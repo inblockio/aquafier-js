@@ -18,7 +18,7 @@ import { AlertCircle, Link as LinkIcon, Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import FilesList from '@/pages/files_list'
+import FilesList from '@/pages/files/files_list'
 
 export const LinkButton = ({ item, nonce, index }: IShareButton) => {
       const { backend_url, setFiles, files, session } = useStore(appStore)

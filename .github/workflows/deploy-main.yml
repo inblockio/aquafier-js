@@ -17,7 +17,7 @@ jobs:
         uses: appleboy/ssh-action@v1
         with:
           host: "aquafier.inblock.io"
-          username: "sammy"
+          username: "dev"
           key: ${{ secrets.RUNNER_PRIVATE_KEY }}
           passphrase: ${{ secrets.PRIVATE_KEY_PASSWORD }}
-          script: /home/sammy/scripts/pull_latest_version_aquafier-js.sh
+          script: /home/dev/scripts/pull_latest_version_aquafier-js.sh

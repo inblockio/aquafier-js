@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import appStore from '../store'
+import React, { useEffect, useState } from 'react'
+import appStore from '../../store'
 import { useStore } from 'zustand'
 import FilesList from './files_list'
 import { AlertCircle, CheckCircle, FileText, FolderPlus, Loader2, Minimize2, Plus, Upload, X } from 'lucide-react'
@@ -17,7 +17,7 @@ import {
 import { maxFileSizeForUpload } from '@/utils/constants'
 import axios from 'axios'
 
-// /components//ui components
+
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
@@ -77,6 +77,22 @@ const FilesPage = () => {
       //             setIsSelectedFileDialogOpen(false)
       //       }
       // }, [openFilesDetailsPopUp])
+
+
+      const [showError, setShowError] = useState(false);
+
+      useEffect(() => {
+            if (files.status === 'error') {
+                  const timer = setTimeout(() => {
+                        setShowError(true);
+                  }, 2000); // Show error after 2 seconds
+
+                  return () => clearTimeout(timer);
+            } else {
+                  setShowError(false);
+            }
+      }, [files.status]);
+
 
       const handleUploadClick = () => {
             fileInputRef.current?.click()
@@ -407,6 +423,53 @@ const FilesPage = () => {
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
       }
 
+
+      const displayFileListItems = () => {
+            if (files.status === 'loading' || files.status === 'idle') {
+
+                  return <div className="flex justify-center items-center h-40">
+                        <Loader2 className="w-6 h-6 text-gray-500 animate-spin" />
+                  </div>
+
+            }
+            // if (files.status === 'error') {
+            //    return   <div className="text-center text-red-500">Error loading files. Please try again.</div>
+            // }
+
+            if (files.status === 'error') {
+                  if (!showError) {
+                        return (
+                              <div className="flex justify-center items-center h-40">
+                                    <Loader2 className="w-6 h-6 text-gray-500 animate-spin" />
+                              </div>
+                        );
+                  }
+                  return (
+                        <div className="text-center text-red-500">
+                              Error loading files. Please try again.
+                        </div>
+                  );
+            }
+
+
+            if (files.fileData.length == 0) {
+                  return <FileDropZone
+                        setFiles={(files: File[]) => {
+                              filesForUpload(files)
+                        }}
+                  />
+            }
+
+
+
+            return <FilesList selectedFiles={[]} activeFile={null} showFileActions={true} showCheckbox={false} showHeader={true} onFileDeSelected={() => { }} onFileSelected={() => {
+
+            }} />
+
+
+
+
+      }
       return (
             <div className="w-full max-w-full box-border overflow-x-hidden">
                   {/* Action Bar */}
@@ -580,29 +643,7 @@ const FilesPage = () => {
 
                   <div className="w-full max-w-full box-border overflow-x-hidden bg-white p-6">
 
-                        {
-                              (files.status === 'loading' || files.status === 'idle') ? 
-                                    <div className="flex justify-center items-center h-40">
-                                          <Loader2 className="w-6 h-6 text-gray-500 animate-spin" />
-                                    </div>
-                               : files.status === 'error' ? 
-                                    <div className="text-center text-red-500">Error loading files. Please try again.</div>
-                               : <>
-
-                                    {files.fileData.length == 0 ? (
-                                          <FileDropZone
-                                                setFiles={(files: File[]) => {
-                                                      filesForUpload(files)
-                                                }}
-                                          />
-                                    ) : (
-
-                                          <FilesList selectedFiles={[]} activeFile={null} showFileActions={true} showCheckbox={false} showHeader={true} onFileDeSelected={() => { }} onFileSelected={() => {
-
-                                          }} />
-                                    )}
-                              </>
-                        }
+                        {displayFileListItems()}
 
 
                   </div>

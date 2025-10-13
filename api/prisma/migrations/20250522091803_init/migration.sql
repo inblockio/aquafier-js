@@ -62,8 +62,6 @@ CREATE TABLE IF NOT EXISTS "contract" (
     "receiver" TEXT,
     "option" TEXT,
     "reference_count" INTEGER,
-    "file_name" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "contract_pkey" PRIMARY KEY ("hash")
 );
@@ -82,7 +80,6 @@ CREATE TABLE IF NOT EXISTS "latest" (
 CREATE TABLE IF NOT EXISTS "revision" (
     "pubkey_hash" TEXT NOT NULL,
     "nonce" TEXT,
-    "file_hash" TEXT,
     "shared" TEXT[],
     "contract" TEXT[],
     "previous" TEXT,
@@ -97,26 +94,23 @@ CREATE TABLE IF NOT EXISTS "revision" (
 
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "file" (
-    "file_hash" TEXT NOT NULL,
-    "file_location" TEXT NOT NULL,
+    "hash" TEXT NOT NULL,
+    "content" TEXT,
+    "file_hash" TEXT,
+    "reference_count" INTEGER,
 
-    CONSTRAINT "file_pkey" PRIMARY KEY ("file_hash")
+    CONSTRAINT "file_pkey" PRIMARY KEY ("hash")
 );
 
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "file_index" (
+    "id" TEXT NOT NULL,
+    "hash" TEXT[],
     "file_hash" TEXT NOT NULL,
-    "pubkey_hash" TEXT[],
+    "uri" TEXT,
+    "reference_count" INTEGER,
 
-    CONSTRAINT "file_index_pkey" PRIMARY KEY ("file_hash")
-);
-
--- CreateTable
-CREATE TABLE IF NOT EXISTS "file_name" (
-    "pubkey_hash" TEXT NOT NULL,
-    "file_name" TEXT NOT NULL,
-
-    CONSTRAINT "file_name_pkey" PRIMARY KEY ("pubkey_hash")
+    CONSTRAINT "file_index_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -193,25 +187,11 @@ CREATE TABLE IF NOT EXISTS "settings" (
     "user_pub_key" TEXT NOT NULL,
     "cli_pub_key" TEXT,
     "cli_priv_key" TEXT,
-    "alchemy_key" TEXT NOT NULL DEFAULT 'ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ',
     "witness_network" TEXT,
     "witness_contract_address" TEXT,
     "theme" TEXT,
 
     CONSTRAINT "settings_pkey" PRIMARY KEY ("user_pub_key")
-);
-
--- CreateTable
-CREATE TABLE IF NOT EXISTS "notifications" (
-    "id" TEXT NOT NULL,
-    "sender" TEXT NOT NULL,
-    "receiver" TEXT NOT NULL,
-    "content" TEXT NOT NULL,
-    "is_read" BOOLEAN NOT NULL DEFAULT false,
-    "created_on" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "navigate_to" TEXT,
-
-    CONSTRAINT "notifications_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -225,6 +205,9 @@ ALTER TABLE "user_attestation_addresses" ADD CONSTRAINT "user_attestation_addres
 
 -- AddForeignKey
 ALTER TABLE "latest" ADD CONSTRAINT "latest_user_fkey" FOREIGN KEY ("user") REFERENCES "users"("address") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "file_index" ADD CONSTRAINT "file_index_id_fkey" FOREIGN KEY ("id") REFERENCES "file"("hash") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "link" ADD CONSTRAINT "link_hash_fkey" FOREIGN KEY ("hash") REFERENCES "revision"("pubkey_hash") ON DELETE RESTRICT ON UPDATE CASCADE;

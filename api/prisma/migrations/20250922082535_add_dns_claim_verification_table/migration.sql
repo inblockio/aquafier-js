@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "public"."DNSClaimVerification" (
+CREATE TABLE IF NOT EXISTS "public"."DNSClaimVerification" (
     "id" SERIAL NOT NULL,
     "wallet_address" TEXT NOT NULL,
     "verification_logs" JSONB NOT NULL,

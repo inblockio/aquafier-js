@@ -9,7 +9,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { SharedContract } from './files_shared_contracts_item'
 
 
-
 export function SharedContracts() {
       const [searchQuery, _setSearchQuery] = useState('')
       const [shareContracts, setShareContracts] = useState<Contract[]>([])
@@ -88,16 +87,32 @@ export function SharedContracts() {
                                                                   key={`${contract.hash}`}
                                                                   contract={contract}
                                                                   index={index}
-                                                                  /**
-                                                                   * Removes a contract from the share contracts list by hash.
-                                                                   * @param {string} hash - The hash of the contract to remove.
-                                                                   */
                                                                   contractDeleted={hash => {
                                                                         let newState = shareContracts.filter(e => e.hash != hash)
                                                                         setShareContracts(newState)
                                                                   }}
                                                             />
                                                       ))}
+                                                      {/* {shareContracts
+                                                            .filter((contract: Contract) => contract.recipients?.map((e) => e.toLocaleLowerCase()).includes(session?.address?.toLocaleLowerCase()!!))
+                                                            .sort((a, b) => {
+                                                                  // Sort from latest to oldest (descending order)
+                                                                  if (!a.created_at) return 1;
+                                                                  if (!b.created_at) return -1;
+                                                                  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                                                            })
+                                                            .map((contract, index) => (
+                                                                  <ShareCard
+                                                                  // type='incoming'
+                                                                  //       key={`${contract.hash}`}
+                                                                  //       contract={contract}
+                                                                  //       index={index}
+                                                                  //       contractDeleted={hash => {
+                                                                  //             let newState = shareContracts.filter(e => e.hash != hash)
+                                                                  //             setShareContracts(newState)
+                                                                  //       }}
+                                                                  />
+                                                            ))} */}
                                                       {shareContracts.filter((contract: Contract) => contract.recipients?.map((e) => e.toLocaleLowerCase()).includes(session?.address?.toLocaleLowerCase()!!)).length == 0 && (
                                                             <div className="card">
                                                                   <Alert variant="default">
@@ -121,7 +136,7 @@ export function SharedContracts() {
                                                             })
                                                             .map((contract, index) => (
                                                                   <SharedContract
-                                                                  type='outgoing'
+                                                                        type='outgoing'
                                                                         key={`${contract.hash}`}
                                                                         contract={contract}
                                                                         index={index}

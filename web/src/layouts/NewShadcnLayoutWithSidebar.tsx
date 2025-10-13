@@ -1,26 +1,21 @@
-import {ConnectWallet} from '../components/connect_wallet'
-import {ConnectWalletPage} from '../components/connect_wallet_page'
-import {Separator} from '../components/ui/separator'
+import { ConnectWallet } from '../components/connect_wallet_button'
+import { ConnectWalletPage } from '../components/connect_wallet_page'
+import { Separator } from '../components/ui/separator'
 import NotificationsBell from '../pages/notifications/NotificationsBell'
-import {SidebarInset, SidebarProvider, SidebarTrigger} from '../components/ui/sidebar'
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar'
 import appStore from '../store'
-import {Crown, X} from 'lucide-react'
-import {Outlet} from 'react-router-dom'
-import {Toaster} from 'sonner'
-import {useStore} from 'zustand'
+import { Crown, X } from 'lucide-react'
+import { Outlet } from 'react-router-dom'
+import { Toaster } from 'sonner'
+import { useStore } from 'zustand'
 
-import {Dialog, DialogContent} from '../components/ui/dialog'
-import {Button} from '../components/ui/button'
+import { Dialog, DialogContent } from '../components/ui/dialog'
+import { Button } from '../components/ui/button'
 import CreateFormFromTemplate from '../components/aqua_forms/CreateFormFromTemplate'
 import FormTemplateEditorShadcn from '../components/aqua_forms/FormTemplateEditorShadcn'
-import {AppSidebar} from '../components/app_sidebar'
+import { AppSidebar } from '../components/app_sidebar'
 import WebsocketFragment from '@/components/navbar/WebsocketFragment'
-import {ScrollArea} from '@/components/ui/scroll-area'
-// import ClipboardButton from '@/components/ui/clipboard'
-// import { Label } from '@/components/ui/label'
-// import { Input } from '@/components/ui/input'
-// import { ClipboardIcon } from 'lucide-react'
-// import { Switch } from '@/components/ui/switch'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import ShareComponent from '@/components/aqua_chain_actions/Share_component'
 
 export default function NewShadcnLayoutWithSidebar() {
@@ -107,40 +102,41 @@ export default function NewShadcnLayoutWithSidebar() {
                                                       <Crown className="w-8 h-8 text-orange-600" />
                                                 </div>
                                                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                                                      Early Bird Special! 🎉
+                                                      Free Pilot Version
                                                 </h2>
-                                                <h4 className="text-md font-bold text-gray-900 mb-2">
-                                                      Upgrade to Pro! 🚀
-                                                </h4>
-                                                <p className="text-gray-600 leading-relaxed">
-                                                      Get access to premium features with our early bird offer of
-                                                      <span className="font-semibold text-orange-600"> 25% off</span>.
-                                                      Contact us to unlock the full potential:
+                                                <p className="text-gray-600 leading-relaxed mb-4">
+                                                      You are using a free pilot version of the{' '}
+
+                                                      <a href="https://aquafier.inblock.io"
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                                                      >
+                                                            aquafier.inblock.io
+                                                      </a>{' '}
+                                                      application.
                                                 </p>
                                           </div>
 
                                           <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                                                <p className="text-gray-700 mb-2">Find the Source Code here:</p>
                                                 <a
-                                                      href="mailto:info@inblock.io"
-                                                      className="text-blue-600 hover:text-blue-800 font-medium text-lg transition-colors"
+                                                      href="https://github.com/inblockio/aquafier-js"
+                                                      target="_blank"
+                                                      rel="noopener noreferrer"
+                                                      className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
                                                 >
-                                                      info@inblock.io
+                                                      github.com/inblockio/aquafier-js
                                                 </a>
                                           </div>
 
                                           <div className="flex gap-3">
                                                 <button
                                                       onClick={() => setOpenDialog(null)}
-                                                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                                                 >
-                                                      Maybe Later
+                                                      Got it
                                                 </button>
-                                                <a
-                                                      href="mailto:info@inblock.io"
-                                                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-center"
-                                                >
-                                                      Send Email
-                                                </a>
                                           </div>
                                     </div>
                               </div>

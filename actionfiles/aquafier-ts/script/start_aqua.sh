@@ -416,6 +416,7 @@ unset PGPASSWORD
 # Replace backend URL placeholder in config
 # sed -i -e "s|BACKEND_URL_PLACEHOLDER|$BACKEND_URL|g" /app/frontend/config.json
 
+AUTH_PROVIDER_ITEM=${AUTH_PROVIDER:-wallet_connect}
 # In your startup script, add this before starting the frontend:
 cat > /app/frontend/config.json << EOF
 {
@@ -425,7 +426,9 @@ cat > /app/frontend/config.json << EOF
   "CUSTOM_LANDING_PAGE_URL": "$CUSTOM_LANDING_PAGE_URL",
   "CUSTOM_LOGO_URL": "$CUSTOM_LOGO_URL",
   "CUSTOM_NAME": "$CUSTOM_NAME",
-  "CUSTOM_DESCRIPTION": "$CUSTOM_DESCRIPTION"
+  "CUSTOM_DESCRIPTION": "$CUSTOM_DESCRIPTION",
+  "REOWN_PROJECT_ID": "$REOWN_PROJECT_ID",
+  "AUTH_PROVIDER":"$AUTH_PROVIDER_ITEM"
 }
 EOF
 

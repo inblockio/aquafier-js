@@ -8,7 +8,7 @@
 DROP TABLE "public"."DNSClaimVerification";
 
 -- CreateTable
-CREATE TABLE "public"."DNSClaimVerificationOne" (
+CREATE TABLE IF NOT EXISTS "public"."DNSClaimVerificationOne" (
     "id" SERIAL NOT NULL,
     "wallet_address" TEXT NOT NULL,
     "verification_logs" JSONB NOT NULL,

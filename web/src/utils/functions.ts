@@ -102,6 +102,14 @@ export function formatTxtRecord(proof: DNSProof): string {
       return `wallet=${proof.walletAddress}&timestamp=${proof.timestamp}&expiration=${proof.expiration}&sig=${proof.signature}`;
 }
 
+ // Helper function to convert string to hex with 0x prefix
+export const stringToHex = (str: string): string => {
+      const hex = Array.from(str)
+            .map(char => char.charCodeAt(0).toString(16).padStart(2, '0'))
+            .join('')
+      return `0x${hex}`
+}
+
 export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string[]): { isWorkFlow: boolean; workFlow: string } => {
       const falseResponse = {
             isWorkFlow: false,
@@ -262,7 +270,7 @@ export function getGenesisHash(aquaTree: AquaTree): string | null {
 export async function getCurrentNetwork() {
       if (typeof window.ethereum !== 'undefined') {
             try {
-                  const chainId = await window.ethereum.request({
+                  const chainId = await (window.ethereum as any).request({
                         method: 'eth_chainId',
                   })
                 //  ("Current chain ID:", chainId);
@@ -280,7 +288,7 @@ export async function switchNetwork(chainId: string) {
       if (typeof window.ethereum !== 'undefined') {
             try {
                   // Check if the network is already set
-                  await window.ethereum.request({
+                  await (window.ethereum as any).request({
                         method: 'wallet_switchEthereumChain',
                         params: [{ chainId }],
                   })

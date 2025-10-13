@@ -15,13 +15,13 @@ import {
 import { FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import { FileText } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { SignAquaChain } from '../components/aqua_chain_actions/sign_aqua_chain'
-import { WitnessAquaChain } from '../components/aqua_chain_actions/witness_aqua_chain'
-import { DownloadAquaChain } from '../components/aqua_chain_actions/download_aqua_chain'
-import { DeleteAquaChain } from '../components/aqua_chain_actions/delete_aqua_chain'
-import { ShareButton } from '../components/aqua_chain_actions/share_aqua_chain'
-import { OpenAquaSignWorkFlowButton } from '../components/aqua_chain_actions/open_aqua_sign_workflow'
-import { LinkButton } from '../components/aqua_chain_actions/link_aqua_chain'
+import { SignAquaChain } from '../../components/aqua_chain_actions/sign_aqua_chain'
+import { WitnessAquaChain } from '../../components/aqua_chain_actions/witness_aqua_chain'
+import { DownloadAquaChain } from '../../components/aqua_chain_actions/download_aqua_chain'
+import { DeleteAquaChain } from '../../components/aqua_chain_actions/delete_aqua_chain'
+import { ShareButton } from '../../components/aqua_chain_actions/share_aqua_chain'
+import { OpenAquaSignWorkFlowButton } from '../../components/aqua_chain_actions/open_aqua_sign_workflow'
+import { LinkButton } from '../../components/aqua_chain_actions/link_aqua_chain'
 import { OpenClaimsWorkFlowButton } from '@/components/aqua_chain_actions/open_identity_claim_workflow'
 import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_claim'
 import { OpenSelectedFileDetailsButton } from '@/components/aqua_chain_actions/details_button'
@@ -30,7 +30,7 @@ import appStore from '@/store'
 import { FilesListProps } from '@/types/types'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
-import WalletAdrressClaim from './v2_claims_workflow/WalletAdrressClaim'
+import WalletAdrressClaim from '../v2_claims_workflow/WalletAdrressClaim'
 
 export default function FilesListItem({
       showWorkFlowsOnly,
@@ -633,7 +633,7 @@ return <>
                                     )}
                               </div>
                         </div>
-
+ 
                         {/* File details grid */}
                         <div className="grid grid-cols-2 gap-4 mb-6">
                               <div className="space-y-1">
@@ -688,7 +688,5 @@ return <>
       }
 
       return null
-      // }
-
-      // return <>{showListItemData()}</>
+   
 }

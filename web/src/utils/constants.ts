@@ -15,6 +15,11 @@ export const ETH_CHAINID_MAP: Record<string, string> = {
       sepolia: '0xaa36a7',
       holesky: '0x4268',
 }
+export const ETH_CHAINID_MAP_NUMBERS: Record<string, number> = {
+      mainnet: 1,
+      sepolia: 11155111,
+      holesky: 17000,
+}
 
 export const ETH_CHAIN_ADDRESSES_MAP: Record<string, string> = {
       mainnet: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
@@ -52,7 +57,7 @@ export const initializeBackendUrl = async (): Promise<{
       apmConfig: APMConfig
 }> => {
       let BACKEND_URL = 'http://127.0.0.1:3000'
-      let config = {}
+      let configObj:WebConfig = {}
       let apmConfig: APMConfig = new APMConfig();
       try {
             // Fetch the config.json file from the public folder
@@ -71,6 +76,8 @@ export const initializeBackendUrl = async (): Promise<{
             apmConfig.enabled = configData.APM_ENABLED;
             apmConfig.serverUrl = configData.APM_SERVER_URL;
             apmConfig.serviceName = configData.APM_SERVICE_NAME;
+
+            configObj = configData
 
             // Update the BACKEND_URL
             BACKEND_URL = configData.BACKEND_URL || 'http://127.0.0.1:3000'
@@ -97,7 +104,7 @@ export const initializeBackendUrl = async (): Promise<{
             console.error('Error reading config:', err)
       }
 
-      return {backend_url: BACKEND_URL, config: config, apmConfig: apmConfig}
+      return {backend_url: BACKEND_URL, config: configObj, apmConfig: apmConfig}
 }
 
 export const testWitness = {

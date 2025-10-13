@@ -1,14 +1,13 @@
-import {ethers} from 'ethers'
 import LoadConfiguration from './components/config'
-import {initializeBackendUrl} from './utils/constants'
-import {useEffect} from 'react'
+import { initializeBackendUrl } from './utils/constants'
+import { useEffect } from 'react'
 import appStore from './store'
-import {useStore} from 'zustand'
-import {BrowserRouter, Route, Routes} from 'react-router-dom'
+import { useStore } from 'zustand'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import ErrorBoundary from './components/error_boundary'
 import Loading from './pages/loading'
 import PdfSigner from './pages/aqua_sign_wokflow/ContractDocument/PdfSigner'
-import FilesPage from './pages/files'
+import FilesPage from './pages/files/files'
 import Home from './pages/home'
 import TailwindMainLayout from './layouts/TailwindMainLayout'
 import PageNotFound from './pages/page_not_found'
@@ -27,17 +26,15 @@ import PrivacyPolicy from './pages/legal/PrivacyPolicy'
 import ClaimsAndAttestationPage from './pages/claim_and_attestation'
 import ClaimsWorkflowPage from './pages/claims_workflow/claimsWorkflowPage'
 import ClaimsWorkflowPageV2 from './pages/v2_claims_workflow/claimsWorkflowPage'
+// Import appkit config to initialize AppKit at module level
+// import './config/appkit'
 
-import {WebConfig} from './types/types'
+import { WebConfig } from './types/types'
 import * as Sentry from "@sentry/react";
-import {init as initApm} from '@elastic/apm-rum'
-import {APMConfig} from "@/types/apm.ts";
+import { init as initApm } from '@elastic/apm-rum'
+import { APMConfig } from "@/types/apm.ts";
+import ContactsPage from './pages/contacts/contacts'
 
-declare global {
-    interface Window {
-        ethereum?: ethers.Eip1193Provider
-    }
-}
 
 function startApm(config: APMConfig) {
     if (config.enabled && config.serviceName && config.serverUrl) {
@@ -45,26 +42,45 @@ function startApm(config: APMConfig) {
             serviceName: config.serviceName,
             serverUrl: config.serverUrl,
             distributedTracing: true,
-            distributedTracingOrigins: [/^http?:\/\/.*/, /^https?:\/\/.*/]
+            // Exclude WalletConnect/Reown domains from distributed tracing to avoid CORS issues
+            distributedTracingOrigins: [
+                /^http?:\/\/localhost/,
+                /^https?:\/\/.*\.inblock\.io/,
+                /^https?:\/\/aquafier\./,
+                // Exclude WalletConnect/Reown RPC endpoints
+                "!https://rpc.walletconnect.org",
+                "!https://rpc.walletconnect.com",
+                "!https://relay.walletconnect.com",
+                "!https://relay.walletconnect.org",
+                "!https://explorer-api.walletconnect.com",
+                "!https://keys.walletconnect.com"
+            ]
         })
     }
 }
 
 function App() {
-    const {setBackEndUrl, setWebConfig} = useStore(appStore)
+    const { setBackEndUrl, setWebConfig } = useStore(appStore)
 
-      useEffect(() => {
-            // Properly handle async initialization
-            const initBackend = async () => {
-                const {backend_url, config, apmConfig} = await initializeBackendUrl()
-                startApm(apmConfig)
-                setBackEndUrl(backend_url)
-                setUpSentry(config)
-                setWebConfig(config)
+    useEffect(() => {
+        // Properly handle async initialization
+        const initBackend = async () => {
+            const { backend_url, config, apmConfig } = await initializeBackendUrl()
+            startApm(apmConfig)
+            setBackEndUrl(backend_url)
+            setUpSentry(config)
+            setWebConfig(config)
+
+
+            // Conditionally import AppKit based on AUTH_PROVIDER
+            if (config.AUTH_PROVIDER === 'wallet_connect') {
+                await import('./config/appkit')
+                console.log('AppKit initialized for wallet_connect')
             }
+        }
 
-          initBackend()
-      }, []) // Empty dependency array means this runs once on mount
+        initBackend()
+    }, []) // Empty dependency array means this runs once on mount
 
     const setUpSentry = (config: WebConfig) => {
         // Initialize Sentry for error tracking
@@ -83,7 +99,7 @@ function App() {
                 // Tracing
                 tracesSampleRate: 1.0, //  Capture 100% of the transactions
                 // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
-                // https://dev.inblock.io/
+                // Exclude WalletConnect/Reown domains to avoid CORS issues
                 tracePropagationTargets: [
                     "localhost",
                     /^https:\/\/dev\.inblock\.io\//,
@@ -102,44 +118,45 @@ function App() {
     }
     return (
         <BrowserRouter>
-            <LoadConfiguration/>
+            <LoadConfiguration />
             <ErrorBoundary>
                 <Routes>
                     {/* Routes with Tailwind UI (no MainLayout wrapper) */}
 
-                    <Route path="/" element={<TailwindMainLayout/>}>
-                        <Route index element={<Home/>}/>
-                        <Route path="terms-and-conditions" element={<TermsAndConditions/>}/>
-                        <Route path="privacy-policy" element={<PrivacyPolicy/>}/>
+                    <Route path="/" element={<TailwindMainLayout />}>
+                        <Route index element={<Home />} />
+                        <Route path="terms-and-conditions" element={<TermsAndConditions />} />
+                        <Route path="privacy-policy" element={<PrivacyPolicy />} />
                     </Route>
 
                     {/* All file routes using Tailwind */}
-                    <Route path="/app" element={<NewShadcnLayoutWithSidebar/>}>
-                        <Route index element={<FilesPage/>}/>
-                 
-                        <Route path="pdf/workflow" element={<PdfWorkflowPage/>}/>
-                        <Route path="claims/workflow" element={<ClaimsWorkflowPage/>}/>
-                        <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2/>}/>
-                        <Route path="files_workflows" element={<FilesPage/>}/>
-                        <Route path="domain_attestation" element={<DomainAttestationPage/>}/>
-                        <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage/>}/>
+                    <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
+                        <Route index element={<FilesPage />} />
 
-                        <Route path="templates" element={<TemplatesPage/>}/>
+                        <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
+                        <Route path="claims/workflow" element={<ClaimsWorkflowPage />} />
+                        <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2 />} />
+                        <Route path="contact_list" element={<ContactsPage />} />
+                        <Route path="files_workflows" element={<FilesPage />} />
+                        <Route path="domain_attestation" element={<DomainAttestationPage />} />
+                        <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage />} />
 
-                        <Route path="shared-contracts" element={<FilesSharedContracts/>}/>
-                        <Route path="shared-contracts/:identifier" element={<SharePage/>}/>
+                        <Route path="templates" element={<TemplatesPage />} />
 
-                        <Route path="settings" element={<SettingsPage/>}/>
-                        <Route path="info" element={<InfoPage/>}/>
-                        <Route path="workflows" element={<WorkflowsTablePage/>}/>
-                        <Route path="form-instance/:templateName" element={<CreateFormInstance/>}/>
-                        <Route path="loading" element={<Loading/>}/>
+                        <Route path="shared-contracts" element={<FilesSharedContracts />} />
+                        <Route path="shared-contracts/:identifier" element={<SharePage />} />
+
+                        <Route path="settings" element={<SettingsPage />} />
+                        <Route path="info" element={<InfoPage />} />
+                        <Route path="workflows" element={<WorkflowsTablePage />} />
+                        <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
+                        <Route path="loading" element={<Loading />} />
                         <Route path="pdf-signer" element={<PdfSigner fileData={null} setActiveStep={_one => {
-                        }}/>}/>
+                        }} />} />
                     </Route>
 
 
-                    <Route path="*" element={<PageNotFound/>}/>
+                    <Route path="*" element={<PageNotFound />} />
                 </Routes>
             </ErrorBoundary>
         </BrowserRouter>

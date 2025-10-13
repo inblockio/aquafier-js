@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, useSidebar } from '@/components/ui/sidebar'
 import CustomNavLink from './ui/CustomNavLink'
-import { FileText, LayoutTemplate, Link, Plus, Settings, Share2, Star, User, Workflow } from 'lucide-react'
+import { Contact, FileText, LayoutTemplate, Link, Plus, Settings, Share2, Star, User, Workflow } from 'lucide-react'
 import { maxUserFileSizeForUpload } from '@/utils/constants'
 import { formatBytes, getAquaTreeFileObject } from '@/utils/functions'
 import { useStore } from 'zustand'
@@ -73,6 +73,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   label: 'Claim & Attestation',
                   icon: Link,
                   id: '/claims_and_attestation',
+            },
+            {
+                  label: 'Contact List',
+                  icon: Contact,
+                  id: '/contact_list',
             },
       ]
 

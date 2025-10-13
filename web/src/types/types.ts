@@ -38,6 +38,7 @@ export interface WebConfig {
       BACKEND_URL?: string
       CUSTOM_NAME?: string
       CUSTOM_DESCRIPTION?: string
+      AUTH_PROVIDER? : "wallet_connect" | "metamask" 
 }
 export interface DNSProof {
       walletAddress: string;
@@ -46,6 +47,25 @@ export interface DNSProof {
       expiration: string;
       signature: string;
 }
+
+export interface Session {
+      id: number
+      address: string
+      nonce: string
+      issuedAt: string // ISO 8601 string format
+      expirationTime: string // ISO 8601 string format
+}
+
+export interface ApiFileData {
+      fileHash: string
+      fileData: string | ArrayBuffer
+}
+
+export interface ContactProfile {
+      walletAddress: string
+      file: Array<ApiFileInfo>
+}
+
 
 
 export interface FilesListProps {
