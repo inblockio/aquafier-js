@@ -230,7 +230,7 @@ const ShareComponent = () => {
                   {/* <div className="sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[65vh] sm:max-h-[65vh] !max-w-[95vw] !w-[95vw]  bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden"> */}
                   <div className="sm:!max-w-[65vw] sm:!w-[45vw] sm:h-[75vh] sm:max-h-[95vh] !max-w-[60vw] !w-[65vw]  bg-white rounded-xl shadow-2xl   overflow-hidden ">
                         {/* Header */}
-                        <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+                        <div className="px-6 py-4 border-b h-[80px] border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
                               <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                           <div className="p-2 bg-blue-100 rounded-lg">
@@ -254,7 +254,9 @@ const ShareComponent = () => {
                         </div>
 
                         {/* Content */}
-                        <div className="px-6 py-6 space-y-6 max-h-[60vh] overflow-y-auto">
+                        <div className="px-6 py-6 space-y-6 overflow-y-auto" style={{
+                              height: "calc(100% - 140px)"
+                        }}>
                               {/* Warning */}
                               <div className="flex gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                                     <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -547,7 +549,7 @@ const ShareComponent = () => {
                         </div>
 
                         {/* Footer */}
-                        <div className="px-6 py-2 border-t border-gray-100 h-[60px] bg-gray-50 flex justify-between gap-3 align-center">
+                        <div className="px-6 py-2 border-t border-gray-100 bg-gray-50 h-[60px] flex justify-between items-center gap-3">
                               <button
                                     onClick={() => {
                                           setOpenDialog(null)
@@ -580,21 +582,19 @@ const ShareComponent = () => {
                                     <button
                                           onClick={handleShare}
                                           disabled={shared ? true : false}
-                                          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50  cursor-pointer disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                                          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                                     >
-                                          {
-                                                sharing ? (
-                                                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" ></div>
-                                                ) : (
-                                                      <Share2 className="w-4 h-4" />
-                                                )}
+                                          {sharing ? (
+                                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                          ) : (
+                                                <Share2 className="w-4 h-4" />
+                                          )}
                                           {sharing ? 'Sharing...' : 'Create Share Link'}
                                     </button>
                               </div>
-
                         </div>
-                  </div >
-            </div >
+                  </div>
+            </div>
       )
 }
 
