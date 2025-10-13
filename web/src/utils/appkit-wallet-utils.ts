@@ -1,6 +1,8 @@
 import { appKit } from '../config/appkit'
 import { ethers } from 'ethers'
 import { generateNonce, SiweMessage } from 'siwe'
+import { ETH_CHAINID_MAP_NUMBERS } from './constants'
+import appStore from '@/store'
 
 // Get the current provider from AppKit
 export async function getAppKitProvider() {
@@ -94,13 +96,15 @@ export const createSiweMessage = (address: string, statement: string): string =>
   const origin = window.location.origin
   const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
 
+  const network = appStore.getState().user_profile?.witness_network ?? "sepolia"
+
   const message = new SiweMessage({
     domain,
     address,
     statement,
     uri: origin,
     version: '1',
-    chainId: 2,
+    chainId: ETH_CHAINID_MAP_NUMBERS[network],
     nonce: generateNonce(),
     expirationTime: expiry,
     issuedAt: new Date(Date.now()).toISOString(),
