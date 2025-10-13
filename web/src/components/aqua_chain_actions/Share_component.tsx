@@ -547,7 +547,7 @@ const ShareComponent = () => {
                         </div>
 
                         {/* Footer */}
-                        <div className="px-6 py-2 border-t border-gray-100 bg-gray-50 flex justify-between gap-3 align-center">
+                        <div className="px-6 py-2 border-t border-gray-100 h-[60px] bg-gray-50 flex justify-between gap-3 align-center">
                               <button
                                     onClick={() => {
                                           setOpenDialog(null)
