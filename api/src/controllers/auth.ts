@@ -1,8 +1,8 @@
-import {FastifyInstance, FastifyRequest} from 'fastify';
-import {prisma} from '../database/db';
-import {SessionQuery, SiweRequest} from '../models/request_models';
-import {verifySiweMessage} from '../utils/auth_utils';
-import {fetchEnsName} from '../utils/api_utils';
+import { FastifyInstance, FastifyRequest } from 'fastify';
+import { prisma } from '../database/db';
+import { SessionQuery, SiweRequest } from '../models/request_models';
+import { verifySiweMessage } from '../utils/auth_utils';
+import { fetchEnsName } from '../utils/api_utils';
 import Logger from "../utils/Logger";
 
 export default async function authController(fastify: FastifyInstance) {
@@ -45,7 +45,7 @@ export default async function authController(fastify: FastifyInstance) {
           cli_pub_key: "",
           cli_priv_key: "",
           alchemy_key: "ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ",
-          witness_network: process.env.DEFAULT_WITNESS_NETWORK ?? "sepolia", 
+          witness_network: process.env.DEFAULT_WITNESS_NETWORK ?? "sepolia",
           theme: "light",
           witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
         }
@@ -65,10 +65,10 @@ export default async function authController(fastify: FastifyInstance) {
           issued_at: session.issuedAt,
           expiration_time: session.expirationTime
         },
-        user_settings: settingsData 
+        user_settings: settingsData
       };
-    } catch (error : any) {
-        Logger.error("Error fetching session:", error);
+    } catch (error: any) {
+      Logger.error("Error fetching session:", error);
       return reply.code(500).send({ success: false, message: "Internal server error" });
     }
   });
@@ -86,8 +86,8 @@ export default async function authController(fastify: FastifyInstance) {
       });
 
       return { success: true, message: "Session deleted successfully" };
-    } catch (error : any) {
-        Logger.error("Error deleting session:", error);
+    } catch (error: any) {
+      Logger.error("Error deleting session:", error);
       return reply.code(500).send({ success: false, message: "Internal server error" });
     }
   });
@@ -193,7 +193,7 @@ export default async function authController(fastify: FastifyInstance) {
             sender: "system",
             receiver: siweData.address!!,
             content: "Welcome to Aqua! Get started by creating your first document or uploading a file for notarization.",
-            navigate_to:"",
+            navigate_to: "",
             is_read: false,
             created_on: new Date()
           }
@@ -204,15 +204,30 @@ export default async function authController(fastify: FastifyInstance) {
         })
       }
 
+      // Logging to track if it logged in
+      Logger.info('User login', {
+        event: {
+          action: 'login',
+          category: 'authentication',
+          type: 'start'
+        },
+        user: {
+          id: session.address!!,
+          name: session.address!!
+        },
+        session: {
+          id: session.nonce!!
+        }
+      });
 
 
       return reply.code(201).send({
         success: true,
         logs,
         session,
-        user_settings: settingsData 
+        user_settings: settingsData
       });
-    } catch (error : any) {
+    } catch (error: any) {
       logs.push(`SIWE sign-in failed: ${error}`);
       fastify.log.error(error);
 
