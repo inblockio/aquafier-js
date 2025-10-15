@@ -12,6 +12,8 @@ model Users {
   address       String                     @id
   ens_name      String?
   email         String?
+  createdAt     DateTime                   @default(now()) @map("created_at")
+  updatedAt     DateTime                   @updatedAt @map("updated_at")
   Latest        Latest[]
   Settings      Settings?
   UserAddresses UserAttestationAddresses[]
@@ -27,6 +29,8 @@ model AquaTemplate {
   name        String
   created_at  String
   public      Boolean
+  createdAt   DateTime             @default(now()) @map("created_at_ts")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
   form_fields AquaTemplateFields[]
 
   @@map("aqua_templates")
@@ -39,25 +43,29 @@ model VerificationData {
   code         String
   is_used      Boolean  @default(false)
   created_on   DateTime @default(now())
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@map("verification_data")
 }
 
 model AquaTemplateFields {
-  id            String  @id @default(uuid())
+  id            String   @id @default(uuid())
   aqua_form_id  String
   name          String
   label         String
   type          String
   required      Boolean
-  is_array      Boolean @default(false)
-  is_hidden     Boolean @default(false)
-  is_editable   Boolean @default(true)
-  is_verifiable Boolean @default(false)
+  is_array      Boolean  @default(false)
+  is_hidden     Boolean  @default(false)
+  is_editable   Boolean  @default(true)
+  is_verifiable Boolean  @default(false)
   description   String?
   placeholder   String?
   support_text  String?
   default_value String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   AquaForm AquaTemplate @relation(fields: [aqua_form_id], references: [id])
 
@@ -65,11 +73,13 @@ model AquaTemplateFields {
 }
 
 model UserAttestationAddresses {
-  id          String @id @default(uuid())
+  id          String   @id @default(uuid())
   owner       String
   address     String
   trust_level Int
-  User        Users  @relation(fields: [owner], references: [address])
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  User        Users    @relation(fields: [owner], references: [address])
 
   @@map("user_attestation_addresses")
 }
@@ -77,9 +87,11 @@ model UserAttestationAddresses {
 model SiweSession {
   id             Int       @id @default(autoincrement())
   address        String
-  nonce          String    @unique // ✅ Make nonce unique
+  nonce          String    @unique
   issuedAt       DateTime  @default(now())
   expirationTime DateTime?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
   @@map("siwe_session")
 }
@@ -87,60 +99,59 @@ model SiweSession {
 model Contract {
   hash                 String   @id
   genesis_hash         String?
-  latest               String? //Json?
+  latest               String?
   sender               String?
-  // receiver             String?
   recipients           String[]
   option               String?
   reference_count      Int?
   file_name            String?
-  receiver_has_deleted String[] //Boolean  @default(false)
+  receiver_has_deleted String[]
   created_at           DateTime @default(now())
-  // User             User?         @relation(fields: [hash], references: [user])
-  // Revision         Revision?     @relation(fields: [hash], references: [pubkey_hash])
+  createdAt            DateTime @default(now()) @map("created_at_ts")
+  updatedAt            DateTime @updatedAt @map("updated_at")
 
   @@map("contract")
 }
 
 model Latest {
-  hash        String  @id
+  hash        String   @id
   user        String
   template_id String?
-  is_workflow Boolean @default(false)
-  User        Users   @relation(fields: [user], references: [address])
-  // Revision         Revision[]
+  is_workflow Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  User        Users    @relation(fields: [user], references: [address])
 
   @@map("latest")
 }
 
 model Revision {
-  pubkey_hash     String   @id
-  nonce           String?
-  file_hash       String?
-  shared          String[]
-  contract        String[]
-  previous        String?
-  children        String?
-  local_timestamp String?
-  revision_type   String?
-  has_content     Boolean  @default(false)
-
+  pubkey_hash         String      @id
+  nonce               String?
+  file_hash           String?
+  shared              String[]
+  contract            String[]
+  previous            String?
+  children            String?
+  local_timestamp     String?
+  revision_type       String?
+  has_content         Boolean     @default(false)
   verification_leaves String[]
-  // Latest           Latest        @relation(fields: [pubkey_hash], references: [hash])
-  // File             File[]
+  createdAt           DateTime    @default(now()) @map("created_at")
+  updatedAt           DateTime    @updatedAt @map("updated_at")
   Signature           Signature[]
   Witness             Witness[]
   Link                Link[]
-  // Contract         Contract?
-  // FileIndex        FileIndex[]
   AquaForms           AquaForms[]
 
   @@map("revision")
 }
 
 model File {
-  file_hash     String @id
+  file_hash     String   @id
   file_location String
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   @@map("file")
 }
@@ -148,13 +159,17 @@ model File {
 model FileIndex {
   file_hash   String   @id
   pubkey_hash String[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("file_index")
 }
 
 model FileName {
-  pubkey_hash String @id
+  pubkey_hash String   @id
   file_name   String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("file_name")
 }
@@ -166,8 +181,9 @@ model Link {
   link_verification_hashes          String[]
   reference_count                   Int?
   link_file_hashes                  String[]
+  createdAt                         DateTime @default(now()) @map("created_at")
+  updatedAt                         DateTime @updatedAt @map("updated_at")
   Revision                          Revision @relation(fields: [hash], references: [pubkey_hash])
-  // FileIndex                           FileIndex?    @relation(fields: [hash], references: [hash])
 
   @@map("link")
 }
@@ -179,6 +195,8 @@ model Signature {
   signature_public_key     String?
   signature_type           String?
   reference_count          Int?
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
   Revision                 Revision @relation(fields: [hash], references: [pubkey_hash])
 
   @@map("signature")
@@ -188,9 +206,10 @@ model Witness {
   hash                String        @id
   Witness_merkle_root String?
   reference_count     Int?
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
   Revision            Revision      @relation(fields: [hash], references: [pubkey_hash])
   WitnessEvent        WitnessEvent? @relation(fields: [Witness_merkle_root], references: [Witness_merkle_root])
-  // MerkleNodes               MerkleNodes[]
 
   @@map("witness")
 }
@@ -202,8 +221,9 @@ model WitnessEvent {
   Witness_smart_contract_address String?
   Witness_transaction_hash       String?
   Witness_sender_account_address String?
+  createdAt                      DateTime  @default(now()) @map("created_at")
+  updatedAt                      DateTime  @updatedAt @map("updated_at")
   Witness                        Witness[]
-  // MerkleNodes                        MerkleNodes[]
 
   @@map("witness_event")
 }
@@ -215,6 +235,8 @@ model AquaForms {
   value           Json?
   type            String?
   reference_count Int?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
   Revision        Revision @relation(fields: [hash], references: [pubkey_hash])
 
   @@map("aqua_forms")
@@ -227,39 +249,37 @@ model MerkleNodes {
   is_leaf          Boolean?
   left_child_hash  String?
   right_child_hash String?
-  // Witness              Witness?      @relation(fields: [node_hash], references: [hash])
-  // WitnessEvent         WitnessEvent? @relation(fields: [node_hash], references: [Witness_merkle_root])
-  // ParentNode           MerkleNodes?  @relation("MerkleNodesRelation", fields: [parent_hash], references: [node_hash])
-  // LeftChildNode        MerkleNodes?  @relation("MerkleNodesLeftChildRelation", fields: [left_child_hash], references: [node_hash])
-  // RightChildNode       MerkleNodes?  @relation("MerkleNodesRightChildRelation", fields: [right_child_hash], references: [node_hash])
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   @@map("merkle_nodes")
 }
 
 model Settings {
-  user_pub_key             String  @id
+  user_pub_key             String   @id
   cli_pub_key              String?
   cli_priv_key             String?
-  alchemy_key              String  @default("ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ")
+  alchemy_key              String   @default("ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ")
   witness_network          String?
   witness_contract_address String?
   theme                    String?
-  User                     Users   @relation(fields: [user_pub_key], references: [address])
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+  User                     Users    @relation(fields: [user_pub_key], references: [address])
 
   @@map("settings")
 }
 
 model Notifications {
-  id String @id @default(uuid())
-
-  sender   String
-  receiver String
-  content  String
-  is_read  Boolean @default(false)
-
-  created_on DateTime @default(now())
-
+  id          String   @id @default(uuid())
+  sender      String
+  receiver    String
+  content     String
+  is_read     Boolean  @default(false)
+  created_on  DateTime @default(now())
   navigate_to String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("notifications")
 }
@@ -267,12 +287,13 @@ model Notifications {
 model VerificationAttempt {
   id                    Int      @id @default(autoincrement())
   email_or_phone_number String
-  verification_type     String // "email" or "phone_number"
-  nonce                 String? // Optional, links to siweSession
-  action                String // "send_code" or "verify_code"
+  verification_type     String
+  nonce                 String?
+  action                String
   createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt @map("updated_at")
 
-  @@index([email_or_phone_number, verification_type, action]) // For efficient querying
+  @@index([email_or_phone_number, verification_type, action])
 }
 
 model DNSClaimVerificationOne {
@@ -280,9 +301,11 @@ model DNSClaimVerificationOne {
   wallet_address      String
   verification_logs   Json
   verification_status String
-  is_verified         Boolean @default(false)
-  is_domain_verified  Boolean @default(true)
+  is_verified         Boolean  @default(false)
+  is_domain_verified  Boolean  @default(true)
   last_verified       DateTime
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
-  @@index([wallet_address]) // For efficient querying
+  @@index([wallet_address])
 }
