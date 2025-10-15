@@ -8,7 +8,7 @@ import {fetchEnsName} from '../utils/api_utils';
 import {authenticate, AuthenticatedRequest} from '../middleware/auth_middleware';
 import {Prisma, PrismaClient, UserAttestationAddresses} from '@prisma/client';
 import {DefaultArgs} from '@prisma/client/runtime/library';
-import Logger from '../utils/Logger';
+import Logger from '../utils/logger';
 
 export default async function userController(fastify: FastifyInstance) {
 

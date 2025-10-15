@@ -25,7 +25,7 @@ import WebSocketActions from '../constants/constants';
 import { sendToUserWebsockerAMessage } from './websocketController';
 // import { systemTemplateHashes } from '../models/constants';
 import { saveAttestationFileAndAquaTree } from '../utils/server_utils';
-import Logger from "../utils/Logger";
+import Logger from "../utils/logger";
 // import { saveAquaFile } from '../utils/server_utils';
 // import getStream from 'get-stream';
 // Promisify pipeline

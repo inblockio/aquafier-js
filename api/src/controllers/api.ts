@@ -1,7 +1,7 @@
 import {FastifyInstance} from "fastify";
 import {twilioClient} from "../api/twilio";
 import {prisma} from "../database/db";
-import Logger from "../utils/Logger";
+import Logger from "../utils/logger";
 import {WebScraper} from "../utils/scraper";
 import {ScrapedData} from "../models/types";
 import * as fs from "fs"

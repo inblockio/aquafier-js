@@ -3,7 +3,7 @@ import {connectedClients} from "../store/store";
 import {ClientConnection} from "../models/types";
 import {FastifyInstance} from 'fastify';
 import {WebSocket as WSWebSocket} from 'ws';
-import Logger from "../utils/Logger";
+import Logger from "../utils/logger";
 
 // Define SocketStream manually
 export interface SocketStream {

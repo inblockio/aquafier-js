@@ -1,7 +1,7 @@
 import {prisma} from '../database/db';
 import {ExtendedAquaTreeData} from '../models/types';
 import {createAquaTreeFromRevisions} from './revisions_operations_utils';
-import Logger from './Logger';
+import Logger from './logger';
 
 
 /**

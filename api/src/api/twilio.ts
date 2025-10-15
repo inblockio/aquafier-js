@@ -1,5 +1,5 @@
 import twilio from 'twilio';
-import Logger from "../utils/Logger";
+import Logger from "../utils/logger";
 
 
 const {

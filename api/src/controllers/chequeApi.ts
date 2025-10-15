@@ -5,7 +5,7 @@ import {prisma} from "../database/db";
 import {getHost, getPort} from "../utils/api_utils";
 import {estimateStringFileSize} from "../utils/file_utils";
 import {createAquaTreeFromRevisions} from "../utils/revisions_operations_utils";
-import Logger from "../utils/Logger";
+import Logger from "../utils/logger";
 
 export default async function chequeApiController(fastify: FastifyInstance) {
 

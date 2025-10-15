@@ -1,7 +1,7 @@
 // Import the server
 import buildServer from './server';
 import {getHost, getPort} from './utils/api_utils';
-import Logger from "./utils/Logger";
+import Logger from "./utils/logger";
 
 const server = buildServer()
 

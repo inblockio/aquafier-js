@@ -3,7 +3,7 @@ import { Revision } from '@prisma/client';
 import * as fs from 'fs';
 import { ExtendedAquaTreeData } from '../models/types';
 import { deleteFile } from "./file_utils";
-import Logger from './Logger';
+import Logger from './logger';
 import { AquaTree, cliGreenify, cliRedify, cliYellowfy } from 'aqua-js-sdk';
 import { fetchCompleteRevisionChain } from './quick_utils';
 import { getLastRevisionVerificationHash } from './aqua_tree_utils';

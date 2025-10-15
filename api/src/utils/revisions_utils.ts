@@ -21,7 +21,7 @@ import { deleteFile, getFileUploadDirectory } from './file_utils';
 import { randomUUID } from 'crypto';
 import path from 'path';
 import { systemTemplateHashes } from '../models/constants';
-import Logger from './Logger';
+import Logger from './logger';
 import { orderUserChain } from './quick_revision_utils';
 
 // import { PrismaClient } from '@prisma/client';

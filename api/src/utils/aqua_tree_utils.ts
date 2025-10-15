@@ -1,7 +1,7 @@
 import {AquaTree, OrderRevisionInAquaTree} from 'aqua-js-sdk';
 // For specific model types
 import {FileIndex} from '@prisma/client';
-import Logger from "./Logger";
+import Logger from "./logger";
 
 export const getLastRevisionVerificationHash = (aquaTree: AquaTree) => {
       const orderedRevisions = OrderRevisionInAquaTree(aquaTree)

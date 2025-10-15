@@ -2,7 +2,7 @@ import {authenticate} from "../middleware/auth_middleware";
 import {prisma} from "../database/db";
 import {fetchCompleteRevisionChain} from "../utils/quick_utils";
 import {FastifyInstance} from "fastify";
-import Logger from "../utils/Logger";
+import Logger from "../utils/logger";
 
 export default async function fetchChainController(fastify: FastifyInstance) {
     // Test route for fetchCompleteRevisionChain

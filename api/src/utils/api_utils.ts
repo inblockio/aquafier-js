@@ -9,7 +9,7 @@ import {AquaTemplatesFields} from "../models/types"
 import * as fs from "fs"
 import path from 'path';
 import {getGenesisHash} from "./aqua_tree_utils"
-import Logger from "./Logger";
+import Logger from "./logger";
 
 const getHost = (): string => {
     return process.env.HOST || '0.0.0.0'

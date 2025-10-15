@@ -10,7 +10,7 @@ import {isWorkFlowData, saveAquaTree} from "./revisions_utils";
 import {serverAttestation} from "./server_attest";
 import {systemTemplateHashes} from "../models/constants";
 import {getGenesisHash} from "./aqua_tree_utils";
-import Logger from "./Logger";
+import Logger from "./logger";
 
 
 // Basic random number function

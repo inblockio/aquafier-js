@@ -3,7 +3,7 @@ import {getFile, streamToBuffer} from '../utils/file_utils.js';
 import Aquafier, {AquaTree, FileObject, LogType} from 'aqua-js-sdk';
 import {FastifyInstance} from 'fastify';
 import path from 'path';
-import Logger from "../utils/Logger";
+import Logger from "../utils/logger";
 
 export default async function filesController(fastify: FastifyInstance) {
     // get file using file hash

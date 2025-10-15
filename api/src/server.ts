@@ -29,7 +29,7 @@ import ApiController from './controllers/api';
 import * as Sentry from "@sentry/node"
 import {nodeProfilingIntegration} from "@sentry/profiling-node"
 import {ensureDomainViewForCors} from './utils/server_utils';
-import Logger from "./utils/Logger";
+import Logger from "./utils/logger";
 import DNSClaimVerificationController from './controllers/dns_claim_verification';
 
 

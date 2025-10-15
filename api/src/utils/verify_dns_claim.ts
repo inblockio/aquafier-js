@@ -1,7 +1,7 @@
 import * as ethers from 'ethers';
 import * as dns from 'dns';
 import {promisify} from 'util';
-import Logger from "./Logger";
+import Logger from "./logger";
 
 export interface TxtRecord {
   wallet: string;

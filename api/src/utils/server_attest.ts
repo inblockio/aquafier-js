@@ -5,7 +5,7 @@ import {getGenesisHash} from "./aqua_tree_utils";
 import fs from "fs";
 import {dummyCredential, getRandomNumber, getServerWalletInformation} from "./server_utils";
 import {getAquaTreeFileName} from "./api_utils";
-import Logger from "./Logger";
+import Logger from "./logger";
 
 interface TemplateInformation {
     templateAquaTreeData: string;

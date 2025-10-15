@@ -3,7 +3,7 @@ import { prisma } from '../database/db';
 import { SessionQuery, SiweRequest } from '../models/request_models';
 import { verifySiweMessage } from '../utils/auth_utils';
 import { fetchEnsName } from '../utils/api_utils';
-import Logger from "../utils/Logger";
+import Logger, { EventCategory, EventOutcome, EventType } from "../utils/logger";
 
 export default async function authController(fastify: FastifyInstance) {
   // get current session
@@ -95,7 +95,7 @@ export default async function authController(fastify: FastifyInstance) {
   fastify.post('/session', async (request, reply) => {
 
     const { message, signature } = request.body as SiweRequest;
-
+const startTime = Date.now();
     let logs: string[] = [];
     logs.push(`Received SIWE message: ${message}`);
     logs.push(`Received signature: ${signature}`);
@@ -136,6 +136,8 @@ export default async function authController(fastify: FastifyInstance) {
 
       // Check if we should attempt ENS lookup
       const infuraProjectId = process.env.VITE_INFURA_PROJECT_ID;
+const duration = Date.now() - startTime;
+    Logger.logAuthEvent('user-login', EventOutcome.SUCCESS, siweData.address!!);
 
       if (userData == null) {
         let ensName = null
@@ -149,6 +151,19 @@ export default async function authController(fastify: FastifyInstance) {
             ens_name: ensName
           }
         });
+
+
+        Logger.logEvent('User created in database', {
+              category: EventCategory.DATABASE,
+              type: EventType.CREATION,
+              action: 'user-create',
+              outcome: EventOutcome.SUCCESS,
+              duration,
+              metadata: {
+                userId: siweData.address!!,
+                table: 'users',
+              }
+            });
 
       } else {
 
@@ -220,6 +235,19 @@ export default async function authController(fastify: FastifyInstance) {
         }
       });
 
+
+
+       Logger.logEvent('User login successful', {
+              category: EventCategory.DATABASE,
+              type: EventType.CREATION,
+              action: 'user-login',
+              outcome: EventOutcome.SUCCESS,
+              duration,
+              metadata: {
+                userId: siweData.address!!,
+                table: 'users-login',
+              }
+            });
 
       return reply.code(201).send({
         success: true,

@@ -3,7 +3,7 @@ import {fileURLToPath} from "url";
 import * as process from "node:process";
 import * as fs from "node:fs";
 import {getBucketName, getMinioClient, minioClientCompleted} from "./s3Utils";
-import Logger from "./Logger";
+import Logger from "./logger";
 
 const getAquaAssetDirectory = (): string => {
     // Get the equivalent of __dirname in ES modules
