@@ -48,6 +48,8 @@ export default async function authController(fastify: FastifyInstance) {
           witness_network: process.env.DEFAULT_WITNESS_NETWORK ?? "sepolia",
           theme: "light",
           witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+           createdAt: new Date(),
+    updatedAt: new Date(),
         }
 
         settingsData = defaultData
@@ -199,6 +201,8 @@ const duration = Date.now() - startTime;
           witness_network: process.env.DEFAULT_WITNESS_NETWORK ?? "sepolia",
           theme: "light",
           witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+           createdAt: new Date(),
+    updatedAt: new Date(),
         }
 
         settingsData = defaultData
