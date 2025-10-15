@@ -26,7 +26,9 @@ const ContactsPage = () => {
     const { files, systemFileInfo, session } = useStore(appStore);
     const [contactProfiles, setContactProfiles] = useState<ContactProfile[]>([]);
     const [filterMultipleAddresses, setFilterMultipleAddresses] = useState<string[]>([''])
+
     const navigate = useNavigate()
+    
     const systemTreeNames = systemFileInfo.map((info) => {
         try {
             return getAquaTreeFileName(info.aquaTree!);
@@ -34,6 +36,8 @@ const ContactsPage = () => {
             return "";
         }
     });
+
+    console.log("Contact profiles: ", contactProfiles)
 
     useEffect(() => {
         if (!files?.fileData?.length || !systemFileInfo?.length) return;
@@ -80,6 +84,7 @@ const ContactsPage = () => {
                 contactProfileMap.set(walletAddress, {
                     walletAddress,
                     file: [element],
+                    claims: {}
                 });
             }
         }
@@ -171,6 +176,18 @@ const ContactsPage = () => {
 
         return <div className="flex flex-wrap items-center gap-2">{allBadges}</div>;
     };
+
+    // const createMetadata = (contactProfile: ContactProfile) => {
+    //     let phone_number_claim = contactProfile.file.filter(file => {
+    //         let revisions = Object.values(file.aquaTree!.revisions)
+    //         return revisions.some(revision => revision.revision_type === "phone_number_claim")
+    //     });
+
+    //     if (phone_number_claim.length > 0) {
+            
+    //     }
+    // }
+
     return (
         <div className="p-6">
             <h1 className="text-xl font-semibold mb-2">Total Contacts {contactProfiles.length}</h1>
@@ -234,7 +251,7 @@ const ContactsPage = () => {
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-200">
                                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-700">
-                                    Wallet Address
+                                    Contact
                                 </th>
                                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-700">
                                     Contact Claims
@@ -258,7 +275,8 @@ const ContactsPage = () => {
                                     );
                                 }).map((profile, index) => (
                                 <tr
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                        e.preventDefault();
                                         navigate(`/app/claims/workflow/${profile.walletAddress}`)
                                     }}
                                     key={index}
@@ -271,7 +289,6 @@ const ContactsPage = () => {
                                             <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
                                                 <p className="text-xs ">Profile Owner   {session?.address === profile.walletAddress ? <>(You)</> : <></>}: &nbsp;</p>
                                                 <WalletAdrressClaim walletAddress={profile.walletAddress} />
-
                                             </div>
                                         </span>
                                     </td>
