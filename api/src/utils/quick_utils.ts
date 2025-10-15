@@ -276,8 +276,8 @@ export async function diagnoseLinks(): Promise<void> {
                 WHERE table_name = 'Link'
             `;
 
-            Logger.info('\nLink table structure:');
-            Logger.info(tableInfo);
+            Logger.info('\nLink table structure: fix me ..');
+            // Logger.info(tableInfo);
         } catch (err) {
             Logger.error('Could not retrieve Link table structure:', err);
         }

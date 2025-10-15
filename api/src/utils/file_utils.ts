@@ -366,7 +366,7 @@ async function getFileSize(path: string): Promise<number | undefined | null> {
             try {
                 const data = await getMinioClient().statObject(bucket, filePath)
                 return data.size;
-            } catch (e) {
+            } catch (e : any) {
                 Logger.error(e);
                 return null
             }
