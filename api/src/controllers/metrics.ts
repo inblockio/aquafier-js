@@ -4,6 +4,20 @@ import { AdvancedMetricsResponse, DateRangeQuery, MetricsResponse } from '../mod
 
 export default async function metricsController(fastify: FastifyInstance) {
     fastify.get('/metrics', async (request, reply) => {
+  const nonce = request.headers['nonce']; // Headers are case-insensitive
+
+        // Check if `nonce` is missing or empty
+        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+        }
+
+        const session = await prisma.siweSession.findUnique({
+            where: { nonce }
+        });
+
+        if (!session) {  
+            return reply.code(403).send({ success: false, message: "Nounce  is invalid "+nonce  });
+        }
 
 
         try {
@@ -207,6 +221,24 @@ export default async function metricsController(fastify: FastifyInstance) {
      */
 
     fastify.get<{ Querystring: DateRangeQuery }>('/metrics/range', async (request, reply) => {
+
+
+        const nonce = request.headers['nonce']; // Headers are case-insensitive
+
+        // Check if `nonce` is missing or empty
+        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+        }
+
+        const session = await prisma.siweSession.findUnique({
+            where: { nonce }
+        });
+
+        if (!session) {  
+            return reply.code(403).send({ success: false, message: "Nounce  is invalid "+nonce  });
+        }
+
+        
         try {
             const { startDate, endDate, tables } = request.query;
 
