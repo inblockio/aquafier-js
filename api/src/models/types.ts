@@ -1,6 +1,86 @@
 import { AquaTree, FileObject, Revision as AquaRevision, Revision, FileIndex, } from 'aqua-js-sdk';
 import { WebSocket as WSWebSocket } from 'ws';
 
+
+export interface DateRangeQuery {
+    startDate?: string;
+    endDate?: string;
+    tables?: string; // comma-separated list of table names
+}
+
+export interface TableMetrics {
+    tableName: string;
+    total: number;
+    inRange: number;
+    percentage: string;
+}
+
+export interface AdvancedMetricsResponse {
+    dateRange: {
+        start: string;
+        end: string;
+    };
+    tables: TableMetrics[];
+    summary: {
+        totalRecordsAcrossAllTables: number;
+        totalRecordsInRange: number;
+    };
+    timestamp: string;
+}
+
+export interface MetricsResponse {
+  users: {
+    total: number;
+    newToday: number;
+    growth: string;
+  };
+  contracts: {
+    total: number;
+    newToday: number;
+    growth: string;
+  };
+  revisions: {
+    total: number;
+    newToday: number;
+    growth: string;
+  };
+  files: {
+    total: number;
+    newToday: number;
+    growth: string;
+  };
+  additionalMetrics: {
+    activeUsers: {
+      last24Hours: number;
+      last7Days: number;
+      last30Days: number;
+    };
+    templates: {
+      total: number;
+      publicTemplates: number;
+    };
+    signatures: {
+      total: number;
+      newToday: number;
+    };
+    witnesses: {
+      total: number;
+      newToday: number;
+    };
+    notifications: {
+      total: number;
+      unread: number;
+      newToday: number;
+    };
+    averages: {
+      revisionsPerContract: string;
+      filesPerRevision: string;
+      contractsPerUser: string;
+    };
+  };
+  timestamp: string;
+}
+
 export interface AquaTemplatesFields {
 
   name: string,
