@@ -45,7 +45,7 @@ import { DeleteAquaChain } from '../../components/aqua_chain_actions/delete_aqua
 import { IWorkflowItem } from '@/types/types'
 import WalletAdrressClaim from '../v2_claims_workflow/WalletAdrressClaim'
 import { ApiFileInfo } from '@/models/FileInfo'
-import { set } from 'date-fns'
+import { toast } from 'sonner'
 
 const getStatusIcon = (status: string) => {
       switch (status) {
@@ -303,14 +303,20 @@ export default function WorkflowsTablePage() {
             setIsLoading(true);
             (async () => {
 
-                  const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
+                 try {
+                   const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
                   setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
 
                   processFilesToGetWorkflows(filesApi.files)
+                 } catch (error) {
+                  toast.error('Error fetching workflows')
+                 } finally{
+
+                       setIsLoading(false);
+                 }
             })()
 
-             setIsLoading(false);
       },[])
       // useEffect(() => {
       //       processFilesToGetWorkflows()
@@ -361,7 +367,7 @@ export default function WorkflowsTablePage() {
                                     <CardTitle className="flex items-center gap-2 justify-between">
                                           <div className="flex items-center gap-2">
                                                 <FileText className="h-5 w-5" />
-                                                <span>Aqua Sign Workflows.</span>
+                                                <span>Aqua Sign Workflows</span>
                                           </div>
                                           <button
                                                 className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"

@@ -25,14 +25,10 @@ import { mergeRevisionChain } from '../utils/quick_revision_utils';
 import { getGenesisHash, removeFilePathFromFileIndex, validateAquaTree } from '../utils/aqua_tree_utils';
 import WebSocketActions from '../constants/constants';
 import { sendToUserWebsockerAMessage } from './websocketController';
-// import { systemTemplateHashes } from '../models/constants';
 import { saveAttestationFileAndAquaTree } from '../utils/server_utils';
 import Logger from "../utils/logger";
-import { systemTemplateHashes } from 'src/models/constants';
-// import { saveAquaFile } from '../utils/server_utils';
-// import getStream from 'get-stream';
-// Promisify pipeline
-// const pump = util.promisify(pipeline);
+import { systemTemplateHashes } from '../models/constants';
+
 
 /**
  * Registers Explorer-related HTTP routes on the provided Fastify instance.
@@ -64,61 +60,69 @@ export default async function workflowsController(fastify: FastifyInstance) {
         // file content from db
         // return as a blob
 
-        // Read `nonce` from headers
-        const nonce = request.headers['nonce']; // Headers are case-insensitive
+        try {
 
-        // Check if `nonce` is missing or empty
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
+            // Read `nonce` from headers
+            const nonce = request.headers['nonce']; // Headers are case-insensitive
 
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce }
-        });
-
-        if (!session) {
-            return reply.code(403).send({ success: false, message: "Nounce is invalid" });
-        }
-
-        // Get the host from the request headers
-        const host = request.headers.host || `${getHost()}:${getPort()}`;
-
-        // Get the protocol (http or https)
-        const protocol = request.protocol || 'https'
-
-        // Construct the full URL
-        const url = `${protocol}://${host}`;
-
-        console.log(cliRedify(url), cliGreenify(session.address))
-
-
-        // this can be optimized by getting all from revisions with prefix of user wallet address.
-        // getting genesis hash from there and then fetching aquatree for those genesis hashes.
-
-
-        const paginatedData = await getUserApiWorkflowFileInfo(url, session.address)
-        const data: Array<{
-            aquaTree: AquaTree,
-            fileObject: FileObject[]
-        }> = [];
-
-        for (const file of paginatedData.data) {
-            const { workFlow, isWorkFlow } = isWorkFlowData(file.aquaTree!, systemTemplateHashes)
-            Logger.info("Workflow check on workflow endpoint isWorkFlow = " + isWorkFlow + " name " + workFlow)
-            if (isWorkFlow) {
-                data.push({
-                    aquaTree: file.aquaTree!,
-                    fileObject: file.fileObject
-                })
+            // Check if `nonce` is missing or empty
+            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
             }
 
-        }
+            const session = await prisma.siweSession.findUnique({
+                where: { nonce }
+            });
 
-        return reply.code(200).send({
-            success: true,
-            message: 'Aqua tree saved successfully',
-            data: data,
-        });
+            if (!session) {
+                return reply.code(403).send({ success: false, message: "Nonce is invalid" });
+            }
+
+            // Get the host from the request headers
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
+
+            // Get the protocol (http or https)
+            const protocol = request.protocol || 'https';
+
+            // Construct the full URL
+            const url = `${protocol}://${host}`;
+
+
+
+
+            // this can be optimized by getting all from revisions with prefix of user wallet address.
+            Logger.info(`URL: ${cliRedify(url)}, Address: ${cliGreenify(session.address)}`);
+
+            const paginatedData = await getUserApiWorkflowFileInfo(url, session.address)
+            const data: Array<{
+                aquaTree: AquaTree,
+                fileObject: FileObject[]
+            }> = [];
+
+            for (const file of paginatedData.data) {
+                const { workFlow, isWorkFlow } = isWorkFlowData(file.aquaTree!, systemTemplateHashes)
+                Logger.info("Workflow check on workflow endpoint isWorkFlow = " + isWorkFlow + " name " + workFlow)
+                if (isWorkFlow) {
+                    data.push({
+                        aquaTree: file.aquaTree!,
+                        fileObject: file.fileObject
+                    })
+                }
+
+            }
+
+            return reply.code(200).send({
+                success: true,
+                message: 'Workflows retrieved successfully',
+                data: data,
+            });
+        } catch (error) {
+            Logger.error('Error fetching workflows:', error);
+            return reply.code(500).send({
+                success: false,
+                message: 'Failed to retrieve workflows'
+            });
+        }
     });
 
 }

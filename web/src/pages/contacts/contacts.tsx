@@ -23,11 +23,11 @@ const CLAIMS = new Set([
 ]);
 
 const ContactsPage = () => {
-    const {  systemFileInfo, session , setWorkflows,workflows, backend_url} = useStore(appStore);
+    const { systemFileInfo, session, setWorkflows, workflows, backend_url } = useStore(appStore);
     const [contactProfiles, setContactProfiles] = useState<ContactProfile[]>([]);
     const [filterMultipleAddresses, setFilterMultipleAddresses] = useState<string[]>([''])
 
-     const [isLoading, setIsLoading] = useState<boolean>(false)
+    const [isLoading, setIsLoading] = useState<boolean>(false)
 
 
     const navigate = useNavigate()
@@ -39,22 +39,27 @@ const ContactsPage = () => {
         }
     });
 
-     useEffect(() => {
-                setIsLoading(true);
-                (async () => {
-    
-                      const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
-                      setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
-    
-    
-                      processFilesToGetWorkflows(filesApi.files)
-                })()
-    
+    useEffect(() => {
+      
+
+        const loadWorkflows = async () => {
+            setIsLoading(true);
+            try {
+                const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce);
+                setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' });
+                processFilesToGetWorkflows(filesApi.files);
+            } catch (error) {
+                console.error('Failed to load workflows:', error);
+                // Consider setting an error state here
+            } finally {
                 setIsLoading(false);
-          }, [])
-          
-   const processFilesToGetWorkflows= (files: ApiFileInfo[]) => {
-        // if (!files?.fileData?.length || !systemFileInfo?.length) return;
+            }
+        };
+        loadWorkflows();
+    }, [])
+
+    const processFilesToGetWorkflows = (files: ApiFileInfo[]) => {
+
 
         if (!files?.length || !systemFileInfo?.length) return;
 
@@ -192,41 +197,41 @@ const ContactsPage = () => {
         return <div className="flex flex-wrap items-center gap-2">{allBadges}</div>;
     };
 
-     if (isLoading) {
-            // return <div>Loading...</div>
-            return <div className="flex items-center gap-2">
-                  {/* Circular Loading Spinner */}
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>Loading Contacts</span>
-            </div>
-      }
+    if (isLoading) {
+
+        return <div className="flex items-center gap-2">
+            {/* Circular Loading Spinner */}
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            <span>Loading Contacts</span>
+        </div>
+    }
 
     return (
         <div className="p-6">
             <h1 className="text-xl font-semibold mb-2">Total Contacts {contactProfiles.length}</h1>
 
-            {filterMultipleAddresses.some(addr => addr.trim() !== '') ? 
-            
-            <>
-            Filtered Data, Total Contacts {contactProfiles
-                            .filter(profile => {
-                                    // If filterMultipleAddresses has valid entries, filter by them
-                                    const hasValidFilters = filterMultipleAddresses.some(addr => addr.trim() !== '');
-                                    if (!hasValidFilters) return true;
-                                    
-                                    // Check if profile wallet address matches any filter
-                                    return filterMultipleAddresses.some(filterAddr => 
-                                        filterAddr.trim() !== '' && 
-                                        profile.walletAddress.toLowerCase().includes(filterAddr.toLowerCase())
-                                    );
-                                }).length}
-            </>
-            
-            :
-            
-            <p className="text-sm text-gray-600 mb-6">
-                Found {contactProfiles.length} contact profiles.
-            </p>
+            {filterMultipleAddresses.some(addr => addr.trim() !== '') ?
+
+                <>
+                    Filtered Data, Total Contacts {contactProfiles
+                        .filter(profile => {
+                            // If filterMultipleAddresses has valid entries, filter by them
+                            const hasValidFilters = filterMultipleAddresses.some(addr => addr.trim() !== '');
+                            if (!hasValidFilters) return true;
+
+                            // Check if profile wallet address matches any filter
+                            return filterMultipleAddresses.some(filterAddr =>
+                                filterAddr.trim() !== '' &&
+                                profile.walletAddress.toLowerCase().includes(filterAddr.toLowerCase())
+                            );
+                        }).length}
+                </>
+
+                :
+
+                <p className="text-sm text-gray-600 mb-6">
+                    Found {contactProfiles.length} contact profiles.
+                </p>
             }
 
             {
@@ -242,7 +247,7 @@ const ContactsPage = () => {
                         index={0}
                         address={filterMultipleAddresses[0]}
                         multipleAddresses={filterMultipleAddresses}
-                        setMultipleAddresses={(addresses : string[])=> {
+                        setMultipleAddresses={(addresses: string[]) => {
                             setFilterMultipleAddresses(addresses)
                         }}
                         placeholder="Enter Name Claim | Phone Number Claim | Email clain | Wallet address"
@@ -276,45 +281,45 @@ const ContactsPage = () => {
                         </thead>
                         <tbody>
                             {contactProfiles
-                            .filter(profile => {
+                                .filter(profile => {
                                     // If filterMultipleAddresses has valid entries, filter by them
                                     const hasValidFilters = filterMultipleAddresses.some(addr => addr.trim() !== '');
                                     if (!hasValidFilters) return true;
-                                    
+
                                     // Check if profile wallet address matches any filter
-                                    return filterMultipleAddresses.some(filterAddr => 
-                                        filterAddr.trim() !== '' && 
+                                    return filterMultipleAddresses.some(filterAddr =>
+                                        filterAddr.trim() !== '' &&
                                         profile.walletAddress.toLowerCase().includes(filterAddr.toLowerCase())
                                     );
                                 }).map((profile, index) => (
-                                <tr
-                                    onClick={() => {
-                                        navigate(`/app/claims/workflow/${profile.walletAddress}`)
-                                    }}
-                                    key={index}
-                                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
-                                >
-                                    <td className="py-3 px-4">
-                                        <span className="font-mono text-sm text-gray-900">
-                                            {/* {profile.walletAddress.slice(0, 6)}...{profile.walletAddress.slice(-4)} */}
+                                    <tr
+                                        onClick={() => {
+                                            navigate(`/app/claims/workflow/${profile.walletAddress}`)
+                                        }}
+                                        key={index}
+                                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                                    >
+                                        <td className="py-3 px-4">
+                                            <span className="font-mono text-sm text-gray-900">
+                                                {/* {profile.walletAddress.slice(0, 6)}...{profile.walletAddress.slice(-4)} */}
 
-                                            <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
-                                                <p className="text-xs ">Profile Owner   {session?.address === profile.walletAddress ? <>(You)</> : <></>}: &nbsp;</p>
-                                                <WalletAdrressClaim walletAddress={profile.walletAddress} />
+                                                <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
+                                                    <p className="text-xs ">Profile Owner   {session?.address === profile.walletAddress ? <>(You)</> : <></>}: &nbsp;</p>
+                                                    <WalletAdrressClaim walletAddress={profile.walletAddress} />
 
-                                            </div>
-                                        </span>
-                                    </td>
-                                    <td className="py-3 px-4">
-                                        {profileBadges(profile.file)}
-                                    </td>
-                                    <td className="py-3 px-4">
-                                        <span className="inline-flex items-center justify-center rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-800">
-                                            {profile.file.length}
-                                        </span>
-                                    </td>
-                                </tr>
-                            ))}
+                                                </div>
+                                            </span>
+                                        </td>
+                                        <td className="py-3 px-4">
+                                            {profileBadges(profile.file)}
+                                        </td>
+                                        <td className="py-3 px-4">
+                                            <span className="inline-flex items-center justify-center rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-800">
+                                                {profile.file.length}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
                         </tbody>
                     </table>
                 </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAppKit, useAppKitAccount, useAppKitState, useDisconnect } from '@reown/appkit/react'
 import { useStore } from 'zustand'
 import appStore from '../store'
@@ -13,7 +13,7 @@ export const ConnectWalletPageAppKit = () => {
   const { open: modalOpen } = useAppKitState()
 
   console.log("Connection status: ", status)
-  
+
   const {
     setMetamaskAddress,
     session,
@@ -26,7 +26,7 @@ export const ConnectWalletPageAppKit = () => {
   const [error, setError] = useState('')
   const [hasTriggeredSiwe, setHasTriggeredSiwe] = useState(false)
   const { disconnect } = useDisconnect()
-  
+
   // Handle wallet connection state changes
   useEffect(() => {
     if (isConnected && address) {
@@ -39,13 +39,16 @@ export const ConnectWalletPageAppKit = () => {
     }
   }, [isConnected, address, setMetamaskAddress, setAvatar])
 
-   useEffect(() => {
-if (isConnected && address && session == null) {
+  
+  useEffect(() => {
+    if (isConnected && address && session == null) {
 
-  console.log("Session is null after connection, signing out to reset state.")
- handleSignOut()
-}
-   }, [])
+      console.log("Session is null after connection, signing out to reset state.")
+      handleSignOut()
+    }
+  }, [])
+
+  
   // Monitor modal state changes
   useEffect(() => {
     if (modalOpen) {
@@ -59,7 +62,7 @@ if (isConnected && address && session == null) {
   // Monitor for successful authentication
   useEffect(() => {
     // if (isConnected && address && session?.address && !hasTriggeredSiwe) {
-    if (isConnected && address  && !hasTriggeredSiwe) {
+    if (isConnected && address && !hasTriggeredSiwe) {
       setHasTriggeredSiwe(true)
       handleSiweSuccess()
       toast.success('Sign In successful')
@@ -73,38 +76,33 @@ if (isConnected && address && session == null) {
     }
   }, [isConnected])
 
-  const handleSignOut = async () => {
-  // setIsSigningOut(true)
-  // toast.info('Signing out...')
-  
-  try {
-    await disconnect()
-    toast.success('Signed out successfully')
-   
-  } catch (error: any) {
-    // Check if it's the permission revocation error
-    const isPermissionError = error?.message?.includes('revoke permissions') || 
-                              error?.message?.includes('Internal JSON-RPC error')
-    
-    if (isPermissionError) {
-      // Still consider it a success since wallet disconnects anyway
-      console.warn('Permission revocation failed, but wallet disconnected:', error)
-      // toast.success('Signed out successfully')
-      // setIsProfileOpen(false)
-    } else {
-      // Only show error for other types of failures
-      console.error('Sign out error:', error)
-      toast.error('Error signing out')
+  const handleSignOut = useCallback(async () => {
+    try {
+      await disconnect()
+      toast.success('Signed out successfully')
+
+    } catch (error: any) {
+      // Check if it's the permission revocation error
+      const isPermissionError = error?.message?.includes('revoke permissions') ||
+        error?.message?.includes('Internal JSON-RPC error')
+
+      if (isPermissionError) {
+        // Still consider it a success since wallet disconnects anyway
+        console.warn('Permission revocation failed, but wallet disconnected:', error)
+      } else {
+        // Only show error for other types of failures
+        console.error('Sign out error:', error)
+        toast.error('Error signing out')
+      }
     }
-  } 
-}
-  // Handle SIWE success - files are fetched automatically in siweConfig
+  }, [disconnect])  // Handle SIWE success - files are fetched automatically in siweConfig
+
   const handleSiweSuccess = async () => {
     if (session?.address) {
       try {
-      
-                              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+
+        const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+        setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
       } catch (error) {
         console.error('Failed to fetch files:', error)
@@ -124,7 +122,7 @@ if (isConnected && address && session == null) {
       setTimeout(() => setError(''), 2000)
     }
   }, [modalOpen, error])
- 
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 w-full max-w-md">

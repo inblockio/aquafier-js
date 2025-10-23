@@ -30,6 +30,7 @@ import { OpenClaimsWorkFlowButton } from '@/components/aqua_chain_actions/open_i
 import { useNavigate } from 'react-router-dom'
 import { ApiFileInfo } from '@/models/FileInfo'
 import ClaimTypesDropdownButton from '@/components/button_claim_dropdown'
+import { toast } from 'sonner'
 
 
 const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowItem) => {
@@ -144,10 +145,13 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
             // navigate('/app/claims/workflow')
             if (item) {
                   const genesisHash = getGenesisHash(item.aquaTree!)
-                  const genesisRevision = item.aquaTree?.revisions[genesisHash!]
-                  let walletAddress = genesisRevision?.forms_wallet_address
+
                   if (genesisHash) {
-                        navigate(`/app/claims/workflow/${walletAddress}#${genesisHash}`)
+                        const genesisRevision = item.aquaTree?.revisions[genesisHash!]
+                        let walletAddress = genesisRevision?.forms_wallet_address
+                        if (genesisHash) {
+                              navigate(`/app/claims/workflow/${walletAddress}#${genesisHash}`)
+                        }
                   }
             }
       }
@@ -231,7 +235,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
 }
 
 const ClaimsAndAttestationPage = () => {
-      const { systemFileInfo, session , backend_url, setWorkflows} = useStore(appStore)
+      const { systemFileInfo, session, backend_url, setWorkflows } = useStore(appStore)
 
       const [totalClaims, setTotalClaims] = useState<number>(0)
       const [_totolAttestors, setTotolAttestors] = useState<number>(0)
@@ -240,7 +244,7 @@ const ClaimsAndAttestationPage = () => {
 
       const [workflowsUi, setWorkflowsUi] = useState<IWorkflowItem[]>([])
 
-      const processFilesToGetWorkflows= (files: ApiFileInfo[]) => {
+      const processFilesToGetWorkflows = (files: ApiFileInfo[]) => {
             const someData = systemFileInfo.map(e => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
@@ -279,7 +283,7 @@ const ClaimsAndAttestationPage = () => {
                         }
 
                         let signatureReisionIndex = 2;
-                        if (workFlow.trim() == "user_signature") {
+                        if (workFlow.trim() === "user_signature") {
                               signatureReisionIndex = 3
                         }
                         const signatureRevision = file.aquaTree?.revisions[allHashes[signatureReisionIndex]]
@@ -323,14 +327,21 @@ const ClaimsAndAttestationPage = () => {
             setIsLoading(true);
             (async () => {
 
-                  const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
-                  setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+                  try {
+                        const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
+                        setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
 
-                  processFilesToGetWorkflows(filesApi.files)
+                        processFilesToGetWorkflows(filesApi.files)
+                  } catch (error) {
+                        console.error('Error fetching workflows:', error)
+                        toast.error('Failed to load claims and attestations')
+                  } finally {
+                        setIsLoading(false);
+                  }
             })()
 
-            setIsLoading(false);
+
       }, [])
 
       // useEffect(() => {
@@ -436,7 +447,7 @@ const ClaimsAndAttestationPage = () => {
                                                       {workflowsUi.length === 0 && (
                                                             <TableRow>
                                                                   <TableCell colSpan={6} className="h-24 text-center">
-                                                                        You do not own any claim workflowsUi
+                                                                        You do not own any claim workflows
                                                                   </TableCell>
                                                             </TableRow>
                                                       )}

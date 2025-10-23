@@ -26,7 +26,7 @@ import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_cla
 
 
 export default function ClaimsWorkflowPage() {
-      const { session, backend_url, systemFileInfo,  setWorkflows } = useStore(appStore)
+      const { session, backend_url, systemFileInfo, workflows, setWorkflows } = useStore(appStore)
 
       const [claims, setClaims] = useState<Array<{ file: ApiFileInfo, processedInfo: ClaimInformation, attestations: Array<IAttestationEntry>, sharedContracts: Contract[] }>>([])
       const [isLoading, setIsLoading] = useState(false)
@@ -87,7 +87,7 @@ export default function ClaimsWorkflowPage() {
             }
       }
 
-      const getAllAttestations =  (files: ApiFileInfo[]) => {
+      const getAllAttestations = (files: ApiFileInfo[]) => {
             const aquaTemplates = systemFileInfo.map(e => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
@@ -163,7 +163,7 @@ export default function ClaimsWorkflowPage() {
 
       const renderClaim = (claim: ICompleteClaimInformation) => {
             const claimInfo = claim.processedInfo.claimInformation
-            const genesisRevisionHash = getGenesisHash(claim.file.aquaTree!) 
+            const genesisRevisionHash = getGenesisHash(claim.file.aquaTree!)
 
             if (claimInfo.forms_type === 'dns_claim') {
                   return (
@@ -237,33 +237,42 @@ export default function ClaimsWorkflowPage() {
             }
       }
 
-      // useEffect(() => {
-      //       processAllAddressClaims()
-      // }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), walletAddress])
 
 
-       useEffect(() => {
-                  setIsLoading(true);
-                  (async () => {
-      
+
+      useEffect(() => {
+            setIsLoading(true);
+
+            (async () => {
+                  try {
+                        setIsLoading(true);
                         const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
                         setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
-      
-      
-                       await processAllAddressClaims(filesApi.files)
-                  })()
-      
-                  setIsLoading(false);
-            }, []);
-      
+                        await processAllAddressClaims(filesApi.files)
+                  } catch (error) {
+                        console.error('Error loading claims:', error);
+                        toast.error('Failed to load claims');
+                  } finally {
+                        setIsLoading(false);
+                  }
+            })()
 
-             if (isLoading) {
+      }, []);
+
+
+      useEffect(() => {
+            processAllAddressClaims(workflows.fileData)
+      }, [walletAddress])
+
+
+      if (isLoading) {
             // return <div>Loading...</div>
-            return    <div className="flex items-center gap-2">
-                        {/* Circular Loading Spinner */}
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        <span>Loading Data</span>
-                  </div>
+            return <div className="flex items-center gap-2">
+                  {/* Circular Loading Spinner */}
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <ClipLoader color={'blue'} loading={true} size={150} aria-label="Loading Spinner" data-testid="loader" />
+                  <span>Loading Data</span>
+            </div>
       }
       return (
             <div className='py-6 flex flex-col gap-4'>
@@ -283,12 +292,12 @@ export default function ClaimsWorkflowPage() {
                         </div>
                   </div>
 
-                  {isLoading ? (
+                  {/* {isLoading ? (
                         <div className="flex items-center justify-center flex-col align-center py-8">
                               <ClipLoader color={'blue'} loading={true} size={150} aria-label="Loading Spinner" data-testid="loader" />
                               <span className="text-center font-500 text-2xl">Processing claim...</span>
                         </div>
-                  ) : null}
+                  ) : null} */}
 
                   {
                         (claims.length === 0 && !isLoading) ? (
@@ -338,7 +347,7 @@ export default function ClaimsWorkflowPage() {
                                                                   claim.sharedContracts?.map((contract, index) => (
                                                                         <div key={`shared_contract_${index}`}>
                                                                               <SharedContract
-                                                                              type='outgoing'
+                                                                                    type='outgoing'
                                                                                     key={`${contract.hash}`}
                                                                                     contract={contract}
                                                                                     index={index}
@@ -384,7 +393,7 @@ export default function ClaimsWorkflowPage() {
                                                                   claim.sharedContracts?.map((contract, index) => (
                                                                         <div key={`shared_contract_${index}`}>
                                                                               <SharedContract
-                                                                              type='outgoing'
+                                                                                    type='outgoing'
                                                                                     key={`${contract.hash}`}
                                                                                     contract={contract}
                                                                                     index={index}

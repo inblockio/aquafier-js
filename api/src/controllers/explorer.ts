@@ -422,7 +422,6 @@ export default async function explorerController(fastify: FastifyInstance) {
         // Construct the full URL
         const url = `${protocol}://${host}`;
 
-        console.log(cliRedify(url), cliGreenify(session.address))
 
         // Extract pagination parameters from query string
         const query = request.query as Record<string, string | undefined>;

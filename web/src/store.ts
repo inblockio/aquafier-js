@@ -1,10 +1,10 @@
-import {IDBPDatabase, openDB} from 'idb'
-import {createStore} from 'zustand'
-import {createJSONStorage, persist} from 'zustand/middleware'
-import {ApiFileInfo} from './models/FileInfo'
-import {ApiFileData, ApiFileInfoState, OpenDialog, Session, WebConfig} from './types/types'
-import {FormTemplate} from './components/aqua_forms/types'
-import {ensureDomainUrlHasSSL} from './utils/functions'
+import { IDBPDatabase, openDB } from 'idb'
+import { createStore } from 'zustand'
+import { createJSONStorage, persist } from 'zustand/middleware'
+import { ApiFileInfo } from './models/FileInfo'
+import { ApiFileData, ApiFileInfoState, OpenDialog, Session, WebConfig } from './types/types'
+import { FormTemplate } from './components/aqua_forms/types'
+import { ensureDomainUrlHasSSL } from './utils/functions'
 
 type AppStoreState = {
       user_profile: {
@@ -20,7 +20,7 @@ type AppStoreState = {
       }
       session: Session | null
       files: ApiFileInfoState,
-      workflows : ApiFileInfoState,
+      workflows: ApiFileInfoState,
       webConfig: WebConfig,
       apiFileData: ApiFileData[]
       systemFileInfo: ApiFileInfo[]
@@ -44,7 +44,7 @@ type AppStoreActions = {
       setMetamaskAddress: (address: AppStoreState['metamaskAddress']) => void
       setAvatar: (avatar: AppStoreState['avatar']) => void
       setFiles: (files: AppStoreState['files']) => void
-      setWorkflows: (files: AppStoreState['workflows']) => void
+      setWorkflows: (workflows: AppStoreState['workflows']) => void
       setWebConfig: (config: AppStoreState['webConfig']) => void
       setSelectedFileInfo: (file: ApiFileInfo | null) => void
 
@@ -149,7 +149,7 @@ const appStore = createStore<TAppStore>()(
                         fileData: [],
                         status: 'idle',
                   },
-                   workflows: {
+                  workflows: {
                         fileData: [],
                         status: 'idle',
                   },

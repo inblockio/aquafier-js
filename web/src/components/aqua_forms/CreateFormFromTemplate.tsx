@@ -117,8 +117,21 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
       useEffect(() => {
             (async () => {
-                  const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
-                  setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+                  if (!session?.address || !session?.nonce) {
+                        console.warn('Session not available for fetching workflows')
+                        return
+                  }
+
+                  try {
+                        const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
+                        setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+
+                  } catch (error) {
+                        console.error('Error fetching workflows:', error)
+                        
+                              toast.error('Failed to load workflows')
+                        
+                  }
             })()
 
 
