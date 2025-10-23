@@ -267,12 +267,6 @@ async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFi
         });
         if (fileIndex) {
 
-
-            // const fileNameData = await prisma.fileName.findFirst({
-            //     where: {
-            //         pubkey_hash: pubKeyHash
-            //     },
-            // });
             let hashOnly = pubKeyHash.split("_")[1]
             const fileNameData = await prisma.fileName.findFirst({
                 where: {
@@ -306,6 +300,9 @@ async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFi
             allData.push(data);
         } else {
             Logger.error(`💣💣💣 File index not found ..pubKeyHash ${pubKeyHash} --  ${hashOnly}`)
+
+
+            
         }
     }
 
@@ -623,7 +620,7 @@ async function updateLinkRevisionFileIndex(revision: Revision,
     let newHash = linkData.link_verification_hashes[0]
 
     if (newHash == undefined) {
-        throw Error(`Expected linke revision to have alteast one verification hash ${JSON.stringify(linkData)}`)
+        throw Error(`Expected linked revision to have alteast one verification hash ${JSON.stringify(linkData)}`)
 
     }
 

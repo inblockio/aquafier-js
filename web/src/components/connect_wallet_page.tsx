@@ -33,7 +33,7 @@ export const ConnectWalletPage = () => {
 
 
   if (!webConfigData) {
-    return <div>Config is empty </div>
+    return <div>Loading </div>
   }
   if (webConfigData.AUTH_PROVIDER == "metamask") {
     return <ConnectWalletPageMetamask />
