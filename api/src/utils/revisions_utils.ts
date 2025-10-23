@@ -77,12 +77,27 @@ export async function getSignatureAquaTrees(userAddress: string, url: string): P
     return signatureAquaTrees
 }
 
-export async function getUserApiFileInfo(url: string, address: string): Promise<Array<{
-    aquaTree: AquaTree,
-    fileObject: FileObject[]
-}>> {
-
-    let latest = await prisma.latest.findMany({
+export async function getUserApiFileInfo(
+    url: string, 
+    address: string,
+    page: number = 1,
+    limit: number = 10
+): Promise<{
+    data: Array<{
+        aquaTree: AquaTree,
+        fileObject: FileObject[]
+    }>,
+    pagination: {
+        currentPage: number,
+        totalPages: number,
+        totalItems: number,
+        itemsPerPage: number,
+        hasNextPage: boolean,
+        hasPreviousPage: boolean
+    }
+}> {
+    // First, get the total count
+    const totalItems = await prisma.latest.count({
         where: {
             AND: {
                 user: address,
@@ -91,13 +106,54 @@ export async function getUserApiFileInfo(url: string, address: string): Promise<
             }
         }
     });
-
-    if (latest.length == 0) {
-
-        return []
+    
+    if (totalItems === 0) {
+        return {
+            data: [],
+            pagination: {
+                currentPage: page,
+                totalPages: 0,
+                totalItems: 0,
+                itemsPerPage: limit,
+                hasNextPage: false,
+                hasPreviousPage: false
+            }
+        }
     }
 
-    return await fetchAquatreeFoUser(url, latest)
+    // Calculate pagination values
+    const totalPages = Math.ceil(totalItems / limit);
+    const skip = (page - 1) * limit;
+
+    // Fetch only the items needed for this page with sorting
+    let latest = await prisma.latest.findMany({
+        where: {
+            AND: {
+                user: address,
+                template_id: null,
+                is_workflow: false
+            }
+        },
+        skip: skip,
+        take: limit,
+        orderBy: {
+            hash: 'asc' // Adjust this based on your sorting preference
+        }
+    });
+    
+    const displayData = await fetchAquatreeFoUser(url, latest)
+
+    return {
+        data: displayData,
+        pagination: {
+            currentPage: page,
+            totalPages: totalPages,
+            totalItems: totalItems,
+            itemsPerPage: limit,
+            hasNextPage: page < totalPages,
+            hasPreviousPage: page > 1
+        }
+    };
 }
 
 export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string[]): { isWorkFlow: boolean; workFlow: string } => {

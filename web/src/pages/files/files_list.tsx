@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Filter, Grid3X3, List, X } from 'lucide-react'
+import { Filter, Grid3X3, List, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import FileListItem from './files_list_item'
 import { fetchSystemFiles, getAquaTreeFileName, isWorkFlowData } from '@/utils/functions'
 
@@ -13,7 +13,11 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [hasFetchedSystemAquaTrees, setHasFetchedSystemAquaTrees] = useState(false)
       const [isSmallScreen, setIsSmallScreen] = useState(false)
       const [uniqueWorkflows, setUniqueWorkflows] = useState<string[]>([])
-      const [selectedWorkflow, setSelectedWorkflow] = useState<string>('aqua_files')
+      const [selectedWorkflow, setSelectedWorkflow] = useState<string>('all') //aqua_files
+
+      // Pagination states
+      const [currentPage, setCurrentPage] = useState(1)
+      const [isLoadingPage, setIsLoadingPage] = useState(false)
 
       // Filter states
       const [showFilterModal, setShowFilterModal] = useState(false)
@@ -29,6 +33,44 @@ export default function FilesList(filesListProps: FilesListProps) {
                   return ''
             }
       })
+
+      // Fetch files for a specific page
+      const fetchFilesPage = async (page: number) => {
+            if (!session?.nonce) return
+
+            setIsLoadingPage(true)
+            try {
+                  const response = await fetch(`${backend_url}/files?page=${page}`, {
+                        headers: {
+                              'Authorization': `Bearer ${session.nonce}`
+                        }
+                  })
+                  const data = await response.json()
+                  
+                  if (data.success) {
+                        // Update your store with the new file data
+                        // You'll need to add a setFiles action to your store
+                        appStore.setState({ 
+                              files: { 
+                                    ...files, 
+                                    fileData: data.data,
+                                    status: 'loaded'
+                              }
+                        })
+                  }
+            } catch (error) {
+                  console.error('Error fetching files:', error)
+            } finally {
+                  setIsLoadingPage(false)
+            }
+      }
+
+      // Handle page change
+      const handlePageChange = (newPage: number) => {
+            if (newPage < 1 || newPage > (files.pagination?.totalPages || 1)) return
+            setCurrentPage(newPage)
+            fetchFilesPage(newPage)
+      }
 
       // Add screen size detector
       useEffect(() => {
@@ -56,8 +98,6 @@ export default function FilesList(filesListProps: FilesListProps) {
                         })()
                   }
             } else {
-
-
                   const someData = systemFileInfo.map(e => {
                         try {
                               return getAquaTreeFileName(e.aquaTree!)
@@ -79,18 +119,11 @@ export default function FilesList(filesListProps: FilesListProps) {
                   })
 
                   setUniqueWorkflows(Array.from(workflows).sort())
-
             }
-
-            // }, [files.length, systemFileInfo.length])
       }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(',')])
-
-
-
 
       // Filter files based on selected filters AND selected workflow
       const getFilteredFiles = (): ApiFileInfo[] => {
-            // First filter by the modal filters
             let filteredByFilters = files.fileData;
 
             if (!selectedFilters.includes('all')) {
@@ -106,11 +139,9 @@ export default function FilesList(filesListProps: FilesListProps) {
                         try {
                               const workFlow = isWorkFlowData(file.aquaTree!, someData)
 
-                              // Check if it's a workflow file
                               if (workFlow.isWorkFlow && workFlow.workFlow) {
                                     return selectedFilters.includes(workFlow.workFlow)
                               } else {
-                                    // Non-workflow file
                                     return selectedFilters.includes('aqua_files')
                               }
                         } catch (e) {
@@ -119,7 +150,6 @@ export default function FilesList(filesListProps: FilesListProps) {
                   })
             }
 
-            // Then filter by workflow tabs (only if "all" filters are selected)
             if (selectedFilters.includes('all') && selectedWorkflow !== 'all') {
                   const someData = systemFileInfo.map(e => {
                         try {
@@ -133,7 +163,6 @@ export default function FilesList(filesListProps: FilesListProps) {
                         try {
                               const workFlow = isWorkFlowData(file.aquaTree!, someData)
 
-                               // If "aqua_files" tab is selected, show only non-workflow files
                               if (selectedWorkflow === 'aqua_files') {
                                     return !workFlow.isWorkFlow
                               }
@@ -150,19 +179,16 @@ export default function FilesList(filesListProps: FilesListProps) {
 
       const filteredFiles = getFilteredFiles()
 
-      // Helper function to capitalize workflow names
       const capitalizeWords = (str: string): string => {
             return str.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1))
       }
 
-      // Get available filter options
       const getFilterOptions = () => {
             const options = [
-                  { value: 'all', label: 'All Files', count: files.fileData.length },
+                  { value: 'all', label: 'All Files .', count: files.pagination?.totalItems || 0 },
                   { value: 'aqua_files', label: 'Aqua Files (Non worklows)', count: 0 }
             ]
 
-            // Count non-workflow files
             const someData = systemFileInfo.map(e => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
@@ -185,13 +211,11 @@ export default function FilesList(filesListProps: FilesListProps) {
                         }
                   } catch (e) {
                         console.error('files : Error processing system file:', e);
-                        // Handle error
                   }
             })
 
             options[1].count = nonWorkflowCount
 
-            // Add workflow options
             uniqueWorkflows.forEach(workflow => {
                   options.push({
                         value: workflow,
@@ -226,7 +250,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const applyFilters = () => {
             setSelectedFilters(tempSelectedFilters)
             setShowFilterModal(false)
-            setSelectedWorkflow('all') // Reset workflow tabs when using filters
+            setSelectedWorkflow('all')
       }
 
       const resetFilters = () => {
@@ -237,8 +261,7 @@ export default function FilesList(filesListProps: FilesListProps) {
 
       const getFilteredTitle = () => {
             if (selectedFilters.includes('all')) {
-                  // return `All files ${view}`
-                  return selectedWorkflow === 'all' ? 'All Files' : capitalizeWords(selectedWorkflow.replace(/_/g, ' '))
+                  return selectedWorkflow === 'all' ? 'All Files ..' : capitalizeWords(selectedWorkflow.replace(/_/g, ' '))
             }
 
             if (selectedFilters.length === 1) {
@@ -250,6 +273,51 @@ export default function FilesList(filesListProps: FilesListProps) {
             }
 
             return 'Filtered Items'
+      }
+
+      // Pagination component
+      const renderPagination = () => {
+            const pagination = files.pagination
+            if (!pagination || pagination.totalPages <= 1) return null
+
+            const { currentPage, totalPages, hasNextPage, hasPreviousPage } = pagination
+
+            return (
+                  <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
+                        <div className="flex items-center justify-between w-full">
+                              <div className="text-sm text-gray-700">
+                                    Showing page <span className="font-medium">{currentPage}</span> of{' '}
+                                    <span className="font-medium">{totalPages}</span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                    <button
+                                          onClick={() => handlePageChange(currentPage - 1)}
+                                          disabled={!hasPreviousPage || isLoadingPage}
+                                          className={`relative inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                                                !hasPreviousPage || isLoadingPage
+                                                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                                          }`}
+                                    >
+                                          <ChevronLeft className="w-4 h-4" />
+                                          Previous
+                                    </button>
+                                    <button
+                                          onClick={() => handlePageChange(currentPage + 1)}
+                                          disabled={!hasNextPage || isLoadingPage}
+                                          className={`relative inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                                                !hasNextPage || isLoadingPage
+                                                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                                          }`}
+                                    >
+                                          Next
+                                          <ChevronRight className="w-4 h-4" />
+                                    </button>
+                              </div>
+                        </div>
+                  </div>
+            )
       }
 
       const renderFilesListCard = () => {
@@ -279,7 +347,6 @@ export default function FilesList(filesListProps: FilesListProps) {
       }
 
       const renderFilesList = () => {
-
             let hasUndefined = false
             for (let i = 0; i < filteredFiles.length; i++) {
                   if (filteredFiles[i].aquaTree === undefined) {
@@ -293,7 +360,6 @@ export default function FilesList(filesListProps: FilesListProps) {
             }
             if (hasUndefined) {
                   return <div>No files available.</div>
-
             }
             return <table className="w-full border-collapse">
                   <thead>
@@ -304,7 +370,6 @@ export default function FilesList(filesListProps: FilesListProps) {
                               <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-40">Uploaded At</th>
                               <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-24">File Size</th>
                               {filesListProps.showFileActions == true ? <th className="min-w-[370px] py-3 px-4 text-left text-sm font-medium text-gray-700 w-1/4 rounded-tr-md">Actions</th> : null}
-
                         </tr>
                   </thead>
                   <tbody>
@@ -349,14 +414,12 @@ export default function FilesList(filesListProps: FilesListProps) {
                                     >
                                           Aqua Files ({files.fileData.filter((file) => {
                                                 const workFlow = isWorkFlowData(file.aquaTree!, systemAquaTreeFileNames)
-                                                // return workFlow.isWorkFlow && workFlow.workFlow === workflow   
                                                 if (workFlow && workFlow.isWorkFlow) {
                                                       return null
                                                 }
                                                 return file
                                           }).length})
                                     </button>
-
 
                                     <button
                                           onClick={() => setSelectedWorkflow('all')}
@@ -365,13 +428,12 @@ export default function FilesList(filesListProps: FilesListProps) {
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                                 }`}
                                     >
-                                          All Files ({files.fileData.length})
+                                          All Files, ({files.pagination?.totalItems})
                                     </button>
                                     {
                                           view === 'table' && uniqueWorkflows.map((workflow) => {
                                                 const workflowCount = files.fileData.filter(file => {
                                                       try {
-
                                                             const workFlow = isWorkFlowData(file.aquaTree!, systemAquaTreeFileNames)
                                                             return workFlow.isWorkFlow && workFlow.workFlow === workflow
                                                       } catch (e) {
@@ -466,9 +528,7 @@ export default function FilesList(filesListProps: FilesListProps) {
 
       return (
             <div>
-                  {/* File Content */}
                   <div className="flex-1">
-                        {/* File Header */}
                         {
                               filesListProps.showHeader == true ? (
                                     <div className="flex items-center justify-between mb-6">
@@ -476,13 +536,17 @@ export default function FilesList(filesListProps: FilesListProps) {
                                                 <h1 className="text-xl font-semibold text-gray-900">
                                                       {getFilteredTitle()}
                                                 </h1>
-                                                <div className="w-4 h-4 bg-gray-300 rounded-full flex items-center justify-center">
-                                                      <span className="text-xs text-gray-600">{filteredFiles.length}</span>
+                                                {
+                                                       selectedFilters.includes('all') ? <>
+                                                       <div className="w-4 h-4 bg-gray-300 rounded-full flex items-center justify-center">
+                                                      <span className="text-xs text-gray-600">{files.pagination?.totalItems} || {JSON.stringify(files.pagination)}</span>
                                                 </div>
+                                                       </> : null
+                                                }
+                                                
                                           </div>
                                           {!isSmallScreen && (
                                                 <div className="flex items-center space-x-2">
-                                                      {/* Filter Button */}
                                                       <button
                                                             onClick={() => {
                                                                   setTempSelectedFilters(selectedFilters)
@@ -497,7 +561,6 @@ export default function FilesList(filesListProps: FilesListProps) {
                                                             <Filter className="w-4 h-4" />
                                                       </button>
 
-                                                      {/* View Toggle */}
                                                       <div className="flex bg-gray-100 rounded-md">
                                                             <button onClick={() => setView('card')} className={`p-2 rounded-md ${view === 'card' ? 'bg-white shadow-sm' : ''}`}>
                                                                   <Grid3X3 className="w-4 h-4" />
@@ -512,48 +575,59 @@ export default function FilesList(filesListProps: FilesListProps) {
                               ) : <div className='mb-6'></div>
                         }
 
-
-                        {/* Workflow Tabs - Only show when "all" filter is selected */}
                         {renderWorkflowTabs()}
 
-                        {/* Responsive Table */}
                         {!isSmallScreen ? (
                               <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
                                     <div className="p-1">
-                                          {view === 'table' ? renderFilesList() : renderFilesListCard()}
-                                    </div>
-                              </div>
-                        ) : null}
-
-                        {/* Card view for small screens */}
-                        {isSmallScreen ? (
-                              <div className="space-y-4">
-                                    {filteredFiles
-                                          .sort((a, b) => {
-                                                const filenameA = getAquaTreeFileName(a.aquaTree!)
-                                                const filenameB = getAquaTreeFileName(b.aquaTree!)
-                                                return filenameA.localeCompare(filenameB)
-                                          })
-                                          .map((file, index) => (
-                                                <div key={`mobile-${index}`} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-                                                      <FileListItem
-                                                            showWorkFlowsOnly={false}
-                                                            key={`mobile-item-${index}`}
-                                                            index={index}
-                                                            file={file}
-                                                            systemFileInfo={systemFileInfo}
-                                                            backendUrl={backend_url}
-                                                            nonce={session?.nonce ?? ''}
-                                                            viewMode={'card'}
-                                                            filesListProps={filesListProps}
-                                                      />
+                                          {isLoadingPage ? (
+                                                <div className="flex items-center justify-center py-12">
+                                                      <div className="text-gray-500">Loading...</div>
                                                 </div>
-                                          ))}
+                                          ) : (
+                                                view === 'table' ? renderFilesList() : renderFilesListCard()
+                                          )}
+                                    </div>
+                                    {renderPagination()}
                               </div>
                         ) : null}
 
-                        {/* No results message */}
-                        {filteredFiles.length === 0 && (
+                        {isSmallScreen ? (
+                              <>
+                                    <div className="space-y-4">
+                                          {isLoadingPage ? (
+                                                <div className="flex items-center justify-center py-12">
+                                                      <div className="text-gray-500">Loading...</div>
+                                                </div>
+                                          ) : (
+                                                filteredFiles
+                                                      .sort((a, b) => {
+                                                            const filenameA = getAquaTreeFileName(a.aquaTree!)
+                                                            const filenameB = getAquaTreeFileName(b.aquaTree!)
+                                                            return filenameA.localeCompare(filenameB)
+                                                      })
+                                                      .map((file, index) => (
+                                                            <div key={`mobile-${index}`} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                                                                  <FileListItem
+                                                                        showWorkFlowsOnly={false}
+                                                                        key={`mobile-item-${index}`}
+                                                                        index={index}
+                                                                        file={file}
+                                                                        systemFileInfo={systemFileInfo}
+                                                                        backendUrl={backend_url}
+                                                                        nonce={session?.nonce ?? ''}
+                                                                        viewMode={'card'}
+                                                                        filesListProps={filesListProps}
+                                                                  />
+                                                            </div>
+                                                      ))
+                                          )}
+                                    </div>
+                                    {renderPagination()}
+                              </>
+                        ) : null}
+
+                        {filteredFiles.length === 0 && !isLoadingPage && (
                               <div className="text-center py-12">
                                     <p className="text-gray-500 text-lg">
                                           No files found for the selected filters.
@@ -562,7 +636,6 @@ export default function FilesList(filesListProps: FilesListProps) {
                         )}
                   </div>
 
-                  {/* Filter Modal */}
                   {renderFilterModal()}
             </div>
       )

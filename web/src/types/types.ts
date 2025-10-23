@@ -6,18 +6,26 @@ export interface ApiFileInfoState {
       fileData: ApiFileInfo[],
       status: 'loading' | 'loaded' | 'error' | 'idle'
       error?: string
+       pagination?: {
+            currentPage: number
+            totalPages: number
+            totalItems: number
+            itemsPerPage: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+      }
 }
 
 
-export interface AquaJsonNameWithHash      {
-            name : string,
-            hash: string
-        }
-export interface AquaJsonManifestFileInZip       {
-      
-    genesis: string,
-    name_with_hash: Array<AquaJsonNameWithHash>
-       
+export interface AquaJsonNameWithHash {
+      name: string,
+      hash: string
+}
+export interface AquaJsonManifestFileInZip {
+
+      genesis: string,
+      name_with_hash: Array<AquaJsonNameWithHash>
+
 }
 export interface ImportZipAquaTreeConflictResolutionDialogProps {
       localFile: ApiFileInfo,
@@ -38,7 +46,7 @@ export interface WebConfig {
       BACKEND_URL?: string
       CUSTOM_NAME?: string
       CUSTOM_DESCRIPTION?: string
-      AUTH_PROVIDER? : "wallet_connect" | "metamask" 
+      AUTH_PROVIDER?: "wallet_connect" | "metamask"
 }
 export interface DNSProof {
       walletAddress: string;
