@@ -31,6 +31,7 @@ const ContactsPage = () => {
 
 
     const navigate = useNavigate()
+    
     const systemTreeNames = systemFileInfo.map((info) => {
         try {
             return getAquaTreeFileName(info.aquaTree!);
@@ -38,6 +39,8 @@ const ContactsPage = () => {
             return "";
         }
     });
+
+    console.log("Contact profiles: ", contactProfiles)
 
     useEffect(() => {
       
@@ -105,6 +108,7 @@ const ContactsPage = () => {
                 contactProfileMap.set(walletAddress, {
                     walletAddress,
                     file: [element],
+                    claims: {}
                 });
             }
         }
@@ -269,7 +273,7 @@ const ContactsPage = () => {
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-200">
                                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-700">
-                                    Wallet Address
+                                    Contact
                                 </th>
                                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-700">
                                     Contact Claims
@@ -292,34 +296,34 @@ const ContactsPage = () => {
                                         profile.walletAddress.toLowerCase().includes(filterAddr.toLowerCase())
                                     );
                                 }).map((profile, index) => (
-                                    <tr
-                                        onClick={() => {
-                                            navigate(`/app/claims/workflow/${profile.walletAddress}`)
-                                        }}
-                                        key={index}
-                                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
-                                    >
-                                        <td className="py-3 px-4">
-                                            <span className="font-mono text-sm text-gray-900">
-                                                {/* {profile.walletAddress.slice(0, 6)}...{profile.walletAddress.slice(-4)} */}
+                                <tr
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        navigate(`/app/claims/workflow/${profile.walletAddress}`)
+                                    }}
+                                    key={index}
+                                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                                >
+                                    <td className="py-3 px-4">
+                                        <span className="font-mono text-sm text-gray-900">
+                                            {/* {profile.walletAddress.slice(0, 6)}...{profile.walletAddress.slice(-4)} */}
 
-                                                <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
-                                                    <p className="text-xs ">Profile Owner   {session?.address === profile.walletAddress ? <>(You)</> : <></>}: &nbsp;</p>
-                                                    <WalletAdrressClaim walletAddress={profile.walletAddress} />
-
-                                                </div>
-                                            </span>
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            {profileBadges(profile.file)}
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            <span className="inline-flex items-center justify-center rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-800">
-                                                {profile.file.length}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
+                                            <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
+                                                <p className="text-xs ">Profile Owner   {session?.address === profile.walletAddress ? <>(You)</> : <></>}: &nbsp;</p>
+                                                <WalletAdrressClaim walletAddress={profile.walletAddress} />
+                                            </div>
+                                        </span>
+                                    </td>
+                                    <td className="py-3 px-4">
+                                        {profileBadges(profile.file)}
+                                    </td>
+                                    <td className="py-3 px-4">
+                                        <span className="inline-flex items-center justify-center rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-800">
+                                            {profile.file.length}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>

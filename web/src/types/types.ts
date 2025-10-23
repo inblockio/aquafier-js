@@ -73,9 +73,22 @@ export interface ApiFileData {
       fileData: string | ArrayBuffer
 }
 
+export interface IProfileClaim {
+      name: string;
+      claimValues: string[];
+}
+
 export interface ContactProfile {
       walletAddress: string
       file: Array<ApiFileInfo>
+
+      // Extra fields
+      name?: string;
+      phone?: string;
+      email?: string;
+      // A construction of all searchable details
+      searchString?: string;
+      claims: Record<string, string[]>
 }
 
 
