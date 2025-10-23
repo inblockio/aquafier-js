@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Filter, Grid3X3, List, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import FileListItem from './files_list_item'
-import { fetchFiles, fetchSystemFiles, getAquaTreeFileName, isWorkFlowData } from '@/utils/functions'
+import { fetchSystemFiles, getAquaTreeFileName, isWorkFlowData } from '@/utils/functions'
 
 import { useStore } from 'zustand'
 import appStore from '../../store'
@@ -24,7 +24,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [selectedFilters, setSelectedFilters] = useState<string[]>(['all'])
       const [tempSelectedFilters, setTempSelectedFilters] = useState<string[]>(['all'])
 
-      const { files, setFiles ,systemFileInfo, backend_url, session, setSystemFileInfo } = useStore(appStore)
+      const { files, systemFileInfo, backend_url, session, setSystemFileInfo } = useStore(appStore)
 
       const systemAquaTreeFileNames = systemFileInfo.map(e => {
             try {
@@ -40,28 +40,24 @@ export default function FilesList(filesListProps: FilesListProps) {
 
             setIsLoadingPage(true)
             try {
-            //       const response = await fetch(`${backend_url}/files?page=${page}`, {
-            //             headers: {
-            //                   'Authorization': `Bearer ${session.nonce}`
-            //             }
-            //       })
-            //       const data = await response.json()
-
-            //       if (data.success) {
-            //             // Update your store with the new file data
-            //             // You'll need to add a setFiles action to your store
-            //             appStore.setState({
-            //                   files: {
-            //                         ...files,
-            //                         fileData: data.data,
-            //                         status: 'loaded'
-            //                   }
-            //             })
-            //       }
-
-               const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files?page=${page}`, session!.nonce)
-              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
-                    
+                  const response = await fetch(`${backend_url}/files?page=${page}`, {
+                        headers: {
+                              'Authorization': `Bearer ${session.nonce}`
+                        }
+                  })
+                  const data = await response.json()
+                  
+                  if (data.success) {
+                        // Update your store with the new file data
+                        // You'll need to add a setFiles action to your store
+                        appStore.setState({ 
+                              files: { 
+                                    ...files, 
+                                    fileData: data.data,
+                                    status: 'loaded'
+                              }
+                        })
+                  }
             } catch (error) {
                   console.error('Error fetching files:', error)
             } finally {
@@ -170,7 +166,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                               if (selectedWorkflow === 'aqua_files') {
                                     return !workFlow.isWorkFlow
                               }
-
+                              
                               return workFlow.isWorkFlow && workFlow.workFlow === selectedWorkflow
                         } catch (e) {
                               return false
@@ -265,7 +261,7 @@ export default function FilesList(filesListProps: FilesListProps) {
 
       const getFilteredTitle = () => {
             if (selectedFilters.includes('all')) {
-                  return selectedWorkflow === 'all' ? 'All Files ' : capitalizeWords(selectedWorkflow.replace(/_/g, ' '))
+                  return selectedWorkflow === 'all' ? 'All Files ..' : capitalizeWords(selectedWorkflow.replace(/_/g, ' '))
             }
 
             if (selectedFilters.length === 1) {
@@ -284,7 +280,7 @@ export default function FilesList(filesListProps: FilesListProps) {
             const pagination = files.pagination
             if (!pagination || pagination.totalPages <= 1) return null
 
-            const { currentPage, totalPages, hasNextPage, hasPreviousPage, startIndex, endIndex, totalItems } = pagination
+            const { currentPage, totalPages, hasNextPage, hasPreviousPage } = pagination
 
             return (
                   <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
@@ -293,21 +289,15 @@ export default function FilesList(filesListProps: FilesListProps) {
                                     Showing page <span className="font-medium">{currentPage}</span> of{' '}
                                     <span className="font-medium">{totalPages}</span>
                               </div>
-
-                              <div className="text-sm text-gray-700">
-                                    Showing <span className="font-medium">{startIndex}</span> to{' '}
-                                    <span className="font-medium">{endIndex}</span> of{' '}
-                                    <span className="font-medium">{totalItems}</span> results
-                              </div>
-
                               <div className="flex items-center space-x-2">
                                     <button
                                           onClick={() => handlePageChange(currentPage - 1)}
                                           disabled={!hasPreviousPage || isLoadingPage}
-                                          className={`relative inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${!hasPreviousPage || isLoadingPage
-                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                                                }`}
+                                          className={`relative inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                                                !hasPreviousPage || isLoadingPage
+                                                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                                          }`}
                                     >
                                           <ChevronLeft className="w-4 h-4" />
                                           Previous
@@ -315,10 +305,11 @@ export default function FilesList(filesListProps: FilesListProps) {
                                     <button
                                           onClick={() => handlePageChange(currentPage + 1)}
                                           disabled={!hasNextPage || isLoadingPage}
-                                          className={`relative inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${!hasNextPage || isLoadingPage
-                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                                                }`}
+                                          className={`relative inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                                                !hasNextPage || isLoadingPage
+                                                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                                          }`}
                                     >
                                           Next
                                           <ChevronRight className="w-4 h-4" />
@@ -437,7 +428,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                                 }`}
                                     >
-                                          All Files ({files.pagination?.itemsPerPage})
+                                          All Files, ({files.pagination?.totalItems})
                                     </button>
                                     {
                                           view === 'table' && uniqueWorkflows.map((workflow) => {
@@ -545,24 +536,14 @@ export default function FilesList(filesListProps: FilesListProps) {
                                                 <h1 className="text-xl font-semibold text-gray-900">
                                                       {getFilteredTitle()}
                                                 </h1>
-                                                {selectedFilters.includes('all') ? (
-                                                      <div className="flex items-center space-x-2">
-                                                            <div className="px-3 py-1 bg-gray-100 rounded-full">
-                                                                  <span className="text-sm text-gray-600">
-                                                                        {files.pagination?.startIndex && files.pagination?.endIndex
-                                                                              ? `${files.pagination.startIndex}-${files.pagination.endIndex} of ${files.pagination.totalItems}`
-                                                                              : `${files.pagination?.totalItems || 0} items`}
-                                                                  </span>
-                                                            </div>
-                                                      </div>
-                                                ) : (
-                                                      <div className="px-3 py-1 bg-blue-50 rounded-full">
-                                                            <span className="text-sm text-blue-700">
-                                                                  {filteredFiles.length} filtered
-                                                            </span>
-                                                      </div>
-                                                )}
-
+                                                {
+                                                       selectedFilters.includes('all') ? <>
+                                                       <div className="w-4 h-4 bg-gray-300 rounded-full flex items-center justify-center">
+                                                      <span className="text-xs text-gray-600">{files.pagination?.totalItems} || {JSON.stringify(files.pagination)}</span>
+                                                </div>
+                                                       </> : null
+                                                }
+                                                
                                           </div>
                                           {!isSmallScreen && (
                                                 <div className="flex items-center space-x-2">
@@ -598,15 +579,6 @@ export default function FilesList(filesListProps: FilesListProps) {
 
                         {!isSmallScreen ? (
                               <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-                                    {/* Add this count bar */}
-                                    <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
-                                          <p className="text-sm text-gray-700">
-                                                {selectedFilters.includes('all')
-                                                      ? `Showing ${files.pagination?.startIndex || 0} to ${files.pagination?.endIndex || 0} of ${files.pagination?.totalItems || 0} files`
-                                                      : `Showing ${filteredFiles.length} filtered files`}
-                                          </p>
-                                    </div>
-
                                     <div className="p-1">
                                           {isLoadingPage ? (
                                                 <div className="flex items-center justify-center py-12">

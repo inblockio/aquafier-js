@@ -69,11 +69,10 @@ export const ConnectWalletPageAppKit = () => {
   const handleSiweSuccess = async () => {
     if (session?.address) {
       try {
-        const files = await fetchFiles(session.address, `${backend_url}/explorer_files`, session.nonce)
-        setFiles({
-          fileData: files,
-          status: 'loaded',
-        })
+      
+                              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+
       } catch (error) {
         console.error('Failed to fetch files:', error)
       }

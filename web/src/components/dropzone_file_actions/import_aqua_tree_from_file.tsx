@@ -40,9 +40,14 @@ export const ImportAquaChainFromFile = ({ file, filesWrapper, removeFilesListFor
                         },
                   })
 
-                   const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                                                      setFiles({ fileData: files, status: 'loaded' })
+                  //  const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                  //                                     setFiles({ fileData: files, status: 'loaded' })
 
+
+                  const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+
+                              
                   toast.success( 'Aqua Chain imported successfully')
                   setUploading(false)
                   // setUploaded(true)

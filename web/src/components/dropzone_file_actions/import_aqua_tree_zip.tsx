@@ -42,10 +42,15 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                   })
 
                   // return all user files
-                  const files = await fetchFiles(session!.address!, `${backend_url}/explorer_files`, session!.nonce)
-                  setFiles({
-                        fileData: files, status: 'loaded'
-                  })
+                  // const files = await fetchFiles(session!.address!, `${backend_url}/explorer_files`, session!.nonce)
+                  // setFiles({
+                  //       fileData: files, status: 'loaded'
+                  // })
+
+                  const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+
+                              
                   // setUploaded(true)
                   setUploading(false)
                   toast.success('File uploaded successfuly')

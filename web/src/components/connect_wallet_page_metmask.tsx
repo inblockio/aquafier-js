@@ -490,15 +490,20 @@ export const ConnectWalletPageMetamask = () => {
         setUserProfile({ ...response.data.user_settings })
         setSession({ ...response.data.session })
 
-        const files = await fetchFiles(
-          walletAddress,
-          `${backend_url}/explorer_files`,
-          responseData.session.nonce
-        )
-        setFiles({
-          fileData: files,
-          status: 'loaded',
-        })
+        // const files = await fetchFiles(
+        //   walletAddress,
+        //   `${backend_url}/explorer_files`,
+        //   responseData.session.nonce
+        // )
+        // setFiles({
+        //   fileData: files,
+        //   status: 'loaded',
+        // })
+
+        
+                                      const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                                      setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+        
 
         toast.success('Sign In successful')
 

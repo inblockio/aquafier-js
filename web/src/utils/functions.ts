@@ -6,7 +6,7 @@ import { documentTypes, ERROR_TEXT, ERROR_UKNOWN, imageTypes, musicTypes, videoT
 import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk'
 import jdenticon from 'jdenticon/standalone'
 import { IContractInformation } from '@/types/contract_workflow'
-import { ApiFileInfoState, DNSProof, IIdentityClaimDetails, SummaryDetailsDisplayData } from '@/types/types'
+import { ApiFileInfoState, ApiFilePaginationData, DNSProof, IIdentityClaimDetails, SummaryDetailsDisplayData } from '@/types/types'
 
 export function formatDate(date: Date) {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -397,7 +397,10 @@ export async function fetchSystemFiles(url: string, metamaskAddress: string = ''
       }
 }
 
-export async function fetchFiles(publicMetaMaskAddress: string, url: string, nonce: string): Promise<Array<ApiFileInfo>> {
+export async function fetchFiles(publicMetaMaskAddress: string, url: string, nonce: string): Promise<{
+      files: Array<ApiFileInfo>,
+      pagination: ApiFilePaginationData
+}> {
       try {
             const query = await fetch(url, {
                   method: 'GET',
@@ -412,10 +415,25 @@ export async function fetchFiles(publicMetaMaskAddress: string, url: string, non
                   throw new Error(`HTTP error! status: ${query.status}`)
             }
 
-            return response.data
+            return {
+                  files: response.data,
+                  pagination: response.pagination
+            }
       } catch (error) {
             console.error('Error fetching files:', error)
-            return []
+            return {
+                  files: [],
+                  pagination: {
+                        currentPage: 1,
+                        totalPages: 0,
+                        totalItems: 0,
+                        itemsPerPage: 10,
+                        hasNextPage: false,
+                        hasPreviousPage: false,
+                        endIndex: 0,
+                        startIndex: 0,
+                  }
+            }
       }
 }
 
@@ -2749,16 +2767,16 @@ export const fetchWalletAddressesAndNamesForInputRecommendation = (systemFileInf
                   }
 
                   if (workFlow.workFlow === 'identity_attestation') {
-                        if (genRevsion && genRevsion[`forms_context`] && genRevsion[`forms_claim_wallet_address`] ) {
+                        if (genRevsion && genRevsion[`forms_context`] && genRevsion[`forms_claim_wallet_address`]) {
 
-                              if(genRevsion['forms_attestion_type']== "user"){
+                              if (genRevsion['forms_attestion_type'] == "user") {
 
                                     recommended.set(genRevsion[`forms_context`], genRevsion[`forms_claim_wallet_address`])
                               }
                         }
                   }
 
-                    if (workFlow.workFlow === 'phone_number_claim') {
+                  if (workFlow.workFlow === 'phone_number_claim') {
 
                         if (genRevsion && genRevsion[`forms_phone_number`] && genRevsion[`forms_wallet_address`]) {
                               recommended.set(genRevsion[`forms_phone_number`], genRevsion[`forms_wallet_address`])
@@ -2766,7 +2784,7 @@ export const fetchWalletAddressesAndNamesForInputRecommendation = (systemFileInf
                   }
 
 
-                    if (workFlow.workFlow === 'domain_claim') {
+                  if (workFlow.workFlow === 'domain_claim') {
 
                         if (genRevsion && genRevsion[`forms_domain`] && genRevsion[`forms_wallet_address`]) {
                               recommended.set(genRevsion[`forms_domain`], genRevsion[`forms_wallet_address`])
@@ -2774,14 +2792,14 @@ export const fetchWalletAddressesAndNamesForInputRecommendation = (systemFileInf
                   }
 
 
-                     if (workFlow.workFlow === 'email_claim') {
+                  if (workFlow.workFlow === 'email_claim') {
 
                         if (genRevsion && genRevsion[`forms_email`] && genRevsion[`forms_wallet_address`]) {
                               recommended.set(genRevsion[`forms_email`], genRevsion[`forms_wallet_address`])
                         }
                   }
 
-                  
+
 
             } else {
                   //  console.log('Not a workflow data: ', file.aquaTree)

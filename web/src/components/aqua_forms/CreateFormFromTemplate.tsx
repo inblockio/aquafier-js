@@ -310,8 +310,15 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         if (isFinal) {
 
                               // if (account !== session?.address) {
-                              const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                              setFiles({ fileData: files, status: 'loaded' })
+                              // const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                              // setFiles({ fileData: files, status: 'loaded' })
+
+                              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                              setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+
+
+
+
                               // } else {
                               //       setFiles({ fileData: [...files.fileData, response.data.files], status: 'loaded' })
                               // }

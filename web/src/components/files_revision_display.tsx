@@ -134,15 +134,13 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                         if (index === 0) {
                               window.location.reload()
                         } else {
-                              const url2 = `${backend_url}/explorer_files`
-                              const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`)
-                              setFiles({
-                                    fileData: files,
-                                    status: 'loaded',
-                              })
+                              
+                              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+
 
                               // we need to update the side drawer for reverification to start
-                              const selectedFileDataResponse = files.find(e => {
+                              const selectedFileDataResponse = filesApi.files.find(e => {
                                     Object.keys(e.aquaTree!.revisions!)[0] == Object.keys(selectedFileInfo!.aquaTree!.revisions)[0]
                               })
                               if (selectedFileDataResponse) {

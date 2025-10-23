@@ -93,7 +93,9 @@ export async function getUserApiFileInfo(
         totalItems: number,
         itemsPerPage: number,
         hasNextPage: boolean,
-        hasPreviousPage: boolean
+        hasPreviousPage: boolean, 
+        startIndex: number,  // Add this
+        endIndex: number     // Add this
     }
 }> {
     // First, get the total count
@@ -116,7 +118,10 @@ export async function getUserApiFileInfo(
                 totalItems: 0,
                 itemsPerPage: limit,
                 hasNextPage: false,
-                hasPreviousPage: false
+                hasPreviousPage: false,
+                startIndex: 0,
+                endIndex: 0
+           
             }
         }
     }
@@ -143,6 +148,9 @@ export async function getUserApiFileInfo(
     
     const displayData = await fetchAquatreeFoUser(url, latest)
 
+      const startIndex = skip + 1;
+    const endIndex = Math.min(skip + limit, totalItems);
+    
     return {
         data: displayData,
         pagination: {
@@ -151,7 +159,9 @@ export async function getUserApiFileInfo(
             totalItems: totalItems,
             itemsPerPage: limit,
             hasNextPage: page < totalPages,
-            hasPreviousPage: page > 1
+            hasPreviousPage: page > 1,
+             startIndex: startIndex,    // Add this
+            endIndex: endIndex   
         }
     };
 }

@@ -428,18 +428,10 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                   if (response.status === 200 || response.status === 201) {
                         if (isFinal) {
-                              // if (account !== session?.address) {
-                              //       const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                              //       setFiles({ fileData: files, status: 'loaded' })
-                              // } else {
-                              //       setFiles({
-                              //             fileData: response.data.files,
-                              //             status: 'loaded',
-                              //       })
-                              // }
+                             
 
-                              const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                              setFiles({ fileData: files, status: 'loaded' })
+                              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
 
                               toast.success('Profile Aqua tree created successfully')
                               callBack && callBack()

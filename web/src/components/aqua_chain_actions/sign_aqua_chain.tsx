@@ -81,10 +81,15 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
 
                                                 try {
                                                       const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
-                                                      const files = await fetchFiles(session!.address!, url, session!.nonce)
-                                                      setFiles({
-                                                            fileData: files, status: 'loaded'
-                                                      })
+                                                      // const files = await fetchFiles(session!.address!, url, session!.nonce)
+                                                      // setFiles({
+                                                      //       fileData: files, status: 'loaded'
+                                                      // })
+
+                                                      
+                              const filesApi = await fetchFiles(session!.address, url, session!.nonce)
+                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+
 
                                                       if (selectedFileInfo) {
                                                             const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
@@ -216,10 +221,14 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
 
                                           try {
                                                 const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
-                                                const files = await fetchFiles(session!.address!, url, session!.nonce)
-                                                setFiles({
-                                                      fileData: files, status: 'loaded'
-                                                })
+                                                // const files = await fetchFiles(session!.address!, url, session!.nonce)
+                                                // setFiles({
+                                                //       fileData: files, status: 'loaded'
+                                                // })
+                                                
+                              const filesApi = await fetchFiles(session!.address, url, session!.nonce)
+                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+
 
                                                 if (selectedFileInfo) {
                                                       const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)

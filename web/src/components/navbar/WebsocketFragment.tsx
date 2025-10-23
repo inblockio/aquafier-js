@@ -132,16 +132,21 @@ const WebsocketFragment = () => {
                                           if (walletAddressRef.current && nounceRef.current) {
                                                 const url = `${backend_url}/explorer_files`
                                                 const actualUrlToFetch = ensureDomainUrlHasSSL(url)
-                                                const files = await fetchFiles(walletAddressRef.current, actualUrlToFetch, nounceRef.current)
-                                                // setFiles(files)
-                                                setFiles({ fileData: files, status: 'loaded' })
-                                                const currentSelectedFile = selectedFileRef.current
+                                                // const files = await fetchFiles(walletAddressRef.current, actualUrlToFetch, nounceRef.current)
+                                                // setFiles({ fileData: files, status: 'loaded' })
+
+
+ const filesApi = await fetchFiles(session!.address, actualUrlToFetch, session!.nonce)
+                                      setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+        
+
+                                      const currentSelectedFile = selectedFileRef.current
 
                                                 if (currentSelectedFile) {
                                                       // if (userSelectedFile) {
                                                       const genesisHash = getGenesisHash(currentSelectedFile!.aquaTree!)
                                                       if (genesisHash) {
-                                                            for (const itemTree of files) {
+                                                            for (const itemTree of filesApi.files) {
                                                                   const genesisHashItem = getGenesisHash(itemTree.aquaTree!)
                                                                   if (genesisHashItem) {
                                                                         if (genesisHashItem == genesisHash) {

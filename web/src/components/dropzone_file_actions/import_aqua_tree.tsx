@@ -69,8 +69,13 @@ export const ImportAquaTree = ({file, filesWrapper, removeFilesListForUpload}: I
             //                     setFiles({ fileData: filesFromApi, status: 'loaded' })
             // setUploaded(true)
 
-            const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-            setFiles({fileData: files, status: 'loaded'})
+            // const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+            // setFiles({fileData: files, status: 'loaded'})
+
+              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+
+                              
             setUploading(false)
             setSelectedFileName('')
             toast.success('File uploaded successfully')

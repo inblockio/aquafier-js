@@ -141,9 +141,14 @@ const FilesPage = () => {
                   clearFileInput()
 
                   // Refresh files list
-                  const url2 = `${backend_url}/explorer_files`
-                  const updatedFiles = await fetchFiles(session?.address!, url2, session?.nonce!)
-                  setFiles({ fileData: updatedFiles, status: 'loaded' })
+                  // const url2 = `${backend_url}/explorer_files`
+                  // const updatedFiles = await fetchFiles(session?.address!, url2, session?.nonce!)
+                  // setFiles({ fileData: updatedFiles, status: 'loaded' })
+
+                  const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                  setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+
+
 
                   toast.success('File uploaded successfully')
             } catch (error) {
@@ -291,9 +296,14 @@ const FilesPage = () => {
             }
 
             // fetch all files from the api
-            const url2 = `${backend_url}/explorer_files`
-            const files = await fetchFiles(session?.address!, url2, session?.nonce!)
-            setFiles({ fileData: files, status: 'loaded' })
+            // const url2 = `${backend_url}/explorer_files`
+            // const files = await fetchFiles(session?.address!, url2, session?.nonce!)
+            // setFiles({ fileData: files, status: 'loaded' })
+
+            const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+            setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+
+
       }
 
       const checkFileContentForUpload = async (upload: UploadStatus, index: number) => {
@@ -461,6 +471,9 @@ const FilesPage = () => {
             }
 
 
+            // return <>
+            //       data {files.fileData.length}--{JSON.stringify(files.pagination)}
+            // </>
 
             return <FilesList selectedFiles={[]} activeFile={null} showFileActions={true} showCheckbox={false} showHeader={true} onFileDeSelected={() => { }} onFileSelected={() => {
 

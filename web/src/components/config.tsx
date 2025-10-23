@@ -23,7 +23,7 @@ const LoadConfiguration = () => {
                         })
 
                         if (response.status === 200) {
-                              const url2 = `${backend_url}/explorer_files`
+                              
                               const _address = response.data?.session.address
                               if (_address) {
                                     const address = ethers.getAddress(_address)
@@ -31,11 +31,17 @@ const LoadConfiguration = () => {
                                     const avatar = generateAvatar(address)
                                     setAvatar(avatar)
 
-                                    const files = await fetchFiles(address, url2, nonce)
-                                    setFiles({
-                                          fileData: files,
-                                          status: 'loaded',
-                                    })
+                                    // const files = await fetchFiles(address, url2, nonce)
+                                    // setFiles({
+                                    //       fileData: files,
+                                    //       status: 'loaded',
+                                    // })
+
+                                    
+                              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+
+                              
                                     fetchUserProfile(_address, nonce)
                                     setSession(response.data?.session)
                                     const url3 = `${backend_url}/system/aqua_tree`
