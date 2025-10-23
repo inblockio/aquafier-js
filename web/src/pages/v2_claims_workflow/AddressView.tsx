@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Copy, Check, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { fetchWalletAddressesAndNamesForInputRecommendation } from '@/utils/functions';
+import { fetchFiles, fetchWalletAddressesAndNamesForInputRecommendation } from '@/utils/functions';
 import { WalletAutosuggest } from '@/components/wallet_auto_suggest';
 import { useStore } from 'zustand'
 import appStore from '@/store'
@@ -21,8 +21,10 @@ export const AddressView: React.FC<AddressViewProps> = ({
   const {
 
     systemFileInfo,
-
-    files
+    session,
+    backend_url,
+    setWorkflows,
+    workflows
   } = useStore(appStore)
   const [multipleAddresses, setMultipleAddresses] = useState<string[]>([address])
 
@@ -43,10 +45,19 @@ export const AddressView: React.FC<AddressViewProps> = ({
   };
 
   useEffect(() => {
+
+    (async () => {
+
+      const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
+      setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+
+    })()
+
+
     let add = multipleAddresses
     if (add.length === 0) {
       add = [address]
-    }else{
+    } else {
       add[0] = address
     }
     setMultipleAddresses(add)
@@ -66,10 +77,10 @@ export const AddressView: React.FC<AddressViewProps> = ({
             /> */}
             <WalletAutosuggest
 
-              walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, files)}
+              walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, workflows)}
               field={{
                 name: 'address',
-              
+
               }}
               index={0}
               address={multipleAddresses[0]}
@@ -77,7 +88,7 @@ export const AddressView: React.FC<AddressViewProps> = ({
               setMultipleAddresses={(addrs: string[]) => {
                 console.log('Setting multiple addresses:', addrs)
                 setMultipleAddresses(addrs)
-               
+
               }}
               placeholder="Enter name claim or wallet address..."
               className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"

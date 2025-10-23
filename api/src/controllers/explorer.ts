@@ -253,8 +253,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                         fileObject: {
                             fileContent: JSON.stringify(serverAttestation.attestationJSONfileData),
                             fileName: serverAttestation.attestationJSONfileName,
-                            path:"",
-                            fileSize:0
+                            path: "",
+                            fileSize: 0
 
                         }
                     }
@@ -390,54 +390,54 @@ export default async function explorerController(fastify: FastifyInstance) {
         }
     });
 
-  
 
-// get file using file hash with pagination
-fastify.get('/explorer_files', async (request, reply) => {
-    // file content from db
-    // return as a blob
 
-    // Read `nonce` from headers
-    const nonce = request.headers['nonce']; // Headers are case-insensitive
+    // get file using file hash with pagination
+    fastify.get('/explorer_files', async (request, reply) => {
+        // file content from db
+        // return as a blob
 
-    // Check if `nonce` is missing or empty
-    if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-        return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-    }
+        // Read `nonce` from headers
+        const nonce = request.headers['nonce']; // Headers are case-insensitive
 
-    const session = await prisma.siweSession.findUnique({
-        where: { nonce }
+        // Check if `nonce` is missing or empty
+        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+        }
+
+        const session = await prisma.siweSession.findUnique({
+            where: { nonce }
+        });
+
+        if (!session) {
+            return reply.code(403).send({ success: false, message: "Nounce is invalid" });
+        }
+
+        // Get the host from the request headers
+        const host = request.headers.host || `${getHost()}:${getPort()}`;
+
+        // Get the protocol (http or https)
+        const protocol = request.protocol || 'https'
+
+        // Construct the full URL
+        const url = `${protocol}://${host}`;
+
+        console.log(cliRedify(url), cliGreenify(session.address))
+
+        // Extract pagination parameters from query string
+        const query = request.query as Record<string, string | undefined>;
+        const page = parseInt(query.page ?? '1', 10) || 1;
+        const limit = parseInt(query.limit ?? '10', 10) || 10;
+
+        const paginatedData = await getUserApiFileInfo(url, session.address, page, limit)
+
+        return reply.code(200).send({
+            success: true,
+            message: 'Aqua tree saved successfully',
+            ...paginatedData
+        });
+
     });
-
-    if (!session) {
-        return reply.code(403).send({ success: false, message: "Nounce is invalid" });
-    }
-
-    // Get the host from the request headers
-    const host = request.headers.host || `${getHost()}:${getPort()}`;
-
-    // Get the protocol (http or https)
-    const protocol = request.protocol || 'https'
-
-    // Construct the full URL
-    const url = `${protocol}://${host}`;
-
-    console.log(cliRedify(url), cliGreenify(session.address))
-
-    // Extract pagination parameters from query string
-    const query = request.query as Record<string, string | undefined>;
-    const page = parseInt(query.page ?? '1', 10) || 1;
-    const limit = parseInt(query.limit ?? '10', 10) || 10;
-
-    const paginatedData = await getUserApiFileInfo(url, session.address, page, limit)
-
-    return reply.code(200).send({
-        success: true,
-        message: 'Aqua tree saved successfully',
-        ...paginatedData
-    });
-
-});
 
     fastify.post('/explorer_files', async (request, reply) => {
 
@@ -787,7 +787,7 @@ fastify.get('/explorer_files', async (request, reply) => {
                 ]
             const entireChain = await fetchAquatreeFoUser(url, latest)//(latestRevisionHash, userAddress, url);
 
-        
+
             // Check if the user exists (create if not)
             const targetUser = await prisma.users.findUnique({
                 where: { address: session.address }
@@ -911,7 +911,7 @@ fastify.get('/explorer_files', async (request, reply) => {
                 ]
             const entireChain = await fetchAquatreeFoUser(url, latest)//(latestRevisionHash, userAddress, url);
 
-        
+
             // Check if the user exists (create if not)
             const targetUser = await prisma.users.findUnique({
                 where: { address: session.address }

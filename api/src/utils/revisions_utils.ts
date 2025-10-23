@@ -77,6 +77,59 @@ export async function getSignatureAquaTrees(userAddress: string, url: string): P
     return signatureAquaTrees
 }
 
+export async function getUserApiWorkflowFileInfo(
+    url: string, 
+    address: string,
+): Promise<{
+    data: Array<{
+        aquaTree: AquaTree,
+        fileObject: FileObject[]
+    }>
+}> {
+    // First, get the total count
+    const totalItems = await prisma.latest.count({
+        where: {
+            AND: {
+                user: address,
+                template_id: null,
+                is_workflow: false
+            }
+        }
+    });
+    
+    if (totalItems === 0) {
+        return {
+            data: [],
+           
+        }
+    }
+
+
+    // Fetch only the items needed for this page with sorting
+    let latest = await prisma.latest.findMany({
+        where: {
+            AND: {
+                user: address,
+                template_id: null,
+                is_workflow: false
+            }
+        },
+        
+        orderBy: {
+            createdAt: 'desc' // Adjust this based on your sorting preference
+        }
+    });
+    
+    const displayData = await fetchAquatreeFoUser(url, latest)
+
+     
+    
+    return {
+        data: displayData,
+    
+    };
+}
+
 export async function getUserApiFileInfo(
     url: string, 
     address: string,
@@ -142,7 +195,8 @@ export async function getUserApiFileInfo(
         skip: skip,
         take: limit,
         orderBy: {
-            hash: 'asc' // Adjust this based on your sorting preference
+            // hash: 'asc' // Adjust this based on your sorting preference
+            createdAt: 'desc'
         }
     });
     
@@ -150,7 +204,7 @@ export async function getUserApiFileInfo(
 
       const startIndex = skip + 1;
     const endIndex = Math.min(skip + limit, totalItems);
-    
+
     return {
         data: displayData,
         pagination: {

@@ -79,7 +79,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             setSystemFileInfo,
             setFiles,
             selectedFileInfo,
-            files,
+            workflows,
+            setWorkflows,
             webConfig
       } = useStore(appStore)
       const [formData, setFormData] = useState<Record<string, string | File | number>>({})
@@ -115,6 +116,12 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       }
 
       useEffect(() => {
+            (async () => {
+                  const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
+                  setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+            })()
+
+
             if (containerRef.current) {
                   const rect = containerRef.current.getBoundingClientRect();
                   setCanvasSize({
@@ -1261,7 +1268,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                                                                       /> */}
                                                                                                       <WalletAutosuggest
 
-                                                                                                            walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, files)}
+                                                                                                            walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, workflows)}
                                                                                                             field={field}
                                                                                                             index={index}
                                                                                                             address={address}
@@ -1521,7 +1528,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                                                                 :
 
                                                                                                 <WalletAutosuggest
-                                                                                                      walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, files)}
+                                                                                                      walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, workflows)}
                                                                                                       field={field}
                                                                                                       index={1}
                                                                                                       address={formData[field.name] ? formData[field.name] as string : ""}

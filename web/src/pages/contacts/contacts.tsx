@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import appStore from "@/store";
 import { useStore } from "zustand";
 import { ContactProfile } from "@/types/types";
-import { fetchWalletAddressesAndNamesForInputRecommendation, getAquaTreeFileName, getGenesisHash, isWorkFlowData } from "@/utils/functions";
+import { fetchFiles, fetchWalletAddressesAndNamesForInputRecommendation, getAquaTreeFileName, getGenesisHash, isWorkFlowData } from "@/utils/functions";
 import { OrderRevisionInAquaTree, Revision } from "aqua-js-sdk";
 import { ApiFileInfo } from "@/models/FileInfo";
 import WalletAdrressClaim from "../v2_claims_workflow/WalletAdrressClaim";
@@ -23,9 +23,13 @@ const CLAIMS = new Set([
 ]);
 
 const ContactsPage = () => {
-    const { files, systemFileInfo, session } = useStore(appStore);
+    const {  systemFileInfo, session , setWorkflows,workflows, backend_url} = useStore(appStore);
     const [contactProfiles, setContactProfiles] = useState<ContactProfile[]>([]);
     const [filterMultipleAddresses, setFilterMultipleAddresses] = useState<string[]>([''])
+
+     const [isLoading, setIsLoading] = useState<boolean>(false)
+
+
     const navigate = useNavigate()
     const systemTreeNames = systemFileInfo.map((info) => {
         try {
@@ -35,12 +39,28 @@ const ContactsPage = () => {
         }
     });
 
-    useEffect(() => {
-        if (!files?.fileData?.length || !systemFileInfo?.length) return;
+     useEffect(() => {
+                setIsLoading(true);
+                (async () => {
+    
+                      const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
+                      setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+    
+    
+                      processFilesToGetWorkflows(filesApi.files)
+                })()
+    
+                setIsLoading(false);
+          }, [])
+          
+   const processFilesToGetWorkflows= (files: ApiFileInfo[]) => {
+        // if (!files?.fileData?.length || !systemFileInfo?.length) return;
+
+        if (!files?.length || !systemFileInfo?.length) return;
 
         const contactProfileMap = new Map<string, ContactProfile>();
 
-        for (const element of files.fileData) {
+        for (const element of files) {
             const workFlow = isWorkFlowData(element.aquaTree!, systemTreeNames);
             if (!workFlow.isWorkFlow || !workFlow.workFlow) continue;
 
@@ -85,7 +105,7 @@ const ContactsPage = () => {
         }
 
         setContactProfiles(Array.from(contactProfileMap.values()));
-    }, [files, systemFileInfo]);
+    };
 
     let profileBadges = (contactProfileFiles: ApiFileInfo[]) => {
         const badgeCounts: Record<string, number> = {};
@@ -171,6 +191,16 @@ const ContactsPage = () => {
 
         return <div className="flex flex-wrap items-center gap-2">{allBadges}</div>;
     };
+
+     if (isLoading) {
+            // return <div>Loading...</div>
+            return <div className="flex items-center gap-2">
+                  {/* Circular Loading Spinner */}
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <span>Loading Contacts</span>
+            </div>
+      }
+
     return (
         <div className="p-6">
             <h1 className="text-xl font-semibold mb-2">Total Contacts {contactProfiles.length}</h1>
@@ -204,7 +234,7 @@ const ContactsPage = () => {
 
                     <WalletAutosuggest
 
-                        walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, files)}
+                        walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, workflows)}
                         field={{
                             name: 'address',
 

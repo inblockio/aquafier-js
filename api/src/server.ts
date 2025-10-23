@@ -32,6 +32,7 @@ import {ensureDomainViewForCors} from './utils/server_utils';
 import Logger from "./utils/logger";
 import DNSClaimVerificationController from './controllers/dns_claim_verification';
 import metricsController from './controllers/metrics';
+import workflowsController from './controllers/workflow';
 
 
 function buildServer() {
@@ -157,6 +158,7 @@ function buildServer() {
     fastify.register(ApiController);
     fastify.register(DNSClaimVerificationController);
     fastify.register(metricsController);
+    fastify.register(workflowsController);
 
 
     fastify.addHook("onRequest", (request, reply, done) => {

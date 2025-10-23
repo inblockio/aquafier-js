@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useAppKit, useAppKitAccount, useAppKitState } from '@reown/appkit/react'
+import { useAppKit, useAppKitAccount, useAppKitState, useDisconnect } from '@reown/appkit/react'
 import { useStore } from 'zustand'
 import appStore from '../store'
 import { Alert, AlertDescription } from './ui/alert'
@@ -25,7 +25,8 @@ export const ConnectWalletPageAppKit = () => {
   const [isConnecting, setIsConnecting] = useState(false)
   const [error, setError] = useState('')
   const [hasTriggeredSiwe, setHasTriggeredSiwe] = useState(false)
-
+  const { disconnect } = useDisconnect()
+  
   // Handle wallet connection state changes
   useEffect(() => {
     if (isConnected && address) {
@@ -38,6 +39,13 @@ export const ConnectWalletPageAppKit = () => {
     }
   }, [isConnected, address, setMetamaskAddress, setAvatar])
 
+   useEffect(() => {
+if (isConnected && address && session == null) {
+
+  console.log("Session is null after connection, signing out to reset state.")
+ handleSignOut()
+}
+   }, [])
   // Monitor modal state changes
   useEffect(() => {
     if (modalOpen) {
@@ -65,6 +73,31 @@ export const ConnectWalletPageAppKit = () => {
     }
   }, [isConnected])
 
+  const handleSignOut = async () => {
+  // setIsSigningOut(true)
+  // toast.info('Signing out...')
+  
+  try {
+    await disconnect()
+    toast.success('Signed out successfully')
+   
+  } catch (error: any) {
+    // Check if it's the permission revocation error
+    const isPermissionError = error?.message?.includes('revoke permissions') || 
+                              error?.message?.includes('Internal JSON-RPC error')
+    
+    if (isPermissionError) {
+      // Still consider it a success since wallet disconnects anyway
+      console.warn('Permission revocation failed, but wallet disconnected:', error)
+      // toast.success('Signed out successfully')
+      // setIsProfileOpen(false)
+    } else {
+      // Only show error for other types of failures
+      console.error('Sign out error:', error)
+      toast.error('Error signing out')
+    }
+  } 
+}
   // Handle SIWE success - files are fetched automatically in siweConfig
   const handleSiweSuccess = async () => {
     if (session?.address) {

@@ -20,6 +20,7 @@ type AppStoreState = {
       }
       session: Session | null
       files: ApiFileInfoState,
+      workflows : ApiFileInfoState,
       webConfig: WebConfig,
       apiFileData: ApiFileData[]
       systemFileInfo: ApiFileInfo[]
@@ -43,6 +44,7 @@ type AppStoreActions = {
       setMetamaskAddress: (address: AppStoreState['metamaskAddress']) => void
       setAvatar: (avatar: AppStoreState['avatar']) => void
       setFiles: (files: AppStoreState['files']) => void
+      setWorkflows: (files: AppStoreState['workflows']) => void
       setWebConfig: (config: AppStoreState['webConfig']) => void
       setSelectedFileInfo: (file: ApiFileInfo | null) => void
 
@@ -147,6 +149,10 @@ const appStore = createStore<TAppStore>()(
                         fileData: [],
                         status: 'idle',
                   },
+                   workflows: {
+                        fileData: [],
+                        status: 'idle',
+                  },
                   selectedFileInfo: null,
                   webConfig: {
                         CUSTOM_LANDING_PAGE_URL: false,
@@ -175,6 +181,7 @@ const appStore = createStore<TAppStore>()(
                   setMetamaskAddress: (address: AppStoreState['metamaskAddress']) => set({ metamaskAddress: address }),
                   setAvatar: (avatar: AppStoreState['avatar']) => set({ avatar: avatar }),
                   setFiles: (files: AppStoreState['files']) => set({ files: files }),
+                  setWorkflows: (workflows: AppStoreState['workflows']) => set({ workflows: workflows }),
                   setSelectedFileInfo: (file: ApiFileInfo | null) => set({ selectedFileInfo: file }),
 
                   setOpenDialog: (state: OpenDialog | null) => set({ openDialog: state }),

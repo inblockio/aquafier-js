@@ -1,10 +1,10 @@
-import {useEffect, useState} from 'react'
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table'
-import {Badge} from '@/components/ui/badge'
-import {Button} from '@/components/ui/button'
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
-import {Avatar, AvatarFallback} from '@/components/ui/avatar'
-import {Progress} from '@/components/ui/progress'
+import { useEffect, useState } from 'react'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Progress } from '@/components/ui/progress'
 import {
       DropdownMenu,
       DropdownMenuContent,
@@ -27,22 +27,25 @@ import {
       Users
 } from 'lucide-react'
 import appStore from '@/store'
-import {useStore} from 'zustand'
+import { useStore } from 'zustand'
 import {
       displayTime,
+      fetchFiles,
       getAquaTreeFileName,
       getAquaTreeFileObject,
       getGenesisHash,
       isWorkFlowData,
       processContractInformation
 } from '@/utils/functions'
-import {FileObject} from 'aqua-js-sdk'
-import {IContractInformation} from '@/types/contract_workflow'
-import {DownloadAquaChain} from '../../components/aqua_chain_actions/download_aqua_chain'
-import {OpenAquaSignWorkFlowButton} from '../../components/aqua_chain_actions/open_aqua_sign_workflow'
-import {DeleteAquaChain} from '../../components/aqua_chain_actions/delete_aqua_chain'
-import {IWorkflowItem} from '@/types/types'
+import { FileObject } from 'aqua-js-sdk'
+import { IContractInformation } from '@/types/contract_workflow'
+import { DownloadAquaChain } from '../../components/aqua_chain_actions/download_aqua_chain'
+import { OpenAquaSignWorkFlowButton } from '../../components/aqua_chain_actions/open_aqua_sign_workflow'
+import { DeleteAquaChain } from '../../components/aqua_chain_actions/delete_aqua_chain'
+import { IWorkflowItem } from '@/types/types'
 import WalletAdrressClaim from '../v2_claims_workflow/WalletAdrressClaim'
+import { ApiFileInfo } from '@/models/FileInfo'
+import { set } from 'date-fns'
 
 const getStatusIcon = (status: string) => {
       switch (status) {
@@ -254,13 +257,14 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
 }
 
 export default function WorkflowsTablePage() {
-      const { files, systemFileInfo, setOpenDialog } = useStore(appStore)
+      const {  session, setWorkflows, backend_url, systemFileInfo, setOpenDialog } = useStore(appStore)
 
       // const [workflows] = useState<DocumentWorkflow[]>(mockWorkflows);
 
-      const [_workflows, setWorkflows] = useState<IWorkflowItem[]>([])
+      const [workflowsUi, setWorkflowsUi] = useState<IWorkflowItem[]>([])
+      const [isLoading, setIsLoading] = useState<boolean>(false)
 
-      const processFilesToGetWorkflows = () => {
+      const processFilesToGetWorkflows = (files: ApiFileInfo[]) => {
             const someData = systemFileInfo.map(e => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
@@ -270,7 +274,7 @@ export default function WorkflowsTablePage() {
             })
 
             const newData: IWorkflowItem[] = []
-            files.fileData.forEach(file => {
+            files.forEach(file => {
                   // const fileObject = getAquaTreeFileObject(file);
                   const { workFlow, isWorkFlow } = isWorkFlowData(file.aquaTree!, someData)
                   if (isWorkFlow && workFlow === 'aqua_sign') {
@@ -292,14 +296,36 @@ export default function WorkflowsTablePage() {
                   }
             })
 
-            setWorkflows(newData)
+            setWorkflowsUi(newData)
       }
 
       useEffect(() => {
-            processFilesToGetWorkflows()
-      }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index??{})).join(',')])
+            setIsLoading(true);
+            (async () => {
 
-       
+                  const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
+                  setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+
+
+                  processFilesToGetWorkflows(filesApi.files)
+            })()
+
+             setIsLoading(false);
+      },[])
+      // useEffect(() => {
+      //       processFilesToGetWorkflows()
+      // }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index??{})).join(',')])
+
+
+
+      if (isLoading) {
+            // return <div>Loading...</div>
+            return    <div className="flex items-center gap-2">
+                        {/* Circular Loading Spinner */}
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span>Loading Aqua Sign Workflows</span>
+                  </div>
+      }
       return (
             <>
                   {/* Action Bar */}
@@ -335,7 +361,7 @@ export default function WorkflowsTablePage() {
                                     <CardTitle className="flex items-center gap-2 justify-between">
                                           <div className="flex items-center gap-2">
                                                 <FileText className="h-5 w-5" />
-                                                <span>Aqua Sign Workflows</span>
+                                                <span>Aqua Sign Workflows.</span>
                                           </div>
                                           <button
                                                 className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
@@ -372,14 +398,14 @@ export default function WorkflowsTablePage() {
                                                       </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
-                                                      {_workflows.length === 0 && (
+                                                      {workflowsUi.length === 0 && (
                                                             <TableRow>
                                                                   <TableCell colSpan={6} className="h-24 text-center">
                                                                         No workflows found
                                                                   </TableCell>
                                                             </TableRow>
                                                       )}
-                                                      {_workflows.map((workflow, index: number) => (
+                                                      {workflowsUi.map((workflow, index: number) => (
                                                             <WorkflowTableItem key={`${index}-workflow`} workflowName={workflow.workflowName} apiFileInfo={workflow.apiFileInfo} index={index} />
                                                       ))}
                                                 </TableBody>

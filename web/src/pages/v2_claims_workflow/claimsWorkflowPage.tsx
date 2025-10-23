@@ -3,7 +3,7 @@ import { useLocation, useParams } from 'react-router-dom'
 import appStore from '../../store'
 import { useStore } from 'zustand'
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
-import { getAquaTreeFileName, getGenesisHash, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
+import { fetchFiles, getAquaTreeFileName, getGenesisHash, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
 import { ClipLoader } from 'react-spinners'
 import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileInfo'
 import axios from 'axios'
@@ -26,7 +26,7 @@ import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_cla
 
 
 export default function ClaimsWorkflowPage() {
-      const { session, backend_url, systemFileInfo, files } = useStore(appStore)
+      const { session, backend_url, systemFileInfo,  setWorkflows } = useStore(appStore)
 
       const [claims, setClaims] = useState<Array<{ file: ApiFileInfo, processedInfo: ClaimInformation, attestations: Array<IAttestationEntry>, sharedContracts: Contract[] }>>([])
       const [isLoading, setIsLoading] = useState(false)
@@ -87,7 +87,7 @@ export default function ClaimsWorkflowPage() {
             }
       }
 
-      const getAllAttestations = () => {
+      const getAllAttestations =  (files: ApiFileInfo[]) => {
             const aquaTemplates = systemFileInfo.map(e => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
@@ -96,8 +96,8 @@ export default function ClaimsWorkflowPage() {
                   }
             })
             const _attestations: Array<ApiFileInfo> = []
-            for (let i = 0; i < files.fileData.length; i++) {
-                  const file: ApiFileInfo = files.fileData[i]
+            for (let i = 0; i < files.length; i++) {
+                  const file: ApiFileInfo = files[i]
                   // const fileObject = getAquaTreeFileObject(file)
 
                   const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree!, aquaTemplates)
@@ -109,7 +109,7 @@ export default function ClaimsWorkflowPage() {
             return _attestations
       }
 
-      const processAllAddressClaims = async () => {
+      const processAllAddressClaims = async (files: ApiFileInfo[]) => {
             setIsLoading(true)
             if (!walletAddress) {
                   toast.info('Please select a wallet address')
@@ -127,13 +127,13 @@ export default function ClaimsWorkflowPage() {
                   }
             })
 
-            const _attestations = getAllAttestations()
+            const _attestations = getAllAttestations(files)
 
             const _claims: Array<{ file: ApiFileInfo; processedInfo: ClaimInformation, attestations: Array<IAttestationEntry>, sharedContracts: Contract[] }> = []
 
             // We loop through files to find claims that match the wallet address
-            for (let i = 0; i < files.fileData.length; i++) {
-                  const file: ApiFileInfo = files.fileData[i]
+            for (let i = 0; i < files.length; i++) {
+                  const file: ApiFileInfo = files[i]
                   // const fileObject = getAquaTreeFileObject(file)
 
                   const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree!, aquaTemplates)
@@ -237,10 +237,34 @@ export default function ClaimsWorkflowPage() {
             }
       }
 
-      useEffect(() => {
-            processAllAddressClaims()
-      }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), walletAddress])
+      // useEffect(() => {
+      //       processAllAddressClaims()
+      // }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), walletAddress])
 
+
+       useEffect(() => {
+                  setIsLoading(true);
+                  (async () => {
+      
+                        const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
+                        setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+      
+      
+                       await processAllAddressClaims(filesApi.files)
+                  })()
+      
+                  setIsLoading(false);
+            }, []);
+      
+
+             if (isLoading) {
+            // return <div>Loading...</div>
+            return    <div className="flex items-center gap-2">
+                        {/* Circular Loading Spinner */}
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span>Loading Data</span>
+                  </div>
+      }
       return (
             <div className='py-6 flex flex-col gap-4'>
 

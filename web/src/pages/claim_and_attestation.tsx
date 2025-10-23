@@ -1,7 +1,7 @@
-import {useEffect, useState} from 'react'
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table'
-import {Button} from '@/components/ui/button'
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
+import { useEffect, useState } from 'react'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
       DropdownMenu,
       DropdownMenuContent,
@@ -10,24 +10,25 @@ import {
       DropdownMenuSeparator,
       DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import {Download, Eye, FileText, MoreHorizontal, Send, Trash2} from 'lucide-react'
+import { Download, Eye, FileText, MoreHorizontal, Send, Trash2 } from 'lucide-react'
 import appStore from '@/store'
-import {useStore} from 'zustand'
+import { useStore } from 'zustand'
 import {
       displayTime,
+      fetchFiles,
       getAquaTreeFileName,
       getAquaTreeFileObject,
       getGenesisHash,
       isWorkFlowData
 } from '@/utils/functions'
-import {FileObject} from 'aqua-js-sdk'
-import {DownloadAquaChain} from '../components/aqua_chain_actions/download_aqua_chain'
-import {DeleteAquaChain} from '../components/aqua_chain_actions/delete_aqua_chain'
-import {Contract, IWorkflowItem} from '@/types/types'
+import { FileObject } from 'aqua-js-sdk'
+import { DownloadAquaChain } from '../components/aqua_chain_actions/download_aqua_chain'
+import { DeleteAquaChain } from '../components/aqua_chain_actions/delete_aqua_chain'
+import { Contract, IWorkflowItem } from '@/types/types'
 import axios from 'axios'
-import {OpenClaimsWorkFlowButton} from '@/components/aqua_chain_actions/open_identity_claim_workflow'
-import {useNavigate} from 'react-router-dom'
-import {ApiFileInfo} from '@/models/FileInfo'
+import { OpenClaimsWorkFlowButton } from '@/components/aqua_chain_actions/open_identity_claim_workflow'
+import { useNavigate } from 'react-router-dom'
+import { ApiFileInfo } from '@/models/FileInfo'
 import ClaimTypesDropdownButton from '@/components/button_claim_dropdown'
 
 
@@ -141,11 +142,11 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
       const openClaimsInforPage = (item: ApiFileInfo) => {
             // setSelectedFileInfo(item)
             // navigate('/app/claims/workflow')
-            if(item){
+            if (item) {
                   const genesisHash = getGenesisHash(item.aquaTree!)
                   const genesisRevision = item.aquaTree?.revisions[genesisHash!]
                   let walletAddress = genesisRevision?.forms_wallet_address
-                  if(genesisHash){
+                  if (genesisHash) {
                         navigate(`/app/claims/workflow/${walletAddress}#${genesisHash}`)
                   }
             }
@@ -230,14 +231,16 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
 }
 
 const ClaimsAndAttestationPage = () => {
-      const { files, systemFileInfo, session } = useStore(appStore)
+      const { systemFileInfo, session , backend_url, setWorkflows} = useStore(appStore)
 
       const [totalClaims, setTotalClaims] = useState<number>(0)
       const [_totolAttestors, setTotolAttestors] = useState<number>(0)
       const [myAttestions, setMyAttestionss] = useState<number>(0)
+      const [isLoading, setIsLoading] = useState<boolean>(false)
 
-      const [workflows, setWorkflows] = useState<IWorkflowItem[]>([])
-      const processFilesToGetWorkflows = () => {
+      const [workflowsUi, setWorkflowsUi] = useState<IWorkflowItem[]>([])
+
+      const processFilesToGetWorkflows= (files: ApiFileInfo[]) => {
             const someData = systemFileInfo.map(e => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
@@ -251,7 +254,7 @@ const ClaimsAndAttestationPage = () => {
             let myAttestions = 0
             const newData: IWorkflowItem[] = []
             // files.forEach(file => {
-            for (const file of files.fileData) {
+            for (const file of files) {
                   // const fileObject = getAquaTreeFileObject(file);
                   const { workFlow, isWorkFlow } = isWorkFlowData(file.aquaTree!, someData)
 
@@ -276,8 +279,8 @@ const ClaimsAndAttestationPage = () => {
                         }
 
                         let signatureReisionIndex = 2;
-                        if (workFlow.trim()== "user_signature"){
-                              signatureReisionIndex =3
+                        if (workFlow.trim() == "user_signature") {
+                              signatureReisionIndex = 3
                         }
                         const signatureRevision = file.aquaTree?.revisions[allHashes[signatureReisionIndex]]
 
@@ -312,17 +315,42 @@ const ClaimsAndAttestationPage = () => {
             setTotalClaims(totolClaims)
             setTotolAttestors(totolAttestors)
             setMyAttestionss(myAttestions)
-            setWorkflows(newData)
+            setWorkflowsUi(newData)
       }
 
-      useEffect(() => {
-            processFilesToGetWorkflows()
-         }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index??{})).join(',')])
-
 
       useEffect(() => {
-            processFilesToGetWorkflows()
+            setIsLoading(true);
+            (async () => {
+
+                  const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
+                  setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+
+
+                  processFilesToGetWorkflows(filesApi.files)
+            })()
+
+            setIsLoading(false);
       }, [])
+
+      // useEffect(() => {
+      //       processFilesToGetWorkflows()
+      //    }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index??{})).join(',')])
+
+
+      // useEffect(() => {
+      //       processFilesToGetWorkflows()
+      // }, [])
+
+
+      if (isLoading) {
+            // return <div>Loading...</div>
+            return <div className="flex items-center gap-2">
+                  {/* Circular Loading Spinner */}
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <span>Loading Claims and Attestations</span>
+            </div>
+      }
 
       return (
             <>
@@ -357,13 +385,13 @@ const ClaimsAndAttestationPage = () => {
                                                 </div>
                                                 <label className="text-sm font-medium text-gray-900  text-left">Total claims you have attested {myAttestions}</label>
                                                 <label className="text-sm font-medium text-gray-900 mb-4 text-left">
-                                                      Total claims imported {totalClaims - workflows.length}. Claims created by you {workflows.length}
+                                                      Total claims imported {totalClaims - workflowsUi.length}. Claims created by you {workflowsUi.length}
                                                 </label>
                                           </div>
 
                                           <div className='ml-auto flex items-center gap-2'>
-                                                <ClaimTypesDropdownButton /> 
-                                                <div  className='ml-4'></div>
+                                                <ClaimTypesDropdownButton />
+                                                <div className='ml-4'></div>
                                           </div>
 
                                           {/* <div className="flex justify-center ">
@@ -405,14 +433,14 @@ const ClaimsAndAttestationPage = () => {
                                                       </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
-                                                      {workflows.length === 0 && (
+                                                      {workflowsUi.length === 0 && (
                                                             <TableRow>
                                                                   <TableCell colSpan={6} className="h-24 text-center">
-                                                                        You do not own any claim workflows
+                                                                        You do not own any claim workflowsUi
                                                                   </TableCell>
                                                             </TableRow>
                                                       )}
-                                                      {workflows.map((workflow, index: number) => (
+                                                      {workflowsUi.map((workflow, index: number) => (
                                                             <WorkflowTableItem key={`${index}-workflow`} workflowName={workflow.workflowName} apiFileInfo={workflow.apiFileInfo} index={index} />
                                                       ))}
                                                 </TableBody>

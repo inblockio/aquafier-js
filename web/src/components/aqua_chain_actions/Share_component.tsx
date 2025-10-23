@@ -1,7 +1,7 @@
 import appStore from '@/store'
 import { Contract } from '@/types/types'
 import { SYSTEM_WALLET_ADDRESS } from '@/utils/constants'
-import { fetchWalletAddressesAndNamesForInputRecommendation, getGenesisHash, isValidEthereumAddress, timeToHumanFriendly } from '@/utils/functions'
+import { fetchFiles, fetchWalletAddressesAndNamesForInputRecommendation, getGenesisHash, isValidEthereumAddress, timeToHumanFriendly } from '@/utils/functions'
 import { getAquaTreeFileObject } from 'aqua-js-sdk'
 import axios from 'axios'
 import { Share2, X, Users, ExternalLink, Check, Copy, Lock, Trash2, Plus } from 'lucide-react'
@@ -21,7 +21,7 @@ import WalletAdrressClaim from '@/pages/v2_claims_workflow/WalletAdrressClaim'
 
 const ShareComponent = () => {
 
-      const { selectedFileInfo, setSelectedFileInfo, setOpenDialog, backend_url, session, files, systemFileInfo } = useStore(appStore)
+      const { selectedFileInfo, setSelectedFileInfo, setOpenDialog, backend_url, session, setWorkflows, workflows, systemFileInfo } = useStore(appStore)
       const [loading, setLoading] = useState(true)
       const [recipientType, setRecipientType] = useState<'0xfabacc150f2a0000000000000000000000000000' | 'specific'>('0xfabacc150f2a0000000000000000000000000000')
       // const [walletAddress, setWalletAddress] = useState('')
@@ -54,6 +54,13 @@ const ShareComponent = () => {
 
 
       useEffect(() => {
+
+            // if(workflows.fileData.length ===0){
+(async ()=>{
+       const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
+                  setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+})()
+            // }
             const timer = setTimeout(() => {
                   setLoading(false)
             }, 1000)
@@ -360,7 +367,7 @@ const ShareComponent = () => {
                                                                         </div>
                                                                         <div className="flex-1">
                                                                               <WalletAutosuggest
-                                                                                    walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, files)}
+                                                                                    walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, workflows)}
                                                                                     field={{
                                                                                           name: `share_address_${index}`,
                                                                                     }}
