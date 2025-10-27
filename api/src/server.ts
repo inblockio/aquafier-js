@@ -163,15 +163,15 @@ function buildServer() {
     fastify.register(workflowsController);
 
 
-    fastify.addHook("onRequest", (request, reply, done) => {
+    fastify.addHook("onRequest", function (request, reply, done) {
         const nonce = request.headers['nonce'];
         const activeSpan = getCurrentActiveSpan();
         if (activeSpan && typeof nonce == 'string') {
             const session = prisma.siweSession.findUnique({
                 where: {nonce}
             });
-            session.then(session => {
-                activeSpan.setAttribute("wallet.address", session?.address as string)
+            session.then(sess => {
+                activeSpan.setAttribute("wallet.address", sess?.address as string)
             })
         }
         done()

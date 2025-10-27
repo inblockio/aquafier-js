@@ -1,0 +1,23 @@
+filebeat.config:
+  modules:
+    path: ${path.config}/modules.d/*.yml
+    reload.enabled: false
+
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      hints.enabled: true
+
+processors:
+  - add_cloud_metadata: ~
+  - rename:
+      fields:
+        - from: "msg"
+          to: "message"
+      ignore_missing: true
+      fail_on_error: false
+
+cloud.id: ${CLOUD_ID}
+
+output.elasticsearch:
+  api_key: ${CLOUD_AUTH}

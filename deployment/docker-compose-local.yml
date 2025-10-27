@@ -9,8 +9,10 @@ services:
       POSTGRES_DB: aquafier
       POSTGRES_USER: ${DB_USER:-aquafier}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    labels:
+      - "co.elastic.logs/enabled=true"
     ports:
-      - 5438:5432
+      - 5432:5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -32,12 +34,31 @@ services:
   #   env_file:
   #     - .env
   #   restart: "no"  # Run once and exit
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:9.1.5
+    container_name: filebeat
+    user: root
+    volumes:
+      - filebeat_data:/usr/share/filebeat/data
+      - ./filebeat.docker.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - CLOUD_ID=${CLOUD_ID}
+      - CLOUD_AUTH=${CLOUD_AUTH}
+    command: [ "-e", "--strict.perms=false" ]  # config is root-owned on many hosts
 
   aqua-container:
-    build:
-      context: ./..
-      dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
+    #    build:
+    #      context: ./..
+    #      dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
+    image: ghcr.io/inblockio/aquafier-js:dev
     restart: always
+    labels:
+      co.elastic.logs/enabled: true
+      co.elastic.logs/json.overwrite_keys: true
+      co.elastic.logs/json.add_error_key: true
+      co.elastic.logs/json.expand_keys: true
     env_file:
       - .env
     environment:
@@ -63,20 +84,21 @@ services:
       - ./restore:/restore
     # volumes:
     #   - ./dev_mount_points/aquafier:/app/backend/media
-
-
-  s3storage:
-    image: minio/minio:latest
-    restart: always
-    ports:
-      - 9000:9000
-    command: [ "server", "/data" ]
-    volumes:
-      - s3_storage:/data
-    environment:
-      MINIO_ROOT_USER: ${S3_USER:-aquafier}
-      MINIO_ROOT_PASSWORD: ${S3_PASSWORD:-supersafepassword123}
+#
+#
+#  s3storage:
+#    image: minio/minio:latest
+#    restart: always
+#    ports:
+#      - 9000:9000
+#    command: [ "server", "/data" ]
+#    volumes:
+#      - s3_storage:/data
+#    environment:
+#      MINIO_ROOT_USER: ${S3_USER:-aquafier}
+#      MINIO_ROOT_PASSWORD: ${S3_PASSWORD:-supersafepassword123}
 
 volumes:
   postgres_data:
   s3_storage:
+  filebeat_data:
