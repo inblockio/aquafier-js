@@ -10,7 +10,7 @@ import {
       estimateFileSize,
       fetchFiles,
       formatCryptoAddress,
-      generateAvatar,
+      generateAvatar, 
       getAquaTreeFileName,
       getAquaTreeFileObject,
       getGenesisHash,
@@ -258,18 +258,39 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
 }
 
 const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, showShadow, hideOpenProfileButton, noBg, timestamp }: ISignatureWalletAddressCard) => {
-      const { files, systemFileInfo, session, setFiles, backend_url, setOpenDialog, setSelectedFileInfo } = useStore(appStore)
+      const { setWorkflows, workflows, systemFileInfo, session, setFiles, backend_url, setOpenDialog, setSelectedFileInfo } = useStore(appStore)
       const [claims, setClaims] = useState<IClaim[]>([])
       const [loading, setLoading] = useState(false)
       // const [sharedProfileItem, setSharedProfileItem] = useState<ApiFileInfo | null>(null)
       // const [showShareDialog, setShowShareDialog] = useState(false)
+      const [isLoading, setIsLoading] = useState<boolean>(false)
       const navigate = useNavigate()
 
       const shadowClasses = showShadow ? 'shadow-lg hover:shadow-xl transition-shadow duration-300' : 'shadow-none'
 
       const requiredClaims = ['simple_claim', 'domain_claim', 'identity_claim', 'phone_number_claim', 'email_claim', 'user_signature']
 
-      const getWalletClaims = () => {
+      useEffect(() => {
+      
+
+        const loadWorkflows = async () => {
+            setIsLoading(true);
+            try {
+                const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce);
+                setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' });
+                processFilesToGetWorkflows(filesApi.files);
+            } catch (error) {
+                console.error('Failed to load workflows:', error);
+                // Consider setting an error state here
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadWorkflows();
+    }, [])
+
+      const processFilesToGetWorkflows = (files: ApiFileInfo[]) => {
+      // const getWalletClaims = () => {
             setLoading(true)
             const aquaTemplates: string[] = systemFileInfo.map(e => {
                   try {
@@ -279,16 +300,16 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                   }
             })
 
-            if (files && files.fileData.length > 0) {
-                  let attestationFiles = files.fileData.filter(file => {
+            if (files && files.length > 0) {
+                  let attestationFiles = files.filter(file => {
                         const fileInfo = isWorkFlowData(file.aquaTree!, aquaTemplates)
                         return fileInfo.isWorkFlow && fileInfo.workFlow === 'identity_attestation'
                   })
 
                   const localClaims: IClaim[] = []
                   // let _totalAttestations = 0
-                  for (let i = 0; i < files.fileData.length; i++) {
-                        const aquaTree = files.fileData[i].aquaTree
+                  for (let i = 0; i < files.length; i++) {
+                        const aquaTree = files[i].aquaTree
                         if (aquaTree) {
                               const { isWorkFlow, workFlow } = isWorkFlowData(aquaTree!, aquaTemplates)
 
@@ -335,7 +356,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                                 claimType: workFlow,
                                                 claimName: claimName,
                                                 attestationsCount: attestationsCount,
-                                                apiFileInfo: files.fileData[i],
+                                                apiFileInfo: files[i],
                                           }
                                           localClaims.push(claimInformation)
                                     }
@@ -627,7 +648,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
 
                   // link user attestations
-                  let allSimpleClaimFiles = files.fileData.filter((e) => {
+                  let allSimpleClaimFiles = workflows.fileData.filter((e) => {
                         let genesisRevisionHash = getGenesisHash(e.aquaTree!)
                         if (genesisRevisionHash) {
 
@@ -694,15 +715,25 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             }
       }
 
-      useEffect(() => {
-            // Defer the heavy computation to allow UI to render first
-            const timeoutId = setTimeout(() => {
-                  getWalletClaims()
-            }, 0)
+      // useEffect(() => {
+      //       // Defer the heavy computation to allow UI to render first
+      //       const timeoutId = setTimeout(() => {
+      //             getWalletClaims()
+      //       }, 0)
 
-            return () => clearTimeout(timeoutId)
-            // }, [files.length])
-      }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), walletAddress])
+      //       return () => clearTimeout(timeoutId)
+      //       // }, [files.length])
+      // }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), walletAddress])
+
+       if (isLoading) {
+
+        return <div className="flex items-center gap-2">
+            {/* Circular Loading Spinner */}
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            <span>Loading Profile Claims</span>
+        </div>
+    }
+
 
       return (
             <div className={`${width ? width : 'w-full'} bg-transparent`}>

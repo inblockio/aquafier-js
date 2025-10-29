@@ -57,7 +57,7 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
   const handlePostAuthentication = async () => {
     if (session?.address) {
      
-                              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
                               setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
 
     }
