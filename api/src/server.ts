@@ -33,7 +33,6 @@ import Logger from "./utils/logger";
 import DNSClaimVerificationController from './controllers/dns_claim_verification';
 import metricsController from './controllers/metrics';
 import workflowsController from './controllers/workflow';
-import {prisma} from "./database/db";
 import {getCurrentActiveSpan} from "./utils/apm";
 
 
@@ -163,16 +162,11 @@ function buildServer() {
     fastify.register(workflowsController);
 
 
-    fastify.addHook("onRequest", function (request, reply, done) {
+    fastify.addHook("onRequest", async function (request, reply, done) {
         const nonce = request.headers['nonce'];
         const activeSpan = getCurrentActiveSpan();
         if (activeSpan && typeof nonce == 'string') {
-            const session = prisma.siweSession.findUnique({
-                where: {nonce}
-            });
-            session.then(sess => {
-                activeSpan.setAttribute("wallet.address", sess?.address as string)
-            })
+            activeSpan.setAttribute("nonce", nonce);
         }
         done()
     })
