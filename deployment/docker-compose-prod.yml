@@ -49,8 +49,9 @@ services:
       NGINX_CLIENT_MAX_BODY_SIZE: 210M
       PROXY_BODY_SIZE: 200M
     ports:
-      - 80:80
-      - 443:443
+      - "80:80"
+      - "443:443/tcp"
+      - "443:443/udp"
     volumes:
       - proxy_data_html:/usr/share/nginx/html
       - proxy_data_certs:/etc/nginx/certs
