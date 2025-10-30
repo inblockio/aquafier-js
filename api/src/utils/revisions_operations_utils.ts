@@ -11,11 +11,12 @@ import {prisma} from '../database/db';
 import {AquaForms, Link, Prisma, Revision, Signature, WitnessEvent} from '@prisma/client';
 import * as fs from "fs"
 import path from 'path';
-import {getGenesisHash, getAquaTreeFileName} from './aqua_tree_utils';
+import {getGenesisHash} from './aqua_tree_utils';
 import {AquaTreeFileData, LinkedRevisionResult, ProcessRevisionResult, UpdateGenesisResult} from '../models/types';
 import {SYSTEM_WALLET_ADDRESS, systemTemplateHashes} from '../models/constants';
 import {getFileSize} from "./file_utils";
 import Logger from "./logger";
+import { getAquaTreeFileName } from './api_utils';
 // import { getAquaTreeFileName } from '../../../web/src/utils/functions';
 
 // Main refactored function
@@ -114,7 +115,7 @@ export async function createAquaTreeFromRevisions(
 
         fileObjects.push(
             {
-                fileContent: aquaTree,
+                fileContent: JSON.stringify(aquaTree),
                 fileName: getAquaTreeFileName(aquaTree),
                 path: '',
             }
