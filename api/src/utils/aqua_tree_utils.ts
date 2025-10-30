@@ -55,6 +55,21 @@ export function getGenesisHash(aquaTree: AquaTree): string | null {
     return aquaTreeGenesisHash
 }
 
+export function getAquaTreeFileName(aquaTree: AquaTree): string {
+    let mainAquaHash = '';
+    // fetch the genesis
+    const revisionHashes = Object.keys(aquaTree!.revisions!);
+    for (const revisionHash of revisionHashes) {
+        const revisionData = aquaTree!.revisions![revisionHash];
+        if (revisionData.previous_verification_hash == null || revisionData.previous_verification_hash == '') {
+            mainAquaHash = revisionHash;
+            break;
+        }
+    }
+
+    return aquaTree!.file_index[mainAquaHash] ?? '';
+}
+
 /**
  * Validates an AquaTree object to ensure all required properties exist and are valid
  * @param tree The AquaTree object to validate
