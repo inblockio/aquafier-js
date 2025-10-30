@@ -758,6 +758,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   fileObject: fileObject,
             }
 
+            console.log(`linking to system aqua tree ${JSON.stringify(templateApiFileInfo.aquaTree!, null, 4)}`)
+
             const linkedAquaTreeFileObj = getAquaTreeFileObject(templateApiFileInfo)
             if (!linkedAquaTreeFileObj) {
                   throw new Error('System Aqua tree has error')
@@ -1022,18 +1024,21 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
 
                   console.log(`4.`)
-                  //  console.log(`see me ...1`)
+                   console.log(`B4 getSystemFiles ${JSON.stringify(systemFileInfo, null, 4)}`)
                   // Step 3: Get system files
                   const allSystemFiles = await getSystemFiles(systemFileInfo, backend_url, session?.address || '')
                   setSystemFileInfo(allSystemFiles)
 
+                   console.log(`5.`)
                   // Step 4: Find template API file info
                   const templateApiFileInfo = findTemplateApiFileInfo(allSystemFiles, selectedTemplate)
 
+                      console.log(`6.`)
                   // Step 5: Initialize aquafier and prepare data
                   const aquafier = new Aquafier()
                   const fileName = generateFileName(selectedTemplate, completeFormData)
 
+                      console.log(`7.`)
                   //  console.log(`see me ...3`)
                   // Step 6: Handle identity attestation specific logic
                   if (selectedTemplate?.name === 'identity_attestation') {
@@ -1071,7 +1076,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   }
 
                   //  console.log('Complete form data: ', completeFormData)
-
+    console.log(`8.`)
                   // Step 7: Prepare final form data
                   const finalFormDataRes = await prepareFinalFormData(completeFormData, selectedTemplate)
 
@@ -1083,7 +1088,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   const finalFormDataFiltered = finalFormDataRes.filteredData
                   // Step 8: Create genesis aqua tree
                   const { genesisAquaTree, fileObject } = await createGenesisAquaTree(finalFormDataFiltered, fileName, aquafier)
-
+    console.log(`10.`)
                   // Step 9: Link to system aqua tree
                   let aquaTreeData = await linkToSystemAquaTree(genesisAquaTree, fileObject, templateApiFileInfo, aquafier)
 
