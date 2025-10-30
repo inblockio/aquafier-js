@@ -892,12 +892,12 @@ export default async function explorerController(fastify: FastifyInstance) {
             //     });
             // }
 
-            console.log(cliRedify(`Current user: ${session.address} - Deleting latest revision: ${currentUserLatestRevisionHash} - ${lastLocalRevisionHash}`))
+            // console.log(cliRedify(`Current user: ${session.address} - Deleting latest revision: ${currentUserLatestRevisionHash} - ${lastLocalRevisionHash}`))
             // throw new Error("test")
             // let deletionResult = await deleteAquaTree(lastLocalRevisionHash, session.address, url)
             let response = await deleteAquaTreeFromSystem(session.address, lastLocalRevisionHash)
 
-            console.log(cliRedify(JSON.stringify(response, null, 4)))
+            // console.log(cliRedify(JSON.stringify(response, null, 4)))
 
             let latest: Array<{
                 hash: string;

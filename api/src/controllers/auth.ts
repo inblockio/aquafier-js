@@ -37,8 +37,6 @@ export default async function authController(fastify: FastifyInstance) {
         }
       })
 
-      console.log("process.env.DEFAULT_WITNESS_NETWORK", process.env.DEFAULT_WITNESS_NETWORK)
-
       if (settingsData == null) {
         let defaultData = {
           user_pub_key: session.address!!,
