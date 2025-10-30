@@ -249,7 +249,7 @@ export function getAquaTreeFileObject(fileInfo: ApiFileInfo): FileObject | undef
       }
       mainAquaFileName = fileInfo.aquaTree!.file_index[mainAquaHash]
 
-      return fileInfo.fileObject.find(e => e.fileName == mainAquaFileName)
+      return fileInfo.fileObject.find(e => e.fileName == mainAquaFileName) || fileInfo.linkedFileObjects.find(e => e.fileName === mainAquaFileName)
 }
 
 export function getGenesisHash(aquaTree: AquaTree): string | null {
