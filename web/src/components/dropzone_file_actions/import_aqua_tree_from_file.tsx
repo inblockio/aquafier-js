@@ -1,0 +1,74 @@
+import {LuImport} from 'react-icons/lu'
+import axios from 'axios'
+import {useStore} from 'zustand'
+import appStore from '../../store'
+import {useState} from 'react'
+import {IDropzoneAction} from '../../types/types'
+import {Button} from '@/components/ui/button'
+import {toast} from 'sonner'
+import {fetchFiles} from '@/utils/functions'
+
+// export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
+export const ImportAquaChainFromFile = ({ file, filesWrapper, removeFilesListForUpload}: IDropzoneAction) => {
+      const [uploading, setUploading] = useState(false)
+      // const [uploaded, setUploaded] = useState(false)
+
+      const { metamaskAddress, setFiles, session, backend_url } = useStore(appStore)
+
+      const importAquaChain = async () => {
+
+             if(uploading){
+                  toast.info(`Wait for upload to complete`)
+                  return
+            }
+            
+            if (!file) {
+                  toast.error( 'No file selected!')
+                  return
+            }
+
+            const formData = new FormData()
+            formData.append('file', file)
+            formData.append('account', 'example')
+            setUploading(true)
+            try {
+                  const url = `${backend_url}/explorer_aqua_file_upload`
+                   await axios.post(url, formData, {
+                        headers: {
+                              'Content-Type': 'multipart/form-data',
+                              metamask_address: metamaskAddress,
+                        },
+                  })
+
+                  //  const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                  //                                     setFiles({ fileData: files, status: 'loaded' })
+
+
+                  const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+
+                              
+                  toast.success( 'Aqua Chain imported successfully')
+                  setUploading(false)
+                  // setUploaded(true)
+                  removeFilesListForUpload(filesWrapper)
+                  return
+            } catch (error) {
+                  setUploading(false)
+                  toast.error( `Failed to import chain: ${error}`)
+            }
+      }
+
+      return (
+            <Button
+                  data-testid="import-action-42-button"
+                  size="sm"
+                  className="w-[80px] flex items-center gap-1 text-muted-foreground"
+                  onClick={importAquaChain}
+                  // disabled={uploadedIndexes.includes(fileIndex) || uploaded}
+            >
+                  {uploading ? <span className="w-4 h-4 animate-spin border-2 border-muted-foreground border-t-transparent rounded-full" /> : <LuImport className="w-4 h-4" />}
+                  Import
+            </Button>
+      )
+}

@@ -3,7 +3,7 @@ import appStore from '../../store'
 import { useStore } from 'zustand'
 import FilesList from './files_list'
 import { AlertCircle, CheckCircle, FileText, FolderPlus, Loader2, Minimize2, Plus, Upload, X } from 'lucide-react'
-import { FileItemWrapper, UploadStatus } from '@/types/types'
+import { FileItemWrapper, UploadStatus } from '../../types/types'
 import {
       checkIfFileExistInUserFiles,
       fetchFiles,
@@ -13,28 +13,29 @@ import {
       isJSONKeyValueStringContent,
       isZipFile,
       readFileContent
-} from '@/utils/functions'
-import { maxFileSizeForUpload } from '@/utils/constants'
+} from '../../utils/functions'
+import { maxFileSizeForUpload } from '../../utils/constants'
 import axios from 'axios'
 
 
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Progress } from '@/components/ui/progress'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../components/ui/dialog'
+import { Progress } from '../../components/ui/progress'
+import { Button } from '../../components/ui/button'
+import { Badge } from '../../components/ui/badge'
+import { Card, CardContent } from '../../components/ui/card'
+
 
 // import { CompleteChainView } from './components/files_chain_details';
-import { IDrawerStatus } from '@/models/AquaTreeDetails'
-import { CompleteChainView } from '@/components/files_chain_details'
-import FileDropZone from '@/components/dropzone_file_actions'
+import { IDrawerStatus } from '../../models/AquaTreeDetails'
+import { CompleteChainView } from '../../components/files_chain_details'
+import FileDropZone from '../../components/dropzone_file_actions'
 import { LuTrash2, LuUpload } from 'react-icons/lu'
 import { toast } from 'sonner'
-import { ImportAquaTree } from '@/components/dropzone_file_actions/import_aqua_tree'
-import { ImportAquaTreeZip } from '@/components/dropzone_file_actions/import_aqua_tree_zip'
-import { FormRevisionFile } from '@/components/dropzone_file_actions/form_revision'
+import { ImportAquaTree } from '../../components/dropzone_file_actions/import_aqua_tree'
+import { ImportAquaTreeZip } from '../../components/dropzone_file_actions/import_aqua_tree_zip'
+import { FormRevisionFile } from '../../components/dropzone_file_actions/form_revision'
 
-import ClaimTypesDropdownButton from '@/components/button_claim_dropdown'
+import ClaimTypesDropdownButton from '../../components/button_claim_dropdown'
 
 const FilesPage = () => {
       const {

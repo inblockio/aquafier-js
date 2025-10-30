@@ -5,7 +5,7 @@ import devtools from 'solid-devtools/vite';
 export default defineConfig({
   plugins: [devtools(), solidPlugin()],
   server: {
-    port: 5173,
+    port: 5174,
   },
   build: {
     target: 'esnext',
