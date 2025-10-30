@@ -1,18 +1,36 @@
-import * as React from 'react'
-import * as AvatarPrimitive from '@radix-ui/react-avatar'
+import { JSX, splitProps } from "solid-js"
+import { Avatar as AvatarRoot, AvatarImage, AvatarFallback } from "kobalte"
+import { cn } from "../../lib/utils"
 
-import { cn } from '@/lib/utils'
-
-function Avatar({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Root>) {
-      return <AvatarPrimitive.Root data-slot="avatar" className={cn('relative flex size-8 shrink-0 overflow-hidden rounded-full', className)} {...props} />
+export function Avatar(props: JSX.HTMLAttributes<HTMLSpanElement>) {
+  const [local, others] = splitProps(props, ["class"])
+  return (
+    <AvatarRoot
+      data-slot="avatar"
+      class={cn("relative flex size-8 shrink-0 overflow-hidden rounded-full", local.class)}
+      {...others}
+    />
+  )
 }
 
-function AvatarImage({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Image>) {
-      return <AvatarPrimitive.Image data-slot="avatar-image" className={cn('aspect-square size-full', className)} {...props} />
+export function AvatarImageComponent(props: JSX.HTMLAttributes<HTMLImageElement>) {
+  const [local, others] = splitProps(props, ["class"])
+  return (
+    <AvatarImage
+      data-slot="avatar-image"
+      class={cn("aspect-square size-full", local.class)}
+      {...others}
+    />
+  )
 }
 
-function AvatarFallback({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
-      return <AvatarPrimitive.Fallback data-slot="avatar-fallback" className={cn('bg-muted flex size-full items-center justify-center rounded-full', className)} {...props} />
+export function AvatarFallbackComponent(props: JSX.HTMLAttributes<HTMLSpanElement>) {
+  const [local, others] = splitProps(props, ["class"])
+  return (
+    <AvatarFallback
+      data-slot="avatar-fallback"
+      class={cn("bg-muted flex size-full items-center justify-center rounded-full", local.class)}
+      {...others}
+    />
+  )
 }
-
-export { Avatar, AvatarImage, AvatarFallback }

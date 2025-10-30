@@ -1,10 +1,9 @@
-import { createAppKit } from '@reown/appkit/react'
+import { createAppKit } from '@reown/appkit'
 import { EthersAdapter } from '@reown/appkit-adapter-ethers'
 import { mainnet, sepolia, polygon, arbitrum } from '@reown/appkit/networks'
 import { siweConfig } from './siweConfig'
 
 // Get projectId from https://cloud.reown.com
-// export const projectId = '80d7707d71e3502f8635b00e56173cdf'
 export const projectId = "9ed78593f9e1f84e3151ea58cfeea38b"
 
 // Create networks array
@@ -20,8 +19,6 @@ const metadata = {
   name: 'Aquafier',
   description: 'Aquafier - Decentralized Identity and Document Management',
   url: typeof window !== 'undefined' ? window.location.origin : 'https://aquafier.inblock.io',
-  // url: "http://localhost:5173",
-  // icons: ['https://github.com/inblockio/aquafier-js/blob/pr-438/web/public/images/inblock_logo.png?raw=true']
   icons: ["/images/ico.png"],
 }
 
@@ -49,7 +46,6 @@ export const appKit = createAppKit({
   },
   siweConfig,
   includeWalletIds: [
-    // Configure more wallet here: https://docs.reown.com/cloud/wallets/wallet-list
     "c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96", // Metamask
     "f323633c1f67055a45aac84e321af6ffe46322da677ffdd32f9bc1e33bafe29c", // Core wallet
     "a797aa35c0fadbfc1a53e7f675162ed5226968b44a19ee3d24385c64d1d3c393", // Phantom

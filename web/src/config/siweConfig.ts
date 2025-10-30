@@ -3,9 +3,9 @@ import type { SIWECreateMessageArgs, SIWESession, SIWEVerifyMessageArgs } from '
 import axios from 'axios'
 import { getCookie, setCookie, ensureDomainUrlHasSSL } from '../utils/functions'
 import { ETH_CHAINID_MAP_NUMBERS, SESSION_COOKIE_NAME } from '../utils/constants'
-import appStore from '../store'
+import appStore, { appStoreActions } from '../store'
 import { toast } from 'sonner'
-import { createSiweMessage } from '@/utils/appkit-wallet-utils'
+import { createSiweMessage } from '../utils/appkit-wallet-utils'
 import { ethers } from 'ethers'
 
 // Helper function to extract Ethereum address from DID or return as-is if already an address
@@ -52,7 +52,7 @@ export const siweConfig = createSIWEConfig({
     console.log("Here after nonce")
 
     try {
-      const backend_url = appStore.getState().backend_url
+      const backend_url = appStore.backend_url
       const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
       const response = await axios.get(url, {
         params: { nonce },
@@ -85,7 +85,7 @@ export const siweConfig = createSIWEConfig({
     console.log("Message: ", message)
     console.log("Signature: ", signature)
     try {
-      const backend_url = appStore.getState().backend_url
+      const backend_url = appStore.backend_url
       const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
       const domain = window.location.host
 
@@ -106,9 +106,9 @@ export const siweConfig = createSIWEConfig({
         )
 
         // Update app store
-        const store = appStore.getState()
-        store.setSession(responseData.session)
-        store.setUserProfile(responseData.user_settings)
+         const {  setMetamaskAddress, setFiles, setAvatar, setUserProfile, setSession } = appStoreActions;
+        setSession(responseData.session)
+        setUserProfile(responseData.user_settings)
 
         return true
       }
@@ -127,7 +127,7 @@ export const siweConfig = createSIWEConfig({
       const nonce = getCookie(SESSION_COOKIE_NAME)
 
       if (nonce) {
-        const backend_url = appStore.getState().backend_url
+        const backend_url = appStore.backend_url
         const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
         await axios.delete(url, {
           params: { nonce },
@@ -138,11 +138,13 @@ export const siweConfig = createSIWEConfig({
       setCookie(SESSION_COOKIE_NAME, '', new Date('1970-01-01T00:00:00Z'))
 
       // Clear store
-      const store = appStore.getState()
-      store.setMetamaskAddress(null)
-      store.setAvatar(undefined)
-      store.setSession(null)
-      store.setFiles({
+      // const store = appStore
+
+       const {  setMetamaskAddress, setFiles, setAvatar, setUserProfile, setSession } = appStoreActions;
+      setMetamaskAddress(null)
+      setAvatar(undefined)
+      setSession(null)
+      setFiles({
         fileData: [],
         status: 'idle',
       })

@@ -1,229 +1,227 @@
+import { createStore } from 'solid-js/store'
+import { createEffect, onMount } from 'solid-js'
 import { IDBPDatabase, openDB } from 'idb'
-import { createStore } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
 import { ApiFileInfo } from './models/FileInfo'
 import { ApiFileData, ApiFileInfoState, OpenDialog, Session, WebConfig } from './types/types'
-import { FormTemplate } from './components/aqua_forms/types'
+import { FormTemplate } from './types/aqua_forms'
 import { ensureDomainUrlHasSSL } from './utils/functions'
 
 type AppStoreState = {
-      user_profile: {
-            user_pub_key: string
-            cli_pub_key: string
-            cli_priv_key: string
-            witness_network: string
-            alchemy_key: string
-            theme: string
-            ens_name: string
-            enable_dba_claim: boolean
-            witness_contract_address: string | null
-      }
-      session: Session | null
-      files: ApiFileInfoState,
-      workflows: ApiFileInfoState,
-      webConfig: WebConfig,
-      apiFileData: ApiFileData[]
-      systemFileInfo: ApiFileInfo[]
-      formTemplates: FormTemplate[]
-      selectedFileInfo: ApiFileInfo | null
-      openDialog: OpenDialog | null
-      // openFilesDetailsPopUp: boolean | null
-      // openCreateTemplatePopUp: boolean | null
-      // openCreateAquaSignPopUp: boolean | null
-      // openCreateClaimPopUp: boolean | null
-      // openCreateClaimAttestationPopUp: boolean | null
-      metamaskAddress: string | null
-      avatar: string | undefined
-      backend_url: string
-      contracts: any[]
+  user_profile: {
+    user_pub_key: string
+    cli_pub_key: string
+    cli_priv_key: string
+    witness_network: string
+    alchemy_key: string
+    theme: string
+    ens_name: string
+    enable_dba_claim: boolean
+    witness_contract_address: string | null
+  }
+  session: Session | null
+  files: ApiFileInfoState
+  workflows: ApiFileInfoState
+  webConfig: WebConfig
+  apiFileData: ApiFileData[]
+  systemFileInfo: ApiFileInfo[]
+  formTemplates: FormTemplate[]
+  selectedFileInfo: ApiFileInfo | null
+  openDialog: OpenDialog | null
+  metamaskAddress: string | null
+  avatar: string | undefined
+  backend_url: string
+  contracts: any[]
 }
 
-type AppStoreActions = {
-      setUserProfile: (config: AppStoreState['user_profile']) => void
-      setSession: (config: AppStoreState['session']) => void
-      setMetamaskAddress: (address: AppStoreState['metamaskAddress']) => void
-      setAvatar: (avatar: AppStoreState['avatar']) => void
-      setFiles: (files: AppStoreState['files']) => void
-      setWorkflows: (workflows: AppStoreState['workflows']) => void
-      setWebConfig: (config: AppStoreState['webConfig']) => void
-      setSelectedFileInfo: (file: ApiFileInfo | null) => void
-
-      setOpenDialog: (state: OpenDialog | null) => void
-      // setOpenFileDetailsPopUp: (state: boolean | null) => void
-      // setOpenCreateTemplatePopUp: (state: boolean | null) => void
-      // setOpenCreateAquaSignPopUp: (state: boolean | null) => void
-      // setOpenCreateClaimPopUp: (state: boolean | null) => void
-      // setOpenCreateClaimAttestationPopUp: (state: boolean | null) => void
-
-      addFile: (file: ApiFileInfo) => void
-      setApiFileData: (apiFileData: ApiFileData[]) => void
-      setSystemFileInfo: (systemFileInfo: ApiFileInfo[]) => void
-      setFormTemplate: (apiFileData: FormTemplate[]) => void
-      setContracts: (contracts: any[]) => void
-      setBackEndUrl: (backend_url: AppStoreState['backend_url']) => void
-}
-
-type TAppStore = AppStoreState & AppStoreActions
-
-// Create a singleton promise for the database to prevent multiple upgrade attempts
+// Singleton database promise
 let dbPromiseInstance: Promise<IDBPDatabase> | null = null
 
 const getDbPromise = () => {
-      if (!dbPromiseInstance) {
-            dbPromiseInstance = openDB('aquafier-db', 2, {
-                  upgrade(db, _oldVersion, _newVersion, _transaction) {
-                        // Handle version upgrades properly
-                        if (!db.objectStoreNames.contains('store')) {
-                              db.createObjectStore('store')
-                        }
-                  },
-
-                  // Add blocking handler to prevent version conflicts
-                  blocked() {
-                        console.warn('Database upgrade blocked by another connection')
-                        // Optionally notify user or handle the blocking situation
-                  },
-
-                  // Add blocking handler for close events
-                  blocking() {
-                        console.warn('Database needs to close for upgrade')
-                        // Optionally notify user or handle the blocking situation
-                  },
-            }).catch(error => {
-                  console.error('Database opening error:', error)
-                  dbPromiseInstance = null // Reset on error to allow retry
-                  throw error
-            })
-      }
-      return dbPromiseInstance
+  if (!dbPromiseInstance) {
+    dbPromiseInstance = openDB('aquafier-db', 2, {
+      upgrade(db, _oldVersion, _newVersion, _transaction) {
+        if (!db.objectStoreNames.contains('store')) {
+          db.createObjectStore('store')
+        }
+      },
+      blocked() {
+        console.warn('Database upgrade blocked by another connection')
+      },
+      blocking() {
+        console.warn('Database needs to close for upgrade')
+      },
+    }).catch(error => {
+      console.error('Database opening error:', error)
+      dbPromiseInstance = null
+      throw error
+    })
+  }
+  return dbPromiseInstance
 }
 
-// Custom storage object for Zustand using IndexedDB
-const indexedDBStorage = {
-      getItem: async (name: string) => {
-            try {
-                  const db = await getDbPromise()
-                  return (await db.get('store', name)) || null
-            } catch (error) {
-                  console.error('Error getting item from IndexedDB:', error)
-                  return null
-            }
-      },
-      setItem: async (name: string, value: string) => {
-            try {
-                  const db = await getDbPromise()
-                  await db.put('store', value, name)
-            } catch (error) {
-                  console.error('Error setting item in IndexedDB:', error)
-                  throw error
-            }
-      },
-      removeItem: async (name: string) => {
-            try {
-                  const db = await getDbPromise()
-                  await db.delete('store', name)
-            } catch (error) {
-                  console.error('Error removing item from IndexedDB:', error)
-                  throw error
-            }
-      },
+// IndexedDB persistence helpers
+const loadFromIndexedDB = async (key: string) => {
+  try {
+    const db = await getDbPromise()
+    const value = await db.get('store', key)
+    return value ? JSON.parse(value) : null
+  } catch (error) {
+    console.error('Error loading from IndexedDB:', error)
+    return null
+  }
 }
 
-const appStore = createStore<TAppStore>()(
-      persist(
-            set => ({
-                  // Initial state
-                  user_profile: {
-                        ens_name: '',
-                        user_pub_key: '',
-                        cli_pub_key: '',
-                        cli_priv_key: '',
-                        witness_network: '',
-                        alchemy_key: '',
-                        theme: 'light',
-                        enable_dba_claim: false,
-                        witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
-                  },
-                  session: null,
-                  files: {
-                        fileData: [],
-                        status: 'idle',
-                  },
-                  workflows: {
-                        fileData: [],
-                        status: 'idle',
-                  },
-                  selectedFileInfo: null,
-                  webConfig: {
-                        CUSTOM_LANDING_PAGE_URL: false,
-                        CUSTOM_LOGO_URL: false,
-                        SENTRY_DSN: undefined,
-                        BACKEND_URL: undefined,
-                        AUTH_PROVIDER: undefined
-                  },
-                  openDialog: null, // Initialize openDialog state
-                  // openFilesDetailsPopUp: false,
-                  // openCreateTemplatePopUp: false,
-                  // openCreateAquaSignPopUp: false,
-                  // openCreateClaimPopUp: false,
-                  // openCreateClaimAttestationPopUp: false,
-                  metamaskAddress: '',
-                  avatar: '',
-                  apiFileData: [],
-                  systemFileInfo: [],
-                  formTemplates: [],
-                  backend_url: 'http://0.0.0.0:3000',
-                  contracts: [],
+const saveToIndexedDB = async (key: string, value: any) => {
+  try {
+    const db = await getDbPromise()
+    await db.put('store', JSON.stringify(value), key)
+  } catch (error) {
+    console.error('Error saving to IndexedDB:', error)
+  }
+}
 
-                  // Actions
-                  setUserProfile: config => set({ user_profile: config }),
-                  setSession: session => set({ session: session }),
-                  setMetamaskAddress: (address: AppStoreState['metamaskAddress']) => set({ metamaskAddress: address }),
-                  setAvatar: (avatar: AppStoreState['avatar']) => set({ avatar: avatar }),
-                  setFiles: (files: AppStoreState['files']) => set({ files: files }),
-                  setWorkflows: (workflows: AppStoreState['workflows']) => set({ workflows: workflows }),
-                  setSelectedFileInfo: (file: ApiFileInfo | null) => set({ selectedFileInfo: file }),
+// Initial state
+const initialState: AppStoreState = {
+  user_profile: {
+    ens_name: '',
+    user_pub_key: '',
+    cli_pub_key: '',
+    cli_priv_key: '',
+    witness_network: '',
+    alchemy_key: '',
+    theme: 'light',
+    enable_dba_claim: false,
+    witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+  },
+  session: null,
+  files: {
+    fileData: [],
+    status: 'idle',
+  },
+  workflows: {
+    fileData: [],
+    status: 'idle',
+  },
+  selectedFileInfo: null,
+  webConfig: {
+    CUSTOM_LANDING_PAGE_URL: false,
+    CUSTOM_LOGO_URL: false,
+    SENTRY_DSN: undefined,
+    BACKEND_URL: undefined,
+    AUTH_PROVIDER: undefined
+  },
+  openDialog: null,
+  metamaskAddress: '',
+  avatar: '',
+  apiFileData: [],
+  systemFileInfo: [],
+  formTemplates: [],
+  backend_url: 'http://0.0.0.0:3000',
+  contracts: [],
+}
 
-                  setOpenDialog: (state: OpenDialog | null) => set({ openDialog: state }),
-                  // setOpenFileDetailsPopUp: (state: boolean | null) => set({ openFilesDetailsPopUp: state }),
-                  // setOpenCreateTemplatePopUp: (state: boolean | null) => set({ openCreateTemplatePopUp: state }),
-                  // setOpenCreateAquaSignPopUp: (state: boolean | null) => set({ openCreateAquaSignPopUp: state }),
-                  // setOpenCreateClaimPopUp: (state: boolean | null) => set({ openCreateClaimPopUp: state }),
-                  // setOpenCreateClaimAttestationPopUp: (state: boolean | null) => set({ openCreateClaimAttestationPopUp: state }),
+// Create the store
+const [appStore, setAppStore] = createStore<AppStoreState>(initialState)
 
-                  setApiFileData: (apiFileData: ApiFileData[]) => set({ apiFileData: apiFileData }),
-                  setSystemFileInfo: (systemFileInfo: ApiFileInfo[]) => set({ systemFileInfo: systemFileInfo }),
-                  setFormTemplate: (apiFormTemplate: FormTemplate[]) => set({ formTemplates: apiFormTemplate }),
-                  setContracts: (contractData: any[]) => set({ contracts: contractData }),
-                  setWebConfig(config) {
-                        set({ webConfig: config })
-                  },
-                  addFile: (file: ApiFileInfo) => {
-                        const { files } = appStore.getState()
-                        files.fileData = [file, ...files.fileData]
-                        set({ files: files })
-                  },
-                  setBackEndUrl: (backend_url: AppStoreState['backend_url']) => {
-                        let urlData = ensureDomainUrlHasSSL(backend_url)
-                        set({ backend_url: urlData })
-                  },
-            }),
-            {
-                  name: 'app-store', // Unique name for storage key
-                  storage: createJSONStorage(() => indexedDBStorage),
-                  partialize: state => ({
-                        // List all state properties you want to persist EXCEPT selectedFileInfo
-                        user_profile: state.user_profile,
-                        session: state.session,
-                        // files: state.files,
-                        apiFileData: state.apiFileData,
-                        metamaskAddress: state.metamaskAddress,
-                        avatar: state.avatar,
-                        backend_url: state.backend_url,
-                        // selectedFileInfo & setApiFileData is intentionally omitted
-                  }),
-            }
-      )
-)
+// Properties to persist (excluding selectedFileInfo)
+const persistedKeys: (keyof AppStoreState)[] = [
+  'user_profile',
+  'session',
+  'apiFileData',
+  'metamaskAddress',
+  'avatar',
+  'backend_url',
+]
 
+// Auto-persist logic - runs when persisted properties change
+let isHydrating = false
+
+createEffect(() => {
+  if (isHydrating) return
+
+  const stateToPersist: Partial<AppStoreState> = {}
+  persistedKeys.forEach(key => {
+    stateToPersist[key] = appStore[key] as any
+  })
+
+  saveToIndexedDB('app-store', stateToPersist)
+})
+
+// Hydrate from IndexedDB on initialization
+export const hydrateStore = async () => {
+  isHydrating = true
+  const persisted = await loadFromIndexedDB('app-store')
+  
+  if (persisted) {
+    setAppStore(persisted)
+  }
+  
+  isHydrating = false
+}
+
+// Store actions
+export const appStoreActions = {
+  setUserProfile: (config: AppStoreState['user_profile']) => {
+    setAppStore('user_profile', config)
+  },
+
+  setSession: (session: Session | null) => {
+    setAppStore('session', session)
+  },
+
+  setMetamaskAddress: (address: string | null) => {
+    setAppStore('metamaskAddress', address)
+  },
+
+  setAvatar: (avatar: string | undefined) => {
+    setAppStore('avatar', avatar)
+  },
+
+  setFiles: (files: ApiFileInfoState) => {
+    setAppStore('files', files)
+  },
+
+  setWorkflows: (workflows: ApiFileInfoState) => {
+    setAppStore('workflows', workflows)
+  },
+
+  setWebConfig: (config: WebConfig) => {
+    setAppStore('webConfig', config)
+  },
+
+  setSelectedFileInfo: (file: ApiFileInfo | null) => {
+    setAppStore('selectedFileInfo', file)
+  },
+
+  setOpenDialog: (state: OpenDialog | null) => {
+    setAppStore('openDialog', state)
+  },
+
+  setApiFileData: (apiFileData: ApiFileData[]) => {
+    setAppStore('apiFileData', apiFileData)
+  },
+
+  setSystemFileInfo: (systemFileInfo: ApiFileInfo[]) => {
+    setAppStore('systemFileInfo', systemFileInfo)
+  },
+
+  setFormTemplate: (formTemplates: FormTemplate[]) => {
+    setAppStore('formTemplates', formTemplates)
+  },
+
+  setContracts: (contracts: any[]) => {
+    setAppStore('contracts', contracts)
+  },
+
+  addFile: (file: ApiFileInfo) => {
+    setAppStore('files', 'fileData', files => [file, ...files])
+  },
+
+  setBackEndUrl: (backend_url: string) => {
+    const urlData = ensureDomainUrlHasSSL(backend_url)
+    setAppStore('backend_url', urlData)
+  },
+}
+
+export { appStore }
 export default appStore
