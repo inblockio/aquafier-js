@@ -91,10 +91,11 @@ export async function createAquaTreeFromRevisions(
 
         // Step 2: Get all associated files
         const aquaTreeFileData = await fetchAquaTreeFileData(revisionPubKeyHashes);
-        // Logger.info("File indexes: ", aquaTreeFileData)
-
+        Logger.info("aquaTreeFileData -- File indexes: ", aquaTreeFileData.length)
+        
         // Step 3: Create file objects for download
         fileObjects = await createFileObjects(aquaTreeFileData, url);
+        Logger.info("aquaTreeFileData -- fileObjects : ", fileObjects.length)
 
         // Logger.info("File indexe----: ", JSON.stringify(fileObjects, null, 4))
 

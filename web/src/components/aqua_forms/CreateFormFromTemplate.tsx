@@ -13,6 +13,7 @@ import {
       formatDate,
       formatTxtRecord,
       generateProofFromSignature,
+      getAquaTreeFileObject,
       getGenesisHash,
       getLastRevisionVerificationHash,
       getRandomNumber,
@@ -25,7 +26,6 @@ import Aquafier, {
       AquaTreeWrapper,
       FileObject,
       getAquaTreeFileName,
-      getAquaTreeFileObject,
       Revision
 } from 'aqua-js-sdk'
 import axios from 'axios'
