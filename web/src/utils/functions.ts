@@ -236,6 +236,7 @@ export function getAquaTreeFileName(aquaTree: AquaTree): string {
 }
 
 export function getAquaTreeFileObject(fileInfo: ApiFileInfo): FileObject | undefined {
+      console.log("API FILE INFO: ", fileInfo)
       let mainAquaFileName = ''
       let mainAquaHash = ''
       // fetch the genesis
@@ -248,8 +249,9 @@ export function getAquaTreeFileObject(fileInfo: ApiFileInfo): FileObject | undef
             }
       }
       mainAquaFileName = fileInfo.aquaTree!.file_index[mainAquaHash]
+      console.log("Main FILE NAME IS: ", mainAquaFileName)
 
-      return fileInfo.fileObject.find(e => e.fileName == mainAquaFileName) || fileInfo.linkedFileObjects.find(e => e.fileName === mainAquaFileName)
+      return fileInfo.fileObject.find(e => e.fileName == mainAquaFileName) || fileInfo?.linkedFileObjects?.find(e => e.fileName === mainAquaFileName)
 }
 
 export function getGenesisHash(aquaTree: AquaTree): string | null {
