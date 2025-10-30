@@ -61,6 +61,7 @@ export function getAquaTreeFileName(aquaTree: AquaTree): string {
     //     //     }
     //     // }
     // }
+    
     let genesisHash = getGenesisHash(aquaTree);
     if (!genesisHash) {
         throw Error(`Genesis hash not found in aqua tree ${JSON.stringify(aquaTree)}`)
