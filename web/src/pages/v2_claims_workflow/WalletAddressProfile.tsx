@@ -10,7 +10,7 @@ import {
       estimateFileSize,
       fetchFiles,
       formatCryptoAddress,
-      generateAvatar, 
+      generateAvatar,
       getAquaTreeFileName,
       getAquaTreeFileObject,
       getGenesisHash,
@@ -270,27 +270,29 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
       const requiredClaims = ['simple_claim', 'domain_claim', 'identity_claim', 'phone_number_claim', 'email_claim', 'user_signature']
 
-      useEffect(() => {
-      
+      const lastFourLetterOfWalletAddress = walletAddress?.substring(walletAddress?.length - 4)
 
-        const loadWorkflows = async () => {
-            setIsLoading(true);
-            try {
-                const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce);
-                setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' });
-                processFilesToGetWorkflows(filesApi.files);
-            } catch (error) {
-                console.error('Failed to load workflows:', error);
-                // Consider setting an error state here
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        loadWorkflows();
-    }, [])
+      useEffect(() => {
+
+
+            const loadWorkflows = async () => {
+                  setIsLoading(true);
+                  try {
+                        const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce);
+                        setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' });
+                        processFilesToGetWorkflows(filesApi.files);
+                  } catch (error) {
+                        console.error('Failed to load workflows:', error);
+                        // Consider setting an error state here
+                  } finally {
+                        setIsLoading(false);
+                  }
+            };
+            loadWorkflows();
+      }, [])
 
       const processFilesToGetWorkflows = (files: ApiFileInfo[]) => {
-      // const getWalletClaims = () => {
+            // const getWalletClaims = () => {
             setLoading(true)
             const aquaTemplates: string[] = systemFileInfo.map(e => {
                   try {
@@ -449,10 +451,10 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                   if (response.status === 200 || response.status === 201) {
                         if (isFinal) {
-                             
+
 
                               const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+                              setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
                               toast.success('Profile Aqua tree created successfully')
                               callBack && callBack()
@@ -706,10 +708,19 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             if (claims.length === 0) {
                   return null
             }
+
+            // First try to find identity_claim
             let identityClaim = claims.find((claim) => claim.claimType === 'identity_claim')
+
+            // If not found, try user_signature
+            if (!identityClaim) {
+                  identityClaim = claims.find((claim) => claim.claimType === 'user_signature')
+            }
+
             if (!identityClaim) {
                   return null
             }
+
             return {
                   name: identityClaim.claimName,
             }
@@ -725,14 +736,14 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
       //       // }, [files.length])
       // }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), walletAddress])
 
-       if (isLoading) {
+      if (isLoading) {
 
-        return <div className="flex items-center gap-2">
-            {/* Circular Loading Spinner */}
-            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-            <span>Loading Profile Claims</span>
-        </div>
-    }
+            return <div className="flex items-center gap-2">
+                  {/* Circular Loading Spinner */}
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <span>Loading Profile Claims</span>
+            </div>
+      }
 
 
       return (
@@ -796,12 +807,12 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                           <div className="flex items-center gap-2">
                                                 <Avatar className='size-12'>
                                                       {/* <AvatarImage src={generateAvatar(walletAddress!)} alt="User Avatar" /> */}
-                                                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                                                            {getIdentityClaim() ? getIdentityClaim()!.name?.substring(0, 2).toUpperCase() : 'UN'}
+                                                      <AvatarFallback className="bg-primary/10 text-primary font-semibold uppercase">
+                                                            {getIdentityClaim() ? getIdentityClaim()!.name?.substring(0, 2).toUpperCase() : lastFourLetterOfWalletAddress}
                                                       </AvatarFallback>
                                                 </Avatar>
                                                 <div className="flex flex-col gap-1">
-                                                      <p className="font-semibold text-gray-800">{getIdentityClaim() ? getIdentityClaim()!.name : 'UN'}</p>
+                                                      <p className="font-semibold text-gray-800 uppercase">{getIdentityClaim() ? getIdentityClaim()!.name : lastFourLetterOfWalletAddress}</p>
                                                       <div className="flex gap-2 items-center">
                                                             <p className="text-xs break-all">{walletAddress}</p>
                                                             <CopyButton text={`${walletAddress}`} isIcon={true} />
