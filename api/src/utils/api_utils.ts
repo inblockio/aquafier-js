@@ -47,20 +47,25 @@ export function getAquaTreeFileName(aquaTree: AquaTree): string {
 
     let mainAquaHash = "";
     // fetch the genesis
-    let revisionHashes = Object.keys(aquaTree!.revisions!)
-    for (let revisionHash of revisionHashes) {
-        let revisionData = aquaTree!.revisions![revisionHash];
-        // if (revisionData.previous_verification_hash == null || revisionData.previous_verification_hash == "") {
-        //   mainAquaHash = revisionHash;
-        //   break;
-        // }
-        if (!revisionData.previous_verification_hash) {
-            let fileHash = revisionData.file_hash
-            if (fileHash) {
-                let fileName
-            }
-        }
+    // let revisionHashes = Object.keys(aquaTree!.revisions!)
+    // for (let revisionHash of revisionHashes) {
+    //     let revisionData = aquaTree!.revisions![revisionHash];
+    //     if (revisionData.previous_verification_hash == null || revisionData.previous_verification_hash == "") {
+    //       mainAquaHash = revisionHash;
+    //       break;
+    //     }
+    //     // if (!revisionData.previous_verification_hash) {
+    //     //     let fileHash = revisionData.file_hash
+    //     //     if (fileHash) {
+    //     //         let fileName
+    //     //     }
+    //     // }
+    // }
+    let genesisHash = getGenesisHash(aquaTree);
+    if (!genesisHash) {
+        throw Error(`Genesis hash not found in aqua tree ${JSON.stringify(aquaTree)}`)
     }
+    mainAquaHash = genesisHash!!;
 
 
     return aquaTree!.file_index[mainAquaHash] ?? "";
