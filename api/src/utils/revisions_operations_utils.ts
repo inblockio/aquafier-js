@@ -112,14 +112,13 @@ export async function createAquaTreeFromRevisions(
 
         const aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(aquaTree);
 
-        // Commented this out since it was to try a fix
-        // fileObjects.push(
-        //     {
-        //         fileContent: JSON.stringify(aquaTree),
-        //         fileName: getAquaTreeFileName(aquaTree),
-        //         path: '',
-        //     }
-        // );
+        fileObjects.push(
+            {
+                fileContent: JSON.stringify(aquaTree),
+                fileName: getAquaTreeFileName(aquaTree),
+                path: '',
+            }
+        );
 
         return [aquaTreeWithOrderdRevision, fileObjects];
 
