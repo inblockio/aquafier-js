@@ -162,14 +162,14 @@ function buildServer() {
     fastify.register(workflowsController);
 
 
-    fastify.addHook("onRequest", async function (request, reply, done) {
-        const nonce = request.headers['nonce'];
-        const activeSpan = getCurrentActiveSpan();
-        if (activeSpan && typeof nonce == 'string') {
-            activeSpan.setAttribute("nonce", nonce);
-        }
-        done()
-    })
+    // fastify.addHook("onRequest", async function (request, reply, done) {
+    //     const nonce = request.headers['nonce'];
+    //     const activeSpan = getCurrentActiveSpan();
+    //     if (activeSpan && typeof nonce == 'string') {
+    //         activeSpan.setAttribute("nonce", nonce);
+    //     }
+    //     done()
+    // })
 
     return fastify
 
