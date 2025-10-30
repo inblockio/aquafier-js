@@ -16,6 +16,7 @@ import {AquaTreeFileData, LinkedRevisionResult, ProcessRevisionResult, UpdateGen
 import {SYSTEM_WALLET_ADDRESS, systemTemplateHashes} from '../models/constants';
 import {getFileSize} from "./file_utils";
 import Logger from "./logger";
+import { getAquaTreeFileName } from '../../../web/src/utils/functions';
 
 // Main refactored function
 export async function createAquaTreeFromRevisions(
@@ -91,12 +92,14 @@ export async function createAquaTreeFromRevisions(
 
         // Step 2: Get all associated files
         const aquaTreeFileData = await fetchAquaTreeFileData(revisionPubKeyHashes);
-        Logger.info("aquaTreeFileData -- File indexes: ", aquaTreeFileData.length)
+        console.log("aquaTreeFileData -- File indexes: ->", aquaTreeFileData.length)
         
         // Step 3: Create file objects for download
         fileObjects = await createFileObjects(aquaTreeFileData, url);
-        Logger.info("aquaTreeFileData -- fileObjects : ", fileObjects.length)
+       console.log("aquaTreeFileData -- fileObjects : ->", fileObjects.length)
 
+
+        
         // Logger.info("File indexe----: ", JSON.stringify(fileObjects, null, 4))
 
         // Step 4: Process each revision
@@ -108,6 +111,14 @@ export async function createAquaTreeFromRevisions(
 
         const aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(aquaTree);
 
+
+        fileObjects.push(
+            {
+                fileContent: aquaTree,
+                fileName: getAquaTreeFileName(aquaTree),
+                path: '',
+            }
+        );
 
         return [aquaTreeWithOrderdRevision, fileObjects];
 

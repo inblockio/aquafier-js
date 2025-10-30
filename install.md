@@ -18,7 +18,7 @@ We will be using docker to run the aquafier  instance.
 4. If changes have been made to github, pull the new image first ie `docker compose -f deployment/docker-compose-dev.yml pull`
 5. run `docker compose -f deployment/docker-compose-dev.yml up` for bleeding edge or `docker compose -f deployment/docker-compose-prod.yml up` for stable builds
 6. if you encounter an issue always start by checking logs `sudo docker logs {image id}`.
-
+7. to watch logs `sudo docker logs {image id} -f`
 
 ## Clear/Prune Unused images
 
