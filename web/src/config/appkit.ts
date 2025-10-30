@@ -37,13 +37,15 @@ export const appKit = createAppKit({
     email: false,
     socials: false,
     swaps: false,
-    onramp: false
+    onramp: false,
+    // Explicitly enable SIWE if this option exists
   },
   themeMode: 'light',
   themeVariables: {
     '--w3m-accent': '#3b82f6',
     '--w3m-border-radius-master': '8px'
   },
+  // IMPORTANT: siweConfig must be included for SIWE to work
   siweConfig,
   includeWalletIds: [
     "c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96", // Metamask
@@ -53,7 +55,9 @@ export const appKit = createAppKit({
     "e0c2e199712878ed272e2c170b585baa0ff0eb50b07521ca586ebf7aeeffc598", // Talisman
     "4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0", // Trust Wallet
     "9ce87712b99b3eb57396cc8621db8900ac983c712236f48fb70ad28760be3f6a", // Subwallet
-  ]
+  ],
+  // Add these to ensure SIWE triggers automatically
+  allWallets: 'SHOW' as const,
 })
 
 // Export the ethers adapter for use in other components

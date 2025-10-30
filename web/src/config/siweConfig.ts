@@ -16,25 +16,29 @@ const extractEthereumAddress = (addressOrDid: string): string => {
     // The address is the last part after splitting by ':'
     return parts[parts.length - 1]
   }
-
   // Already a standard Ethereum address
   return addressOrDid
 }
 
 export const siweConfig = createSIWEConfig({
   createMessage: ({ address }: SIWECreateMessageArgs) => {
+    console.log("SIWE: createMessage called with address:", address)
     // Extract the actual Ethereum address from DID format if necessary
     const ethAddress = extractEthereumAddress(address)
-
-    return createSiweMessage(ethAddress, "Sign in with Ethereum to the app")
+    const message = createSiweMessage(ethAddress, "Sign in with Ethereum to the app")
+    console.log("SIWE: Message created:", message)
+    return message
   },
 
   getNonce: async () => {
+    console.log("SIWE: getNonce called")
     const nonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    console.log("SIWE: Generated nonce:", nonce)
     return nonce
   },
 
   getMessageParams: async () => {
+    console.log("SIWE: getMessageParams called")
     return {
       domain: window.location.host,
       uri: window.location.origin,
@@ -43,51 +47,60 @@ export const siweConfig = createSIWEConfig({
       chains: [1, 11155111, 17000], // main, Sepolia and Holesky
     }
   },
-
+ 
   getSession: async () => {
+    console.log("SIWE: getSession called")
     const nonce = getCookie(SESSION_COOKIE_NAME)
-    console.log("Nonce: ", nonce)
-    if (!nonce) return null
-
-    console.log("Here after nonce")
+    console.log("SIWE: Nonce from cookie:", nonce)
+    
+    if (!nonce) {
+      console.log("SIWE: No nonce found, returning null")
+      return null
+    }
 
     try {
       const backend_url = appStore.backend_url
       const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
+      console.log("SIWE: Fetching session from:", url)
+      
       const response = await axios.get(url, {
         params: { nonce },
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       })
-      console.log("Response: ", response)
+
+      console.log("SIWE: Session response:", response)
 
       if (response.status === 200 && response.data?.session) {
-        console.log("Session: ", response.data.session)
+        console.log("SIWE: Session found:", response.data.session)
         const userSettings = response.data.user_settings
         const network = userSettings.witness_network
         const chainId = ETH_CHAINID_MAP_NUMBERS[network]
+        
         return {
           address: ethers.getAddress(response.data.session.address),
-          // TODO: fix this. Find a way to return the connected chain id from the backend to avoid issues in which it asks the user to reconnect
-          // For now, I read the user settings to get chainID
           chainId: response.data.session.chain_id || chainId, 
         } as SIWESession
       }
     } catch (error) {
-      console.error('Failed to get session:', error)
+      console.error('SIWE: Failed to get session:', error)
     }
-
+    
     return null
   },
 
   verifyMessage: async ({ message, signature }: SIWEVerifyMessageArgs) => {
-    console.log("Message: ", message)
-    console.log("Signature: ", signature)
+    console.log("SIWE: verifyMessage called")
+    console.log("SIWE: Message:", message)
+    console.log("SIWE: Signature:", signature)
+    
     try {
       const backend_url = appStore.backend_url
       const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
       const domain = window.location.host
+      
+      console.log("SIWE: Sending verification to:", url)
 
       const response = await axios.post(url, {
         message,
@@ -95,9 +108,11 @@ export const siweConfig = createSIWEConfig({
         domain,
       })
 
+      console.log("SIWE: Verification response:", response)
+
       if (response.status === 200 || response.status === 201) {
         const responseData = response.data
-
+        
         // Set session cookie
         setCookie(
           SESSION_COOKIE_NAME,
@@ -105,30 +120,33 @@ export const siweConfig = createSIWEConfig({
           new Date(responseData.session.expiration_time)
         )
 
+        console.log("SIWE: Session cookie set, updating store")
+
         // Update app store
-         const {  setMetamaskAddress, setFiles, setAvatar, setUserProfile, setSession } = appStoreActions;
+        const { setMetamaskAddress, setFiles, setAvatar, setUserProfile, setSession } = appStoreActions;
         setSession(responseData.session)
         setUserProfile(responseData.user_settings)
-
+        
+        console.log("SIWE: Store updated successfully")
         return true
       }
-
+      
       return false
     } catch (error) {
-      console.error('Failed to verify message:', error)
+      console.error('SIWE: Failed to verify message:', error)
       toast.error('An error occurred during authentication')
       return false
     }
   },
 
-
   signOut: async () => {
+    console.log("SIWE: signOut called")
     try {
       const nonce = getCookie(SESSION_COOKIE_NAME)
-
       if (nonce) {
         const backend_url = appStore.backend_url
         const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
+        console.log("SIWE: Sending signout request to:", url)
         await axios.delete(url, {
           params: { nonce },
         })
@@ -138,9 +156,7 @@ export const siweConfig = createSIWEConfig({
       setCookie(SESSION_COOKIE_NAME, '', new Date('1970-01-01T00:00:00Z'))
 
       // Clear store
-      // const store = appStore
-
-       const {  setMetamaskAddress, setFiles, setAvatar, setUserProfile, setSession } = appStoreActions;
+      const { setMetamaskAddress, setFiles, setAvatar, setUserProfile, setSession } = appStoreActions;
       setMetamaskAddress(null)
       setAvatar(undefined)
       setSession(null)
@@ -148,10 +164,11 @@ export const siweConfig = createSIWEConfig({
         fileData: [],
         status: 'idle',
       })
-
+      
+      console.log("SIWE: Sign out complete")
       return true
     } catch (error) {
-      console.error('Failed to sign out:', error)
+      console.error('SIWE: Failed to sign out:', error)
       // Clear local state even if backend fails
       setCookie(SESSION_COOKIE_NAME, '', new Date('1970-01-01T00:00:00Z'))
       return false
@@ -159,9 +176,20 @@ export const siweConfig = createSIWEConfig({
   },
 
   onSignIn: (session) => {
-    console.log('User signed in:', session)
+    console.log('SIWE: User signed in:', session)
   },
+
   onSignOut: () => {
-    console.log('User signed out')
+    console.log('SIWE: User signed out')
   },
+
+  // Enable SIWE
+  enabled: true,
+  
+  // Configure when to show SIWE
+  nonceRefetchIntervalMs: 300000, // 5 minutes
+  sessionRefetchIntervalMs: 300000, // 5 minutes
+  signOutOnDisconnect: true,
+  signOutOnAccountChange: true,
+  signOutOnNetworkChange: false,
 })

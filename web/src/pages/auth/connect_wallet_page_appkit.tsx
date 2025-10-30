@@ -5,6 +5,8 @@ import { Alert, AlertDescription } from '../../components/ui/alert'
 import { toast } from 'sonner'
 import { generateAvatar, fetchFiles } from '../../utils/functions'
 import { ethers } from 'ethers'
+import { createSiweMessage } from '../../utils/appkit-wallet-utils'
+import { siweConfig } from '../../config/siweConfig'
 
 export const ConnectWalletPageAppKit = () => {
   const [isConnected, setIsConnected] = createSignal(false)
@@ -14,62 +16,42 @@ export const ConnectWalletPageAppKit = () => {
   const [isConnecting, setIsConnecting] = createSignal(false)
   const [error, setError] = createSignal('')
   const [hasTriggeredSiwe, setHasTriggeredSiwe] = createSignal(false)
+  const [isAuthenticating, setIsAuthenticating] = createSignal(false)
 
-  // const store = useStore()
-const { setBackEndUrl, setFiles, setMetamaskAddress, setAvatar } = appStoreActions;
+  const { setBackEndUrl, setFiles, setMetamaskAddress, setAvatar } = appStoreActions;
 
   // Subscribe to AppKit state changes
-  // createEffect(() => {
-  //   const unsubscribe = appKit.subscribeState((state) => {
-  //     setIsConnected(state.open === false && !!state.address)
-  //     setAddress(state.address || null)
-  //     setModalOpen(state.open || false)
+  createEffect(() => {
+    const unsubscribe = appKit.subscribeState((state) => {
+      setModalOpen(state.open || false)
       
-  //     // Determine status based on state
-  //     if (state.open) {
-  //       setStatus('connecting')
-  //     } else if (state.address) {
-  //       setStatus('connected')
-  //     } else {
-  //       setStatus('disconnected')
-  //     }
-  //   })
+      if (state.open) {
+        setStatus('connecting')
+      }
+    })
+    onCleanup(() => unsubscribe())
+  })
 
-  //   onCleanup(() => unsubscribe())
-  // })
-
-  // Subscribe to AppKit state changes
-createEffect(() => {
-  const unsubscribe = appKit.subscribeState((state) => {
-    setModalOpen(state.open || false)
-    
-    if (state.open) {
-      setStatus('connecting')
+  // Handle account changes
+  createEffect(() => {
+    const handleAccountChange = () => {
+      const addr = appKit.getAddress()
+      setIsConnected(!!addr)
+      setAddress(addr || null)
+      setStatus(addr ? 'connected' : 'disconnected')
+      console.log("Account change detected. Address:", addr, "Status:", status())
     }
+    
+    window.addEventListener('w3m-connected', handleAccountChange)
+    window.addEventListener('w3m-disconnected', handleAccountChange)
+    
+    handleAccountChange()
+    
+    onCleanup(() => {
+      window.removeEventListener('w3m-connected', handleAccountChange)
+      window.removeEventListener('w3m-disconnected', handleAccountChange)
+    })
   })
-
-  onCleanup(() => unsubscribe())
-})
-
-createEffect(() => {
-  const handleAccountChange = () => {
-    const addr = appKit.getAddress()
-    setIsConnected(!!addr)
-    setAddress(addr || null)
-    setStatus(addr ? 'connected' : 'disconnected')
-  }
-  
-  window.addEventListener('w3m-connected', handleAccountChange)
-  window.addEventListener('w3m-disconnected', handleAccountChange)
-  
-  handleAccountChange()
-  
-  onCleanup(() => {
-    window.removeEventListener('w3m-connected', handleAccountChange)
-    window.removeEventListener('w3m-disconnected', handleAccountChange)
-  })
-})
-
 
   console.log("Connection status: ", status())
 
@@ -80,22 +62,24 @@ createEffect(() => {
     
     if (connected && addr) {
       const checksumAddress = ethers.getAddress(addr)
-       setMetamaskAddress(checksumAddress)
-       setAvatar(generateAvatar(checksumAddress))
+      setMetamaskAddress(checksumAddress)
+      setAvatar(generateAvatar(checksumAddress))
     } else if (!connected && !addr) {
-       setMetamaskAddress(null)
-       setAvatar(undefined)
+      setMetamaskAddress(null)
+      setAvatar(undefined)
     }
   })
 
-  // Check if session is null after connection
+  // Check if session is null AFTER giving time for SIWE to complete
   createEffect(() => {
     const connected = isConnected()
     const addr = address()
-    const session =  appStore.session
+    const session = appStore.session
+    const authenticating = isAuthenticating()
     
-    if (connected && addr && session == null) {
-      console.log("Session is null after connection, signing out to reset state.")
+    // Only check for null session after authentication attempt has finished
+    if (connected && addr && session === null && !authenticating && hasTriggeredSiwe()) {
+      console.log("Session is null after authentication attempt, signing out to reset state.")
       handleSignOut()
     }
   })
@@ -110,14 +94,29 @@ createEffect(() => {
     }
   })
 
-  // Monitor for successful authentication
+  // Trigger SIWE authentication after wallet connection
   createEffect(() => {
     const connected = isConnected()
     const addr = address()
     const triggered = hasTriggeredSiwe()
+    const session = appStore.session
     
-    if (connected && addr && !triggered) {
+    // Only trigger if connected, has address, hasn't triggered yet, and no existing session
+    if (connected && addr && !triggered && !session) {
+      console.log("Triggering SIWE authentication...")
       setHasTriggeredSiwe(true)
+      setIsAuthenticating(true)
+      triggerSiweAuth()
+    }
+  })
+
+  // Monitor for successful authentication (check for session creation)
+  createEffect(() => {
+    const session = appStore.session
+    const authenticating = isAuthenticating()
+    
+    if (session && authenticating) {
+      setIsAuthenticating(false)
       handleSiweSuccess()
       toast.success('Sign In successful')
     }
@@ -127,8 +126,104 @@ createEffect(() => {
   createEffect(() => {
     if (!isConnected()) {
       setHasTriggeredSiwe(false)
+      setIsAuthenticating(false)
     }
   })
+
+  // Manual SIWE implementation - doesn't rely on AppKit's siweClient
+  const triggerSiweAuth = async () => {
+    try {
+      console.log("Starting manual SIWE authentication...")
+      
+      const walletProvider = appKit.getWalletProvider()
+      const addr = address()
+      const chainId = appKit.getChainId()
+      
+      if (!walletProvider || !addr) {
+        console.error("No wallet provider or address available")
+        setIsAuthenticating(false)
+        toast.error("Wallet provider not available")
+        return
+      }
+
+      console.log("Wallet provider found, getting nonce...")
+
+      // Step 1: Get nonce
+      const nonce = await siweConfig.getNonce()
+      console.log("Nonce generated:", nonce)
+
+      // Step 2: Get message params
+      const messageParams = await siweConfig.getMessageParams()
+      console.log("Message params:", messageParams)
+
+      // Step 3: Create the SIWE message
+      const message = createSiweMessage(addr, messageParams.statement || 'Sign in with Ethereum to the app')
+      console.log("SIWE message created:", message)
+
+      // Step 4: Request signature from wallet
+      console.log("Requesting signature from wallet...")
+      
+      let signature: string
+      
+      try {
+        // Use ethers provider to request signature
+        const provider = new ethers.BrowserProvider(walletProvider as any)
+        const signer = await provider.getSigner()
+        
+        signature = await signer.signMessage(message)
+        console.log("Signature received:", signature)
+      } catch (signError: any) {
+        console.error("Signature error:", signError)
+        
+        // Check if user rejected
+        if (signError?.message?.includes('User rejected') || 
+            signError?.code === 4001 ||
+            signError?.code === 'ACTION_REJECTED') {
+          toast.error("Signature request rejected")
+          setIsAuthenticating(false)
+          await handleSignOut()
+          return
+        }
+        
+        throw signError
+      }
+
+      // Step 5: Verify the signature and create session
+      console.log("Verifying signature...")
+      const verified = await siweConfig.verifyMessage({ 
+        message, 
+        signature,
+        cacao: undefined 
+      })
+
+      if (verified) {
+        console.log("SIWE authentication successful!")
+        // Session should now be created - wait a bit for state to update
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        // Check if session was created
+        const session = appStore.session
+        if (!session) {
+          console.error("Verification succeeded but no session created")
+          setIsAuthenticating(false)
+          toast.error("Authentication failed. Please try again.")
+          await handleSignOut()
+        } else {
+          console.log("Session created successfully:", session)
+        }
+      } else {
+        console.error("SIWE verification failed")
+        setIsAuthenticating(false)
+        toast.error("Authentication failed. Please try again.")
+        await handleSignOut()
+      }
+    } catch (err: any) {
+      console.error("SIWE authentication error:", err)
+      setIsAuthenticating(false)
+      toast.error("Authentication error: " + (err?.message || 'Unknown error'))
+      await handleSignOut()
+    }
+  }
 
   const handleSignOut = async () => {
     try {
@@ -138,7 +233,6 @@ createEffect(() => {
       // Check if it's the permission revocation error
       const isPermissionError = err?.message?.includes('revoke permissions') ||
         err?.message?.includes('Internal JSON-RPC error')
-
       if (isPermissionError) {
         console.warn('Permission revocation failed, but wallet disconnected:', err)
       } else {
@@ -148,7 +242,7 @@ createEffect(() => {
     }
   }
 
-  // Handle SIWE success - files are fetched automatically in siweConfig
+  // Handle SIWE success - fetch files
   const handleSiweSuccess = async () => {
     const session = appStore.session
     if (session?.address) {
@@ -158,7 +252,7 @@ createEffect(() => {
           `${appStore.backend_url}/explorer_files`,
           session.nonce
         )
-       setFiles({ 
+        setFiles({ 
           fileData: filesApi.files, 
           pagination: filesApi.pagination, 
           status: 'loaded' 
@@ -204,10 +298,10 @@ createEffect(() => {
           </Alert>
         </Show>
 
-        <Show when={status() === 'connecting'}>
+        <Show when={status() === 'connecting' || isAuthenticating()}>
           <Alert class="mb-6 border-blue-200 bg-blue-50">
             <AlertDescription class="text-blue-700 text-sm">
-              Connecting to wallet...
+              {isAuthenticating() ? 'Please sign the message in your wallet...' : 'Connecting to wallet...'}
             </AlertDescription>
           </Alert>
         </Show>
@@ -215,11 +309,11 @@ createEffect(() => {
         <button
           onClick={handleSignAndConnect}
           data-testid="sign-in-button-page"
-          disabled={isConnecting() || status() === 'connecting'}
+          disabled={isConnecting() || status() === 'connecting' || isAuthenticating()}
           class="w-full bg-black hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
         >
           <Show 
-            when={isConnecting() || status() === 'connecting'}
+            when={isConnecting() || status() === 'connecting' || isAuthenticating()}
             fallback={
               <>
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -231,7 +325,7 @@ createEffect(() => {
             }
           >
             <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            Connecting...
+            {isAuthenticating() ? 'Authenticating...' : 'Connecting...'}
           </Show>
         </button>
 

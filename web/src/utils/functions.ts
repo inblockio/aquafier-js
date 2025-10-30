@@ -5,8 +5,8 @@ import { ApiFileInfo, ClaimInformation } from '../models/FileInfo'
 import { documentTypes, ERROR_TEXT, ERROR_UKNOWN, imageTypes, musicTypes, videoTypes } from './constants'
 import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk'
 import jdenticon from 'jdenticon/standalone'
-import { IContractInformation } from '@/types/contract_workflow'
-import { ApiFileInfoState, ApiFilePaginationData, DNSProof, IIdentityClaimDetails, SummaryDetailsDisplayData } from '@/types/types'
+import { IContractInformation } from '../types/contract_workflow'
+import { ApiFileInfoState, ApiFilePaginationData, DNSProof, IIdentityClaimDetails, SummaryDetailsDisplayData } from '../types/types'
 
 export function formatDate(date: Date) {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']

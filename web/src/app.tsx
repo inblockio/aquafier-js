@@ -26,6 +26,7 @@ const App: Component<{ children: Element }> = (props) => {
       if (config.AUTH_PROVIDER === 'wallet_connect') {
         await import('./config/appkit');
         console.log('AppKit initialized for wallet_connect');
+        
       }
     };
 

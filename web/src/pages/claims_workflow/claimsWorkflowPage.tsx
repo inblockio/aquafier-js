@@ -1,0 +1,424 @@
+import { useEffect, useState } from 'react'
+import { useLocation, useParams } from 'react-router-dom'
+import appStore from '../../store'
+import { useStore } from 'zustand'
+import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
+import { fetchFiles, getAquaTreeFileName, getGenesisHash, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
+import { ClipLoader } from 'react-spinners'
+import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileInfo'
+import axios from 'axios'
+import { Contract, ICompleteClaimInformation } from '@/types/types'
+import { SharedContract } from '../files_share/files_shared_contracts_item'
+import AttestationEntry from './AttestationEntry'
+import { OrderRevisionInAquaTree } from 'aqua-js-sdk'
+import SimpleClaim from './SimpleClaim'
+import DNSClaim from './DNSClaim'
+import { toast } from 'sonner'
+
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { ChevronDown, ChevronUp } from 'lucide-react'
+import WalletAddressProfile from './WalletAddressProfile'
+// import PhoneNumberClaim from './PhoneNumberClaim'
+// import EmailClaim from './EmailClaim'
+import UserSignatureClaim from './UserSignatureClaim'
+import { AddressView } from './AddressView'
+import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_claim'
+
+
+export default function ClaimsWorkflowPage() {
+      const { session, backend_url, systemFileInfo, workflows, setWorkflows } = useStore(appStore)
+
+      const [claims, setClaims] = useState<Array<{ file: ApiFileInfo, processedInfo: ClaimInformation, attestations: Array<IAttestationEntry>, sharedContracts: Contract[] }>>([])
+      const [isLoading, setIsLoading] = useState(false)
+
+      const { walletAddress } = useParams()
+      const urlHash = useLocation().hash
+
+      const loadSharedContractsData = async (_latestRevisionHash: string) => {
+            try {
+                  const url = `${backend_url}/contracts`
+                  const response = await axios.get(url, {
+                        params: {
+                              sender: session?.address,
+                              // genesis_hash: genesisHash,
+                              latest: _latestRevisionHash,
+                        },
+                        headers: {
+                              nonce: session?.nonce,
+                        },
+                  })
+                  if (response.status === 200) {
+                        // setSharedContracts(response.data?.contracts)
+                        return response.data?.contracts
+                  }
+            } catch (error) {
+                  console.error(error)
+                  return []
+            }
+      }
+
+      const loadAttestationData = async (_latestRevisionHash: string, _attestations: Array<ApiFileInfo>) => {
+
+            try {
+                  const processedAttestations: Array<IAttestationEntry> = []
+
+                  for (let i = 0; i < _attestations.length; i++) {
+                        const file: ApiFileInfo = _attestations[i]
+                        const orderedAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
+                        const revisionHashes = Object.keys(orderedAquaTree.revisions)
+                        const firstRevisionHash = revisionHashes[0]
+                        const firstRevision = orderedAquaTree.revisions[firstRevisionHash]
+                        const identityClaimId = firstRevision.forms_identity_claim_id
+                        if (identityClaimId === _latestRevisionHash) {
+                              const attestationEntry: IAttestationEntry = {
+                                    walletAddress: firstRevision.forms_wallet_address,
+                                    context: firstRevision.forms_context,
+                                    createdAt: firstRevision.local_timestamp,
+                                    file: file,
+                                    nonce: session!.nonce,
+                              }
+                              processedAttestations.push(attestationEntry)
+                        }
+                  }
+                  return processedAttestations
+            } catch (error) {
+                  console.error('Error loading attestations:', error)
+                  return []
+            }
+      }
+
+      const getAllAttestations = (files: ApiFileInfo[]) => {
+            const aquaTemplates = systemFileInfo.map(e => {
+                  try {
+                        return getAquaTreeFileName(e.aquaTree!)
+                  } catch (e) {
+                        return ''
+                  }
+            })
+            const _attestations: Array<ApiFileInfo> = []
+            for (let i = 0; i < files.length; i++) {
+                  const file: ApiFileInfo = files[i]
+                  // const fileObject = getAquaTreeFileObject(file)
+
+                  const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree!, aquaTemplates)
+                  if (isWorkFlow && workFlow === 'identity_attestation') {
+                        _attestations.push(file)
+                  }
+            }
+            // setAttestations(_attestations)
+            return _attestations
+      }
+
+      const processAllAddressClaims = async (files: ApiFileInfo[]) => {
+            setIsLoading(true)
+            if (!walletAddress) {
+                  toast.info('Please select a wallet address')
+                  setIsLoading(false)
+                  return
+            }
+            setIsLoading(true)
+            const claimTemplateNames = ["simple_claim", "identity_claim", "dns_claim", "domain_claim", "phone_number_claim", "email_claim", "user_signature"]
+
+            const aquaTemplates = systemFileInfo.map(e => {
+                  try {
+                        return getAquaTreeFileName(e.aquaTree!)
+                  } catch (e) {
+                        return ''
+                  }
+            })
+
+            const _attestations = getAllAttestations(files)
+
+            const _claims: Array<{ file: ApiFileInfo; processedInfo: ClaimInformation, attestations: Array<IAttestationEntry>, sharedContracts: Contract[] }> = []
+
+            // We loop through files to find claims that match the wallet address
+            for (let i = 0; i < files.length; i++) {
+                  const file: ApiFileInfo = files[i]
+                  // const fileObject = getAquaTreeFileObject(file)
+
+                  const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree!, aquaTemplates)
+
+                  if (isWorkFlow && claimTemplateNames.includes(workFlow)) {
+                        const orderedAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
+                        const revisionHashes = Object.keys(orderedAquaTree.revisions)
+                        const firstRevisionHash = revisionHashes[0]
+                        const lastRevisionHash = revisionHashes[revisionHashes.length - 1]
+                        const firstRevision = orderedAquaTree.revisions[firstRevisionHash]
+                        const _walletAddress = firstRevision.forms_wallet_address
+                        if (_walletAddress === walletAddress) {
+                              const processedClaimInfo = processSimpleWorkflowClaim(file)
+                              let processedAttestations: Array<IAttestationEntry> = []
+                              if (["simple_claim", "identity_claim", "dns_claim", "domain_claim", "phone_number_claim", "email_claim"].includes(processedClaimInfo.claimInformation.forms_type)) {
+                                    processedAttestations = await loadAttestationData(processedClaimInfo.genesisHash!, _attestations)
+                              }
+                              const sharedContracts = await loadSharedContractsData(lastRevisionHash)
+                              _claims.push({ file: file, processedInfo: processedClaimInfo, attestations: processedAttestations, sharedContracts: sharedContracts })
+                        }
+                  }
+            }
+
+            setClaims(_claims)
+            setIsLoading(false)
+      }
+
+      const renderClaim = (claim: ICompleteClaimInformation) => {
+            const claimInfo = claim.processedInfo.claimInformation
+            const genesisRevisionHash = getGenesisHash(claim.file.aquaTree!)
+
+            if (claimInfo.forms_type === 'dns_claim') {
+                  return (
+                        <DNSClaim claimInfo={claimInfo} apiFileInfo={claim.file} nonce={session!.nonce} sessionAddress={session!.address} />
+                  )
+            }
+            // else if (claimInfo.forms_type === 'phone_number_claim') {
+            //       return (
+            //             <PhoneNumberClaim claim={claim} />
+            //       )
+            // }
+            // else if (claimInfo.forms_type === 'email_claim') {
+            //       return (
+            //             <EmailClaim claim={claim} />
+            //       )
+            // }
+            else if (claimInfo.forms_type === 'user_signature') {
+                  return (
+                        <UserSignatureClaim claim={claim} />
+                  )
+            }
+            else {
+                  return (
+                        <div className="grid lg:grid-cols-12 gap-4 relative" id={`${genesisRevisionHash}`}>
+                              {
+                                    urlHash?.replace("#", "") === genesisRevisionHash ? (
+                                          <div className='absolute top-0 right-0 z-10 bg-green-500 w-fit px-2 py-1 text-white rounded-md'>
+                                                Selected
+                                          </div>
+                                    ) : null
+                              }
+                              <div className='col-span-7 bg-gray-50 p-2'>
+                                    <div className="flex flex-col gap-2">
+                                          <SimpleClaim claimInfo={claimInfo} />
+                                          {claim.processedInfo?.walletAddress?.trim().toLowerCase() === session?.address?.trim().toLowerCase() && (
+                                                <ShareButton item={claim.file} nonce={session!.nonce} />
+                                          )}
+                                    </div>
+                              </div>
+                              <div className='col-span-5 p-2'>
+                                    <div className="flex flex-col gap-2 h-full">
+                                          {claim.attestations.length > 0 ? (
+                                                <div className="flex flex-col gap-2">
+                                                      <h3 className="text-lg font-bold text-center">Claim Attestations</h3>
+                                                      <div className="flex flex-col gap-0 max-h-[300px] overflow-y-auto">
+                                                            {claim.attestations.map((attestation, index) => (
+                                                                  <AttestationEntry
+                                                                        key={`attestation-${index}`}
+                                                                        walletAddress={attestation.walletAddress}
+                                                                        context={attestation.context}
+                                                                        createdAt={timeToHumanFriendly(attestation.createdAt, true) ?? ''}
+                                                                        nonce={session!.nonce}
+                                                                        file={attestation.file}
+                                                                  />
+                                                            ))}
+                                                      </div>
+                                                </div>
+                                          ) : (
+                                                <div className="text-center py-8 flex flex-col gap-2 items-center justify-center h-full bg-gray-50">
+                                                      <h3 className="text-lg font-bold text-center">Claim Attestations</h3>
+                                                      <p className="text-gray-600">No attestations found for this claim.</p>
+                                                      {claim.processedInfo?.walletAddress?.trim().toLowerCase() !== session?.address?.trim().toLowerCase() && (
+                                                            <AttestAquaClaim file={claim.file!!} index={1} />
+                                                      )}
+                                                </div>
+                                          )}
+                                    </div>
+                              </div>
+                        </div>
+                  )
+            }
+      }
+
+
+
+
+      useEffect(() => {
+            setIsLoading(true);
+
+            (async () => {
+                  try {
+                        setIsLoading(true);
+                        const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
+                        setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+                        await processAllAddressClaims(filesApi.files)
+                  } catch (error) {
+                        console.error('Error loading claims:', error);
+                        toast.error('Failed to load claims');
+                  } finally {
+                        setIsLoading(false);
+                  }
+            })()
+
+      }, []);
+
+
+      useEffect(() => {
+            processAllAddressClaims(workflows.fileData)
+      }, [walletAddress])
+
+
+      if (isLoading) {
+            // return <div>Loading...</div>
+            return <div className="flex items-center gap-2">
+                  {/* Circular Loading Spinner */}
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <ClipLoader color={'blue'} loading={true} size={150} aria-label="Loading Spinner" data-testid="loader" />
+                  <span>Loading Data</span>
+            </div>
+      }
+      return (
+            <div className='py-6 flex flex-col gap-4'>
+
+                  <div className="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 p-4 sm:p-6 lg:p-8 rounded-lg">
+                        <div className="max-w-2xl mx-auto">
+                              <div className="text-center mb-8">
+                                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Identity Profile</h1>
+                                    <p className="text-gray-600">Manage your verified claims and digital identity</p>
+                              </div>
+
+                              <AddressView
+                                    address={`${walletAddress}`}
+                                    className="max-w-full"
+                              />
+
+                        </div>
+                  </div>
+
+                  {/* {isLoading ? (
+                        <div className="flex items-center justify-center flex-col align-center py-8">
+                              <ClipLoader color={'blue'} loading={true} size={150} aria-label="Loading Spinner" data-testid="loader" />
+                              <span className="text-center font-500 text-2xl">Processing claim...</span>
+                        </div>
+                  ) : null} */}
+
+                  {
+                        (claims.length === 0 && !isLoading) ? (
+                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mx-auto max-w-md">
+                                    <div className="flex items-center justify-center flex-col gap-3">
+                                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                          </div>
+                                          <div className="text-center">
+                                                <h3 className="text-lg font-semibold text-blue-900 mb-1">No Claims Found</h3>
+                                                <p className="text-sm text-blue-700">This wallet address doesn't have any verified claims yet.</p>
+                                          </div>
+                                    </div>
+                              </div>
+                        ) : null
+                  }
+
+                  {
+                        !isLoading ? (
+                              <div className="container mx-auto py-4 bg-white rounded-lg">
+                                    <WalletAddressProfile walletAddress={walletAddress} hideOpenProfileButton={true} />
+                              </div>
+                        ) : null
+                  }
+
+                  <div className="flex flex-col gap-4">
+                        {
+                              claims.filter(item => ["simple_claim", "identity_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
+                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg border-[2px] border-gray-400">
+                                          {renderClaim(claim)}
+                                          <Collapsible className=' bg-gray-50 p-2 rounded-lg'>
+                                                <CollapsibleTrigger className='cursor-pointer w-full p-2 border-2 border-gray-200 rounded-lg flex justify-between items-center'>
+                                                      <div className="flex flex-col text-start">
+                                                            <p className='font-bold text-gray-700'>Sharing Information</p>
+                                                            <p className='text-gray-600'>Who have you shared the claim with</p>
+                                                      </div>
+                                                      <div className='flex flex-col gap-0 h-fit'>
+                                                            <ChevronDown />
+                                                            <ChevronUp />
+                                                      </div>
+                                                </CollapsibleTrigger>
+                                                <CollapsibleContent>
+                                                      <div className="flex flex-col gap-2 p-2">
+                                                            {
+                                                                  claim.sharedContracts?.map((contract, index) => (
+                                                                        <div key={`shared_contract_${index}`}>
+                                                                              <SharedContract
+                                                                                    type='outgoing'
+                                                                                    key={`${contract.hash}`}
+                                                                                    contract={contract}
+                                                                                    index={index}
+                                                                                    contractDeleted={hash => {
+                                                                                          let newState = claim.sharedContracts?.filter(e => e.hash != hash)
+                                                                                          claim.sharedContracts = newState
+                                                                                    }}
+                                                                              />
+                                                                        </div>
+                                                                  ))
+                                                            }
+                                                      </div>
+                                                      {
+                                                            claim.sharedContracts?.length === 0 ? (
+                                                                  <div className="flex flex-col gap-2 p-4 text-center">
+                                                                        <p>No shared contracts found</p>
+                                                                  </div>
+                                                            ) : null
+                                                      }
+                                                </CollapsibleContent>
+                                          </Collapsible>
+                                    </div>
+                              ))
+                        }
+                        {
+                              claims.filter(item => !["simple_claim", "identity_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
+                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg border-[2px] border-gray-400">
+                                          {renderClaim(claim)}
+                                          <Collapsible className='mt-4 bg-gray-50 p-2 rounded-lg'>
+                                                <CollapsibleTrigger className='cursor-pointer w-full p-2 border-2 border-gray-200 rounded-lg flex justify-between items-center'>
+                                                      <div className="flex flex-col text-start">
+                                                            <p className='font-bold text-gray-700'>Sharing Information</p>
+                                                            <p className='text-gray-600'>Who have you shared the claim with</p>
+                                                      </div>
+                                                      <div className='flex flex-col gap-0 h-fit'>
+                                                            <ChevronDown />
+                                                            <ChevronUp />
+                                                      </div>
+                                                </CollapsibleTrigger>
+                                                <CollapsibleContent>
+                                                      <div className="flex flex-col gap-2 p-2">
+                                                            {
+                                                                  claim.sharedContracts?.map((contract, index) => (
+                                                                        <div key={`shared_contract_${index}`}>
+                                                                              <SharedContract
+                                                                                    type='outgoing'
+                                                                                    key={`${contract.hash}`}
+                                                                                    contract={contract}
+                                                                                    index={index}
+                                                                                    contractDeleted={hash => {
+                                                                                          let newState = claim.sharedContracts?.filter(e => e.hash != hash)
+                                                                                          claim.sharedContracts = newState
+                                                                                    }}
+                                                                              />
+                                                                        </div>
+                                                                  ))
+                                                            }
+                                                      </div>
+                                                      {
+                                                            claim.sharedContracts?.length === 0 ? (
+                                                                  <div className="flex flex-col gap-2 p-4 text-center">
+                                                                        <p>No shared contracts found</p>
+                                                                  </div>
+                                                            ) : null
+                                                      }
+                                                </CollapsibleContent>
+                                          </Collapsible>
+                                    </div>
+                              ))
+                        }
+                  </div>
+            </div>
+      )
+}

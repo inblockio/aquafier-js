@@ -116,7 +116,7 @@ const initialState: AppStoreState = {
   apiFileData: [],
   systemFileInfo: [],
   formTemplates: [],
-  backend_url: 'http://0.0.0.0:3000',
+  backend_url: 'http://127.0.0.1:3000',
   contracts: [],
 }
 
