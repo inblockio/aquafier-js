@@ -17,7 +17,6 @@ import {SYSTEM_WALLET_ADDRESS, systemTemplateHashes} from '../models/constants';
 import {getFileSize} from "./file_utils";
 import Logger from "./logger";
 import { getAquaTreeFileName } from './api_utils';
-// import { getAquaTreeFileName } from '../../../web/src/utils/functions';
 
 // Main refactored function
 export async function createAquaTreeFromRevisions(

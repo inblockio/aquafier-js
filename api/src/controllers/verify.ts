@@ -1,9 +1,8 @@
 import { streamToBuffer } from "../utils/file_utils";
-import Aquafier, { AquaTree, FileObject, None, Revision } from "aqua-js-sdk";
+import Aquafier, { AquaTree, FileObject, Revision } from "aqua-js-sdk";
 import { FastifyInstance } from "fastify";
 import { ApiResponse, coerceIntoApiResponse, verifyProofApi } from "../utils/verify_dns_claim";
-import { prisma } from "src/database/db";
-import logger from "src/utils/logger";
+import { prisma } from "../database/db";
 
 export default async function verifyController(fastify: FastifyInstance) {
 
