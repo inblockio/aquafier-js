@@ -16,3 +16,15 @@ We could improve performance of dns claim verification by caching the result of 
 ```
 
 In the function that requests for verification, we should check if the verification is already cached and if it is, we should return it. If it is not, we should request for verification and cache it.
+
+
+### 2. We are sending a large bundle size to the client
+![alt text](image.png)
+A website's initial JavaScript bundle size, after minification and compression (gzipped), should ideally be under 300 KB, and smaller is always better. Anything in the megabyte (MB) range for the initial load is generally considered detrimental to performance and user experience. 
+
+Pro and cons of using solid js ![alt text](image-1.png)
+
+Solid Js is most perfomant framework that very close to React unlike vue, svelte  
+
+### 3. Cache workflows 
+All Items under application section ![alt text](image-2.png) depend on workflows this can be cached either on the front end or the backend .
