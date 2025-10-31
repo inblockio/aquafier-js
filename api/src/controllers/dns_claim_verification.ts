@@ -12,7 +12,7 @@ export default async function DNSClaimVerificationController(fastify: FastifyIns
             const { wallet_address } = request.params;
 
             // Get DNS claim verification data for the wallet address
-            const dnsClaimVerification = await prisma.dNSClaimVerificationOne.findMany({
+            const dnsClaimVerification = await prisma.dNSClaimVerification.findMany({
                 where: {
                     wallet_address: wallet_address
                 },
@@ -71,9 +71,10 @@ export default async function DNSClaimVerificationController(fastify: FastifyIns
                 verification_time: new Date().toISOString()
             };
 
-            const newDnsClaimVerification = await prisma.dNSClaimVerificationOne.create({
+            const newDnsClaimVerification = await prisma.dNSClaimVerification.create({
                 data: {
                     wallet_address: wallet_address,
+                    domain: domain || 'example.com',
                     verification_logs: dummyVerificationLogs,
                     verification_status: 'verified',
                     is_verified: true,

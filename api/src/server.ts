@@ -84,7 +84,7 @@ function buildServer() {
     setUpSystemTemplates();
 
 
-    let allowedCors = process.env.ALLOWED_CORS ? [process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()), ...ensureDomainViewForCors(process.env.FRONTEND_URL)] : [
+    let corsAllowedOrigins = process.env.ALLOWED_CORS ? [process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()), ...ensureDomainViewForCors(process.env.FRONTEND_URL)] : [
         'http://localhost:5173',
         'http://127.0.0.1:5173',
         'http://localhost:5174',
@@ -101,18 +101,18 @@ function buildServer() {
         ...ensureDomainViewForCors(process.env.FRONTEND_URL),
     ]; // Allow your React app origins
 
-    Logger.info("Allowed CORS origins: ", JSON.stringify(allowedCors, null, 2));
+    Logger.info("Allowed CORS origins: ", JSON.stringify(corsAllowedOrigins, null, 2));
 
 
 // Remove duplicates using Set
-    allowedCors = [...new Set(allowedCors.flat())];
+    corsAllowedOrigins = [...new Set(corsAllowedOrigins.flat())];
 
-    Logger.info("Without duplicates Allowed CORS origins: ", JSON.stringify(allowedCors, null, 2));
+    Logger.info("Without duplicates Allowed CORS origins: ", JSON.stringify(corsAllowedOrigins, null, 2));
 
     // Register the CORS plugin
     fastify.register(cors, {
         // Configure CORS options
-        origin: allowedCors, // Allow specific origins
+        origin: corsAllowedOrigins, // Allow specific origins
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
         credentials: true, // Allow cookies if needed
         allowedHeaders: ['Content-Type', 'Authorization', 'nonce', 'metamask_address', 'baggage', 'sentry-trace', 'x-sentry-trace', 'x-request-id', 'x-correlation-id', 'traceparent', 'tracestate'],

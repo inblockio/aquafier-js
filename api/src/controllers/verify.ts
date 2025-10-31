@@ -1,7 +1,9 @@
-import {streamToBuffer} from "../utils/file_utils";
-import Aquafier, {AquaTree, FileObject, Revision} from "aqua-js-sdk";
-import {FastifyInstance} from "fastify";
-import {verifyProofApi} from "../utils/verify_dns_claim";
+import { streamToBuffer } from "../utils/file_utils";
+import Aquafier, { AquaTree, FileObject, None, Revision } from "aqua-js-sdk";
+import { FastifyInstance } from "fastify";
+import { ApiResponse, coerceIntoApiResponse, verifyProofApi } from "../utils/verify_dns_claim";
+import { prisma } from "src/database/db";
+import logger from "src/utils/logger";
 
 export default async function verifyController(fastify: FastifyInstance) {
 
@@ -38,7 +40,7 @@ export default async function verifyController(fastify: FastifyInstance) {
             }
 
 
-        } catch (error : any) {
+        } catch (error: any) {
             request.log.error(error);
             return reply.code(500).send({
                 error: 'Error processing AquaTree',
@@ -169,7 +171,7 @@ export default async function verifyController(fastify: FastifyInstance) {
                 });
             }
 
-        } catch (error : any) {
+        } catch (error: any) {
             request.log.error(error);
             return reply.code(500).send({
                 error: 'Error processing AquaTree',
@@ -184,7 +186,7 @@ export default async function verifyController(fastify: FastifyInstance) {
 
     fastify.post('/verify/dns_claim', async (request: any, reply: any) => {
         try {
-            const data: { domain: string, wallet?: string } = request.body as { domain: string, wallet?: string };
+            const data: { domain: string, wallet: string, refresh?: boolean } = request.body as { domain: string, wallet: string, refresh?: boolean };
 
             // Validate input
             if (!data.domain || typeof data.domain !== 'string') {
@@ -199,8 +201,60 @@ export default async function verifyController(fastify: FastifyInstance) {
                 });
             }
 
-            // Perform verification (assuming 'wallet' as default lookup key)
-            const result = await verifyProofApi(data.domain, 'wallet', data.wallet);
+            if (!data.wallet || typeof data.wallet !== 'string') {
+                return reply.code(400).send({
+                    error: 'Invalid input',
+                    message: 'Wallet is required and must be a string',
+                    logs: [{
+                        level: 'error',
+                        message: 'Missing or invalid wallet parameter',
+                        details: { received: data }
+                    }]
+                });
+            }
+
+            const existingVerification = await prisma.dNSClaimVerification.findFirst({
+                where: {
+                    wallet_address: data.wallet,
+                    domain: data.domain
+                }
+            });
+
+            let result: ApiResponse | null = null
+
+            if (existingVerification) {
+                if (data.refresh) {
+                    result = await verifyProofApi(data.domain, 'wallet', data.wallet);
+                    await prisma.dNSClaimVerification.update({
+                        where: {
+                            id: existingVerification.id
+                        },
+                        data: {
+                            verification_logs: result as any,
+                            verification_status: result.success ? 'verified' : 'failed',
+                            is_verified: result.success,
+                            is_domain_verified: result.dnssecValidated,
+                            last_verified: new Date()
+                        }
+                    });
+                } else {
+                    result = coerceIntoApiResponse(existingVerification.verification_logs)
+                }
+            } else {
+                result = await verifyProofApi(data.domain, 'wallet', data.wallet);
+
+                await prisma.dNSClaimVerification.create({
+                    data: {
+                        wallet_address: data.wallet,
+                        domain: data.domain,
+                        verification_logs: result as any,
+                        verification_status: result.success ? 'verified' : 'failed',
+                        is_verified: result.success,
+                        is_domain_verified: result.dnssecValidated,
+                        last_verified: new Date()
+                    }
+                });
+            }
 
             // Return appropriate status code based on result
             if (result.success) {
@@ -224,7 +278,7 @@ export default async function verifyController(fastify: FastifyInstance) {
                 return reply.code(statusCode).send(result);
             }
 
-        } catch (error : any) {
+        } catch (error: any) {
             request.log.error(error);
             return reply.code(500).send({
                 error: 'Internal server error',

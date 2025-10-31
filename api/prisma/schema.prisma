@@ -296,9 +296,10 @@ model VerificationAttempt {
   @@index([email_or_phone_number, verification_type, action])
 }
 
-model DNSClaimVerificationOne {
+model DNSClaimVerification {
   id                  Int      @id @default(autoincrement())
   wallet_address      String
+  domain              String
   verification_logs   Json
   verification_status String
   is_verified         Boolean  @default(false)
@@ -307,5 +308,5 @@ model DNSClaimVerificationOne {
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
-  @@index([wallet_address])
+  @@index([wallet_address, domain], name: "wallet_address_domain")
 }

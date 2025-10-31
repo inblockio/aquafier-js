@@ -1,7 +1,8 @@
 import * as ethers from 'ethers';
 import * as dns from 'dns';
-import {promisify} from 'util';
+import { promisify } from 'util';
 import Logger from "./logger";
+import { Prisma } from '@prisma/client';
 
 export interface TxtRecord {
   wallet: string;
@@ -44,7 +45,7 @@ interface VerificationResult {
 }
 
 // API Response interface
-interface ApiResponse {
+export interface ApiResponse {
   success: boolean;
   message: string;
   domain: string;
@@ -59,7 +60,7 @@ interface ApiResponse {
 // Improved DNS resolution with multiple fallbacks
 async function resolveTxtWithFallbacks(domain: string): Promise<{ records: string[][]; dnssecValidated: boolean }> {
   const logs: string[] = [];
-  
+
   // Method 1: Try with promisified dns.resolveTxt
   try {
     logs.push(`Attempting DNS resolution for ${domain} using promisified dns.resolveTxt`);
@@ -99,7 +100,7 @@ async function resolveTxtWithFallbacks(domain: string): Promise<{ records: strin
     logs.push(`Attempting DNS resolution using custom resolver`);
     const customResolver = new dns.Resolver();
     customResolver.setServers(['8.8.8.8', '1.1.1.1']);
-    
+
     const records = await new Promise<string[][]>((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         reject(new Error('Custom resolver timeout after 10 seconds'));
@@ -133,7 +134,7 @@ async function resolveTxtWithFallbacks(domain: string): Promise<{ records: strin
       logs.push(`Attempting DNS resolution using servers: ${servers.join(', ')}`);
       const resolver = new dns.Resolver();
       resolver.setServers(servers);
-      
+
       const records = await new Promise<string[][]>((resolve, reject) => {
         const timeoutId = setTimeout(() => {
           reject(new Error(`DNS query timeout with servers ${servers.join(', ')}`));
@@ -150,7 +151,7 @@ async function resolveTxtWithFallbacks(domain: string): Promise<{ records: strin
       });
       logs.push(`Success with servers ${servers.join(', ')}: ${records.length} records found`);
       return { records, dnssecValidated: false };
-    } catch (error : any) {
+    } catch (error: any) {
       logs.push(`Failed with servers ${servers.join(', ')}: ${error instanceof Error ? error.message : error}`);
     }
   }
@@ -163,7 +164,7 @@ async function resolveTxtWithFallbacks(domain: string): Promise<{ records: strin
     nodeVersion: process.version,
     platform: process.platform
   };
-  
+
   throw new Error(`All DNS resolution methods failed for ${domain}. Diagnostic info: ${JSON.stringify(diagnosticInfo, null, 2)}`);
 }
 
@@ -497,13 +498,21 @@ async function verifySingleRecord(
     result.success = true;
     return result;
 
-  } catch (error : any) {
+  } catch (error: any) {
     logs.push({
       level: 'error',
       message: 'Signature verification error',
       details: { error: error instanceof Error ? error.message : error }
     });
     return result;
+  }
+}
+
+export function coerceIntoApiResponse(jsonValue: Prisma.JsonValue): ApiResponse {
+  try {
+    return jsonValue as unknown as ApiResponse;
+  } catch (error) {
+    throw new Error('Invalid JSON value');
   }
 }
 
@@ -590,7 +599,7 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
       txtRecords = result.records;
       dnssecValidated = result.dnssecValidated;
       response.dnssecValidated = dnssecValidated;
-      
+
       logs.push({
         level: 'success',
         message: 'DNS resolution successful',
@@ -603,7 +612,7 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
       logs.push({
         level: 'error',
         message: 'All DNS resolution methods failed',
-        details: { 
+        details: {
           error: dnsError instanceof Error ? dnsError.message : dnsError,
           recordName: recordName,
           dnsServers: dns.getServers()
@@ -729,7 +738,7 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
 
     return response;
 
-  } catch (error : any) {
+  } catch (error: any) {
     logs.push({
       level: 'error',
       message: 'Unexpected error during verification',

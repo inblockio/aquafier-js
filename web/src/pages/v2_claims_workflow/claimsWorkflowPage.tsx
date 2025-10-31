@@ -237,9 +237,6 @@ export default function ClaimsWorkflowPage() {
             }
       }
 
-
-
-
       useEffect(() => {
             setIsLoading(true);
 
