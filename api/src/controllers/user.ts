@@ -9,8 +9,8 @@ import { authenticate, AuthenticatedRequest } from '../middleware/auth_middlewar
 import { Prisma, PrismaClient, UserAttestationAddresses } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import Logger from '../utils/logger';
-import { cliGreenify, cliRedify, cliYellowfy } from 'aqua-js-sdk';
-import { TEMPLATE_HASHES } from 'src/models/constants';
+import { cliRedify } from 'aqua-js-sdk';
+import { TEMPLATE_HASHES } from '../models/constants';
 
 export default async function userController(fastify: FastifyInstance) {
 
