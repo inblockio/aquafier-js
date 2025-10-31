@@ -24,7 +24,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [selectedFilters, setSelectedFilters] = useState<string[]>(['all'])
       const [tempSelectedFilters, setTempSelectedFilters] = useState<string[]>(['all'])
 
-      const { files, setFiles ,systemFileInfo, backend_url, session, setSystemFileInfo } = useStore(appStore)
+      const { files, setFiles, systemFileInfo, backend_url, session, setSystemFileInfo } = useStore(appStore)
 
       const systemAquaTreeFileNames = systemFileInfo.map(e => {
             try {
@@ -40,28 +40,28 @@ export default function FilesList(filesListProps: FilesListProps) {
 
             setIsLoadingPage(true)
             try {
-            //       const response = await fetch(`${backend_url}/files?page=${page}`, {
-            //             headers: {
-            //                   'Authorization': `Bearer ${session.nonce}`
-            //             }
-            //       })
-            //       const data = await response.json()
+                  //       const response = await fetch(`${backend_url}/files?page=${page}`, {
+                  //             headers: {
+                  //                   'Authorization': `Bearer ${session.nonce}`
+                  //             }
+                  //       })
+                  //       const data = await response.json()
 
-            //       if (data.success) {
-            //             // Update your store with the new file data
-            //             // You'll need to add a setFiles action to your store
-            //             appStore.setState({
-            //                   files: {
-            //                         ...files,
-            //                         fileData: data.data,
-            //                         status: 'loaded'
-            //                   }
-            //             })
-            //       }
+                  //       if (data.success) {
+                  //             // Update your store with the new file data
+                  //             // You'll need to add a setFiles action to your store
+                  //             appStore.setState({
+                  //                   files: {
+                  //                         ...files,
+                  //                         fileData: data.data,
+                  //                         status: 'loaded'
+                  //                   }
+                  //             })
+                  //       }
 
-               const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files?page=${page}`, session!.nonce)
-              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
-                    
+                  const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files?page=${page}`, session!.nonce)
+                  setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+
             } catch (error) {
                   console.error('Error fetching files:', error)
             } finally {
@@ -441,7 +441,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                                           }).length})
                                     </button>
 
-                                    
+
                                     {
                                           view === 'table' && uniqueWorkflows.map((workflow) => {
                                                 const workflowCount = files.fileData.filter(file => {
@@ -478,7 +478,7 @@ export default function FilesList(filesListProps: FilesListProps) {
 
             return (
                   <div className="fixed inset-0 bg-[#00000080] bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+                        <div className="bg-white rounded-lg shadow-xl p-0 md:p-6 w-full max-w-md mx-4">
                               <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-lg font-semibold text-gray-900">Filter Files</h3>
                                     <button
@@ -598,6 +598,11 @@ export default function FilesList(filesListProps: FilesListProps) {
                         }
 
                         {renderWorkflowTabs()}
+                        {/* We replace this with carousel slides for nice slides in small screen */}
+                        {/* <div className="w-full">
+                              <CarouselTabsForFiles />
+                        </div> */}
+
 
                         {!isSmallScreen ? (
                               <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">

@@ -654,7 +654,7 @@ const FilesPage = () => {
                         )}
                   </div>
 
-                  <div className="w-full max-w-full box-border overflow-x-hidden bg-white p-6">
+                  <div className="w-full max-w-full box-border overflow-x-hidden bg-white p-0 md:p-6">
 
                         {displayFileListItems()}
 
