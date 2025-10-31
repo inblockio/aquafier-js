@@ -44,8 +44,8 @@ export async function authenticate(
     fastify.decorateRequest('user', null);
     
     // onRequest hook that runs before all route handlers
-    // fastify.addHook('onRequest', async (request: AuthenticatedRequest, reply) => {
+    fastify.addHook('onRequest', async (request: AuthenticatedRequest, reply: FastifyReply) => {
       // This would apply to ALL routes, which you might not want
       // Use this only if you want authentication globally
-    // });
+    });
   }

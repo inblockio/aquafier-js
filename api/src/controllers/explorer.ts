@@ -612,7 +612,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     },
                 });
 
-                (`one`)
+                // (`one`)
                 // if is form add the form elements
                 if (isForm) {
                     let revisioValue = Object.keys(revisionData);

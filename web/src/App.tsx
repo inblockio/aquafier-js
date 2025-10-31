@@ -34,6 +34,7 @@ import * as Sentry from "@sentry/react";
 import { init as initApm } from '@elastic/apm-rum'
 import { APMConfig } from "@/types/apm.ts";
 import ContactsPageV2 from './pages/contacts/contactsV2'
+import axios from 'axios'
 
 
 function startApm(config: APMConfig) {
@@ -60,7 +61,7 @@ function startApm(config: APMConfig) {
 }
 
 function App() {
-    const { setBackEndUrl, setWebConfig } = useStore(appStore)
+    const { setBackEndUrl, setWebConfig, backend_url, session } = useStore(appStore)
 
     useEffect(() => {
         // Properly handle async initialization
@@ -116,6 +117,32 @@ function App() {
 
 
     }
+
+    const getUserStats = async () => {
+        if(backend_url && session){
+            let result  = await axios.get(`${backend_url}/user_data_stats`, {
+                headers: {
+                    'nonce': session.nonce,
+                    'metamask_address': session.address
+                }
+            })
+            console.log("Stats-----", result)
+        //     const query = await fetch(`${backend_url}/user_data_stats`, {
+        //         method: 'GET',
+        //         headers: {
+        //               metamask_address: session.address,
+        //               nonce: session.nonce,
+        //         },
+        //   })
+        //   const response = await query.json()
+        //   console.log("Stats", response)
+        }
+    }
+
+    useEffect(() => {
+        getUserStats()
+    }, [backend_url, JSON.stringify(session)])
+
     return (
         <BrowserRouter>
             <LoadConfiguration />

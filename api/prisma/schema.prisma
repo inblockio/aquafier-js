@@ -132,7 +132,7 @@ model Revision {
   shared              String[]
   contract            String[]
   previous            String?
-  children            String?
+  children            String[]
   local_timestamp     String?
   revision_type       String?
   has_content         Boolean     @default(false)

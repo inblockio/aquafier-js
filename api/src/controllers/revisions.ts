@@ -1,18 +1,18 @@
-import {canDeleteRevision, deleteRevisionAndChildren} from '../utils/quick_revision_utils';
-import {prisma} from '../database/db';
-import {DeleteRevision, FetchAquaTreeRequest, SaveRevisionForUser} from '../models/request_models';
-import {getHost, getPort} from '../utils/api_utils';
+import { canDeleteRevision, deleteRevisionAndChildren } from '../utils/quick_revision_utils';
+import { prisma } from '../database/db';
+import { DeleteRevision, FetchAquaTreeRequest, SaveRevisionForUser } from '../models/request_models';
+import { getHost, getPort } from '../utils/api_utils';
 import {
     deleteAquaTree,
     getSignatureAquaTrees,
     getUserApiFileInfo,
     saveARevisionInAquaTree
 } from '../utils/revisions_utils';
-import {AquaTree, FileObject, OrderRevisionInAquaTree} from 'aqua-js-sdk';
-import {FastifyInstance} from 'fastify';
-import {sendToUserWebsockerAMessage} from './websocketController';
+import { AquaTree, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
+import { FastifyInstance } from 'fastify';
+import { sendToUserWebsockerAMessage } from './websocketController';
 import WebSocketActions from '../constants/constants';
-import {createAquaTreeFromRevisions} from '../utils/revisions_operations_utils';
+import { createAquaTreeFromRevisions } from '../utils/revisions_operations_utils';
 import Logger from "../utils/logger";
 
 export default async function revisionsController(fastify: FastifyInstance) {
@@ -50,7 +50,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
         // Construct the full URL
         const url = `${protocol}://${host}`;
 
-     
+
 
         try {
 
@@ -114,8 +114,8 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 return reply.code(202).send({ success: false, message: "use /tree to save revision for a specific user /tree/user is for different address" });
             }
 
-            if(!revisionData.orginAddress){
-                 return reply.code(400).send({ success: false, message: "origin address not defined" });
+            if (!revisionData.orginAddress) {
+                return reply.code(400).send({ success: false, message: "origin address not defined" });
             }
 
             //  if(revisionData.orginAddress == revisionData.address    ){
@@ -128,7 +128,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
 
 
-// Get the host from the request headers
+            // Get the host from the request headers
             const host = request.headers.host || `${getHost()}:${getPort()}`;
 
             // Get the protocol (http or https)
@@ -152,7 +152,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 success: true,
             });
 
-        } catch (error : any) {
+        } catch (error: any) {
             request.log.error(error);
             return reply.code(500).send({ error: `Failed to process revisions other user ${error}` });
         }
@@ -199,11 +199,11 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
 
 
-            if(!revisionData.orginAddress){
-                 return reply.code(400).send({ success: false, message: "origin address not defined.." });
+            if (!revisionData.orginAddress) {
+                return reply.code(400).send({ success: false, message: "origin address not defined.." });
             }
 
-// Get the host from the request headers
+            // Get the host from the request headers
             const host = request.headers.host || `${getHost()}:${getPort()}`;
 
             // Get the protocol (http or https)
@@ -235,7 +235,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
             // let displayData = await fetchAquatreeFoUser(url, latest)
 
-           let displayData = await getUserApiFileInfo(url,session.address )
+            let displayData = await getUserApiFileInfo(url, session.address)
 
             return reply.code(200).send({
                 success: true,
@@ -244,7 +244,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
             });
 
-        } catch (error : any) {
+        } catch (error: any) {
             request.log.error(error);
             return reply.code(500).send({ error: `Failed to process revisions ${error}` });
         }
@@ -274,26 +274,13 @@ export default async function revisionsController(fastify: FastifyInstance) {
         }
 
 
+        const host = request.headers.host || `${getHost()}:${getPort()}`;
 
+        // Get the protocol (http or https)
+        const protocol = request.protocol || 'https'
 
-        // Get the host from the request headers
-        // const host = `${getHost()}:${getPort()}`;
-
-        // // Get the protocol (http or https)
-        // const protocol = 'https'
-
-        // // Construct the full URL
-        // const url = `${protocol}://${host}`;
-
-        
- // Get the host from the request headers
-            const host = request.headers.host || `${getHost()}:${getPort()}`;
-
-            // Get the protocol (http or https)
-            const protocol = request.protocol || 'https'
-
-            // Construct the full URL
-            const url = `${protocol}://${host}`;
+        // Construct the full URL
+        const url = `${protocol}://${host}`;
 
 
         const revisionHashestoDelete: Array<string> = revisionDataPar.revisionHash.split(",")
@@ -390,9 +377,9 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
             }
 
-;
+            ;
 
- // Get the host from the request headers
+            // Get the host from the request headers
             const host = request.headers.host || `${getHost()}:${getPort()}`;
 
             // Get the protocol (http or https)

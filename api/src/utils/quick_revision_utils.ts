@@ -85,6 +85,32 @@ export async function deleteRevisionAndChildren(
                     continue;
                 }
 
+                // Update parent if any and remove this revision's hash from the children
+                try {
+                    if (revision.previous) {
+                        const completePreviousRevisionHash = revision.previous.includes('_') ? revision.previous : `${userAddress}_${revision.previous}`;
+                        let parentRevision = await tx.revision.findUnique({
+                            where: { pubkey_hash: completePreviousRevisionHash }
+                        });
+
+                        if (parentRevision) {
+                            // Get all parent revision children
+                            let parentRevisionChildren = parentRevision.children;
+                            // Remove the revision to delete from the children
+                            parentRevisionChildren = parentRevisionChildren.filter((childHash) => childHash !== fullRevisionHash);
+                            // Update the parent revision with the new children
+                            await tx.revision.update({
+                                where: { pubkey_hash: revision.previous },
+                                data: {
+                                    children: parentRevisionChildren
+                                }
+                            });
+                        }
+                    }
+                } catch (error) {
+                    Logger.error(`Error updating parent for revision ${hash}: ${error}`);
+                }
+
                 // Handle related data based on revision type
                 switch (revision.revision_type) {
                     case "signature":

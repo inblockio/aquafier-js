@@ -1,14 +1,16 @@
-import {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
+import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 // import { SiweMessage } from 'siwe';
-import {prisma} from '../database/db';
+import { prisma } from '../database/db';
 // import { Settings } from '@prisma/client';
-import {SettingsRequest, UserAttestationAddressesRequest} from '../models/request_models';
+import { SettingsRequest, UserAttestationAddressesRequest } from '../models/request_models';
 // import { verifySiweMessage } from '../utils/auth_utils';
-import {fetchEnsName} from '../utils/api_utils';
-import {authenticate, AuthenticatedRequest} from '../middleware/auth_middleware';
-import {Prisma, PrismaClient, UserAttestationAddresses} from '@prisma/client';
-import {DefaultArgs} from '@prisma/client/runtime/library';
+import { fetchEnsName } from '../utils/api_utils';
+import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
+import { Prisma, PrismaClient, UserAttestationAddresses } from '@prisma/client';
+import { DefaultArgs } from '@prisma/client/runtime/library';
 import Logger from '../utils/logger';
+import { cliGreenify, cliRedify, cliYellowfy } from 'aqua-js-sdk';
+import { TEMPLATE_HASHES } from 'src/models/constants';
 
 export default async function userController(fastify: FastifyInstance) {
 
@@ -243,7 +245,6 @@ export default async function userController(fastify: FastifyInstance) {
 
     })
 
-
     // get current session
     fastify.get('/explorer_fetch_user_settings', async (request, reply) => {
         const nonce = request.headers['nonce'];
@@ -274,7 +275,7 @@ export default async function userController(fastify: FastifyInstance) {
                 }
             })
 
-            let enableDBAClaim= process.env.ENABLE_DBA_CLAIM ?? "false"
+            let enableDBAClaim = process.env.ENABLE_DBA_CLAIM ?? "false"
 
             if (settingsData == null) {
                 let defaultData = {
@@ -284,7 +285,7 @@ export default async function userController(fastify: FastifyInstance) {
                     cli_priv_key: "",
                     witness_network: "sepolia",
                     theme: "light",
-                    enable_dba_claim : enableDBAClaim== "true" ? true : false,
+                    enable_dba_claim: enableDBAClaim == "true" ? true : false,
                     witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
                 }
                 await prisma.settings.create({
@@ -647,6 +648,136 @@ export default async function userController(fastify: FastifyInstance) {
                 error: error instanceof Error ? error.message : String(error)
             });
         }
+    });
+
+    // Get user data stats
+    fastify.get('/user_data_stats', {
+        preHandler: authenticate
+    }, async (request: FastifyRequest & AuthenticatedRequest, reply) => {
+        const userAddress = request.user?.address;
+
+        if (!userAddress) {
+            return reply.code(401).send({ error: 'User not authenticated' });
+        }
+
+        /**
+         * We query through Revisions and count the user's revisions since genesis in one way or the other has the user address
+         * And besides that we can filter through the pubkey_hash field to sort of map out the all information regarding to the user from revisions 
+         * before building the user stats object
+         * 1. Query all genesis revision
+         * 2. Get link revisions with genesis as previous
+         * 3. Do a counter on them based on type (form type)
+         * 
+         */
+        // 1. All user revisions
+        // const queryStart = performance.now()
+        const allUserRevisions = await prisma.revision.findMany({
+            select: {
+                pubkey_hash: true,
+                // revision_type: true,
+                previous: true,
+                // Link: {
+                //     select: {
+                //         link_verification_hashes: true
+                //     }
+                // }
+                AquaForms: {
+                    select: {
+                        key: true
+                    }
+                }
+            },
+            where: {
+                pubkey_hash: {
+                    startsWith: userAddress
+                },
+                previous:{
+                    equals: ""
+                }
+            }
+        });
+        // const queryEnd = performance.now()
+        // console.log(cliGreenify(`Genesis revisions query took ${(queryEnd - queryStart).toFixed(2)}ms`))
+
+        console.log(cliRedify(`All user revisions: ${JSON.stringify(allUserRevisions, null, 4)}`))
+
+        // Filter out revisions that contain aqua_sign fields (forms_signers)
+        const filteredUserRevisions = allUserRevisions.filter(revision => {
+            // Check if any AquaForms has the key "forms_signers"
+            const hasFormsSigners = revision.AquaForms.some(form => form.key === "forms_signers")
+            return !hasFormsSigners // Return true if it doesn't have forms_signers (keep it)
+        })
+
+        const allRevisionHashes = allUserRevisions.map(revision => revision.pubkey_hash)
+        
+        // const linkQueryStart = performance.now()
+        const linkRevisions = await prisma.revision.findMany({
+            select: {
+                pubkey_hash: true,
+                revision_type: true,
+                previous: true,
+                Link: {
+                    select: {
+                        link_verification_hashes: true
+                    }
+                }
+            },
+            where: {
+                previous: {
+                    in: allRevisionHashes
+                },
+                revision_type: {
+                    equals: "link"
+                }
+            }
+        })
+        // const linkQueryEnd = performance.now()
+        // console.log(cliGreenify(`Link revisions query took ${(linkQueryEnd - linkQueryStart).toFixed(2)}ms`))
+
+        const linkRevisionHashes = linkRevisions.map(revision => revision.pubkey_hash)
+
+        // We create an object of the items we want to track differently and or separately
+        const formTypesToTrack: Record<string, number> = {}
+        for(let i = 0; i < Object.keys(TEMPLATE_HASHES).length; i++){
+            const formType = Object.keys(TEMPLATE_HASHES)[i]
+            formTypesToTrack[formType] = 0
+        }
+
+        const formTypesToTrackKeys = Object.keys(formTypesToTrack)
+
+        // Loop through each link revision
+        for(let j = 0; j < linkRevisions.length; j++){
+            const linkRevision = linkRevisions[j]
+            
+            // Loop through each Link in the revision (it's an array)
+            for(let k = 0; k < linkRevision.Link.length; k++){
+                const link = linkRevision.Link[k]
+                
+                // Loop through each verification hash in the link
+                for(let l = 0; l < link.link_verification_hashes.length; l++){
+                    const verificationHash = link.link_verification_hashes[l]
+                    
+                    // Check which template this hash matches
+                    for(let i = 0; i < formTypesToTrackKeys.length; i++){
+                        const formType = formTypesToTrackKeys[i]
+                        const templateHash = TEMPLATE_HASHES[formType as keyof typeof TEMPLATE_HASHES]
+                        
+                        if(verificationHash === templateHash){
+                            formTypesToTrack[formType]++
+                            break; // Found match, no need to check other templates
+                        }
+                    }
+                }
+            }
+        }
+
+        return reply.code(200).send({
+            filesCount: filteredUserRevisions.length,
+            // totalRevisions: allUserRevisions.length,
+            // linkRevisionsCount: linkRevisions.length,
+            claimTypeCounts: formTypesToTrack
+        })
+
     });
 
 

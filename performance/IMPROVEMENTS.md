@@ -28,3 +28,36 @@ Solid Js is most perfomant framework that very close to React unlike vue, svelte
 
 ### 3. Cache workflows 
 All Items under application section ![alt text](image-2.png) depend on workflows this can be cached either on the front end or the backend .
+
+
+### 4. Add children to revisions
+
+Add a `string[]` for revision children to enable forward navigation to the next revision.
+
+With `previous` field, we can navigate backwards, but if you want to query just a given ID (Identity claim) ie `dns_claim` without querying everything first then this strategy can help move that way.
+
+Templates -> Rev ID
+
+Search <Template ID> type DNS
+
+[Template] -------Link/Rev----> [LinkRev] ----X----> [Srvg]
+    |               ^
+    |               |
+    |               |
+    V               |
+[genesis] ----------
+
+-> child
+
+Update children whenever
+    - New revision is created
+      - Get the previous revision hash and query the revision for update for the user
+    - A Revision is deleted.
+      - Remove this revision's hash from the previous revision if it exists(Previos not genesis)
+
+This strategy can help query specific claims improving the performance of the application.
+ie Scan db for all ID types
+- DNS
+- Name
+- Sig ... go to latest
+    => verify

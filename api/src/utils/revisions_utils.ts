@@ -78,7 +78,7 @@ export async function getSignatureAquaTrees(userAddress: string, url: string): P
 }
 
 export async function getUserApiWorkflowFileInfo(
-    url: string, 
+    url: string,
     address: string,
 ): Promise<{
     data: Array<{
@@ -96,11 +96,11 @@ export async function getUserApiWorkflowFileInfo(
             }
         }
     });
-    
+
     if (totalItems === 0) {
         return {
             data: [],
-           
+
         }
     }
 
@@ -114,24 +114,24 @@ export async function getUserApiWorkflowFileInfo(
                 is_workflow: false
             }
         },
-        
+
         orderBy: {
             createdAt: 'desc' // Adjust this based on your sorting preference
         }
     });
-    
+
     const displayData = await fetchAquatreeFoUser(url, latest)
 
-     
-    
+
+
     return {
         data: displayData,
-    
+
     };
 }
 
 export async function getUserApiFileInfo(
-    url: string, 
+    url: string,
     address: string,
     page: number = 1,
     limit: number = 10
@@ -146,7 +146,7 @@ export async function getUserApiFileInfo(
         totalItems: number,
         itemsPerPage: number,
         hasNextPage: boolean,
-        hasPreviousPage: boolean, 
+        hasPreviousPage: boolean,
         startIndex: number,  // Add this
         endIndex: number     // Add this
     }
@@ -161,7 +161,7 @@ export async function getUserApiFileInfo(
             }
         }
     });
-    
+
     if (totalItems === 0) {
         return {
             data: [],
@@ -174,7 +174,7 @@ export async function getUserApiFileInfo(
                 hasPreviousPage: false,
                 startIndex: 0,
                 endIndex: 0
-           
+
             }
         }
     }
@@ -196,11 +196,12 @@ export async function getUserApiFileInfo(
         take: limit,
         orderBy: {
             createdAt: 'desc'
-        }    });
-    
+        }
+    });
+
     const displayData = await fetchAquatreeFoUser(url, latest)
 
-      const startIndex = skip + 1;
+    const startIndex = skip + 1;
     const endIndex = Math.min(skip + limit, totalItems);
 
     return {
@@ -212,8 +213,8 @@ export async function getUserApiFileInfo(
             itemsPerPage: limit,
             hasNextPage: page < totalPages,
             hasPreviousPage: page > 1,
-             startIndex: startIndex,    // Add this
-            endIndex: endIndex   
+            startIndex: startIndex,    // Add this
+            endIndex: endIndex
         }
     };
 }
@@ -566,7 +567,7 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevisionForUser,
             //     ? [{ address: revisionData.witness_smart_contract_address }]
             //     : [],
             previous: `${userAddress}_${revisionData.revision.previous_verification_hash}`,
-            // children: {},
+            children: [],
             local_timestamp: revisionData.revision.local_timestamp, // revisionData.revision.local_timestamp,
             revision_type: revisionData.revision.revision_type,
             verification_leaves: revisionData.revision.leaves || [],
@@ -574,6 +575,21 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevisionForUser,
 
         },
     });
+
+    // Update previous revision children
+
+    try {
+        await prisma.revision.update({
+            where: {
+                pubkey_hash: `${userAddress}_${revisionData.revision.previous_verification_hash}`
+            },
+            data: {
+                children: [filePubKeyHash]
+            }
+        })
+    } catch (error) {
+        console.log(cliRedify(`Error updating previous revision children ${error}`))
+    }
 
     if (revisionData.revision.revision_type == "form") {
         let revisioValue = Object.keys(revisionData);
@@ -1591,12 +1607,25 @@ export async function saveAquaTree(
     });
 
     // Process each revision
-    for (const revisionHash of allHash) {
+    // for (const revisionHash of allHash) {
+    for (let i = 0; i < allHash.length; i++) {
+        const revisionHash = allHash[i];
         const revisionData = aquaTreeWithOrderdRevision.revisions[revisionHash];
         const pubKeyHash = `${userAddress}_${revisionHash}`;
         const pubKeyPrevious = revisionData.previous_verification_hash.length > 0
             ? `${userAddress}_${revisionData.previous_verification_hash}`
             : "";
+
+        const revisionChildren = []
+
+        for(let a = i + 1; a < allHash.length; a++){
+            const childHash = allHash[a];
+            const childData = aquaTreeWithOrderdRevision.revisions[childHash];
+            if(childData.previous_verification_hash.includes(revisionHash)){
+                const childPubKeyHash = `${userAddress}_${childHash}`;
+                revisionChildren.push(childPubKeyHash);
+            }
+        }
 
         // Insert/update revision in the database
         await prisma.revision.upsert({
@@ -1607,6 +1636,7 @@ export async function saveAquaTree(
                 nonce: revisionData.file_nonce ?? "",
                 shared: [],
                 previous: pubKeyPrevious,
+                children: revisionChildren,
                 local_timestamp: revisionData.local_timestamp,
                 revision_type: revisionData.revision_type,
                 verification_leaves: revisionData.leaves ?? [],
@@ -1617,6 +1647,9 @@ export async function saveAquaTree(
                 nonce: revisionData.file_nonce ?? "",
                 shared: [],
                 previous: pubKeyPrevious,
+                children: {
+                    push: revisionChildren
+                },
                 local_timestamp: revisionData.local_timestamp,
                 revision_type: revisionData.revision_type,
                 verification_leaves: revisionData.leaves ?? [],

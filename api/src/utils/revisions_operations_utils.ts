@@ -91,7 +91,8 @@ export async function createAquaTreeFromRevisions(
 
 
         // Step 2: Get all associated files
-        const aquaTreeFileData = await fetchAquaTreeFileData(revisionPubKeyHashes);
+        // FIX: Replaced revisionPubKeyHashes with fileOrFormPubKeyHashes
+        const aquaTreeFileData = await fetchAquaTreeFileData(fileOrFormPubKeyHashes);
         
         // Step 3: Create file objects for download
         fileObjects = await createFileObjects(aquaTreeFileData, url);
@@ -308,10 +309,7 @@ async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFi
 
             allData.push(data);
         } else {
-            Logger.error(`💣💣💣 File index not found ..pubKeyHash ${pubKeyHash} --  ${hashOnly}`)
-
-
-            
+            Logger.error(`💣💣💣 File index not found ..pubKeyHash ${pubKeyHash} --  ${hashOnly}`)   
         }
     }
 

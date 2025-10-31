@@ -7,6 +7,35 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import axios from 'axios'
 import { Button } from '@/components/ui/button'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
+
+interface IConfirmDeleteDialog {
+      children: React.ReactNode
+      deleteFunc: () => void
+}
+
+export function ConfirmDeleteDialog({ children, deleteFunc }: IConfirmDeleteDialog) {
+      return (
+            <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                        {children}
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                        <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete your
+                                    account and remove your data from our servers.
+                              </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={deleteFunc} color='red'>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                  </AlertDialogContent>
+            </AlertDialog>
+      )
+}
 
 const DeleteUserData = () => {
       const [_deleting, setDeleting] = useState(false)
@@ -67,16 +96,19 @@ const DeleteUserData = () => {
             }
       }
 
+
+
       return (
-            <Button
-                  data-testid="delete-user-data-button"
-                  // className='bg-red-500 hover:bg-red-600 color-white rounded-md'
-                  className="inline-flex items-center gap-2 px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium transition-colors rounded-lg"
-                  variant={'outline'}
-                  onClick={deleteUserData}
-            >
-                  Clear Account Data
-            </Button>
+            <ConfirmDeleteDialog deleteFunc={deleteUserData}>
+                  <Button
+                        data-testid="delete-user-data-button"
+                        // className='bg-red-500 hover:bg-red-600 color-white rounded-md'
+                        className="inline-flex items-center gap-2 px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium transition-colors rounded-lg"
+                        variant={'outline'}
+                  >
+                        Clear Account Data
+                  </Button>
+            </ConfirmDeleteDialog>
       )
 }
 
@@ -256,11 +288,10 @@ export default function SettingsPage() {
                                                             <button
                                                                   key={network}
                                                                   onClick={() => setActiveNetwork(network)}
-                                                                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${
-                                                                        activeNetwork === network
+                                                                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${activeNetwork === network
                                                                               ? 'bg-primary text-white'
                                                                               : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                                                                  }`}
+                                                                        }`}
                                                             >
                                                                   {network}
                                                             </button>

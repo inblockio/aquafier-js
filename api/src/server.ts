@@ -33,7 +33,6 @@ import Logger from "./utils/logger";
 import DNSClaimVerificationController from './controllers/dns_claim_verification';
 import metricsController from './controllers/metrics';
 import workflowsController from './controllers/workflow';
-import {getCurrentActiveSpan} from "./utils/apm";
 
 
 function buildServer() {
@@ -160,6 +159,7 @@ function buildServer() {
     fastify.register(DNSClaimVerificationController);
     fastify.register(metricsController);
     fastify.register(workflowsController);
+
 
 
     // fastify.addHook("onRequest", async function (request, reply, done) {
