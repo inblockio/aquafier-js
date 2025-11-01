@@ -12,7 +12,7 @@ import Home from './pages/home'
 import TailwindMainLayout from './layouts/TailwindMainLayout'
 import PageNotFound from './pages/page_not_found'
 import InfoPage from './pages/info_page'
-import SettingsPage from './pages/settings_page'
+import SettingsPage from './pages/user_settings/settings_page'
 import TemplatesPage from './pages/templates_page'
 import CreateFormInstance from './pages/create_form_instance'
 import NewShadcnLayoutWithSidebar from './layouts/NewShadcnLayoutWithSidebar'
@@ -34,7 +34,6 @@ import * as Sentry from "@sentry/react";
 import { init as initApm } from '@elastic/apm-rum'
 import { APMConfig } from "@/types/apm.ts";
 import ContactsPageV2 from './pages/contacts/contactsV2'
-import axios from 'axios'
 
 
 function startApm(config: APMConfig) {
@@ -61,7 +60,7 @@ function startApm(config: APMConfig) {
 }
 
 function App() {
-    const { setBackEndUrl, setWebConfig, backend_url, session } = useStore(appStore)
+    const { setBackEndUrl, setWebConfig } = useStore(appStore)
 
     useEffect(() => {
         // Properly handle async initialization
@@ -118,30 +117,6 @@ function App() {
 
     }
 
-    const getUserStats = async () => {
-        if(backend_url && session){
-            let result  = await axios.get(`${backend_url}/user_data_stats`, {
-                headers: {
-                    'nonce': session.nonce,
-                    'metamask_address': session.address
-                }
-            })
-            console.log("Stats-----", result)
-        //     const query = await fetch(`${backend_url}/user_data_stats`, {
-        //         method: 'GET',
-        //         headers: {
-        //               metamask_address: session.address,
-        //               nonce: session.nonce,
-        //         },
-        //   })
-        //   const response = await query.json()
-        //   console.log("Stats", response)
-        }
-    }
-
-    useEffect(() => {
-        getUserStats()
-    }, [backend_url, JSON.stringify(session)])
 
     return (
         <BrowserRouter>
