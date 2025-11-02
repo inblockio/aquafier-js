@@ -252,7 +252,7 @@ export async function FetchRevisionInfo(hash: string, revision: Revision): Promi
             }
         });
     } else {
-        Logger.info(`type ${revision.revision_type} with hash ${hash}`);
+        // Logger.info(`type ${revision.revision_type} with hash ${hash}`);
         return null;
     }
 }
@@ -742,16 +742,17 @@ async function processFileRevision(revision: Revision, revisionData: AquaRevisio
 
     if (!fileResult) {
         // Try via file index
-        const fileIndexResult = await prisma.fileIndex.findFirst({
-            where: {
-                pubkey_hash: {
-                    has: hashOnly
-                }
-            }
-        });
+        const fileIndexResult = await prisma.$queryRaw<{file_hash: string}[]>`
+            SELECT file_hash FROM file_index
+            WHERE EXISTS (
+                SELECT 1 FROM unnest(pubkey_hash) AS elem 
+                WHERE elem LIKE ${`%${hashOnly}%`}
+            )
+            LIMIT 1
+        `;
 
-        if (fileIndexResult) {
-            updatedRevisionData.file_hash = fileIndexResult.file_hash;
+        if (fileIndexResult.length > 0) {
+            updatedRevisionData.file_hash = fileIndexResult[0].file_hash;
         } else {
             Logger.error(`Hash not found in file index: ${hashOnly}`);
         }
@@ -834,7 +835,7 @@ async function processLinkRevision(
     });
 
     if (!linkedRevision) {
-        Logger.warn(`Linked revision not found for hash ${linkedHash}`);
+        // Logger.warn(`Linked revision not found for hash ${linkedHash}`);
         return { revisionData: updatedRevisionData, aquaTree, fileObjects };
     }
 

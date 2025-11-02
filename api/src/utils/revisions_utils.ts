@@ -2146,7 +2146,7 @@ export async function FetchRevisionInfo(hash: string, revision: AquaTreeRevision
         })
     } else {
 
-        Logger.info(`type ${revision.revision_type} with hash ${hash}`)
+        // Logger.info(`type ${revision.revision_type} with hash ${hash}`)
         return null
         // throw new Error(`implment for ${revision.revision_type}`);
 
