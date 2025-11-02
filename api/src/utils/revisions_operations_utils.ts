@@ -99,8 +99,6 @@ export async function createAquaTreeFromRevisions(
         // Step 3: Create file objects for download
         fileObjects = await createFileObjects(aquaTreeFileData, url);
 
-
-        
         // Logger.info("File indexe----: ", JSON.stringify(fileObjects, null, 4))
 
         // Step 4: Process each revision (OPTIMIZED VERSION)
@@ -415,21 +413,21 @@ async function processRevisionOptimized(
     let revisionData: AquaRevision = {
         revision_type: revision.revision_type as "link" | "file" | "witness" | "signature" | "form",
         previous_verification_hash: previousHashOnly,
-        verification_leaves: revision.verification_leaves,
-        local_timestamp: revision.local_timestamp ?? "",
+        leaves: revision.verification_leaves,
+        local_timestamp: revision.local_timestamp?.toString() ?? "",
         nonce: revision.nonce ?? "",
         children: revision.children,
         version: AQUA_VERSION
     };
 
     // Add file content if it's a file revision
-    if (revision.revision_type === "file") {
+    if (revision.has_content) {
         revisionData = await addRevisionContent(revision, revisionData, aquaTreeFileData);
     }
 
     // Process revision by type using pre-fetched data
     const revisionInfo = revisionInfoMap.get(revision.pubkey_hash);
-    if (revisionInfo || revision.revision_type === "file") {
+    if (revisionInfo) {
         const processResult = await processRevisionByTypeOptimized(revision, revisionData, revisionInfo!, url);
         revisionData = processResult.revisionData;
         fileObjects = processResult.fileObjects;
@@ -441,6 +439,18 @@ async function processRevisionOptimized(
             fileObjects = genesisResult.fileObjects;
             revisionData = genesisResult.revisionData;
         }
+
+        if (revision.revision_type == "link") {
+            const linkedRevisionResult = await updateLinkRevisionFileIndex(revision, revisionData, aquaTree, fileObjects, aquaTreeFileData, url);
+            if (!linkedRevisionResult) {
+                Logger.error(`Error processing link revision with hash ${revision.pubkey_hash}`);
+                return { aquaTree, fileObjects };
+            }
+            aquaTree = linkedRevisionResult.aquaTree;
+            fileObjects = linkedRevisionResult.fileObjects;
+            revisionData = linkedRevisionResult.revisionData
+        }
+        
     }
 
     // Add revision to aqua tree
@@ -481,9 +491,10 @@ async function processRevisionByTypeOptimized(
                 ...revisionData,
                 link_type: linkData.link_type ?? "",
                 link_verification_hashes: linkData.link_verification_hashes,
-                link_file_hashes: linkData.link_file_hashes
+                link_file_hashes: linkData.link_file_hashes,
             };
             return { revisionData: updatedRevisionData, fileObjects };
+            // return await processLinkRevision(revisionData, revisionInfo as Link, aquaTree, fileObjects, url);
         default:
             Logger.warn(`Unknown revision type: ${revision.revision_type}`);
             return { revisionData, fileObjects };
