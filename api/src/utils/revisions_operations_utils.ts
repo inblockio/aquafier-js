@@ -126,6 +126,7 @@ export async function createAquaTreeFromRevisions(
 
         const aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(aquaTree);
 
+        // NOTE: DO NOT delete this, it might be helpful if the current tree is not directly included in fileObjects
         // fileObjects.push(
         //     {
         //         fileContent: JSON.stringify(aquaTree),
@@ -133,9 +134,6 @@ export async function createAquaTreeFromRevisions(
         //         path: '',
         //     }
         // );
-
-        console.log("FILE OBJECTS")
-        console.log(JSON.stringify(fileObjects, null, 4))
 
         return [aquaTreeWithOrderdRevision, fileObjects];
 

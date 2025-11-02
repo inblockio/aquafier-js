@@ -8,7 +8,7 @@ import {
     getUserApiFileInfo,
     saveARevisionInAquaTree
 } from '../utils/revisions_utils';
-import { AquaTree, cliGreenify, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
+import { AquaTree, cliGreenify, cliRedify, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import { sendToUserWebsockerAMessage } from './websocketController';
 import WebSocketActions from '../constants/constants';
@@ -16,6 +16,7 @@ import { createAquaTreeFromRevisions, deleteChildrenFieldFromAquaTrees } from '.
 import Logger from "../utils/logger";
 import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
 import { TEMPLATE_HASHES } from '../models/constants';
+import { ethers } from 'ethers';
 
 export default async function revisionsController(fastify: FastifyInstance) {
     // fetch aqua tree from a revision hash
@@ -594,11 +595,15 @@ export default async function revisionsController(fastify: FastifyInstance) {
     }, async (request: AuthenticatedRequest, reply) => {
         const userAddress = request.user?.address;
 
-        const { claim_types } = request.query as { claim_types: string };
+        const { claim_types, wallet_address } = request.query as { claim_types: string, wallet_address?: string };
 
         const claimTypes = JSON.parse(claim_types)
 
         const invalidClaimTypes = confirmThatAllClaimTypesAreValid(claimTypes)
+        let cleanedWalletAddress = wallet_address
+        if(wallet_address){
+            cleanedWalletAddress = ethers.getAddress(wallet_address)
+        }
 
         if (invalidClaimTypes.length > 0) {
             return reply.code(400).send({ error: 'Invalid claim types', invalidClaimTypes });
@@ -634,23 +639,66 @@ export default async function revisionsController(fastify: FastifyInstance) {
         const limitNum = typeof limit === 'string' ? parseInt(limit, 10) : limit;
         const skip = (pageNum - 1) * limitNum;
 
-        // Get total count for pagination metadata
-        const totalCount = await prisma.revision.count({
-            where: {
-                pubkey_hash: {
-                    startsWith: userAddress
+        // First, find genesis form revisions that contain the wallet address
+        let genesisFormHashes: string[] = []
+        if(cleanedWalletAddress){
+            const genesisFormRevisions = await prisma.revision.findMany({
+                select: {
+                    pubkey_hash: true
                 },
-                revision_type: {
-                    equals: "link"
-                },
-                Link: {
-                    some: {
-                        link_verification_hashes: {
-                            hasSome: templateHashesToTrack
+                where: {
+                    pubkey_hash: {
+                        startsWith: userAddress
+                    },
+                    revision_type: {
+                        equals: "form"
+                    },
+                    previous: "", // Genesis revisions have no previous
+                    AquaForms: {
+                        some: {
+                            value: {
+                                string_contains: cleanedWalletAddress
+                            }
                         }
                     }
                 }
+            });
+            
+            genesisFormHashes = genesisFormRevisions.map(rev => rev.pubkey_hash);
+            console.log(cliGreenify(`Found ${genesisFormHashes.length} genesis form revisions containing wallet address`));
+        }
+
+        // Build the where clause for link revisions
+        let linkWhereClause: any = {
+            pubkey_hash: {
+                startsWith: userAddress
+            },
+            revision_type: {
+                equals: "link"
+            },
+            Link: {
+                some: {
+                    link_verification_hashes: {
+                        hasSome: templateHashesToTrack
+                    }
+                }
             }
+        }
+
+        console.log(cliRedify(JSON.stringify(genesisFormHashes, null, 2)))
+
+        // If we have genesis form hashes, filter links that reference them
+        if(genesisFormHashes.length > 0){
+            linkWhereClause.previous = {
+                in: genesisFormHashes
+            }
+        }
+
+        console.log(cliRedify(JSON.stringify(linkWhereClause, null, 2)))
+
+        // Get total count for pagination metadata
+        const totalCount = await prisma.revision.count({
+            where: linkWhereClause
         });
 
         const linkRevisions = await prisma.revision.findMany({
@@ -664,21 +712,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                     }
                 }
             },
-            where: {
-                pubkey_hash: {
-                    startsWith: userAddress
-                },
-                revision_type: {
-                    equals: "link"
-                },
-                Link: {
-                    some: {
-                        link_verification_hashes: {
-                            hasSome: templateHashesToTrack
-                        }
-                    }
-                }
-            },
+            where: linkWhereClause,
             skip: skip,
             take: limitNum,
             orderBy: {
@@ -761,170 +795,6 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 hasPrevPage
             }
         })
-
     });
-
-    // This works well, but its just a backup for now
-    // fastify.get('/tree/per_type', {
-    //     preHandler: authenticate
-    // }, async (request: AuthenticatedRequest, reply) => {
-    //     const userAddress = request.user?.address;
-
-    //     const { claim_types } = request.query as { claim_types: string };
-
-    //     const claimTypes = JSON.parse(claim_types)
-
-    //     const invalidClaimTypes = confirmThatAllClaimTypesAreValid(claimTypes)
-
-    //     if (invalidClaimTypes.length > 0) {
-    //         return reply.code(400).send({ error: 'Invalid claim types', invalidClaimTypes });
-    //     }
-
-    //     if (!userAddress) {
-    //         return reply.code(401).send({ error: 'Unauthorized' });
-    //     }
-
-    //     const queryStart = performance.now()
-    //     const templateHashesToTrack = []
-    //     // We create an object of the items we want to track differently and or separately
-    //     const formTypesToTrack: Record<string, number> = {}
-    //     for (let i = 0; i < claimTypes.length; i++) {
-    //         const formType = claimTypes[i]
-    //         formTypesToTrack[formType] = 0
-    //         templateHashesToTrack.push(TEMPLATE_HASHES[formType as keyof typeof TEMPLATE_HASHES])
-    //     }
-
-    //     const formTypesToTrackKeys = Object.keys(formTypesToTrack)
-    //     const allLinkRevisionsForTrackedClaimTypes: string[] = []
-
-    //     // Create lookup map only once, outside the loop
-    //     const templateHashToFormType = new Map<string, string>();
-    //     for (const formType of formTypesToTrackKeys) {
-    //         const templateHash = TEMPLATE_HASHES[formType as keyof typeof TEMPLATE_HASHES];
-    //         templateHashToFormType.set(templateHash, formType);
-    //     }
-
-    //     // Get pagination parameters from query
-    //     const { page = 1, limit = 100 } = request.query as { page?: number, limit?: number };
-    //     const skip = (page - 1) * limit;
-
-    //     // Get total count for pagination metadata
-    //     const totalCount = await prisma.revision.count({
-    //         where: {
-    //             pubkey_hash: {
-    //                 startsWith: userAddress
-    //             },
-    //             revision_type: {
-    //                 equals: "link"
-    //             },
-    //             Link: {
-    //                 some: {
-    //                     link_verification_hashes: {
-    //                         hasSome: templateHashesToTrack
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     });
-
-    //     const linkRevisions = await prisma.revision.findMany({
-    //         select: {
-    //             pubkey_hash: true,
-    //             revision_type: true,
-    //             previous: true,
-    //             Link: {
-    //                 select: {
-    //                     link_verification_hashes: true
-    //                 }
-    //             }
-    //         },
-    //         where: {
-    //             pubkey_hash: {
-    //                 startsWith: userAddress
-    //             },
-    //             revision_type: {
-    //                 equals: "link"
-    //             }
-    //         },
-    //         skip: skip,
-    //         take: limit,
-    //         orderBy: {
-    //             createdAt: 'desc' // Most recent first
-    //         }
-    //     })
-
-    //     // Process revisions with early exit optimization
-    //     for (let j = 0; j < linkRevisions.length; j++) {
-    //         const linkRevision = linkRevisions[j];
-    //         let revisionMatched = false;
-
-    //         // Early exit if revision already matched
-    //         linkLoop: for (let k = 0; k < linkRevision.Link.length; k++) {
-    //             const link = linkRevision.Link[k];
-    //             for (let l = 0; l < link.link_verification_hashes.length; l++) {
-    //                 const verificationHash = link.link_verification_hashes[l];
-    //                 const formType = templateHashToFormType.get(verificationHash);
-
-    //                 if (formType) {
-    //                     formTypesToTrack[formType]++;
-    //                     if (!revisionMatched) {
-    //                         allLinkRevisionsForTrackedClaimTypes.push(linkRevision.pubkey_hash);
-    //                         revisionMatched = true;
-    //                     }
-    //                     break linkLoop; // Exit both loops once we find a match
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     let displayData: Array<{
-    //         aquaTree: AquaTree,
-    //         fileObject: FileObject[]
-    //     }> = []
-
-    //     const url = getBaseUrl(request)
-
-    //     for (let i = 0; i < allLinkRevisionsForTrackedClaimTypes.length; i++) {
-    //         const revisionHash = allLinkRevisionsForTrackedClaimTypes[i]
-    //         const aquaTreeJustRevisions = await buildEntireTreeFromGivenRevisionHash(revisionHash)
-    //         const latestRevisionHash = aquaTreeJustRevisions[aquaTreeJustRevisions.length - 1].revisionHash
-    //         try {
-    //             const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(latestRevisionHash, url)
-    //             let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
-    //             displayData.push({
-    //                 aquaTree: sortedAquaTree,
-    //                 fileObject: fileObject
-    //             })
-    //         } catch (e) {
-    //             return reply.code(500).send({ success: false, message: `Error ${e}` });
-
-    //         }
-    //     }
-
-    //     const queryEnd = performance.now()
-    //     const queryDuration = (queryEnd - queryStart) / 1000
-    //     Logger.info(`Query duration: ${queryDuration} seconds`)
-    //     console.log(cliGreenify(`Query duration: ${queryDuration} seconds`))
-
-    //     const totalPages = Math.ceil(totalCount / limit);
-    //     const hasNextPage = page < totalPages;
-    //     const hasPrevPage = page > 1;
-
-    //     return reply.code(200).send({
-    //         aquaTrees: displayData,
-    //         linkRevisionsForTrackedClaimTypes: allLinkRevisionsForTrackedClaimTypes,
-    //         claimTypeCounts: formTypesToTrack,
-    //         pagination: {
-    //             currentPage: page,
-    //             totalPages,
-    //             totalCount,
-    //             limit,
-    //             hasNextPage,
-    //             hasPrevPage
-    //         }
-    //     })
-
-    // });
-
 
 }
