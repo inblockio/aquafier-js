@@ -6,12 +6,9 @@ import {useStore} from 'zustand'
 import {SummaryDetailsDisplayData, WorkFlowTimeLine} from '../../types/types'
 import {
       convertTemplateNameToTitle,
-      getAquaTreeFileName,
       getFileName,
       getHighestFormIndex,
-      isAquaTree,
-      isWorkFlowData
-} from '../../utils/functions'
+      isAquaTree} from '../../utils/functions'
 import {ContractDocumentView} from './ContractDocument/ContractDocument'
 import {ContractSummaryView} from './ContractSummary/ContractSummary'
 import {AquaTree, OrderRevisionInAquaTree, Revision} from 'aqua-js-sdk/web'
@@ -25,9 +22,9 @@ import {cn} from '../../lib/utils'
 export default function PdfWorkflowPage() {
       const [activeStep, setActiveStep] = useState(1)
       const [timeLineTitle, setTimeLineTitle] = useState('')
-      const [error, setError] = useState('')
+      const [error, _setError] = useState('')
       const [timeLineItems, setTimeLineItems] = useState<Array<WorkFlowTimeLine>>([])
-      const { selectedFileInfo, systemFileInfo, setSelectedFileInfo } = useStore(appStore)
+      const { selectedFileInfo, setSelectedFileInfo } = useStore(appStore)
 
       const navigate = useNavigate()
 
