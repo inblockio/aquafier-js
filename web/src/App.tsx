@@ -133,28 +133,31 @@ function App() {
 
                     {/* All file routes using Tailwind */}
                     <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
+
                         <Route index element={<FilesPage />} />
-
-                        <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
-                        <Route path="claims/workflow" element={<ClaimsWorkflowPage />} />
-                        <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2 />} />
-                        <Route path="contact_list" element={<ContactsPageV2 />} />
-                        <Route path="files_workflows" element={<FilesPage />} />
-                        <Route path="domain_attestation" element={<DomainAttestationPage />} />
-                        <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage />} />
-
                         <Route path="templates" element={<TemplatesPage />} />
-
                         <Route path="shared-contracts" element={<FilesSharedContracts />} />
                         <Route path="shared-contracts/:identifier" element={<SharePage />} />
 
-                        <Route path="settings" element={<SettingsPage />} />
-                        <Route path="info" element={<InfoPage />} />
                         <Route path="workflows" element={<WorkflowsTablePage />} />
-                        <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
-                        <Route path="loading" element={<Loading />} />
+                        <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage />} />
+                        <Route path="contact_list" element={<ContactsPageV2 />} />
+                        <Route path="claims/workflow" element={<ClaimsWorkflowPage />} />
+                        <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2 />} />
+
+                        <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
                         <Route path="pdf-signer" element={<PdfSigner fileData={null} setActiveStep={_one => {
                         }} />} />
+                        <Route path="files_workflows" element={<FilesPage />} />
+                        <Route path="domain_attestation" element={<DomainAttestationPage />} />
+
+
+
+                        <Route path="info" element={<InfoPage />} />
+                        <Route path="settings" element={<SettingsPage />} />
+
+                        <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
+                        <Route path="loading" element={<Loading />} />
                     </Route>
 
 

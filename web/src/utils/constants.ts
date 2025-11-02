@@ -138,4 +138,5 @@ export const API_ENDPOINTS = {
       NOTIFICATIONS: '/notifications',
       NOTIFICATIONS_READ_ALL: '/notifications/read-all',
       MARK_NOTIFICATION_AS_READ: '/notifications/:id/read',
+      GET_PER_TYPE: 'tree/per_type',
 }

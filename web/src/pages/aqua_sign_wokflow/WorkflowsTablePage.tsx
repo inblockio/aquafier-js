@@ -30,11 +30,9 @@ import appStore from '@/store'
 import { useStore } from 'zustand'
 import {
       displayTime,
-      fetchFiles,
       getAquaTreeFileName,
       getAquaTreeFileObject,
       getGenesisHash,
-      isWorkFlowData,
       processContractInformation
 } from '@/utils/functions'
 import { FileObject } from 'aqua-js-sdk'
@@ -46,6 +44,10 @@ import { IWorkflowItem } from '@/types/types'
 import WalletAdrressClaim from '../v2_claims_workflow/WalletAdrressClaim'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { toast } from 'sonner'
+import axios from 'axios'
+import { API_ENDPOINTS } from '@/utils/constants'
+import { GlobalPagination } from '@/types'
+import CustomPagination from '@/components/common/CustomPagination'
 
 const getStatusIcon = (status: string) => {
       switch (status) {
@@ -156,7 +158,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
       }, [apiFileInfo])
 
       return (
-            <TableRow key={`${workflowName}-${index}`} className="hover:bg-muted/50">
+            <TableRow key={`${workflowName}-${index}`} className="hover:bg-muted/50 h-fit">
                   <TableCell className="font-medium w-[300px] max-w-[300px] min-w-[300px]">
                         <div className="w-full flex items-center gap-3">
                               <div className="flex-shrink-0">
@@ -257,45 +259,19 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
 }
 
 export default function WorkflowsTablePage() {
-      const {  session, setWorkflows, backend_url, systemFileInfo, setOpenDialog } = useStore(appStore)
-
-      // const [workflows] = useState<DocumentWorkflow[]>(mockWorkflows);
+      const { session, backend_url, setOpenDialog } = useStore(appStore)
+      const [pagination, setPagination] = useState<GlobalPagination | null>(null)
 
       const [workflowsUi, setWorkflowsUi] = useState<IWorkflowItem[]>([])
       const [isLoading, setIsLoading] = useState<boolean>(false)
+      const [currentPage, setCurrentPage] = useState(1)
 
-      const processFilesToGetWorkflows = (files: ApiFileInfo[]) => {
-            const someData = systemFileInfo.map(e => {
-                  try {
-                        return getAquaTreeFileName(e.aquaTree!)
-                  } catch (e) {
-                        return ''
-                  }
-            })
-
+      const processFilesToWorkflowUi = (_files: ApiFileInfo[]) => {
             const newData: IWorkflowItem[] = []
-            files.forEach(file => {
-                  // const fileObject = getAquaTreeFileObject(file);
-                  const { workFlow, isWorkFlow } = isWorkFlowData(file.aquaTree!, someData)
-                  if (isWorkFlow && workFlow === 'aqua_sign') {
-                        // setWorkflows((prev : IWorkflowItem[]) => {
-
-                        const currentName = getAquaTreeFileName(file.aquaTree!)
-                        const containsCurrentName: IWorkflowItem | undefined = newData.find((e: IWorkflowItem) => {
-                              if (e && e.apiFileInfo && e.apiFileInfo.aquaTree) {
-                                    const nameItem: string = getAquaTreeFileName(e.apiFileInfo.aquaTree)
-                                    return nameItem === currentName
-                              }
-                        })
-                        if (!containsCurrentName) {
-                              newData.push({ workflowName: workFlow, apiFileInfo: file })
-                        }
-
-                        //   [...prev, { workflowName: workFlow, apiFileInfo: file }]
-                        // })
-                  }
+            _files.forEach(file => {
+                  const nameItem: string = getAquaTreeFileName(file.aquaTree!)
+                  newData.push({ workflowName: nameItem, apiFileInfo: file })
             })
-
             setWorkflowsUi(newData)
       }
 
@@ -303,35 +279,35 @@ export default function WorkflowsTablePage() {
             setIsLoading(true);
             (async () => {
 
-                 try {
-                   const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
-                  setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
-
-
-                  processFilesToGetWorkflows(filesApi.files)
-                 } catch (error) {
-                  toast.error('Error fetching workflows')
-                 } finally{
-
-                       setIsLoading(false);
-                 }
+                  try {
+                        setIsLoading(true)
+                        const params = {
+                              page: currentPage,
+                              limit: 10,
+                              claim_types: JSON.stringify(['aqua_sign'])
+                        }
+                        const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
+                              headers: {
+                                    'Content-Type': 'application/json',
+                                    'nonce': `${session!.nonce}`
+                              },
+                              params
+                        })
+                        const response = filesDataQuery.data
+                        const aquaTrees = response.aquaTrees
+                        setPagination(response.pagination)
+                        processFilesToWorkflowUi(aquaTrees)
+                  } catch (error) {
+                        toast.error('Error fetching workflows')
+                        console.log(error)
+                  } finally {
+                        setIsLoading(false);
+                  }
             })()
 
-      },[])
-      // useEffect(() => {
-      //       processFilesToGetWorkflows()
-      // }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index??{})).join(',')])
+      }, [currentPage])
 
-
-
-      if (isLoading) {
-            // return <div>Loading...</div>
-            return    <div className="flex items-center gap-2">
-                        {/* Circular Loading Spinner */}
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        <span>Loading Aqua Sign Workflows</span>
-                  </div>
-      }
+    
       return (
             <>
                   {/* Action Bar */}
@@ -391,7 +367,7 @@ export default function WorkflowsTablePage() {
                               </CardHeader>
                               <CardContent className="px-1">
                                     {/* <div className="rounded-md border"> */}
-                                    <div className="overflow-x-auto">
+                                    <div className="overflow-x-auto md:h-[calc(100vh-300px)] overflow-y-auto">
                                           <Table>
                                                 <TableHeader>
                                                       <TableRow>
@@ -404,19 +380,34 @@ export default function WorkflowsTablePage() {
                                                       </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
-                                                      {workflowsUi.length === 0 && (
+                                                      {isLoading ? (
                                                             <TableRow>
-                                                                  <TableCell colSpan={6} className="h-24 text-center">
+                                                                  <TableCell colSpan={6} className="h-[400px] text-center">
+                                                                        <div className="flex items-center justify-center gap-2">
+                                                                              <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                                                                              <span>Loading Aqua Sign Workflows...</span>
+                                                                        </div>
+                                                                  </TableCell>
+                                                            </TableRow>
+                                                      ) : workflowsUi.length === 0 ? (
+                                                            <TableRow>
+                                                                  <TableCell colSpan={6} className="h-[400px] text-center">
                                                                         No workflows found
                                                                   </TableCell>
                                                             </TableRow>
+                                                      ) : (
+                                                            workflowsUi.map((workflow, index: number) => (
+                                                                  <WorkflowTableItem key={`${index}-workflow`} workflowName={workflow.workflowName} apiFileInfo={workflow.apiFileInfo} index={index} />
+                                                            ))
                                                       )}
-                                                      {workflowsUi.map((workflow, index: number) => (
-                                                            <WorkflowTableItem key={`${index}-workflow`} workflowName={workflow.workflowName} apiFileInfo={workflow.apiFileInfo} index={index} />
-                                                      ))}
                                                 </TableBody>
                                           </Table>
                                     </div>
+                                    <CustomPagination
+                                          currentPage={currentPage}
+                                          totalPages={pagination?.totalPages ?? 1}
+                                          onPageChange={setCurrentPage}
+                                    />
                               </CardContent>
                         </Card>
                   </div>

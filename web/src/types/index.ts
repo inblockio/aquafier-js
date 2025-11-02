@@ -56,3 +56,13 @@ export interface NotificationsHolderProps {
       markAllAsRead: () => void
       onNotificationRead: () => void
 }
+
+
+export interface GlobalPagination {
+      currentPage: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+      limit: number;
+      totalCount: number;
+      totalPages: number;
+}

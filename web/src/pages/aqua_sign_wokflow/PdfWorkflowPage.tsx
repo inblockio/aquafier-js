@@ -7,6 +7,7 @@ import {SummaryDetailsDisplayData, WorkFlowTimeLine} from '../../types/types'
 import {
       convertTemplateNameToTitle,
       getAquaTreeFileName,
+      getFileName,
       getHighestFormIndex,
       isAquaTree,
       isWorkFlowData
@@ -157,24 +158,24 @@ export default function PdfWorkflowPage() {
 
       const loadData = () => {
             if (selectedFileInfo) {
-                  const someData = systemFileInfo.map(e => {
-                        try {
-                              return getAquaTreeFileName(e.aquaTree!)
-                        } catch (e) {
-                            ('Error processing system file')
-                              return ''
-                        }
-                  })
-
+                  // const someData = systemFileInfo.map(e => {
+                  //       try {
+                  //             return getAquaTreeFileName(e.aquaTree!)
+                  //       } catch (e) {
+                  //           ('Error processing system file')
+                  //             return ''
+                  //       }
+                  // })
                   // const templateNames = formTemplates.map((e) => e.name)
-                  const { isWorkFlow, workFlow } = isWorkFlowData(selectedFileInfo.aquaTree!, someData)
+                  // const { isWorkFlow, workFlow } = isWorkFlowData(selectedFileInfo.aquaTree!, someData)
 
-                  if (!isWorkFlow) {
-                        setError('The selected Aqua - Tree is not workflow')
-                        return
-                  }
+                  // if (!isWorkFlow) {
+                  //       setError('The selected Aqua - Tree is not workflow')
+                  //       return
+                  // }
+                  const workflowName = getFileName(selectedFileInfo.aquaTree!)
 
-                  setTimeLineTitle(convertTemplateNameToTitle(workFlow))
+                  setTimeLineTitle(convertTemplateNameToTitle(workflowName))
 
                   computeIsWorkflowCOmplete()
 
