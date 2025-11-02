@@ -13,7 +13,7 @@ import * as fs from "fs"
 import path from 'path';
 import {getGenesisHash} from './aqua_tree_utils';
 import {AquaTreeFileData, LinkedRevisionResult, ProcessRevisionResult, UpdateGenesisResult} from '../models/types';
-import {SYSTEM_WALLET_ADDRESS, systemTemplateHashes} from '../models/constants';
+import {AQUA_VERSION, SYSTEM_WALLET_ADDRESS, systemTemplateHashes} from '../models/constants';
 import {getFileSize} from "./file_utils";
 import Logger from "./logger";
 import { getAquaTreeFileName } from './api_utils';
@@ -23,10 +23,12 @@ export async function createAquaTreeFromRevisions(
     latestRevisionHash: string,
     url: string
 ): Promise<[AquaTree, FileObject[]]> {
+
     let aquaTree: AquaTree = {
         revisions: {},
         file_index: {}
     };
+    
     let fileObjects: FileObject[] = [];
 
     try {
@@ -97,16 +99,25 @@ export async function createAquaTreeFromRevisions(
         // Step 3: Create file objects for download
         fileObjects = await createFileObjects(aquaTreeFileData, url);
 
-
-        
         // Logger.info("File indexe----: ", JSON.stringify(fileObjects, null, 4))
 
-        // Step 4: Process each revision
-        for (const revision of revisionData) {
-            const processResult = await processRevision(revision, aquaTree, fileObjects, aquaTreeFileData, url);
-            aquaTree = processResult.aquaTree;
-            fileObjects = processResult.fileObjects;
-        }
+        // Step 4: Process each revision (OPTIMIZED VERSION)
+        // Option 1: Batch fetch all revision info
+        const revisionInfoMap = await FetchRevisionInfoBatch(revisionData);
+        
+        // Option 2: Process revisions in parallel
+        const processResults = await Promise.all(
+            revisionData.map(revision => 
+                processRevisionOptimized(revision, revisionInfoMap, aquaTreeFileData, url)
+            )
+        );
+        
+        // Merge all results
+        const aquaTrees = processResults.map(result => result.aquaTree);
+        const fileObjectArrays = processResults.map(result => result.fileObjects);
+        
+        aquaTree = mergeAquaTrees(aquaTrees);
+        fileObjects = mergeFileObjects(fileObjectArrays);
 
         const aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(aquaTree);
 
@@ -136,7 +147,6 @@ async function getRevisionChain(latestRevisionHash: string): Promise<Revision[]>
             pubkey_hash: latestRevisionHash
         }
     });
-
 
 
     if (!latestRevision) {
@@ -238,6 +248,256 @@ export async function FetchRevisionInfo(hash: string, revision: Revision): Promi
     } else {
         Logger.info(`type ${revision.revision_type} with hash ${hash}`);
         return null;
+    }
+}
+
+// Option 1: Batch version of FetchRevisionInfo
+export async function FetchRevisionInfoBatch(revisions: Revision[]): Promise<Map<string, RevisionInfo>> {
+    const revisionInfoMap = new Map<string, RevisionInfo>();
+    
+    // Group revisions by type for batch queries
+    const signatureHashes: string[] = [];
+    const witnessHashes: string[] = [];
+    const formHashes: string[] = [];
+    const linkHashes: string[] = [];
+    
+    for (const revision of revisions) {
+        switch (revision.revision_type) {
+            case "signature":
+                signatureHashes.push(revision.pubkey_hash);
+                break;
+            case "witness":
+                witnessHashes.push(revision.pubkey_hash);
+                break;
+            case "form":
+                formHashes.push(revision.pubkey_hash);
+                break;
+            case "link":
+                linkHashes.push(revision.pubkey_hash);
+                break;
+        }
+    }
+    
+    // Execute batch queries in parallel
+    const [signatures, witnesses, forms, links] = await Promise.all([
+        signatureHashes.length > 0 ? prisma.signature.findMany({
+            where: { hash: { in: signatureHashes } }
+        }) : Promise.resolve([]),
+        
+        witnessHashes.length > 0 ? prisma.witness.findMany({
+            where: { hash: { in: witnessHashes } }
+        }) : Promise.resolve([]),
+        
+        formHashes.length > 0 ? prisma.aquaForms.findMany({
+            where: { hash: { in: formHashes } }
+        }) : Promise.resolve([]),
+        
+        linkHashes.length > 0 ? prisma.link.findMany({
+            where: { hash: { in: linkHashes } }
+        }) : Promise.resolve([])
+    ]);
+    
+    // Map results back to revision hashes
+    signatures.forEach(sig => revisionInfoMap.set(sig.hash, sig));
+    witnesses.forEach(wit => revisionInfoMap.set(wit.hash, wit as unknown as RevisionInfo));
+    links.forEach(link => revisionInfoMap.set(link.hash, link));
+    
+    // Group forms by hash (since findMany can return multiple forms per hash)
+    const formsByHash = new Map<string, any[]>();
+    forms.forEach(form => {
+        if (!formsByHash.has(form.hash)) {
+            formsByHash.set(form.hash, []);
+        }
+        formsByHash.get(form.hash)!.push(form);
+    });
+    formsByHash.forEach((formArray, hash) => {
+        revisionInfoMap.set(hash, formArray);
+    });
+    
+    // Handle witness events for witnesses
+    if (witnesses.length > 0) {
+        const witnessRoots = witnesses
+            .map(w => w.Witness_merkle_root)
+            .filter((root): root is string => root !== null && root !== undefined);
+        if (witnessRoots.length > 0) {
+            const witnessEvents = await prisma.witnessEvent.findMany({
+                where: { Witness_merkle_root: { in: witnessRoots } }
+            });
+            
+            // Map witness events back to original hashes
+            witnesses.forEach(witness => {
+                if (witness.Witness_merkle_root) {
+                    const event = witnessEvents.find(e => e.Witness_merkle_root === witness.Witness_merkle_root);
+                    if (event) {
+                        revisionInfoMap.set(witness.hash, event);
+                    }
+                }
+            });
+        }
+    }
+    
+    return revisionInfoMap;
+}
+
+export function deleteChildrenFieldFromAquaTrees(aquaTrees: Array<{ aquaTree: AquaTree, fileObject: FileObject[] }>) {
+    return aquaTrees.map(item => {
+        const cleanedRevisions: any = {};
+        Object.keys(item.aquaTree.revisions).forEach(key => {
+            const { children, verification_leaves, ...revisionWithoutChildren } = item.aquaTree.revisions[key];
+            cleanedRevisions[key] = {...revisionWithoutChildren, leaves: verification_leaves};
+        });
+        
+        return {
+            aquaTree: {
+                ...item.aquaTree,
+                revisions: cleanedRevisions
+            },
+            fileObject: item.fileObject
+        };
+    });
+}
+
+// Option 2: Helper functions for merging results
+function mergeAquaTrees(aquaTrees: AquaTree[]): AquaTree {
+    const mergedTree: AquaTree = {
+        revisions: {},
+        file_index: {}
+    };
+    
+    for (const tree of aquaTrees) {
+        // Merge revisions
+        Object.assign(mergedTree.revisions, tree.revisions);
+        
+        // Merge file_index
+        Object.assign(mergedTree.file_index, tree.file_index);
+    }
+    
+    return mergedTree;
+}
+
+function mergeFileObjects(fileObjectArrays: FileObject[][]): FileObject[] {
+    const mergedObjects: FileObject[] = [];
+    const seenFileNames = new Set<string>();
+    
+    for (const fileArray of fileObjectArrays) {
+        for (const fileObj of fileArray) {
+            // Avoid duplicates based on fileName
+            if (!seenFileNames.has(fileObj.fileName)) {
+                seenFileNames.add(fileObj.fileName);
+                mergedObjects.push(fileObj);
+            }
+        }
+    }
+    
+    return mergedObjects;
+}
+
+// Optimized version of processRevision that works with pre-fetched data
+async function processRevisionOptimized(
+    revision: Revision,
+    revisionInfoMap: Map<string, RevisionInfo>,
+    aquaTreeFileData: AquaTreeFileData[],
+    url: string
+): Promise<{ aquaTree: AquaTree, fileObjects: FileObject[] }> {
+    const hashOnly = extractHashOnly(revision.pubkey_hash);
+    const previousHashOnly = extractHashOnly(revision.previous || "");
+    
+    // Create empty aqua tree for this revision
+    let aquaTree: AquaTree = {
+        revisions: {},
+        file_index: {}
+    };
+    let fileObjects: FileObject[] = [];
+
+    // Create base revision data
+    let revisionData: AquaRevision = {
+        revision_type: revision.revision_type as "link" | "file" | "witness" | "signature" | "form",
+        previous_verification_hash: previousHashOnly,
+        leaves: revision.verification_leaves,
+        local_timestamp: revision.local_timestamp?.toString() ?? "",
+        nonce: revision.nonce ?? "",
+        children: revision.children,
+        version: AQUA_VERSION
+    };
+
+    // Add file content if it's a file revision
+    if (revision.has_content) {
+        revisionData = await addRevisionContent(revision, revisionData, aquaTreeFileData);
+    }
+
+    // Process revision by type using pre-fetched data
+    const revisionInfo = revisionInfoMap.get(revision.pubkey_hash);
+    if (revisionInfo) {
+        const processResult = await processRevisionByTypeOptimized(revision, revisionData, revisionInfo!, url);
+        revisionData = processResult.revisionData;
+        fileObjects = processResult.fileObjects;
+        
+        // Handle file index updates for genesis revisions
+        if (!revision.previous) {
+            const genesisResult = await updateGenesisFileIndex(revision, revisionData, aquaTree, fileObjects, aquaTreeFileData, url);
+            aquaTree = genesisResult.aquaTree;
+            fileObjects = genesisResult.fileObjects;
+            revisionData = genesisResult.revisionData;
+        }
+
+        if (revision.revision_type == "link") {
+            const linkedRevisionResult = await updateLinkRevisionFileIndex(revision, revisionData, aquaTree, fileObjects, aquaTreeFileData, url);
+            if (!linkedRevisionResult) {
+                Logger.error(`Error processing link revision with hash ${revision.pubkey_hash}`);
+                return { aquaTree, fileObjects };
+            }
+            aquaTree = linkedRevisionResult.aquaTree;
+            fileObjects = linkedRevisionResult.fileObjects;
+            revisionData = linkedRevisionResult.revisionData
+        }
+        
+    }
+
+    // Add revision to aqua tree
+    const orderedRevision = reorderRevisionsProperties(revisionData);
+    aquaTree.revisions[hashOnly] = orderedRevision;
+
+    return { aquaTree, fileObjects };
+}
+
+// Optimized version of processRevisionByType that works with pre-fetched data
+async function processRevisionByTypeOptimized(
+    revision: Revision,
+    revisionData: AquaRevision,
+    revisionInfo: RevisionInfo,
+    url: string
+): Promise<{ revisionData: AquaRevision, fileObjects: FileObject[] }> {
+    let fileObjects: FileObject[] = [];
+    
+    if (!revisionInfo && revision.revision_type !== "file") {
+        Logger.warn(`Revision info not found for ${revision.pubkey_hash}`);
+        return { revisionData, fileObjects };
+    }
+
+    switch (revision.revision_type) {
+        case "file":
+            const fileRevisionData = await processFileRevision(revision, revisionData, revisionInfo);
+            return { revisionData: fileRevisionData, fileObjects };
+        case "witness":
+            const witnessRevisionData = processWitnessRevision(revisionData, revisionInfo as WitnessEvent);
+            return { revisionData: witnessRevisionData, fileObjects };
+        case "signature":
+            const signatureRevisionData = processSignatureRevision(revisionData, revisionInfo as Signature);
+            return { revisionData: signatureRevisionData, fileObjects };
+        case "link":
+            // Note: Link processing might still need recursive calls, but we can optimize this later
+            const linkData = revisionInfo as Link;
+            const updatedRevisionData = {
+                ...revisionData,
+                link_type: linkData.link_type ?? "",
+                link_verification_hashes: linkData.link_verification_hashes,
+                link_file_hashes: linkData.link_file_hashes,
+            };
+            return { revisionData: updatedRevisionData, fileObjects };
+            // return await processLinkRevision(revisionData, revisionInfo as Link, aquaTree, fileObjects, url);
+        default:
+            Logger.warn(`Unknown revision type: ${revision.revision_type}`);
+            return { revisionData, fileObjects };
     }
 }
 
@@ -356,7 +616,7 @@ async function processRevision(
         previous_verification_hash: previousHashOnly,
         local_timestamp: revision.local_timestamp?.toString() ?? "",
         leaves: revision.verification_leaves,
-        version: "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar"
+        version: AQUA_VERSION
     };
 
     // Add content if revision has it

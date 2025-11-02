@@ -11,12 +11,11 @@ export interface AuthenticatedRequest extends FastifyRequest {
 export async function authenticate(
     request: AuthenticatedRequest,
     reply: FastifyReply
-  ): Promise<boolean> {
+  ): Promise<void> {
     const nonce = request.headers['nonce'];
     
     if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-      reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-      return false;
+      throw reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
     }
     
     const session = await prisma.siweSession.findUnique({
@@ -24,16 +23,13 @@ export async function authenticate(
     });
     
     if (session == null) {
-      reply.code(403).send({ success: false, message: "Nonce is invalid" });
-      return false;
+      throw reply.code(403).send({ success: false, message: "Nonce is invalid" });
     }
     
-    // Optionally attach the user info to the request for later use
+    // Attach the user info to the request for later use
     request.user = {
       address: session.address
     };
-    
-    return true;
   }
   
   // Register as a Fastify plugin

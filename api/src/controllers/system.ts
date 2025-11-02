@@ -9,6 +9,7 @@ import * as fs from "fs"
 import {getAquaAssetDirectory} from '../utils/file_utils';
 import {getTemplateInformation} from '../utils/server_attest';
 import Logger from "../utils/logger";
+import { deleteChildrenFieldFromAquaTrees } from '../utils/revisions_operations_utils';
 
 export default async function systemController(fastify: FastifyInstance) {
 
@@ -130,7 +131,7 @@ export default async function systemController(fastify: FastifyInstance) {
         // throw Error(`Fetching AquaTree for user ${metamaskAddress} with url ${url}  -- ${JSON.stringify(trees, null, 4)}`)
         let displayData = await fetchAquatreeFoUser(url, trees)
 
-        return reply.code(200).send({ data: displayData })
+        return reply.code(200).send({ data: deleteChildrenFieldFromAquaTrees(displayData) })
     });
 
 }

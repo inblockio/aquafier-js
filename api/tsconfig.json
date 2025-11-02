@@ -3,8 +3,6 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Node",
-    "baseUrl": ".",
-   
     "esModuleInterop": true,
     "strict": true,
     "outDir": "dist",
@@ -24,7 +22,14 @@
   "exclude": [
     "node_modules",
     "dist",
-     "../web/**/*", 
-     "../web"
-  ]
+    "../web/**/*",
+    "../web"
+  ],
+  "paths": {
+    "*": [
+      "*",
+      "*.ts",
+      "*.tsx"
+    ]
+  }
 }
