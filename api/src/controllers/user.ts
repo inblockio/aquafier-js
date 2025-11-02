@@ -119,14 +119,11 @@ export default async function userController(fastify: FastifyInstance) {
         });
     });
 
-    fastify.get('/attestation_address', async (request: FastifyRequest, reply: FastifyReply) => {
+    fastify.get('/attestation_address', {
+        preHandler: authenticate
+    }, async (request: AuthenticatedRequest, reply) => {
 
-        // Authenticate the user
-        if (!(await authenticate(request, reply))) {
-            return; // The authenticate function already sent the appropriate error response
-        }
-
-        const user = (request as AuthenticatedRequest).user;
+        const user = request.user;
 
         try {
             let data = prisma.userAttestationAddresses.findMany({
@@ -144,13 +141,11 @@ export default async function userController(fastify: FastifyInstance) {
 
     })
 
-    fastify.post('/attestation_address', async (request, reply) => {
-        // Authenticate the user
-        if (!(await authenticate(request, reply))) {
-            return; // The authenticate function already sent the appropriate error response
-        }
+    fastify.post('/attestation_address', {
+        preHandler: authenticate
+    }, async (request: AuthenticatedRequest, reply) => {
 
-        const user = (request as AuthenticatedRequest).user;
+        const user = request.user;
 
         const userAttestationAddressesRequest = request.body as UserAttestationAddressesRequest;
 
@@ -191,13 +186,9 @@ export default async function userController(fastify: FastifyInstance) {
 
     })
 
-    fastify.put('/attestation_address', async (request, reply) => {
-        // Authenticate the user
-        if (!(await authenticate(request, reply))) {
-            return; // The authenticate function already sent the appropriate error response
-        }
+    fastify.put('/attestation_address', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
 
-        const user = (request as AuthenticatedRequest).user;
+        const user =request.user;
 
         const userAttestationAddresses = request.body as UserAttestationAddresses;
 
@@ -219,13 +210,9 @@ export default async function userController(fastify: FastifyInstance) {
 
     })
 
-    fastify.delete('/attestation_address', async (request, reply) => {
-        // Authenticate the user
-        if (!(await authenticate(request, reply))) {
-            return; // The authenticate function already sent the appropriate error response
-        }
+    fastify.delete('/attestation_address', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
 
-        const user = (request as AuthenticatedRequest).user;
+        const user =request.user;
 
         const userAttestationAddresses = request.body as UserAttestationAddresses;
 
@@ -653,7 +640,7 @@ export default async function userController(fastify: FastifyInstance) {
     // Get user data stats
     fastify.get('/user_data_stats', {
         preHandler: authenticate
-    }, async (request: FastifyRequest & AuthenticatedRequest, reply) => {
+    }, async (request: AuthenticatedRequest, reply) => {
         const userAddress = request.user?.address;
 
         if (!userAddress) {
