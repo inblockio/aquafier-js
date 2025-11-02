@@ -147,7 +147,7 @@ export const FilePreviewAquaTreeFromTemplate = ({ formData }: { formData: Record
                                           <td className="p-3 font-medium">{makeProperReadableWord(keyItem)}</td>
                                           <td className="p-3">
                                                 <div className="flex items-start justify-between">
-                                                      <div className="flex-1">{renderItemValue(formData[keyItem])}</div>
+                                                      <div className="flex-1 break-all">{renderItemValue(formData[keyItem])}</div>
                                                       <ClipboardButton value={formData[keyItem]} visible={checkCopyButtonVisibility(keyItem)} />
                                                 </div>
                                           </td>

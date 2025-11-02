@@ -462,7 +462,6 @@ export async function fetchAquatreeFoUser(url: string, latest: Array<{
         // Retrieve the tree starting from the latest hash
         // let userAddress = revisionLatestItem.user
         let [anAquaTree, fileObject] = await createAquaTreeFromRevisions(revisionLatestItem.hash, url);
-
         // Ensure the tree is properly ordered
         let orderedRevisionProperties = reorderAquaTreeRevisionsProperties(anAquaTree);
         let aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(orderedRevisionProperties);

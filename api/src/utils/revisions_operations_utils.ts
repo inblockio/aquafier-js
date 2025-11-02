@@ -3,7 +3,9 @@ import {
     FileObject,
     OrderRevisionInAquaTree,
     reorderRevisionsProperties,
-    Revision as AquaRevision
+    Revision as AquaRevision,
+    cliRedify,
+    cliGreenify
 } from 'aqua-js-sdk';
 
 import {prisma} from '../database/db';
@@ -16,7 +18,6 @@ import {AquaTreeFileData, LinkedRevisionResult, ProcessRevisionResult, UpdateGen
 import {AQUA_VERSION, SYSTEM_WALLET_ADDRESS, systemTemplateHashes} from '../models/constants';
 import {getFileSize} from "./file_utils";
 import Logger from "./logger";
-import { getAquaTreeFileName } from './api_utils';
 
 // Main refactored function
 export async function createAquaTreeFromRevisions(
@@ -103,14 +104,18 @@ export async function createAquaTreeFromRevisions(
 
         // Step 4: Process each revision (OPTIMIZED VERSION)
         // Option 1: Batch fetch all revision info
-        const revisionInfoMap = await FetchRevisionInfoBatch(revisionData);
+        // const revisionInfoMap = await FetchRevisionInfoBatch(revisionData);
         
         // Option 2: Process revisions in parallel
         const processResults = await Promise.all(
             revisionData.map(revision => 
-                processRevisionOptimized(revision, revisionInfoMap, aquaTreeFileData, url)
+                // processRevisionOptimized(revision, revisionInfoMap, aquaTreeFileData, url)
+                processRevision(revision, aquaTree, fileObjects,  aquaTreeFileData, url)
             )
         );
+
+        // console.log(JSON.stringify(processResults, null, 4))
+        // throw new Error("test")
         
         // Merge all results
         const aquaTrees = processResults.map(result => result.aquaTree);
@@ -121,13 +126,16 @@ export async function createAquaTreeFromRevisions(
 
         const aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(aquaTree);
 
-        fileObjects.push(
-            {
-                fileContent: JSON.stringify(aquaTree),
-                fileName: getAquaTreeFileName(aquaTree),
-                path: '',
-            }
-        );
+        // fileObjects.push(
+        //     {
+        //         fileContent: JSON.stringify(aquaTree),
+        //         fileName: getAquaTreeFileName(aquaTree),
+        //         path: '',
+        //     }
+        // );
+
+        console.log("FILE OBJECTS")
+        console.log(JSON.stringify(fileObjects, null, 4))
 
         return [aquaTreeWithOrderdRevision, fileObjects];
 
@@ -343,8 +351,12 @@ export function deleteChildrenFieldFromAquaTrees(aquaTrees: Array<{ aquaTree: Aq
     return aquaTrees.map(item => {
         const cleanedRevisions: any = {};
         Object.keys(item.aquaTree.revisions).forEach(key => {
-            const { children, verification_leaves, ...revisionWithoutChildren } = item.aquaTree.revisions[key];
-            cleanedRevisions[key] = {...revisionWithoutChildren, leaves: verification_leaves};
+            const itemRevision = item.aquaTree.revisions[key];
+            const { children, verification_leaves, ...revisionWithoutChildren } = itemRevision;
+            cleanedRevisions[key] = {
+                ...revisionWithoutChildren, 
+                leaves: verification_leaves || itemRevision.leaves
+            };
         });
         
         return {
@@ -415,7 +427,7 @@ async function processRevisionOptimized(
         previous_verification_hash: previousHashOnly,
         leaves: revision.verification_leaves,
         local_timestamp: revision.local_timestamp?.toString() ?? "",
-        nonce: revision.nonce ?? "",
+        // nonce: revision.nonce ?? "",
         children: revision.children,
         version: AQUA_VERSION
     };
@@ -433,8 +445,12 @@ async function processRevisionOptimized(
         fileObjects = processResult.fileObjects;
         
         // Handle file index updates for genesis revisions
-        if (!revision.previous) {
+        if (!revision.previous || revision.previous === "") {
             const genesisResult = await updateGenesisFileIndex(revision, revisionData, aquaTree, fileObjects, aquaTreeFileData, url);
+            // if(revision.revision_type === "file"){
+            //     console.log(JSON.stringify(genesisResult, null, 4))
+            // }
+            // throw Error(`Error processing genesis revision with hash ${revision.pubkey_hash}`);
             aquaTree = genesisResult.aquaTree;
             fileObjects = genesisResult.fileObjects;
             revisionData = genesisResult.revisionData;
@@ -456,6 +472,8 @@ async function processRevisionOptimized(
     // Add revision to aqua tree
     const orderedRevision = reorderRevisionsProperties(revisionData);
     aquaTree.revisions[hashOnly] = orderedRevision;
+    // console.log(JSON.stringify(aquaTree, null, 4))
+    // throw new Error("Error processing revision");
 
     return { aquaTree, fileObjects };
 }
@@ -476,6 +494,7 @@ async function processRevisionByTypeOptimized(
 
     switch (revision.revision_type) {
         case "file":
+        case "form":
             const fileRevisionData = await processFileRevision(revision, revisionData, revisionInfo);
             return { revisionData: fileRevisionData, fileObjects };
         case "witness":
@@ -707,6 +726,7 @@ async function processRevisionByType(
 
 async function processFileRevision(revision: Revision, revisionData: AquaRevision, revisionInfo: RevisionInfo): Promise<AquaRevision> {
     const hashOnly = extractHashOnly(revision.pubkey_hash);
+    // console.log(`hashOnly = ${hashOnly}`)
     const updatedRevisionData = {
         ...revisionData,
         file_nonce: revision.nonce ?? "--error--!"

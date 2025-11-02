@@ -429,7 +429,8 @@ export default async function explorerController(fastify: FastifyInstance) {
         const limit = parseInt(query.limit ?? '10', 10) || 10;
 
         const paginatedData = await getUserApiFileInfo(url, session.address, page, limit)
-
+        // console.log(JSON.stringify(paginatedData, null, 4))
+        // throw new Error("test")
         return reply.code(200).send({
             success: true,
             message: 'Aqua tree saved successfully',

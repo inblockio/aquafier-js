@@ -515,7 +515,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
       // JSON files
       if (fileType === 'application/json' || isJSONKeyValueStringContent(textContent)) {
             return (
-                  <div className="p-2">
+                  <div className="p-2 h-full overflow-y-auto">
                         <FilePreviewAquaTreeFromTemplate formData={JSON.parse(textContent)} />
                   </div>
             )
