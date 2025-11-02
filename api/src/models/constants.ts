@@ -31,3 +31,6 @@ export const TEMPLATE_HASHES = {
     phone_number_claim: "0xfa4c4ffde60cd293033b986034890800a63bd27ca2cde44d1fce5a073ae5e937",
     user_profile: "0x5e339aed4184f012f1ec5e9a084636fb437f535233e20277a63c13d3e4af96e8",
 }
+
+
+export const AQUA_VERSION = "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar"

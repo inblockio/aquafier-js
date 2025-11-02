@@ -12,7 +12,7 @@ import { AquaTree, cliGreenify, FileObject, OrderRevisionInAquaTree } from 'aqua
 import { FastifyInstance } from 'fastify';
 import { sendToUserWebsockerAMessage } from './websocketController';
 import WebSocketActions from '../constants/constants';
-import { createAquaTreeFromRevisions } from '../utils/revisions_operations_utils';
+import { createAquaTreeFromRevisions, deleteChildrenFieldFromAquaTrees } from '../utils/revisions_operations_utils';
 import Logger from "../utils/logger";
 import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
 import { TEMPLATE_HASHES } from '../models/constants';
@@ -59,6 +59,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(latestRevisionHash, url)
 
             let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
+            
             displayData.push({
                 aquaTree: sortedAquaTree,
                 fileObject: fileObject
@@ -68,7 +69,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
         }
 
-        return reply.code(200).send({ data: displayData })
+        return reply.code(200).send({ data: deleteChildrenFieldFromAquaTrees(displayData) })
 
     });
 
@@ -397,9 +398,12 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 fileObject: FileObject[]
             }> = await getSignatureAquaTrees(session.address, url)
 
+            // Remove children field from all revisions in each aquaTree
+            const cleanedSignatureAquaTrees = deleteChildrenFieldFromAquaTrees(signatureAquaTrees);
+
             return reply.code(200).send({
                 success: true,
-                data: signatureAquaTrees
+                data: cleanedSignatureAquaTrees
             });
 
         } catch (error: any) {
@@ -745,7 +749,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
         const hasPrevPage = pageNum > 1;
 
         return reply.code(200).send({
-            aquaTrees: displayData,
+            aquaTrees: deleteChildrenFieldFromAquaTrees(displayData),
             linkRevisionsForTrackedClaimTypes: allLinkRevisionsForTrackedClaimTypes,
             claimTypeCounts: formTypesToTrack,
             pagination: {

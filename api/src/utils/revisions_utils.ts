@@ -14,7 +14,7 @@ import { AquaForms, FileIndex, Link, Revision as DBRevision, Signature, WitnessE
 import * as fs from "fs"
 import { AquaJsonInZip, AquaNameWithHash, SaveRevisionForUser } from '../models/request_models';
 import { getAquaTreeFileName } from './api_utils';
-import { createAquaTreeFromRevisions } from './revisions_operations_utils';
+import { createAquaTreeFromRevisions, deleteChildrenFieldFromAquaTrees } from './revisions_operations_utils';
 import { getGenesisHash } from './aqua_tree_utils';
 import JSZip from 'jszip';
 import { deleteFile, getFileUploadDirectory } from './file_utils';
@@ -205,7 +205,7 @@ export async function getUserApiFileInfo(
     const endIndex = Math.min(skip + limit, totalItems);
 
     return {
-        data: displayData,
+        data: deleteChildrenFieldFromAquaTrees(displayData),
         pagination: {
             currentPage: page,
             totalPages: totalPages,
