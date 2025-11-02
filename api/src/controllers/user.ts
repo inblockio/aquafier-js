@@ -699,7 +699,7 @@ export default async function userController(fastify: FastifyInstance) {
         // const queryEnd = performance.now()
         // console.log(cliGreenify(`Genesis revisions query took ${(queryEnd - queryStart).toFixed(2)}ms`))
 
-        console.log(cliRedify(`All user revisions: ${JSON.stringify(allUserRevisions, null, 4)}`))
+        // console.log(cliRedify(`All user revisions: ${JSON.stringify(allUserRevisions, null, 4)}`))
 
         // Filter out revisions that contain aqua_sign fields (forms_signers)
         const filteredUserRevisions = allUserRevisions.filter(revision => {
@@ -734,7 +734,7 @@ export default async function userController(fastify: FastifyInstance) {
         // const linkQueryEnd = performance.now()
         // console.log(cliGreenify(`Link revisions query took ${(linkQueryEnd - linkQueryStart).toFixed(2)}ms`))
 
-        const linkRevisionHashes = linkRevisions.map(revision => revision.pubkey_hash)
+        // const linkRevisionHashes = linkRevisions.map(revision => revision.pubkey_hash)
 
         // We create an object of the items we want to track differently and or separately
         const formTypesToTrack: Record<string, number> = {}

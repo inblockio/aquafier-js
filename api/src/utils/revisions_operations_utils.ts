@@ -23,10 +23,12 @@ export async function createAquaTreeFromRevisions(
     latestRevisionHash: string,
     url: string
 ): Promise<[AquaTree, FileObject[]]> {
+
     let aquaTree: AquaTree = {
         revisions: {},
         file_index: {}
     };
+    
     let fileObjects: FileObject[] = [];
 
     try {

@@ -5,7 +5,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "build": "tsc && node fix-imports.mjs",
+    "build": "rm -rf dist && tsc && node fix-imports.mjs",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "test": "npx tap",
