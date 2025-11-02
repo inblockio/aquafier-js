@@ -9,10 +9,7 @@ const makeProperReadableWord = (word: string) => {
             .replace(/_/g, ' ')
             .trim()
 
-      console.log("Word before special case handling:", wordReplace.toLocaleLowerCase().trim())
       if (wordReplace.toLocaleLowerCase().trim().startsWith("txt")) {
-            console.log("Applying special case handling for 'txt record'")
-            // wordReplace = wordReplace.replace("txt record", "TXT Record")
             return "TXT Record"
       }
       return wordReplace

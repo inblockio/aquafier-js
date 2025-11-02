@@ -346,7 +346,7 @@ export function deleteChildrenFieldFromAquaTrees(aquaTrees: Array<{ aquaTree: Aq
         const cleanedRevisions: any = {};
         Object.keys(item.aquaTree.revisions).forEach(key => {
             const { children, verification_leaves, ...revisionWithoutChildren } = item.aquaTree.revisions[key];
-            cleanedRevisions[key] = revisionWithoutChildren;
+            cleanedRevisions[key] = {...revisionWithoutChildren, leaves: verification_leaves};
         });
         
         return {
