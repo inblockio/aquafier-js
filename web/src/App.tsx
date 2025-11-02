@@ -159,8 +159,7 @@ function App() {
                         <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
                         <Route path="loading" element={<Loading />} />
                     </Route>
-
-
+                    
                     <Route path="*" element={<PageNotFound />} />
                 </Routes>
             </ErrorBoundary>

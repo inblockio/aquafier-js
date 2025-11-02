@@ -15,11 +15,9 @@ import appStore from '@/store'
 import { useStore } from 'zustand'
 import {
       displayTime,
-      fetchFiles,
       getAquaTreeFileName,
       getAquaTreeFileObject,
-      getGenesisHash,
-      isWorkFlowData
+      getGenesisHash
 } from '@/utils/functions'
 import { FileObject } from 'aqua-js-sdk'
 import { DownloadAquaChain } from '../components/aqua_chain_actions/download_aqua_chain'
@@ -31,6 +29,9 @@ import { useNavigate } from 'react-router-dom'
 import { ApiFileInfo } from '@/models/FileInfo'
 import ClaimTypesDropdownButton from '@/components/button_claim_dropdown'
 import { toast } from 'sonner'
+import { GlobalPagination } from '@/types'
+import { API_ENDPOINTS } from '@/utils/constants'
+import CustomPagination from '@/components/common/CustomPagination'
 
 
 const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowItem) => {
@@ -235,104 +236,48 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
 }
 
 const ClaimsAndAttestationPage = () => {
-      const { systemFileInfo, session, backend_url, setWorkflows } = useStore(appStore)
+      const { session, backend_url } = useStore(appStore)
 
-      const [totalClaims, setTotalClaims] = useState<number>(0)
-      const [_totolAttestors, setTotolAttestors] = useState<number>(0)
-      const [myAttestions, setMyAttestionss] = useState<number>(0)
+      // const [totalClaims, setTotalClaims] = useState<number>(0)
+      // const [_totolAttestors, setTotolAttestors] = useState<number>(0)
+      // const [myAttestions, setMyAttestionss] = useState<number>(0)
       const [isLoading, setIsLoading] = useState<boolean>(false)
 
       const [workflowsUi, setWorkflowsUi] = useState<IWorkflowItem[]>([])
+      const [currentPage, setCurrentPage] = useState(1)
+      const [pagination, setPagination] = useState<GlobalPagination | null>(null)
 
-      const processFilesToGetWorkflows = (files: ApiFileInfo[]) => {
-            const someData = systemFileInfo.map(e => {
-                  try {
-                        return getAquaTreeFileName(e.aquaTree!)
-                  } catch (e) {
-                        return ''
-                  }
-            })
-
-            let totolClaims = 0
-            let totolAttestors = 0
-            let myAttestions = 0
+      const processFilesToWorkflowUi = (_files: ApiFileInfo[]) => {
             const newData: IWorkflowItem[] = []
-            // files.forEach(file => {
-            for (const file of files) {
-                  // const fileObject = getAquaTreeFileObject(file);
-                  const { workFlow, isWorkFlow } = isWorkFlowData(file.aquaTree!, someData)
-
-
-                  if (isWorkFlow && workFlow === 'identity_attestation') {
-                        totolAttestors += 1
-                        let allHashes = Object.keys(file.aquaTree?.revisions || {})
-                        if (allHashes.length >= 2) {
-                              const thirdRevision = file.aquaTree?.revisions[allHashes[2]]
-
-                              if (thirdRevision && thirdRevision.revision_type === 'signature') {
-                                    if (thirdRevision.signature_wallet_address == session?.address) {
-                                          myAttestions += 1
-                                    }
-                              }
-                        }
-                  }
-                  if (isWorkFlow && ["identity_claim", "email_claim", "domain_claim", "phone_number_claim", "user_signature"].includes(workFlow.trim())) {
-                        let allHashes = Object.keys(file.aquaTree?.revisions || {})
-                        if (allHashes.length < 2) {
-                              continue
-                        }
-
-                        let signatureReisionIndex = 2;
-                        if (workFlow.trim() === "user_signature") {
-                              signatureReisionIndex = 3
-                        }
-                        const signatureRevision = file.aquaTree?.revisions[allHashes[signatureReisionIndex]]
-
-                        if (!signatureRevision) {
-                              continue
-                        }
-
-                        if (signatureRevision.revision_type !== 'signature') {
-                              continue
-                        }
-
-                        if (signatureRevision.signature_wallet_address == session?.address) {
-                              const currentName = getAquaTreeFileName(file.aquaTree!)
-                              const containsCurrentName: IWorkflowItem | undefined = newData.find((e: IWorkflowItem) => {
-                                    if (e && e.apiFileInfo && e.apiFileInfo.aquaTree) {
-                                          const nameItem: string = getAquaTreeFileName(e.apiFileInfo.aquaTree)
-                                          return nameItem === currentName
-                                    }
-                              })
-                              if (!containsCurrentName) {
-                                    newData.push({
-                                          workflowName: workFlow,
-                                          apiFileInfo: file,
-                                    })
-                              }
-                        }
-
-                        totolClaims += 1
-                  }
-            }
-
-            setTotalClaims(totolClaims)
-            setTotolAttestors(totolAttestors)
-            setMyAttestionss(myAttestions)
+            _files.forEach(file => {
+                  const nameItem: string = getAquaTreeFileName(file.aquaTree!)
+                  newData.push({ workflowName: nameItem, apiFileInfo: file })
+            })
             setWorkflowsUi(newData)
       }
 
-
       useEffect(() => {
-            setIsLoading(true);
             (async () => {
-
                   try {
-                        const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
-                        setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+                        setIsLoading(true)
+                        const params = {
+                              page: currentPage,
+                              limit: 10,
+                              claim_types: JSON.stringify(['identity_claim', 'user_signature', 'identity_attestation', 'email_claim', 'phone_number_claim', 'domain_claim']),
+                              wallet_address: session?.address
+                        }
+                        const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
+                              headers: {
+                                    'Content-Type': 'application/json',
+                                    'nonce': `${session!.nonce}`
+                              },
+                              params
+                        })
+                        const response = filesDataQuery.data
+                        const aquaTrees = response.aquaTrees
+                        setPagination(response.pagination)
+                        processFilesToWorkflowUi(aquaTrees)
 
-
-                        processFilesToGetWorkflows(filesApi.files)
                   } catch (error) {
                         console.error('Error fetching workflows:', error)
                         toast.error('Failed to load claims and attestations')
@@ -341,62 +286,29 @@ const ClaimsAndAttestationPage = () => {
                   }
             })()
 
-
       }, [])
-
-      // useEffect(() => {
-      //       processFilesToGetWorkflows()
-      //    }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index??{})).join(',')])
-
-
-      // useEffect(() => {
-      //       processFilesToGetWorkflows()
-      // }, [])
-
-
-      if (isLoading) {
-            // return <div>Loading...</div>
-            return <div className="flex items-center gap-2">
-                  {/* Circular Loading Spinner */}
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>Loading Claims and Attestations</span>
-            </div>
-      }
 
       return (
             <>
-                  {/* Action Bar */}
-                  <div className="bg-white border-b border-gray-200 px-6 py-4 hidden">
-                        <div className="flex items-center justify-between">
-                              <div /> {/* Empty div to push the button right */}
-                              {/* <div className="flex items-center space-x-4">
-                                    <button
-                                          className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
-                                          style={{ backgroundColor: '#394150' }}
-                                          onClick={() => {
-                                                // setOpenCreateClaimPopUp(true)
-                                                setOpenDialog({ dialogType: 'identity_claim', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
-                                          }}
-                                    >
-                                          <Plus className="w-4 h-4" />
-                                          <span>Create Claim </span>
-                                    </button>
-                              </div> */}
-                        </div>
-                  </div>
-
                   <div className="space-y-6 mt-5">
                         <Card className="py-6">
                               <CardHeader>
-                                    <CardTitle className="flex items-center gap-2 justify-between">
+                                    <CardTitle className="flex items-center gap-2 justify-between align-center">
                                           <div className="flex flex-col gap-2">
                                                 <div className="flex items-center gap-2">
                                                       <FileText className="h-5 w-5" />
                                                       <span>Aqua Claim Workflows</span>
                                                 </div>
-                                                <label className="text-sm font-medium text-gray-900  text-left">Total claims you have attested {myAttestions}</label>
+                                                <label className="text-sm font-medium text-gray-900  text-left">
+                                                      Your claims & attestations
+                                                </label>
+                                                <label className="text-sm font-medium text-gray-900  text-left">
+                                                      {/* TODO: Fix the counts here */}
+                                                      {/* Total claims you have attested {0} */}
+                                                </label>
                                                 <label className="text-sm font-medium text-gray-900 mb-4 text-left">
-                                                      Total claims imported {totalClaims - workflowsUi.length}. Claims created by you {workflowsUi.length}
+                                                      {/* TODO: Fix the counts here */}
+                                                      {/* Total claims imported {0 - workflowsUi.length}. Claims created by you {workflowsUi.length} */}
                                                 </label>
                                           </div>
 
@@ -404,34 +316,11 @@ const ClaimsAndAttestationPage = () => {
                                                 <ClaimTypesDropdownButton />
                                                 <div className='ml-4'></div>
                                           </div>
-
-                                          {/* <div className="flex justify-center ">
-                                                <button
-                                                      className="flex items-center space-x-2 text-white px-4 py-2 my-2 rounded-md text-sm font-medium hover:bg-blue-100 cursor-pointer"
-                                                      style={{ backgroundColor: '#394150' }}
-                                                      onClick={() => {
-                                                            setOpenCreateClaimPopUp(true)
-                                                      }}
-                                                >
-                                                      <Plus className="w-4 h-4" />
-                                                      <span>Create Name Claim</span>
-                                                </button>
-                                                <button
-                                                      className="flex items-center space-x-2 text-white px-4 py-2  mx-2 my-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
-                                                      style={{ backgroundColor: '#394150' }}
-                                                      onClick={() => {
-                                                            setOpenCreateClaimPopUp(true)
-                                                      }}
-                                                >
-                                                      <Plus className="w-4 h-4" />
-                                                      <span>Create DNS Claim</span>
-                                                </button>
-                                          </div> */}
                                     </CardTitle>
                               </CardHeader>
                               <CardContent className="px-1">
                                     {/* <div className="rounded-md border"> */}
-                                    <div className="overflow-x-auto">
+                                    <div className="overflow-x-auto md:h-[calc(100vh-300px)] overflow-y-auto">
                                           <Table>
                                                 <TableHeader>
                                                       <TableRow>
@@ -444,19 +333,34 @@ const ClaimsAndAttestationPage = () => {
                                                       </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
-                                                      {workflowsUi.length === 0 && (
+                                                      {isLoading ? (
                                                             <TableRow>
-                                                                  <TableCell colSpan={6} className="h-24 text-center">
-                                                                        You do not own any claim workflows
+                                                                  <TableCell colSpan={6} className="h-[400px] text-center">
+                                                                        <div className="flex items-center justify-center gap-2">
+                                                                              <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                                                                              <span>Loading Identity claims...</span>
+                                                                        </div>
                                                                   </TableCell>
                                                             </TableRow>
+                                                      ) : workflowsUi.length === 0 ? (
+                                                            <TableRow>
+                                                                  <TableCell colSpan={6} className="h-[400px] text-center">
+                                                                        No claims found
+                                                                  </TableCell>
+                                                            </TableRow>
+                                                      ) : (
+                                                            workflowsUi.map((workflow, index: number) => (
+                                                                  <WorkflowTableItem key={`${index}-workflow`} workflowName={workflow.workflowName} apiFileInfo={workflow.apiFileInfo} index={index} />
+                                                            ))
                                                       )}
-                                                      {workflowsUi.map((workflow, index: number) => (
-                                                            <WorkflowTableItem key={`${index}-workflow`} workflowName={workflow.workflowName} apiFileInfo={workflow.apiFileInfo} index={index} />
-                                                      ))}
                                                 </TableBody>
                                           </Table>
                                     </div>
+                                    <CustomPagination
+                                          currentPage={currentPage}
+                                          totalPages={pagination?.totalPages ?? 1}
+                                          onPageChange={setCurrentPage}
+                                    />
                               </CardContent>
                         </Card>
                   </div>
