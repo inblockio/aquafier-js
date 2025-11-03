@@ -14,6 +14,7 @@ import axios from "axios";
 import { API_ENDPOINTS } from "@/utils/constants";
 import { GlobalPagination } from "@/types";
 import { ApiFileInfo } from "@/models/FileInfo";
+import { ClipLoader } from "react-spinners";
 
 
 const letters = ['0', ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))];
@@ -239,6 +240,8 @@ const ContactsTable = () => {
     const [files, setFiles] = useState<ApiFileInfo[]>([])
     const [currentPage, _setCurrentPage] = useState(1)
     const [_pagination, setPagination] = useState<GlobalPagination | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [isProcessingClaims, setIsProcessingClaims] = useState(true)
 
 
     // const navigate = useNavigate()
@@ -313,6 +316,7 @@ const ContactsTable = () => {
 
     const loadContactTrees = async () => {
         if (!session?.address || !backend_url) return;
+        setLoading(true)
         const params = {
             page: currentPage,
             limit: 200,
@@ -330,32 +334,32 @@ const ContactsTable = () => {
         const aquaTrees = response.aquaTrees
         setPagination(response.pagination)
         setFiles(aquaTrees)
+        setLoading(false)
         //   processFilesToWorkflowUi(aquaTrees)
     }
 
-    const generateContacts = () => {
+    const generateContacts = async () => {
 
         if (!files?.length || !systemFileInfo?.length) return;
 
         const contactProfileMap = new Map<string, ContactProfile>();
+        setIsProcessingClaims(true)
 
-        for (const element of files) {
+        // Process files in parallel
+        const processFile = async (element: ApiFileInfo) => {
             const workFlow = isWorkFlowData(element.aquaTree!, systemTreeNames);
-            if (!workFlow.isWorkFlow || !workFlow.workFlow) continue;
+            if (!workFlow.isWorkFlow || !workFlow.workFlow) return null;
 
             const claimType = workFlow.workFlow;
-            if (!CLAIMS.has(claimType)) continue;
-
+            if (!CLAIMS.has(claimType)) return null;
 
             const orderedAquaTree = OrderRevisionInAquaTree(element.aquaTree!);
             const allRevisions = Object.values(orderedAquaTree.revisions);
             let walletAddress = ""
 
             if (workFlow.workFlow == "identity_attestation") {
-
                 let genHash = getGenesisHash(element.aquaTree!)
                 if (genHash) {
-
                     let genRevision = element.aquaTree!.revisions[genHash]
                     let walletClaimOwner = genRevision["forms_claim_wallet_address"]
 
@@ -368,7 +372,7 @@ const ContactsTable = () => {
                     (r) => r.revision_type === "signature"
                 ) as Revision | undefined;
 
-                if (!signatureRevision?.signature_wallet_address) continue;
+                if (!signatureRevision?.signature_wallet_address) return null;
 
                 walletAddress = signatureRevision.signature_wallet_address;
             }
@@ -390,11 +394,6 @@ const ContactsTable = () => {
                 const fieldName = claimFieldMap[claimType]
                 if (fieldName && genRevision[fieldName]) {
                     claimValue = genRevision[fieldName]
-
-                    // Special case: identity_claim also sets the name
-                    // if (claimType === "identity_claim") {
-                    //     claimUserName = claimValue
-                    // }
                 }
             }
 
@@ -422,51 +421,74 @@ const ContactsTable = () => {
                 }
             }
 
-            let existingProfile = contactProfileMap.get(walletAddress);
+            return {
+                walletAddress,
+                claimType,
+                claimValue,
+                searchText,
+                element
+            };
+        };
 
-            if (existingProfile) {
-                existingProfile.file.push(element);
+        try {
+            // Process all files in parallel
+            const processedFiles = await Promise.all(files.map(processFile));
+            
+            // Filter out null results and merge into contact profiles
+            const validResults = processedFiles.filter(result => result !== null);
+            
+            for (const result of validResults) {
+                const { walletAddress, claimType, claimValue, searchText, element } = result!;
+                
+                let existingProfile = contactProfileMap.get(walletAddress);
 
-                // Update name if current name is empty and we have a new name
-                if (existingProfile.name === "" && claimType === "identity_claim") {
-                    existingProfile.name = claimValue;
-                }
-                if (existingProfile.phone === "" && claimType === "phone_number_claim") {
-                    existingProfile.phone = claimValue;
-                }
-                if (existingProfile.email === "" && claimType === "email_claim") {
-                    existingProfile.email = claimValue;
-                }
+                if (existingProfile) {
+                    existingProfile.file.push(element);
 
-                // ALWAYS update claims if we have a claim value (moved outside name condition)
-                if (claimValue) {
-                    if (existingProfile.claims[claimType]) {
-                        existingProfile.claims[claimType].push(claimValue);
-                    } else {
-                        existingProfile.claims[claimType] = [claimValue];
+                    // Update name if current name is empty and we have a new name
+                    if (existingProfile.name === "" && claimType === "identity_claim") {
+                        existingProfile.name = claimValue;
+                    }
+                    if (existingProfile.phone === "" && claimType === "phone_number_claim") {
+                        existingProfile.phone = claimValue;
+                    }
+                    if (existingProfile.email === "" && claimType === "email_claim") {
+                        existingProfile.email = claimValue;
+                    }
+
+                    // ALWAYS update claims if we have a claim value (moved outside name condition)
+                    if (claimValue) {
+                        if (existingProfile.claims[claimType]) {
+                            existingProfile.claims[claimType].push(claimValue);
+                        } else {
+                            existingProfile.claims[claimType] = [claimValue];
+                        }
+                    }
+                    // Update search string
+                    existingProfile.searchString = existingProfile.searchString + " " + searchText
+                    contactProfileMap.set(walletAddress, existingProfile);
+
+                } else {
+                    if (walletAddress) {
+                        contactProfileMap.set(walletAddress, {
+                            walletAddress,
+                            file: [element],
+                            name: claimType === "identity_claim" ? claimValue : "",
+                            phone: claimType === "phone_number_claim" ? claimValue : "",
+                            email: claimType === "email_claim" ? claimValue : "",
+                            searchString: searchText,
+                            claims: {
+                                ...(claimValue ? { [claimType]: [claimValue] } : {})
+                            }
+                        });
                     }
                 }
-                // Update search string
-                existingProfile.searchString = existingProfile.searchString + " " + searchText
-                contactProfileMap.set(walletAddress, existingProfile);
-
-            } else {
-                if (walletAddress) {
-                    contactProfileMap.set(walletAddress, {
-                        walletAddress,
-                        file: [element],
-                        name: claimType === "identity_claim" ? claimValue : "",
-                        phone: claimType === "phone_number_claim" ? claimValue : "",
-                        email: claimType === "email_claim" ? claimValue : "",
-                        searchString: searchText,
-                        claims: {
-                            ...(claimValue ? { [claimType]: [claimValue] } : {})
-                        }
-                    });
-                }
             }
+        } catch (error) {
+            console.error('Error processing contacts in parallel:', error);
         }
-
+        
+        setIsProcessingClaims(false)
         setContactProfiles(Array.from(contactProfileMap.values()));
     }
 
@@ -477,29 +499,29 @@ const ContactsTable = () => {
 
     const watchFilesChange = useMemo(() => {
         if (!files?.length) return '0';
-        
+
         let totalRevisions = 0;
         let aquaTreeHashes: string[] = [];
-        
+
         for (const file of files) {
             if (file.aquaTree?.revisions) {
                 const revisionCount = Object.keys(file.aquaTree.revisions).length;
                 totalRevisions += revisionCount;
-                
+
                 // Create a stable identifier for this aquaTree based on its revisions
                 const revisionKeys = Object.keys(file.aquaTree.revisions).sort();
                 const aquaTreeHash = `${revisionCount}-${revisionKeys.join(',')}`;
                 aquaTreeHashes.push(aquaTreeHash);
             }
         }
-        
+
         // Create a stable watch value based on total revisions and aquaTree structure
         return `${totalRevisions}-${aquaTreeHashes.sort().join('|')}`;
     }, [files]);
 
     useEffect(() => {
         loadContactTrees()
-    }, [currentPage]);
+    }, [currentPage, backend_url, JSON.stringify(session)]);
 
     useEffect(() => {
         generateContacts()
@@ -559,7 +581,13 @@ const ContactsTable = () => {
                                         ref={scrollerRef}
                                         className="h-full overflow-y-auto overscroll-contain border-t border-neutral-100"
                                     >
-                                        {totalContacts === 0 ? (
+                                        {
+                                            loading ? <div className="py-6 flex flex-col items-center justify-center h-full w-full">
+                                                <ClipLoader color="#000" loading={loading} size={50} />
+                                                <p className="text-sm">Loading...</p>
+                                            </div> : null
+                                        }
+                                        {(totalContacts === 0 && !loading && !isProcessingClaims) ? (
                                             <div className="p-8 text-center text-neutral-500 text-sm flex flex-col gap-4">
                                                 <p> No contacts found.</p>
                                                 {

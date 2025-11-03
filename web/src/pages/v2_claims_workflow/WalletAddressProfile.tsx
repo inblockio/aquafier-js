@@ -30,6 +30,7 @@ import { useStore } from 'zustand'
 import axios from 'axios'
 import { getDNSStatusBadge, IDnsVerificationResult, verifyDNS } from '@/utils/verifiy_dns'
 import { BsInfoCircle } from 'react-icons/bs'
+import { API_ENDPOINTS } from '@/utils/constants'
 
 interface ISignatureWalletAddressCard {
       index?: number
@@ -42,6 +43,7 @@ interface ISignatureWalletAddressCard {
       showShadow?: boolean
       hideOpenProfileButton?: boolean
       noBg?: boolean
+      files?: ApiFileInfo[]
 }
 
 interface IClaim {
@@ -257,13 +259,13 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
       )
 }
 
-const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, showShadow, hideOpenProfileButton, noBg, timestamp }: ISignatureWalletAddressCard) => {
-      const { setWorkflows, workflows, systemFileInfo, session, setFiles, backend_url, setOpenDialog, setSelectedFileInfo } = useStore(appStore)
+const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, showShadow, hideOpenProfileButton, noBg, timestamp, files }: ISignatureWalletAddressCard) => {
+      const { workflows, systemFileInfo, session, setFiles, backend_url, setOpenDialog, setSelectedFileInfo } = useStore(appStore)
       const [claims, setClaims] = useState<IClaim[]>([])
-      const [loading, setLoading] = useState(false)
+      const [loading, setLoading] = useState(true)
       // const [sharedProfileItem, setSharedProfileItem] = useState<ApiFileInfo | null>(null)
       // const [showShareDialog, setShowShareDialog] = useState(false)
-      const [isLoading, setIsLoading] = useState<boolean>(false)
+      const [isLoading, setIsLoading] = useState<boolean>(true)
       const navigate = useNavigate()
 
       const shadowClasses = showShadow ? 'shadow-lg hover:shadow-xl transition-shadow duration-300' : 'shadow-none'
@@ -272,24 +274,50 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
       const lastFourLetterOfWalletAddress = walletAddress?.substring(walletAddress?.length - 4)
 
-      useEffect(() => {
+      const loadWorkflows = async () => {
+            if (!walletAddress) return
+            setIsLoading(true);
+            try {
+                  let _files: ApiFileInfo[] = []
+                  if (files) {
+                        _files = files
+                  } else {
+                        const params = {
+                              page: 1,
+                              limit: 100,
+                              claim_types: JSON.stringify(['identity_claim', 'identity_attestation', 'user_signature', 'email_claim', 'phone_number_claim', 'domain_claim']),
+                              wallet_address: walletAddress,
+                              use_wallet: walletAddress,
+                        }
+                        const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
+                              headers: {
+                                    'Content-Type': 'application/json',
+                                    'nonce': `${session!.nonce}`
+                              },
+                              params
+                        })
+                        const response = filesDataQuery.data
+                        const aquaTrees = response.aquaTrees
+                        _files = aquaTrees
+                        // setPagination(response.pagination)
+                        // setFiles(response.files)
 
-
-            const loadWorkflows = async () => {
-                  setIsLoading(true);
-                  try {
-                        const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce);
-                        setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' });
-                        processFilesToGetWorkflows(filesApi.files);
-                  } catch (error) {
-                        console.error('Failed to load workflows:', error);
-                        // Consider setting an error state here
-                  } finally {
-                        setIsLoading(false);
+                        // await processAllAddressClaims(aquaTrees)
                   }
-            };
+                  // const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce);
+                  // setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' });
+                  processFilesToGetWorkflows(_files);
+            } catch (error) {
+                  console.error('Failed to load workflows:', error);
+                  // Consider setting an error state here
+            } finally {
+                  setIsLoading(false);
+            }
+      };
+
+      useEffect(() => {
             loadWorkflows();
-      }, [])
+      }, [walletAddress])
 
       const processFilesToGetWorkflows = (files: ApiFileInfo[]) => {
             // const getWalletClaims = () => {
@@ -726,37 +754,29 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             }
       }
 
-      // useEffect(() => {
-      //       // Defer the heavy computation to allow UI to render first
-      //       const timeoutId = setTimeout(() => {
-      //             getWalletClaims()
-      //       }, 0)
-
-      //       return () => clearTimeout(timeoutId)
-      //       // }, [files.length])
-      // }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), walletAddress])
-
-      if (isLoading) {
-
-            return <div className="flex items-center gap-2">
-                  {/* Circular Loading Spinner */}
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>Loading Profile Claims</span>
+      if(claims.length === 0 && !isLoading){
+           return (
+            <div className={`${width ? width : 'w-full'} bg-transparent`}>
+                  <div className={`flex p-2 flex-col ${noBg ? '' : 'bg-gradient-to-br from-white to-slate-200 border border-slate-200'} ${shadowClasses} rounded-xl gap-4 transition-shadow duration-300`}>
+                        <p className="text-sm">No claims found</p>
+                  </div>
             </div>
+           ) 
       }
+
 
 
       return (
             <div className={`${width ? width : 'w-full'} bg-transparent`}>
                   <div className={`flex p-2 flex-col ${noBg ? '' : 'bg-gradient-to-br from-white to-slate-200 border border-slate-200'} ${shadowClasses} rounded-xl gap-4 transition-shadow duration-300`}>
                         {
-                              loading ? <div className="py-6 flex flex-col items-center justify-center h-full w-full">
-                                    <ClipLoader color="#000" loading={loading} size={50} />
+                              isLoading ? <div className="py-6 flex flex-col items-center justify-center h-full w-full">
+                                    <ClipLoader color="#000" loading={isLoading} size={50} />
                                     <p className="text-sm">Loading...</p>
                               </div> : null
                         }
 
-                        {showAvatar && (
+                        {(showAvatar && !loading && !isLoading) ? (
                               <div className="relative group">
                                     <Avatar className="size-20 border-2 border-primary/20 hover:border-primary/50 transition-all duration-300">
                                           <AvatarImage src={generateAvatar(walletAddress!)} alt="User Avatar" />
@@ -766,16 +786,17 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                     </Avatar>
                                     <div className="absolute -bottom-1 -right-1 bg-green-500 h-3 w-3 rounded-full border-2 border-background" title="Connected" />
                               </div>
-                        )}
-                        {showAvatar && (
+                        ) : null}
+
+                        {(showAvatar && !loading) ? (
                               <div className="flex flex-col items-center gap-2 w-full">
                                     <p className="font-mono text-sm bg-secondary/30 px-3 py-1 rounded-full">{formatCryptoAddress(walletAddress, 10, 10)}</p>
                                     <CustomCopyButton value={`${walletAddress}`} />
                               </div>
-                        )}
+                        ) : null}
 
                         {
-                              claims.length === 0 ? (
+                              (claims.length === 0 && !loading && !isLoading) ? (
                                     <div className="flex flex-col gap-2 bg-slate-100 p-2 rounded-lg">
                                           <p className="text-xs font-medium">Wallet Address</p>
                                           <div className="flex gap-2">
@@ -802,7 +823,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                               ) : null
                         }
                         {
-                              claims.length > 0 ? (
+                              (claims.length > 0 && !isLoading && !loading) ? (
                                     <>
                                           <div className="flex items-center gap-2">
                                                 <Avatar className='size-12'>
@@ -846,7 +867,6 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                               !hideOpenProfileButton && (
                                     <div className="flex justify-end">
                                           <div className="flex gap-1 flex-1 flex-wrap">
-                                                {/* Share Profile button */}
                                                 <Button
                                                       className={`flex-1 bg-orange-50 hover:bg-orange-200 text-orange-700 hover:text-orange-800 px-3 py-1.5 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 border border-orange-200 hover:border-orange-300 cursor-pointer ${claims.length === 0 ? 'hidden' : ''}`}
                                                       onClick={handleShareProfile}
@@ -855,7 +875,6 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                                       <Share2 className="w-4 h-4" />
                                                 </Button>
 
-                                                {/* Open Profile button */}
                                                 <Button
                                                       className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 px-3 py-1.5 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 border border-blue-200 hover:border-blue-300 cursor-pointer"
                                                       onClick={() => {

@@ -8,6 +8,7 @@ import appStore from '@/store'
 import { useStore } from 'zustand'
 import { IIdentityClaimDetails } from '@/types/types'
 import { ArrowRightLeft } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 const WalletAddressProfile = lazy(() => import('./WalletAddressProfile'))
 
 interface IWalletAdrressClaim {
@@ -60,15 +61,31 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
                                                             </Avatar>
                                                       </TooltipTrigger>
                                                       <TooltipContent>
-                                                            <span className="flex gap-0 items-center">
+                                                            <div className="flex gap-0 items-center">
                                                                   <p className='text-sm'>{showWalletAddress ? walletAddress : identityClaimDetails?.name || walletAddress}</p>
                                                                   <CopyButton text={`${walletAddress}`} isIcon={true} />
-                                                                  {identityClaimDetails && <ArrowRightLeft size={16} onClick={() => setShowWalletAddress(prev => !prev)} />}
-                                                            </span>
+                                                                  {identityClaimDetails ? (
+                                                                        <Button size={"icon-sm"} variant={"outline"} className='cursor-pointer' onClick={(e) => {
+                                                                              e.stopPropagation()
+                                                                              setShowWalletAddress(prev => !prev)
+                                                                        }}>
+                                                                              <ArrowRightLeft size={16} />
+                                                                        </Button>
+                                                                  ) : null}
+                                                            </div>
                                                       </TooltipContent>
                                                 </Tooltip>
                                           ) : (
                                                 <div className="p-0 flex gap-2 items-center flex-wrap break-all">
+                                                      <CopyButton text={`${walletAddress}`} isIcon={true} />
+                                                      {identityClaimDetails ? (
+                                                            <Button size={"icon-sm"} variant={"outline"} className='cursor-pointer' onClick={(e) => {
+                                                                  e.stopPropagation()
+                                                                  setShowWalletAddress(prev => !prev)
+                                                            }}>
+                                                                  <ArrowRightLeft size={16} />
+                                                            </Button>
+                                                      ) : null}
                                                       <p
                                                             className="p-0 text-xs flex-1 cursor-pointer font-mono font-medium"
                                                             style={{
@@ -83,8 +100,6 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
                                                       >
                                                             {showWalletAddress ? walletAddress : identityClaimDetails?.name || walletAddress}
                                                       </p>
-                                                      <CopyButton text={`${walletAddress}`} isIcon={true} />
-                                                      {identityClaimDetails && <ArrowRightLeft size={16} onClick={() => setShowWalletAddress(prev => !prev)} />}
                                                 </div>
                                           )}
                                     </div>

@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
 import appStore from '../../store'
 import { useStore } from 'zustand'
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
-import { fetchFiles, getAquaTreeFileName, getGenesisHash, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
+import { getAquaTreeFileName, getGenesisHash, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
 import { ClipLoader } from 'react-spinners'
 import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileInfo'
 import axios from 'axios'
@@ -14,22 +14,27 @@ import { OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import SimpleClaim from './SimpleClaim'
 import DNSClaim from './DNSClaim'
 import { toast } from 'sonner'
-
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import WalletAddressProfile from './WalletAddressProfile'
-// import PhoneNumberClaim from './PhoneNumberClaim'
-// import EmailClaim from './EmailClaim'
 import UserSignatureClaim from './UserSignatureClaim'
 import { AddressView } from './AddressView'
 import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_claim'
+import { GlobalPagination } from '@/types'
+import { API_ENDPOINTS } from '@/utils/constants'
+import { ethers } from 'ethers'
 
 
 export default function ClaimsWorkflowPage() {
-      const { session, backend_url, systemFileInfo, workflows, setWorkflows } = useStore(appStore)
+      const { session, backend_url, systemFileInfo } = useStore(appStore)
 
       const [claims, setClaims] = useState<Array<{ file: ApiFileInfo, processedInfo: ClaimInformation, attestations: Array<IAttestationEntry>, sharedContracts: Contract[] }>>([])
-      const [isLoading, setIsLoading] = useState(false)
+      const [isLoading, setIsLoading] = useState(true)
+      const [isProcessingClaims, setIsProcessingClaims] = useState(true)
+
+      const [currentPage, _setCurrentPage] = useState(1)
+      const [_pagination, setPagination] = useState<GlobalPagination | null>(null)
+      const [files, setFiles] = useState<Array<ApiFileInfo>>([])
 
       const { walletAddress } = useParams()
       const urlHash = useLocation().hash
@@ -96,7 +101,7 @@ export default function ClaimsWorkflowPage() {
                   }
             })
             const _attestations: Array<ApiFileInfo> = []
-            for (let i = 0; i < files.length; i++) {
+            for (let i = 0; i < files?.length; i++) {
                   const file: ApiFileInfo = files[i]
                   // const fileObject = getAquaTreeFileObject(file)
 
@@ -110,13 +115,12 @@ export default function ClaimsWorkflowPage() {
       }
 
       const processAllAddressClaims = async (files: ApiFileInfo[]) => {
-            setIsLoading(true)
+            setIsProcessingClaims(true)
             if (!walletAddress) {
                   toast.info('Please select a wallet address')
-                  setIsLoading(false)
+                  setIsProcessingClaims(false)
                   return
             }
-            setIsLoading(true)
             const claimTemplateNames = ["simple_claim", "identity_claim", "dns_claim", "domain_claim", "phone_number_claim", "email_claim", "user_signature"]
 
             const aquaTemplates = systemFileInfo.map(e => {
@@ -158,7 +162,7 @@ export default function ClaimsWorkflowPage() {
             }
 
             setClaims(_claims)
-            setIsLoading(false)
+            setIsProcessingClaims(false)
       }
 
       const renderClaim = (claim: ICompleteClaimInformation) => {
@@ -237,40 +241,94 @@ export default function ClaimsWorkflowPage() {
             }
       }
 
-      useEffect(() => {
-            setIsLoading(true);
-
-            (async () => {
-                  try {
-                        setIsLoading(true);
-                        const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
-                        setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
-                        await processAllAddressClaims(filesApi.files)
-                  } catch (error) {
-                        console.error('Error loading claims:', error);
-                        toast.error('Failed to load claims');
-                  } finally {
-                        setIsLoading(false);
-                  }
-            })()
-
-      }, []);
-
-
-      useEffect(() => {
-            processAllAddressClaims(workflows.fileData)
-      }, [walletAddress])
-
-
-      if (isLoading) {
-            // return <div>Loading...</div>
-            return <div className="flex items-center gap-2">
-                  {/* Circular Loading Spinner */}
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <ClipLoader color={'blue'} loading={true} size={150} aria-label="Loading Spinner" data-testid="loader" />
-                  <span>Loading Data</span>
-            </div>
+      const cleanEthAddress = (address?: string) => {
+            if (!address) {
+                  return false
+            }
+            let isGood = true
+            try {
+                  ethers.getAddress(address)
+            } catch (e) {
+                  isGood = false
+            }
+            return isGood
       }
+
+      async function loadClaimsFileData() {
+            setFiles([])
+            setClaims([])
+            let isGood = cleanEthAddress(walletAddress)
+            if (!isGood) {
+                  toast.warning("Invalid wallet address", {
+                        position: "top-center"
+                  })
+                  return
+            }
+
+            setIsLoading(true);
+            try {
+                  const params = {
+                        page: currentPage,
+                        limit: 100,
+                        claim_types: JSON.stringify(['identity_claim', 'identity_attestation', 'user_signature', 'email_claim', 'phone_number_claim', 'domain_claim']),
+                        wallet_address: walletAddress,
+                        use_wallet: session?.address,
+                  }
+                  const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
+                        headers: {
+                              'Content-Type': 'application/json',
+                              'nonce': `${session!.nonce}`
+                        },
+                        params
+                  })
+                  const response = filesDataQuery.data
+                  const aquaTrees = response.aquaTrees
+                  setPagination(response.pagination)
+                  setFiles(aquaTrees)
+
+                  // await processAllAddressClaims(aquaTrees)
+            } catch (error) {
+                  console.error('Error loading claims:', error);
+                  toast.error('Failed to load claims');
+            } finally {
+                  setIsLoading(false);
+                  setIsProcessingClaims(false)
+            }
+      }
+
+      const watchFilesChange = useMemo(() => {
+            if (!files?.length) return '0';
+
+            let totalRevisions = 0;
+            let aquaTreeHashes: string[] = [];
+
+            for (const file of files) {
+                  if (file.aquaTree?.revisions) {
+                        const revisionCount = Object.keys(file.aquaTree.revisions).length;
+                        totalRevisions += revisionCount;
+
+                        // Create a stable identifier for this aquaTree based on its revisions
+                        const revisionKeys = Object.keys(file.aquaTree.revisions).sort();
+                        const aquaTreeHash = `${revisionCount}-${revisionKeys.join(',')}`;
+                        aquaTreeHashes.push(aquaTreeHash);
+                  }
+            }
+            // Create a stable watch value based on total revisions and aquaTree structure
+            return `${totalRevisions}-${aquaTreeHashes.sort().join('|')}`;
+      }, [files]);
+
+
+      useEffect(() => {
+            loadClaimsFileData()
+      }, [walletAddress]);
+
+
+      useEffect(() => {
+            if (files.length > 0 && systemFileInfo.length > 0) {
+                  processAllAddressClaims(files)
+            }
+      }, [watchFilesChange, systemFileInfo])
+
       return (
             <div className='py-6 flex flex-col gap-4'>
 
@@ -289,15 +347,17 @@ export default function ClaimsWorkflowPage() {
                         </div>
                   </div>
 
-                  {/* {isLoading ? (
-                        <div className="flex items-center justify-center flex-col align-center py-8">
-                              <ClipLoader color={'blue'} loading={true} size={150} aria-label="Loading Spinner" data-testid="loader" />
-                              <span className="text-center font-500 text-2xl">Processing claim...</span>
-                        </div>
-                  ) : null} */}
+                  {(isLoading) ? (
+                        <>
+                              <div className="py-6 flex flex-col items-center justify-center h-full w-full">
+                                    <ClipLoader color="#000" loading={isLoading} size={50} />
+                                    <p className="text-sm">Loading...</p>
+                              </div>
+                        </>
+                  ) : null}
 
                   {
-                        (claims.length === 0 && !isLoading) ? (
+                        (claims.length === 0 && !isLoading && !isProcessingClaims) ? (
                               <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mx-auto max-w-md">
                                     <div className="flex items-center justify-center flex-col gap-3">
                                           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -315,9 +375,9 @@ export default function ClaimsWorkflowPage() {
                   }
 
                   {
-                        !isLoading ? (
+                        (!isLoading && !isProcessingClaims && claims.length > 0) ? (
                               <div className="container mx-auto py-4 bg-white rounded-lg">
-                                    <WalletAddressProfile walletAddress={walletAddress} hideOpenProfileButton={true} />
+                                    <WalletAddressProfile walletAddress={walletAddress} hideOpenProfileButton={true} files={files} />
                               </div>
                         ) : null
                   }

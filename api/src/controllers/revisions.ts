@@ -595,7 +595,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
     }, async (request: AuthenticatedRequest, reply) => {
         const userAddress = request.user?.address;
 
-        const { claim_types, wallet_address } = request.query as { claim_types: string, wallet_address?: string };
+        const { claim_types, wallet_address, use_wallet } = request.query as { claim_types: string, wallet_address?: string, use_wallet?: string };
 
         const claimTypes = JSON.parse(claim_types)
 
@@ -603,6 +603,11 @@ export default async function revisionsController(fastify: FastifyInstance) {
         let cleanedWalletAddress = wallet_address
         if(wallet_address){
             cleanedWalletAddress = ethers.getAddress(wallet_address)
+        }
+
+        let baseAddress = userAddress
+        if(use_wallet){
+            baseAddress = use_wallet
         }
 
         if (invalidClaimTypes.length > 0) {
@@ -650,7 +655,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 },
                 where: {
                     pubkey_hash: {
-                        startsWith: userAddress
+                        startsWith: baseAddress
                     },
                     revision_type: "form",
                     OR: [
@@ -696,7 +701,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
         // Build the where clause for link revisions
         let linkWhereClause: any = {
             pubkey_hash: {
-                startsWith: userAddress
+                startsWith: baseAddress
             },
             revision_type: {
                 equals: "link"
@@ -709,8 +714,6 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 }
             }
         }
-
-        console.log(cliRedify(JSON.stringify(genesisFormHashes, null, 2)))
 
         // If we have genesis form hashes, filter links that reference them
         if(genesisFormHashes.length > 0){

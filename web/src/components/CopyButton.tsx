@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
+import { Button } from './ui/button';
 
 interface ICopyButton {
     text: string,
@@ -9,7 +10,8 @@ interface ICopyButton {
 const CopyButton = ({text, isIcon = false}: ICopyButton) => {
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = async () => {
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation()
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
@@ -26,33 +28,26 @@ const CopyButton = ({text, isIcon = false}: ICopyButton) => {
   if (isIcon) {
     // Just show the icon
     return (
-      <button
-        onClick={handleCopy}
-        className="p-2 hover:bg-gray-100 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        title={copied ? 'Copied!' : 'Copy'}
-      >
+      <Button onClick={handleCopy} size={"icon-sm"} variant={"outline"} className='cursor-pointer'>
         {copied ? (
           <Check size={16} className="text-green-500" />
         ) : (
           <Copy size={16} className="text-gray-600 hover:text-gray-800" />
         )}
-      </button>
+      </Button>
     );
   }
 
   // Show button with label and icon
   return (
-    <button
-      onClick={handleCopy}
-      className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
-    >
+    <Button onClick={handleCopy} size={"sm"} variant={"outline"} className='cursor-pointer rounded-md'>
       <span>{copied ? 'Copied!' : 'Copy'}</span>
       {copied ? (
         <Check size={16} className="text-green-500" />
       ) : (
         <Copy size={16} className="text-gray-600" />
       )}
-    </button>
+    </Button>
   );
 };
 
