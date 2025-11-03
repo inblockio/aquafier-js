@@ -261,7 +261,7 @@ const ShareComponent = () => {
                   </div>
 
                   {/* Content */}
-                  <div className="px-6 py-6 space-y-6 overflow-y-auto" style={{
+                  <div className="px-2 md:px-6 py-2 md:py-6 space-y-6 overflow-y-auto" style={{
                         height: "calc(100% - 140px)"
                   }}>
                         {/* Warning */}
@@ -338,7 +338,7 @@ const ShareComponent = () => {
 
                               {/* Wallet Address Input */}
                               {recipientType === 'specific' && (
-                                    <div className="ml-12 space-y-2">
+                                    <div className="space-y-2">
 
                                           <div key={`field-share-1`} className="space-y-4">
                                                 <div className="flex items-center justify-end">
