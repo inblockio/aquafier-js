@@ -17,9 +17,6 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [selectedWorkflow, setSelectedWorkflow] = useState<string>('all') //aqua_files
       const [stats, setStats] = useState<IUserStats>(emptyUserStats)
 
-      // Pagination states
-      // const [_currentPage, setCurrentPage] = useState(1)
-      // const [_isLoadingPage, setIsLoadingPage] = useState(false)
       const [systemAquaFileNames, setSystemAquaFileNames] = useState<string[]>([])
 
       console.log("Selected Workflow: ", selectedWorkflow)
@@ -30,14 +27,6 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [tempSelectedFilters, setTempSelectedFilters] = useState<string[]>(['all'])
 
       const { files, systemFileInfo, backend_url, session } = useStore(appStore)
-
-      // const systemAquaTreeFileNames = systemFileInfo.map(e => {
-      //       try {
-      //             return getAquaTreeFileName(e.aquaTree!)
-      //       } catch (e) {
-      //             return ''
-      //       }
-      // })
 
       const loadSystemAquaFileNames = async () => {
             if (!session?.nonce) return

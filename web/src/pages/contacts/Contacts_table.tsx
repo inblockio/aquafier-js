@@ -2,7 +2,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import appStore from "@/store";
 import { ContactProfile } from "@/types/types";
-import { getAquaTreeFileName, getGenesisHash, isWorkFlowData } from "@/utils/functions";
+import { getGenesisHash, isWorkFlowData } from "@/utils/functions";
 import { OrderRevisionInAquaTree, Revision } from "aqua-js-sdk";
 import { ArrowUpAz, Eye, Mail, Phone, Search, Signature, User } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -234,7 +234,7 @@ const ContactsTable = () => {
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
 
-    const { systemFileInfo, session, backend_url } = useStore(appStore);
+    const { session, backend_url } = useStore(appStore);
     const [contactProfiles, setContactProfiles] = useState<ContactProfile[]>([]);
 
     const [files, setFiles] = useState<ApiFileInfo[]>([])
@@ -243,16 +243,25 @@ const ContactsTable = () => {
     const [loading, setLoading] = useState(true)
     const [isProcessingClaims, setIsProcessingClaims] = useState(true)
 
+    const [systemAquaFileNames, setSystemAquaFileNames] = useState<string[]>([])
+
+    const loadSystemAquaFileNames = async () => {
+        if (!session?.nonce) return
+        try {
+            const response = await axios.get(`${backend_url}/${API_ENDPOINTS.SYSTEM_AQUA_FILES_NAMES}`, {
+                headers: {
+                    'nonce': session.nonce,
+                    'metamask_address': session.address
+                }
+            })
+            setSystemAquaFileNames(response.data.data)
+        } catch (error) {
+            console.log("Error getting system aqua file names", error)
+        }
+    }
+
 
     // const navigate = useNavigate()
-
-    const systemTreeNames = systemFileInfo.map((info) => {
-        try {
-            return getAquaTreeFileName(info.aquaTree!);
-        } catch {
-            return "";
-        }
-    });
 
     const groupKey = (c: ContactProfile) => {
         const nm = normalizeText(c.name ?? "");
@@ -340,14 +349,14 @@ const ContactsTable = () => {
 
     const generateContacts = async () => {
 
-        if (!files?.length || !systemFileInfo?.length) return;
+        if (!files?.length || !systemAquaFileNames?.length) return;
 
         const contactProfileMap = new Map<string, ContactProfile>();
         setIsProcessingClaims(true)
 
         // Process files in parallel
         const processFile = async (element: ApiFileInfo) => {
-            const workFlow = isWorkFlowData(element.aquaTree!, systemTreeNames);
+            const workFlow = isWorkFlowData(element.aquaTree!, systemAquaFileNames);
             if (!workFlow.isWorkFlow || !workFlow.workFlow) return null;
 
             const claimType = workFlow.workFlow;
@@ -524,8 +533,12 @@ const ContactsTable = () => {
     }, [currentPage, backend_url, JSON.stringify(session)]);
 
     useEffect(() => {
+        loadSystemAquaFileNames()
+    }, [session?.nonce]);
+
+    useEffect(() => {
         generateContacts()
-    }, [watchFilesChange, systemFileInfo]);
+    }, [watchFilesChange, systemAquaFileNames]);
 
     return (
         <>

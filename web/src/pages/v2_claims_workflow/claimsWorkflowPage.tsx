@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
 import appStore from '../../store'
 import { useStore } from 'zustand'
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
-import { getAquaTreeFileName, getGenesisHash, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
+import { getGenesisHash, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
 import { ClipLoader } from 'react-spinners'
 import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileInfo'
 import axios from 'axios'
@@ -26,7 +26,7 @@ import { ethers } from 'ethers'
 
 
 export default function ClaimsWorkflowPage() {
-      const { session, backend_url, systemFileInfo } = useStore(appStore)
+      const { session, backend_url } = useStore(appStore)
 
       const [claims, setClaims] = useState<Array<{ file: ApiFileInfo, processedInfo: ClaimInformation, attestations: Array<IAttestationEntry>, sharedContracts: Contract[] }>>([])
       const [isLoading, setIsLoading] = useState(true)
@@ -92,25 +92,35 @@ export default function ClaimsWorkflowPage() {
             }
       }
 
-      const getAllAttestations = (files: ApiFileInfo[]) => {
-            const aquaTemplates = systemFileInfo.map(e => {
-                  try {
-                        return getAquaTreeFileName(e.aquaTree!)
-                  } catch (e) {
-                        return ''
-                  }
-            })
+      const loadSystemAquaFileNames = async () => {
+            if (!session?.nonce) return []
+            try {
+                  const response = await axios.get(`${backend_url}/${API_ENDPOINTS.SYSTEM_AQUA_FILES_NAMES}`, {
+                        headers: {
+                              'nonce': session.nonce,
+                              'metamask_address': session.address
+                        }
+                  })
+                  // setSystemAquaFileNames(response.data.data)
+                  return response.data.data
+            } catch (error) {
+                  console.log("Error getting system aqua file names", error)
+                  return []
+            }
+      }
+
+
+      const getAllAttestations = (files: ApiFileInfo[], aquaSystemFileNames: string[]) => {
             const _attestations: Array<ApiFileInfo> = []
             for (let i = 0; i < files?.length; i++) {
                   const file: ApiFileInfo = files[i]
                   // const fileObject = getAquaTreeFileObject(file)
 
-                  const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree!, aquaTemplates)
+                  const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree!, aquaSystemFileNames)
                   if (isWorkFlow && workFlow === 'identity_attestation') {
                         _attestations.push(file)
                   }
             }
-            // setAttestations(_attestations)
             return _attestations
       }
 
@@ -123,15 +133,9 @@ export default function ClaimsWorkflowPage() {
             }
             const claimTemplateNames = ["simple_claim", "identity_claim", "dns_claim", "domain_claim", "phone_number_claim", "email_claim", "user_signature"]
 
-            const aquaTemplates = systemFileInfo.map(e => {
-                  try {
-                        return getAquaTreeFileName(e.aquaTree!)
-                  } catch (e) {
-                        return ''
-                  }
-            })
+            const aquaSystemFileNames = await loadSystemAquaFileNames()
 
-            const _attestations = getAllAttestations(files)
+            const _attestations = getAllAttestations(files, aquaSystemFileNames)
 
             const _claims: Array<{ file: ApiFileInfo; processedInfo: ClaimInformation, attestations: Array<IAttestationEntry>, sharedContracts: Contract[] }> = []
 
@@ -140,7 +144,7 @@ export default function ClaimsWorkflowPage() {
                   const file: ApiFileInfo = files[i]
                   // const fileObject = getAquaTreeFileObject(file)
 
-                  const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree!, aquaTemplates)
+                  const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree!, aquaSystemFileNames)
 
                   if (isWorkFlow && claimTemplateNames.includes(workFlow)) {
                         const orderedAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
@@ -286,48 +290,43 @@ export default function ClaimsWorkflowPage() {
                   setPagination(response.pagination)
                   setFiles(aquaTrees)
 
-                  // await processAllAddressClaims(aquaTrees)
+                  // Process claims after setting files
+                  await processAllAddressClaims(aquaTrees)
             } catch (error) {
                   console.error('Error loading claims:', error);
                   toast.error('Failed to load claims');
+                  setIsProcessingClaims(false)
             } finally {
                   setIsLoading(false);
-                  setIsProcessingClaims(false)
+                  // setIsProcessingClaims(false)
             }
       }
 
-      const watchFilesChange = useMemo(() => {
-            if (!files?.length) return '0';
+      // const watchFilesChange = useMemo(() => {
+      //       if (!files?.length) return '0';
 
-            let totalRevisions = 0;
-            let aquaTreeHashes: string[] = [];
+      //       let totalRevisions = 0;
+      //       let aquaTreeHashes: string[] = [];
 
-            for (const file of files) {
-                  if (file.aquaTree?.revisions) {
-                        const revisionCount = Object.keys(file.aquaTree.revisions).length;
-                        totalRevisions += revisionCount;
+      //       for (const file of files) {
+      //             if (file.aquaTree?.revisions) {
+      //                   const revisionCount = Object.keys(file.aquaTree.revisions).length;
+      //                   totalRevisions += revisionCount;
 
-                        // Create a stable identifier for this aquaTree based on its revisions
-                        const revisionKeys = Object.keys(file.aquaTree.revisions).sort();
-                        const aquaTreeHash = `${revisionCount}-${revisionKeys.join(',')}`;
-                        aquaTreeHashes.push(aquaTreeHash);
-                  }
-            }
-            // Create a stable watch value based on total revisions and aquaTree structure
-            return `${totalRevisions}-${aquaTreeHashes.sort().join('|')}`;
-      }, [files]);
+      //                   // Create a stable identifier for this aquaTree based on its revisions
+      //                   const revisionKeys = Object.keys(file.aquaTree.revisions).sort();
+      //                   const aquaTreeHash = `${revisionCount}-${revisionKeys.join(',')}`;
+      //                   aquaTreeHashes.push(aquaTreeHash);
+      //             }
+      //       }
+      //       // Create a stable watch value based on total revisions and aquaTree structure
+      //       return `${totalRevisions}-${aquaTreeHashes.sort().join('|')}`;
+      // }, [files]);
 
 
       useEffect(() => {
             loadClaimsFileData()
       }, [walletAddress]);
-
-
-      useEffect(() => {
-            if (files.length > 0 && systemFileInfo.length > 0) {
-                  processAllAddressClaims(files)
-            }
-      }, [watchFilesChange, systemFileInfo])
 
       return (
             <div className='py-6 flex flex-col gap-4'>

@@ -3,7 +3,7 @@ import appStore from '../../store'
 import { useStore } from 'zustand'
 import FilesList from './files_list'
 import { AlertCircle, CheckCircle, FileText, FolderPlus, Loader2, Minimize2, Plus, Upload, X } from 'lucide-react'
-import { FileItemWrapper, UploadStatus } from '@/types/types'
+import { emptyUserStats, FileItemWrapper, IUserStats, UploadStatus } from '@/types/types'
 import {
       checkIfFileExistInUserFiles,
       fetchFiles,
@@ -14,7 +14,7 @@ import {
       isZipFile,
       readFileContent
 } from '@/utils/functions'
-import { maxFileSizeForUpload } from '@/utils/constants'
+import { API_ENDPOINTS, maxFileSizeForUpload } from '@/utils/constants'
 import axios from 'axios'
 
 
@@ -46,11 +46,6 @@ const FilesPage = () => {
             setSelectedFileInfo,
             setOpenDialog,
             openDialog,
-            // setOpenFileDetailsPopUp,
-            // openFilesDetailsPopUp,
-            // setOpenCreateAquaSignPopUp,
-            // setOpenCreateTemplatePopUp,
-            // setOpenCreateClaimPopUp,
       } = useStore(appStore)
       const fileInputRef = React.useRef<HTMLInputElement>(null)
       const [filesListForUpload, setFilesListForUpload] = useState<FileItemWrapper[]>([])
@@ -61,6 +56,8 @@ const FilesPage = () => {
       const [isMinimized, setIsMinimized] = useState(false)
 
       const [_drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
+      const [stats, setStats] = useState<IUserStats>(emptyUserStats)
+      const [loading, setLoading] = useState(false)
       // const [isSelectedFileDialogOpen, setIsSelectedFileDialogOpen] = useState(false)
 
       // Helper function to clear file input
@@ -70,28 +67,44 @@ const FilesPage = () => {
             }
       }
 
+      // const [showError, setShowError] = useState(false);
+
       // useEffect(() => {
-      //       if (openFilesDetailsPopUp) {
-      //             setIsSelectedFileDialogOpen(true)
+      //       if (files.status === 'error') {
+      //             const timer = setTimeout(() => {
+      //                   setShowError(true);
+      //             }, 2000); // Show error after 2 seconds
+
+      //             return () => clearTimeout(timer);
       //       } else {
-      //             setIsSelectedFileDialogOpen(false)
+      //             setShowError(false);
       //       }
-      // }, [openFilesDetailsPopUp])
+      // }, [files.status]);
 
-
-      const [showError, setShowError] = useState(false);
+      const getUserStats = async () => {
+            if (!session?.nonce || !session?.address) return
+            
+            try {
+                  setLoading(true)
+                  const result = await axios.get(`${backend_url}/${API_ENDPOINTS.USER_STATS}`, {
+                        headers: {
+                              'nonce': session.nonce,
+                              'metamask_address': session.address
+                        }
+                  })
+                  setStats(result.data)
+            } catch (error) {
+                  console.log("Error getting stats", error)
+            } finally {
+                  setLoading(false)
+            }
+      }
 
       useEffect(() => {
-            if (files.status === 'error') {
-                  const timer = setTimeout(() => {
-                        setShowError(true);
-                  }, 2000); // Show error after 2 seconds
-
-                  return () => clearTimeout(timer);
-            } else {
-                  setShowError(false);
+            if(session?.address && session?.nonce && backend_url){
+                  getUserStats()
             }
-      }, [files.status]);
+      }, [session?.address, session?.nonce, backend_url])
 
 
       const handleUploadClick = () => {
@@ -434,31 +447,16 @@ const FilesPage = () => {
 
 
       const displayFileListItems = () => {
-            if (files.status === 'loading' || files.status === 'idle') {
+            if (loading) {
 
-                  return <div className="flex justify-center items-center h-40">
-                        <Loader2 className="w-6 h-6 text-gray-500 animate-spin" />
-                  </div>
-
-            }
-
-            if (files.status === 'error') {
-                  if (!showError) {
-                        return (
-                              <div className="flex justify-center items-center h-40">
-                                    <Loader2 className="w-6 h-6 text-gray-500 animate-spin" />
-                              </div>
-                        );
-                  }
                   return (
-                        <div className="text-center text-red-500">
-                              Error loading files. Please try again.
+                        <div className="flex justify-center items-center h-40">
+                              <Loader2 className="w-6 h-6 text-gray-500 animate-spin" />
                         </div>
-                  );
+                  )
             }
 
-
-            if (files.fileData.length == 0) {
+            if (stats.filesCount === 0 && !loading) {
                   return <FileDropZone
                         setFiles={(files: File[]) => {
                               filesForUpload(files)
@@ -627,10 +625,7 @@ const FilesPage = () => {
                   </div>
 
                   <div className="w-full max-w-full box-border overflow-x-hidden bg-white p-0 md:p-6">
-
                         {displayFileListItems()}
-
-
                   </div>
 
                   {/* chain details dialog */}

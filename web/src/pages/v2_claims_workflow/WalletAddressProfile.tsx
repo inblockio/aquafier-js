@@ -11,7 +11,6 @@ import {
       fetchFiles,
       formatCryptoAddress,
       generateAvatar,
-      getAquaTreeFileName,
       getAquaTreeFileObject,
       getGenesisHash,
       getRandomNumber,
@@ -260,13 +259,28 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
 }
 
 const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, showShadow, hideOpenProfileButton, noBg, timestamp, files }: ISignatureWalletAddressCard) => {
-      const { workflows, systemFileInfo, session, setFiles, backend_url, setOpenDialog, setSelectedFileInfo } = useStore(appStore)
+      const { workflows, session, setFiles, backend_url, setOpenDialog, setSelectedFileInfo } = useStore(appStore)
       const [claims, setClaims] = useState<IClaim[]>([])
       const [loading, setLoading] = useState(true)
-      // const [sharedProfileItem, setSharedProfileItem] = useState<ApiFileInfo | null>(null)
-      // const [showShareDialog, setShowShareDialog] = useState(false)
       const [isLoading, setIsLoading] = useState<boolean>(true)
       const navigate = useNavigate()
+
+      const loadSystemAquaFileNames = async () => {
+            if (!session?.nonce) return []
+            try {
+                  const response = await axios.get(`${backend_url}/${API_ENDPOINTS.SYSTEM_AQUA_FILES_NAMES}`, {
+                        headers: {
+                              'nonce': session.nonce,
+                              'metamask_address': session.address
+                        }
+                  })
+                  // setSystemAquaFileNames(response.data.data)
+                  return response.data.data
+            } catch (error) {
+                  console.log("Error getting system aqua file names", error)
+                  return []
+            }
+      }
 
       const shadowClasses = showShadow ? 'shadow-lg hover:shadow-xl transition-shadow duration-300' : 'shadow-none'
 
@@ -275,10 +289,11 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
       const lastFourLetterOfWalletAddress = walletAddress?.substring(walletAddress?.length - 4)
 
       const loadWorkflows = async () => {
-            if (!walletAddress) return
+            if (!walletAddress || !session?.nonce) return
             setIsLoading(true);
             try {
                   let _files: ApiFileInfo[] = []
+                  let _systemWorkflowNames = await loadSystemAquaFileNames()
                   if (files) {
                         _files = files
                   } else {
@@ -299,14 +314,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         const response = filesDataQuery.data
                         const aquaTrees = response.aquaTrees
                         _files = aquaTrees
-                        // setPagination(response.pagination)
-                        // setFiles(response.files)
-
-                        // await processAllAddressClaims(aquaTrees)
                   }
-                  // const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce);
-                  // setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' });
-                  processFilesToGetWorkflows(_files);
+                  processFilesToGetWorkflows(_files, _systemWorkflowNames);
             } catch (error) {
                   console.error('Failed to load workflows:', error);
                   // Consider setting an error state here
@@ -315,24 +324,13 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             }
       };
 
-      useEffect(() => {
-            loadWorkflows();
-      }, [walletAddress])
+      const processFilesToGetWorkflows = (files: ApiFileInfo[], systemWorkflowNames: string[]) => {
 
-      const processFilesToGetWorkflows = (files: ApiFileInfo[]) => {
-            // const getWalletClaims = () => {
             setLoading(true)
-            const aquaTemplates: string[] = systemFileInfo.map(e => {
-                  try {
-                        return getAquaTreeFileName(e.aquaTree!)
-                  } catch (e) {
-                        return ''
-                  }
-            })
 
             if (files && files.length > 0) {
                   let attestationFiles = files.filter(file => {
-                        const fileInfo = isWorkFlowData(file.aquaTree!, aquaTemplates)
+                        const fileInfo = isWorkFlowData(file.aquaTree!, systemWorkflowNames)
                         return fileInfo.isWorkFlow && fileInfo.workFlow === 'identity_attestation'
                   })
 
@@ -341,7 +339,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                   for (let i = 0; i < files.length; i++) {
                         const aquaTree = files[i].aquaTree
                         if (aquaTree) {
-                              const { isWorkFlow, workFlow } = isWorkFlowData(aquaTree!, aquaTemplates)
+                              const { isWorkFlow, workFlow } = isWorkFlowData(aquaTree!, systemWorkflowNames)
 
                               if (isWorkFlow && requiredClaims.includes(workFlow)) {
 
@@ -579,9 +577,6 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                               },
                         })
 
-                        // throw new Error('Error fetching template aqua tree' + JSON.stringify(response.data))
-
-                        console.log("Template aqua tree response:", response.data)
                         let jsonData
                         if (typeof response.data.templateData === 'string') {
                               let jsonDataString = response.data.templateData
@@ -754,14 +749,20 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             }
       }
 
-      if(claims.length === 0 && !isLoading){
-           return (
-            <div className={`${width ? width : 'w-full'} bg-transparent`}>
-                  <div className={`flex p-2 flex-col ${noBg ? '' : 'bg-gradient-to-br from-white to-slate-200 border border-slate-200'} ${shadowClasses} rounded-xl gap-4 transition-shadow duration-300`}>
-                        <p className="text-sm">No claims found</p>
+      useEffect(() => {
+            if (walletAddress && session?.nonce) {
+                  loadWorkflows()
+            }
+      }, [walletAddress, session?.nonce])
+
+      if (claims.length === 0 && !isLoading) {
+            return (
+                  <div className={`${width ? width : 'w-full'} bg-transparent`}>
+                        <div className={`flex p-2 flex-col ${noBg ? '' : 'bg-gradient-to-br from-white to-slate-200 border border-slate-200'} ${shadowClasses} rounded-xl gap-4 transition-shadow duration-300`}>
+                              <p className="text-sm">No claims found</p>
+                        </div>
                   </div>
-            </div>
-           ) 
+            )
       }
 
 

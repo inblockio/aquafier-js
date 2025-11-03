@@ -5,53 +5,59 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, use
 import CustomNavLink from './ui/CustomNavLink'
 import { Contact, FileText, LayoutTemplate, Link, Plus, Settings, Share2, Star, User, Workflow } from 'lucide-react'
 import { maxUserFileSizeForUpload } from '@/utils/constants'
-import { formatBytes, getAquaTreeFileObject } from '@/utils/functions'
+import { formatBytes } from '@/utils/functions'
 import { useStore } from 'zustand'
 import appStore from '@/store'
 import { WebConfig } from '@/types/types'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-      const { files, setOpenDialog, webConfig, setWebConfig, session } = useStore(appStore)
+      const { files, setOpenDialog, webConfig, session } = useStore(appStore)
 
       const [webConfigData, setWebConfigData] = useState<WebConfig>(webConfig)
-      const [usedStorage, setUsedStorage] = useState<number>(0)
+      const [usedStorage, _setUsedStorage] = useState<number>(0)
       const [totalStorage, _setTotalStorage] = useState<number>(maxUserFileSizeForUpload)
-      const [usagePercentage, setUsagePercentage] = useState<number>(0)
+      const [usagePercentage, _setUsagePercentage] = useState<number>(0)
       // let usedStorage =0; // GB
       // const totalStorage = maxUserFileSizeForUpload //5; // GB
       // const usagePercentage = (usedStorage / totalStorage) * 100;
 
       const { toggleSidebar } = useSidebar()
 
-      const calcukateStorage = () => {
-            if (files.fileData.length == 0) {
-                  return
-            }
-            let usedStorageByUser = 0
-            for (const item of files.fileData) {
-                  const mainFileObject = getAquaTreeFileObject(item)
-                  usedStorageByUser += mainFileObject?.fileSize ?? 0
-            }
-            setUsedStorage(usedStorageByUser)
+      // const calcukateStorage = () => {
+      //       if (files.fileData.length == 0) {
+      //             return
+      //       }
+      //       let usedStorageByUser = 0
+      //       for (const item of files.fileData) {
+      //             const mainFileObject = getAquaTreeFileObject(item)
+      //             usedStorageByUser += mainFileObject?.fileSize ?? 0
+      //       }
+      //       setUsedStorage(usedStorageByUser)
 
-            const usagePercentage = (usedStorageByUser / totalStorage) * 100
-            setUsagePercentage(usagePercentage)
-      }
+      //       const usagePercentage = (usedStorageByUser / totalStorage) * 100
+      //       setUsagePercentage(usagePercentage)
+      // }
+      // React.useEffect(() => {
+      //       calcukateStorage()
+
+      //       if (!webConfig.BACKEND_URL || webConfig.BACKEND_URL == "BACKEND_URL_PLACEHOLDER") {
+      //             (async () => {
+      //                   const config: WebConfig = await fetch('/config.json').then(res => res.json())
+      //                   setWebConfig(config)
+      //                   setWebConfigData(config)
+      //             })()
+      //       }
+      // }, [])
+
+      // React.useEffect(() => {
+      //       calcukateStorage()
+      // }, [files])
+
       React.useEffect(() => {
-            calcukateStorage()
-
-            if (!webConfig.BACKEND_URL || webConfig.BACKEND_URL == "BACKEND_URL_PLACEHOLDER") {
-                  (async () => {
-                        const config: WebConfig = await fetch('/config.json').then(res => res.json())
-                        setWebConfig(config)
-                        setWebConfigData(config)
-                  })()
+            if(webConfig.BACKEND_URL){
+                  setWebConfigData(webConfig)   
             }
-      }, [])
-
-      React.useEffect(() => {
-            calcukateStorage()
-      }, [files])
+      }, [webConfig.BACKEND_URL])
 
       const sidebarItems = [
             // { icon: FaHome, label: 'Home', id: "/home" },

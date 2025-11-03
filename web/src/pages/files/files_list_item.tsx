@@ -59,14 +59,6 @@ export default function FilesListItem({
       const [workflowInfo, setWorkFlowInfo] = useState<{ isWorkFlow: boolean; workFlow: string } | undefined>(undefined)
 
       useEffect(() => {
-            // const someData = systemFileInfo.map(e => {
-            //       try {
-            //             return getAquaTreeFileName(e.aquaTree!)
-            //       } catch (e) {
-            //             return ''
-            //       }
-            // })
-
             const fileObject = getAquaTreeFileObject(file)
             setCurrentFileObject(fileObject)
             const workFlow = isWorkFlowData(file.aquaTree!, systemAquaFileNames)

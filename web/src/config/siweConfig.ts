@@ -46,10 +46,10 @@ export const siweConfig = createSIWEConfig({
 
   getSession: async () => {
     const nonce = getCookie(SESSION_COOKIE_NAME)
-    console.log("Nonce: ", nonce)
+    // console.log("Nonce: ", nonce)
     if (!nonce) return null
 
-    console.log("Here after nonce")
+    // console.log("Here after nonce")
 
     try {
       const backend_url = appStore.getState().backend_url
@@ -60,10 +60,10 @@ export const siweConfig = createSIWEConfig({
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       })
-      console.log("Response: ", response)
+      // console.log("Response: ", response)
 
       if (response.status === 200 && response.data?.session) {
-        console.log("Session: ", response.data.session)
+        // console.log("Session: ", response.data.session)
         const userSettings = response.data.user_settings
         const network = userSettings.witness_network
         const chainId = ETH_CHAINID_MAP_NUMBERS[network]
@@ -82,8 +82,8 @@ export const siweConfig = createSIWEConfig({
   },
 
   verifyMessage: async ({ message, signature }: SIWEVerifyMessageArgs) => {
-    console.log("Message: ", message)
-    console.log("Signature: ", signature)
+    // console.log("Message: ", message)
+    // console.log("Signature: ", signature)
     try {
       const backend_url = appStore.getState().backend_url
       const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
@@ -156,10 +156,10 @@ export const siweConfig = createSIWEConfig({
     }
   },
 
-  onSignIn: (session) => {
-    console.log('User signed in:', session)
+  onSignIn: (_session) => {
+    // console.log('User signed in:', session)
   },
   onSignOut: () => {
-    console.log('User signed out')
+    // console.log('User signed out')
   },
 })

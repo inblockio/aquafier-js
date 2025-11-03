@@ -13,37 +13,39 @@ export const ConnectWalletPage = () => {
     setWebConfig
   } = useStore(appStore)
 
-  const [webConfigData, setWebConfigData] = useState<WebConfig | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    if (!webConfigData || webConfig.AUTH_PROVIDER == null || webConfig.BACKEND_URL == null) {
-      (async () => {
-
-        const config: WebConfig = await fetch('/config.json').then(res => res.json())
-
-        console.log(`Here ... data ${JSON.stringify(config)}`)
-        setWebConfig(config)
-        setWebConfigData(config)
-      })()
-    } else {
-      console.log(`Config data ${JSON.stringify(webConfig)}`)
-      setWebConfigData(webConfig)
+    const loadConfig = async () => {
+      // Only load if config is not already loaded
+      if (!webConfig.AUTH_PROVIDER || !webConfig.BACKEND_URL) {
+        setIsLoading(true)
+        try {
+          const config: WebConfig = await fetch('/config.json').then(res => res.json())
+          setWebConfig(config)
+        } catch (error) {
+          console.error('Failed to load config:', error)
+        } finally {
+          setIsLoading(false)
+        }
+      }
     }
-  }, [])
 
+    loadConfig()
+  }, [webConfig.AUTH_PROVIDER, webConfig.BACKEND_URL, setWebConfig])
 
-  if (!webConfigData) {
-    return <div>Loading </div>
+  if (isLoading || !webConfig.AUTH_PROVIDER) {
+    return <div>Loading...</div>
   }
-  if (webConfigData.AUTH_PROVIDER == "metamask") {
+
+  if (webConfig.AUTH_PROVIDER === "metamask") {
     return <ConnectWalletPageMetamask />
   }
-  if (webConfigData.AUTH_PROVIDER == "wallet_connect") {
+  
+  if (webConfig.AUTH_PROVIDER === "wallet_connect") {
     return <ConnectWalletPageAppKit />
   }
 
-
-  return <div>Auth provider Config is unkown : {webConfigData.AUTH_PROVIDER} </div>
-
+  return <div>Auth provider Config is unknown: {webConfig.AUTH_PROVIDER}</div>
 
 }

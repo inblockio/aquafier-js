@@ -1,13 +1,12 @@
-import {Button} from '@/components/ui/button'
-import {Github} from 'lucide-react'
-import {BsTwitterX} from 'react-icons/bs'
-import {FaFacebook, FaLinkedin} from 'react-icons/fa6'
-import {Link, Outlet} from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import { Github } from 'lucide-react'
+import { BsTwitterX } from 'react-icons/bs'
+import { FaFacebook, FaLinkedin } from 'react-icons/fa6'
+import { Link, Outlet } from 'react-router-dom'
 import appStore from '../store'
-import {useStore} from 'zustand'
-import {useEffect, useState} from 'react'
-import {WebConfig} from '@/types/types'
-import {ClipLoader} from 'react-spinners'
+import { useStore } from 'zustand'
+import { useEffect, useState } from 'react'
+import { WebConfig } from '@/types/types'
 
 const Header = () => (
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -172,51 +171,57 @@ const Footer = () => (
             </div>
       </footer>
 )
- 
+
 const TailwindMainLayout = () => {
 
 
-      const { webConfig, setWebConfig } = useStore(appStore)
-      const [loadingConfig, setLoadingConfig] = useState(true)
+      const { webConfig } = useStore(appStore)
+      // const [loadingConfig, setLoadingConfig] = useState(true)
 
       const [webConfigData, setWebConfigData] = useState<WebConfig>(webConfig)
 
       const getLogoUrl = (config: WebConfig): string | undefined => {
-                  if (typeof config.CUSTOM_LOGO_URL === 'string') {
-                        // config.CUSTOM_LOGO_URL != "true"
-                        if (config.CUSTOM_LOGO_URL.startsWith('http://') || config.CUSTOM_LOGO_URL.startsWith('https://') || config.CUSTOM_LOGO_URL.startsWith('/')) {
-                              console.log("Custom logo url ", config.CUSTOM_LOGO_URL);
-                              return config.CUSTOM_LOGO_URL;
-                        }
-                        if (config.CUSTOM_LOGO_URL === "true") {
-                              return undefined;
-                        }
-                        return '/images/logo.png';
+            if (typeof config.CUSTOM_LOGO_URL === 'string') {
+                  // config.CUSTOM_LOGO_URL != "true"
+                  if (config.CUSTOM_LOGO_URL.startsWith('http://') || config.CUSTOM_LOGO_URL.startsWith('https://') || config.CUSTOM_LOGO_URL.startsWith('/')) {
+                        console.log("Custom logo url ", config.CUSTOM_LOGO_URL);
+                        return config.CUSTOM_LOGO_URL;
                   }
-                  if (!config.CUSTOM_LOGO_URL) {
-                        return '/images/logo.png';
+                  if (config.CUSTOM_LOGO_URL === "true") {
+                        return undefined;
                   }
-                  return undefined; // when it's boolean
-            };
-      
+                  return '/images/logo.png';
+            }
+            if (!config.CUSTOM_LOGO_URL) {
+                  return '/images/logo.png';
+            }
+            return undefined; // when it's boolean
+      };
 
       useEffect(() => {
-            if (!webConfig.BACKEND_URL || webConfig.BACKEND_URL == "BACKEND_URL_PLACEHOLDER") {
-                  (async () => {
-                        setLoadingConfig(true)
-                        const config: WebConfig = await fetch('/config.json').then(res => res.json())
-                        setLoadingConfig(false)
-                        setWebConfig(config)
-                        setWebConfigData(config)
-                  })()
-            }else{
-                  setLoadingConfig(false)
+            if (webConfig.BACKEND_URL && webConfig.BACKEND_URL != "BACKEND_URL_PLACEHOLDER") {
+                  setWebConfigData(webConfig)
             }
-      }, [])
+      }, [webConfig.BACKEND_URL])
+
+
+      // useEffect(() => {
+      //       if (!webConfig.BACKEND_URL || webConfig.BACKEND_URL == "BACKEND_URL_PLACEHOLDER") {
+      //             (async () => {
+      //                   setLoadingConfig(true)
+      //                   const config: WebConfig = await fetch('/config.json').then(res => res.json())
+      //                   setLoadingConfig(false)
+      //                   setWebConfig(config)
+      //                   setWebConfigData(config)
+      //             })()
+      //       }else{
+      //             setLoadingConfig(false)
+      //       }
+      // }, [])
 
       return (
             <>
-                  {
+                  {/* {
                         loadingConfig ? (
                               <div className="min-h-screen flex items-center justify-center">
                                     <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500">
@@ -224,7 +229,7 @@ const TailwindMainLayout = () => {
                                     </div>
                               </div>
                         ) : null
-                  }
+                  } */}
                   {
                         webConfigData.CUSTOM_LANDING_PAGE_URL === 'true' || webConfigData.CUSTOM_LANDING_PAGE_URL === true ?
                               <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50 flex items-center justify-center p-4">
@@ -232,9 +237,9 @@ const TailwindMainLayout = () => {
                                           {/* Logo Section */}
                                           <div className="flex justify-center mb-8">
                                                 {getLogoUrl(webConfigData) ? (
-                                                      <img 
-                                                            src={getLogoUrl(webConfigData) as string} 
-                                                            alt="Logo" 
+                                                      <img
+                                                            src={getLogoUrl(webConfigData) as string}
+                                                            alt="Logo"
                                                             className="h-20 w-auto object-contain"
                                                       />
                                                 ) : null}
@@ -253,16 +258,16 @@ const TailwindMainLayout = () => {
                                           {/* Description */}
                                           <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-orange-100">
                                                 <p className="text-gray-700 text-lg leading-relaxed">
-                                                      Experience the future of data verification and integrity. 
-                                                      Our protocol ensures your data remains tamper-proof and verifiable 
+                                                      Experience the future of data verification and integrity.
+                                                      Our protocol ensures your data remains tamper-proof and verifiable
                                                       through advanced cryptographic techniques.
                                                 </p>
                                           </div>
 
                                           {/* Action Button */}
                                           <div className="pt-4">
-                                                <Button 
-                                                      asChild 
+                                                <Button
+                                                      asChild
                                                       size="lg"
                                                       className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                                                 >

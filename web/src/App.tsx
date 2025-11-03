@@ -62,26 +62,6 @@ function startApm(config: APMConfig) {
 function App() {
     const { setBackEndUrl, setWebConfig } = useStore(appStore)
 
-    useEffect(() => {
-        // Properly handle async initialization
-        const initBackend = async () => {
-            const { backend_url, config, apmConfig } = await initializeBackendUrl()
-            startApm(apmConfig)
-            setBackEndUrl(backend_url)
-            setUpSentry(config)
-            setWebConfig(config)
-
-
-            // Conditionally import AppKit based on AUTH_PROVIDER
-            if (config.AUTH_PROVIDER === 'wallet_connect') {
-                await import('./config/appkit')
-                console.log('AppKit initialized for wallet_connect')
-            }
-        }
-
-        initBackend()
-    }, []) // Empty dependency array means this runs once on mount
-
     const setUpSentry = (config: WebConfig) => {
         // Initialize Sentry for error tracking
         // Initialize Sentry for error tracking and performance monitoring
@@ -117,22 +97,40 @@ function App() {
 
     }
 
+    const initBackend = async () => {
+        const { backend_url, config, apmConfig } = await initializeBackendUrl()
+        startApm(apmConfig)
+        setBackEndUrl(backend_url)
+        setUpSentry(config)
+        setWebConfig(config)
+
+
+        // Conditionally import AppKit based on AUTH_PROVIDER
+        if (config.AUTH_PROVIDER === 'wallet_connect') {
+            await import('./config/appkit')
+            // console.log('AppKit initialized for wallet_connect')
+        }
+    }
+
+    useEffect(() => {
+        initBackend()
+    }, []) // Empty dependency array means this runs once on mount
+
+    console.log("nothing")
+
 
     return (
         <BrowserRouter>
             <LoadConfiguration />
             <ErrorBoundary>
-                <Routes>
-                    {/* Routes with Tailwind UI (no MainLayout wrapper) */}
-
-                    <Route path="/" element={<TailwindMainLayout />}>
+            <Routes>
+                <Route path="/" element={<TailwindMainLayout />}>
                         <Route index element={<Home />} />
                         <Route path="terms-and-conditions" element={<TermsAndConditions />} />
                         <Route path="privacy-policy" element={<PrivacyPolicy />} />
                     </Route>
 
-                    {/* All file routes using Tailwind */}
-                    <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
+                <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
 
                         <Route index element={<FilesPage />} />
                         <Route path="templates" element={<TemplatesPage />} />
@@ -159,9 +157,9 @@ function App() {
                         <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
                         <Route path="loading" element={<Loading />} />
                     </Route>
-                    
-                    <Route path="*" element={<PageNotFound />} />
-                </Routes>
+
+                <Route path="*" element={<PageNotFound />} />
+            </Routes>
             </ErrorBoundary>
         </BrowserRouter>
     )

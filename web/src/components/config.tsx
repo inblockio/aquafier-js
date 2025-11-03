@@ -1,17 +1,18 @@
 import axios from 'axios'
 import { useEffect } from 'react'
-import { ensureDomainUrlHasSSL, fetchFiles, fetchSystemFiles, generateAvatar, getCookie } from '../utils/functions'
+import { ensureDomainUrlHasSSL, fetchSystemFiles, generateAvatar, getCookie } from '../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../store'
 import { ethers } from 'ethers'
 import { toast } from 'sonner'
 import { FormTemplate } from './aqua_forms'
+import { SESSION_COOKIE_NAME } from '@/utils/constants'
 
 const LoadConfiguration = () => {
       const { setMetamaskAddress, setUserProfile, setFiles, setAvatar, setSystemFileInfo, backend_url, setSession, setFormTemplate, session } = useStore(appStore)
 
       const fetchAddressGivenANonce = async (nonce: string) => {
-            if (!backend_url.includes('0.0.0.0')) {
+            if (!backend_url.includes('0.0.0.0') && !session?.address) {
                   try {
 
                         const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
@@ -23,7 +24,7 @@ const LoadConfiguration = () => {
                         })
 
                         if (response.status === 200) {
-                              
+
                               const _address = response.data?.session.address
                               if (_address) {
                                     const address = ethers.getAddress(_address)
@@ -37,11 +38,9 @@ const LoadConfiguration = () => {
                                     //       status: 'loaded',
                                     // })
 
-                                    
-                              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
 
-                              
+                                    // const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                                    // setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
                                     fetchUserProfile(_address, nonce)
                                     setSession(response.data?.session)
                                     const url3 = `${backend_url}/system/aqua_tree`
@@ -92,7 +91,7 @@ const LoadConfiguration = () => {
 
       useEffect(() => {
             if (!backend_url.includes('0.0.0.0')) {
-                  const nonce = getCookie('pkc_nonce')
+                  const nonce = getCookie(SESSION_COOKIE_NAME)
                   if (nonce) {
                         fetchAddressGivenANonce(nonce)
                   } else {
@@ -142,10 +141,10 @@ const LoadConfiguration = () => {
       }
 
       useEffect(() => {
-            if (session) {
+            if (session?.nonce) {
                   loadTemplates()
             }
-      }, [session])
+      }, [session?.nonce])
 
 
 
