@@ -42,7 +42,7 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
             setLoading(true)
             const params = {
                 page: currentPage,
-                limit: 2,
+                limit: 10,
                 claim_types: JSON.stringify([workflowName]),
                 // wallet_address: session?.address
             }
