@@ -10,6 +10,10 @@ import { TbWorld } from "react-icons/tb";
 import { useStore } from "zustand";
 import WalletAddressProfile from "../v2_claims_workflow/WalletAddressProfile";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
+import { API_ENDPOINTS } from "@/utils/constants";
+import { GlobalPagination } from "@/types";
+import { ApiFileInfo } from "@/models/FileInfo";
 
 
 const letters = ['0', ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))];
@@ -115,7 +119,7 @@ const ContactRow = ({ contact, onSelectAddress }: ContactRowProps) => {
 
     return (
         <>
-            <div className="grid sm:grid-cols-4 px-4 py-3 border-b border-neutral-100 gap-2">
+            <div className="grid sm:grid-cols-4 px-2 md:px-4 py-3 border-b border-neutral-100 gap-2">
 
                 <div className="col-span-2">
                     <div className="flex items-center min-w-0 gap-3">
@@ -175,7 +179,7 @@ const ContactRow = ({ contact, onSelectAddress }: ContactRowProps) => {
                     </div>
                 </div>
 
-                <div className="col-span-1 pr-4">
+                <div className="col-span-1">
                     <div className="flex gap-2 justify-end">
                         {/* <button
                             onClick={handleCall}
@@ -229,8 +233,13 @@ const ContactsTable = () => {
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
 
-    const { files, systemFileInfo } = useStore(appStore);
+    const { systemFileInfo, session, backend_url } = useStore(appStore);
     const [contactProfiles, setContactProfiles] = useState<ContactProfile[]>([]);
+
+    const [files, setFiles] = useState<ApiFileInfo[]>([])
+    const [currentPage, _setCurrentPage] = useState(1)
+    const [_pagination, setPagination] = useState<GlobalPagination | null>(null)
+
 
     // const navigate = useNavigate()
 
@@ -255,9 +264,10 @@ const ContactsTable = () => {
         if (!query) return contactProfiles.slice();
         const q = query.toLowerCase();
         return contactProfiles.filter(c => {
-            return [c.name ?? "", c.walletAddress, c.phone, c.email, c.searchString].some(
-                v => (v || '').toLowerCase().includes(q)
-            );
+            // return [c.name ?? "", c.walletAddress, c.phone, c.email, c.searchString].some(
+            //     v => (v || '').toLowerCase().includes(q)
+            // );
+            return `${c.name ?? ""} ${c.walletAddress ?? ""} ${c.phone ?? ""} ${c.email ?? ""} ${c.searchString ?? ""}`.toLowerCase().includes(q)
         });
     };
 
@@ -301,13 +311,35 @@ const ContactsTable = () => {
         setSortAsc(!sortAsc);
     };
 
+    const loadContactTrees = async () => {
+        if (!session?.address || !backend_url) return;
+        const params = {
+            page: currentPage,
+            limit: 200,
+            claim_types: JSON.stringify(['identity_claim', 'user_signature', 'identity_attestation', 'email_claim', 'phone_number_claim', 'domain_claim']),
+            // wallet_address: session?.address
+        }
+        const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'nonce': `${session!.nonce}`
+            },
+            params
+        })
+        const response = filesDataQuery.data
+        const aquaTrees = response.aquaTrees
+        setPagination(response.pagination)
+        setFiles(aquaTrees)
+        //   processFilesToWorkflowUi(aquaTrees)
+    }
+
     const generateContacts = () => {
 
-        if (!files?.fileData?.length || !systemFileInfo?.length) return;
+        if (!files?.length || !systemFileInfo?.length) return;
 
         const contactProfileMap = new Map<string, ContactProfile>();
 
-        for (const element of files.fileData) {
+        for (const element of files) {
             const workFlow = isWorkFlowData(element.aquaTree!, systemTreeNames);
             if (!workFlow.isWorkFlow || !workFlow.workFlow) continue;
 
@@ -443,13 +475,39 @@ const ContactsTable = () => {
         setOpenDialog(true);
     };
 
+    const watchFilesChange = useMemo(() => {
+        if (!files?.length) return '0';
+        
+        let totalRevisions = 0;
+        let aquaTreeHashes: string[] = [];
+        
+        for (const file of files) {
+            if (file.aquaTree?.revisions) {
+                const revisionCount = Object.keys(file.aquaTree.revisions).length;
+                totalRevisions += revisionCount;
+                
+                // Create a stable identifier for this aquaTree based on its revisions
+                const revisionKeys = Object.keys(file.aquaTree.revisions).sort();
+                const aquaTreeHash = `${revisionCount}-${revisionKeys.join(',')}`;
+                aquaTreeHashes.push(aquaTreeHash);
+            }
+        }
+        
+        // Create a stable watch value based on total revisions and aquaTree structure
+        return `${totalRevisions}-${aquaTreeHashes.sort().join('|')}`;
+    }, [files]);
+
+    useEffect(() => {
+        loadContactTrees()
+    }, [currentPage]);
+
     useEffect(() => {
         generateContacts()
-    }, [files, systemFileInfo]);
+    }, [watchFilesChange, systemFileInfo]);
 
     return (
         <>
-            <div className="mx-auto max-w-6xl px-0 sm:px-4 py-8">
+            <div className="mx-auto max-w-6xl px-0 sm:px-4 py-2">
                 <header className="mb-6">
                     <h1 className="text-2xl tracking-tight font-semibold text-neutral-900">
                         Contacts
@@ -493,7 +551,7 @@ const ContactsTable = () => {
                     </div>
 
                     <div className="relative">
-                        <div className="flex gap-0 h-[70vh]">
+                        <div className="flex gap-0 h-fit md:h-[70vh]">
                             {/* List */}
                             <div className="flex-1 h-full">
                                 <div className="relative h-full">
@@ -503,15 +561,15 @@ const ContactsTable = () => {
                                     >
                                         {totalContacts === 0 ? (
                                             <div className="p-8 text-center text-neutral-500 text-sm flex flex-col gap-4">
-                                               <p> No contacts found.</p>
-                                               {
-                                                searchQuery ? (
-                                                    <>
-                                                    <p>Try a different search term.</p>
-                                                    <p>Current search: <span className="font-semibold text-neutral-800">{searchQuery}</span></p>
-                                                    </>
-                                                ) : null
-                                               }
+                                                <p> No contacts found.</p>
+                                                {
+                                                    searchQuery ? (
+                                                        <>
+                                                            <p>Try a different search term.</p>
+                                                            <p>Current search: <span className="font-semibold text-neutral-800">{searchQuery}</span></p>
+                                                        </>
+                                                    ) : null
+                                                }
                                             </div>
                                         ) : (
                                             <div>
@@ -538,7 +596,7 @@ const ContactsTable = () => {
                                 </div>
                             </div>
 
-                            <div className="h-full px-2 overflow-y-auto"> {/* Changed from col-span-1 to just h-full */}
+                            <div className="h-full px-0 md:px-2 overflow-y-auto"> {/* Changed from col-span-1 to just h-full */}
                                 {/* A–Z Rail */}
                                 <AZRail onJump={handleJumpTo} activeLetter={activeLetter} />
                             </div>

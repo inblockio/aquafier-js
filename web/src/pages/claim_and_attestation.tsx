@@ -263,7 +263,7 @@ const ClaimsAndAttestationPage = () => {
                         const params = {
                               page: currentPage,
                               limit: 10,
-                              claim_types: JSON.stringify(['identity_claim', 'user_signature', 'identity_attestation', 'email_claim', 'phone_number_claim', 'domain_claim']),
+                              claim_types: JSON.stringify(['identity_claim', 'user_signature', 'email_claim', 'phone_number_claim', 'domain_claim']),
                               wallet_address: session?.address
                         }
                         const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
