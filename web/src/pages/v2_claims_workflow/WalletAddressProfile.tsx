@@ -293,7 +293,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             setIsLoading(true);
             try {
                   let _files: ApiFileInfo[] = []
-                  let _systemWorkflowNames = await loadSystemAquaFileNames()
+                  let _systemWorkflowNames: string[] = []
                   if (files) {
                         _files = files
                   } else {
@@ -304,16 +304,19 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                               wallet_address: walletAddress,
                               use_wallet: walletAddress,
                         }
-                        const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
+                        const filesDataQueryPromise = axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
                               headers: {
                                     'Content-Type': 'application/json',
                                     'nonce': `${session!.nonce}`
                               },
                               params
                         })
+                        const systemWorkflowNamesPromise = loadSystemAquaFileNames()
+                        const [filesDataQuery, systemWorkflowNames] = await Promise.all([filesDataQueryPromise, systemWorkflowNamesPromise])
                         const response = filesDataQuery.data
                         const aquaTrees = response.aquaTrees
                         _files = aquaTrees
+                        _systemWorkflowNames = systemWorkflowNames
                   }
                   processFilesToGetWorkflows(_files, _systemWorkflowNames);
             } catch (error) {

@@ -619,7 +619,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             return reply.code(401).send({ error: 'Unauthorized' });
         }
 
-        const queryStart = performance.now()
+        // const queryStart = performance.now()
         const templateHashesToTrack = []
         // We create an object of the items we want to track differently and or separately
         const formTypesToTrack: Record<string, number> = {}
@@ -678,11 +678,9 @@ export default async function revisionsController(fastify: FastifyInstance) {
             });
 
             genesisFormHashes = genesisFormRevisions.map(rev => rev.pubkey_hash);
-            console.log(cliGreenify(`Found ${genesisFormHashes.length} genesis form revisions containing wallet address`));
 
             // Optimization 3: Early exit if no matching forms found
             if (genesisFormHashes.length === 0) {
-                console.log(cliRedify('No genesis form revisions found for wallet address, returning empty result'));
                 return reply.code(200).send({
                     aquaTrees: [],
                     linkRevisionsForTrackedClaimTypes: [],
@@ -722,8 +720,6 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 in: genesisFormHashes
             }
         }
-
-        console.log(cliRedify(JSON.stringify(linkWhereClause, null, 2)))
 
         // Get total count for pagination metadata
         const totalCount = await prisma.revision.count({
@@ -802,10 +798,10 @@ export default async function revisionsController(fastify: FastifyInstance) {
             return reply.code(500).send({ success: false, message: `Error ${e}` });
         }
 
-        const queryEnd = performance.now()
-        const queryDuration = (queryEnd - queryStart) / 1000
-        Logger.info(`Query duration: ${queryDuration} seconds`)
-        console.log(cliGreenify(`Query duration: ${queryDuration} seconds`))
+        // const queryEnd = performance.now()
+        // const queryDuration = (queryEnd - queryStart) / 1000
+        // Logger.info(`Query duration: ${queryDuration} seconds`)
+        // console.log(cliGreenify(`Query duration: ${queryDuration} seconds`))
 
         const totalPages = Math.ceil(totalCount / limitNum);
         const hasNextPage = pageNum < totalPages;
@@ -939,7 +935,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             return reply.code(401).send({ error: 'Unauthorized' });
         }
 
-        const queryStart = performance.now()
+        // const queryStart = performance.now()
 
         // Get pagination parameters from query
         const { page = 1, limit = 100 } = request.query as { page?: string | number, limit?: string | number };
@@ -1007,10 +1003,9 @@ export default async function revisionsController(fastify: FastifyInstance) {
             return reply.code(500).send({ success: false, message: `Error ${e}` });
         }
 
-        const queryEnd = performance.now()
-        const queryDuration = (queryEnd - queryStart) / 1000
-        Logger.info(`Query duration: ${queryDuration} seconds`)
-        console.log(cliGreenify(`Query duration: ${queryDuration} seconds`))
+        // const queryEnd = performance.now()
+        // const queryDuration = (queryEnd - queryStart) / 1000
+        // Logger.info(`Query duration: ${queryDuration} seconds`)
 
         const totalPages = Math.ceil(totalCount / limitNum);
         const hasNextPage = pageNum < totalPages;

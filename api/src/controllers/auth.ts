@@ -189,7 +189,7 @@ const duration = Date.now() - startTime;
           user_pub_key: siweData.address!!
         }
       })
-      console.log("process.env.DEFAULT_WITNESS_NETWORK", process.env.DEFAULT_WITNESS_NETWORK)
+      
       if (settingsData == null) {
         let defaultData = {
           user_pub_key: siweData.address!!,
