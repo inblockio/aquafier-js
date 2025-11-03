@@ -19,8 +19,6 @@ export default function FilesList(filesListProps: FilesListProps) {
 
       const [systemAquaFileNames, setSystemAquaFileNames] = useState<string[]>([])
 
-      console.log("Selected Workflow: ", selectedWorkflow)
-
       // Filter states
       const [showFilterModal, setShowFilterModal] = useState(false)
       const [selectedFilters, setSelectedFilters] = useState<string[]>(['all'])

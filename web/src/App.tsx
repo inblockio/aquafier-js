@@ -116,8 +116,6 @@ function App() {
         initBackend()
     }, []) // Empty dependency array means this runs once on mount
 
-    console.log("nothing")
-
 
     return (
         <BrowserRouter>
