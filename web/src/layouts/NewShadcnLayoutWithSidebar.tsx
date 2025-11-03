@@ -21,8 +21,8 @@ import ShareComponent from '@/components/aqua_chain_actions/Share_component'
 export default function NewShadcnLayoutWithSidebar() {
       const {
             session,
-            selectedFileInfo,
             setSelectedFileInfo,
+            selectedFileInfo,
             openDialog,
             setOpenDialog,
             formTemplates
@@ -269,10 +269,31 @@ export default function NewShadcnLayoutWithSidebar() {
                         </DialogContent>
                   </Dialog>
 
-                  {/* Enhanced Share Dialog */}
-                  {openDialog?.dialogType === 'share_dialog' && selectedFileInfo && (
-                        <ShareComponent />
-                  )}
+
+                  <Dialog
+                        open={openDialog !== null && openDialog.isOpen && openDialog.dialogType == 'share_dialog'}
+                        onOpenChange={openState => {
+                              // setIsSelectedFileDialogOpen(openState)
+                              if (!openState) {
+                                    setSelectedFileInfo(null)
+                                    setOpenDialog(null)
+                              }
+                        }}
+                  >
+                        <DialogContent showCloseButton={false} className="!max-w-[96vw] !w-[96vw] md:!w-[65vw] !h-[98vh] md:!h-[75vh] max-h-[98vh] !p-0 gap-0 flex flex-col overflow-hidden">
+                              <div className="h-full">
+                                    {
+                                          selectedFileInfo ? (
+                                                <ShareComponent />
+                                          ) : (
+                                                <div className="h-full w-full flex items-center justify-center">
+                                                      <p className="text-center text-lg">No file selected</p>
+                                                </div>
+                                          )
+                                    }
+                              </div>
+                        </DialogContent>
+                  </Dialog>
             </>
       )
 }
