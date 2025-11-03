@@ -722,6 +722,7 @@ export default async function userController(fastify: FastifyInstance) {
         // console.log(cliGreenify(`Link revisions query took ${(linkQueryEnd - linkQueryStart).toFixed(2)}ms`))
 
         // const linkRevisionHashes = linkRevisions.map(revision => revision.pubkey_hash)
+        // const aquaFilesRevisionHashes = filteredUserRevisions.filter(revision => !linkRevisionHashes.includes(revision.pubkey_hash))
 
         // We create an object of the items we want to track differently and or separately
         const formTypesToTrack: Record<string, number> = {}
@@ -758,11 +759,17 @@ export default async function userController(fastify: FastifyInstance) {
             }
         }
 
+        const totalFiles = filteredUserRevisions.length
+        const aquaFiles = totalFiles - Object.values(formTypesToTrack).reduce((a, b) => a + b, 0)
+
         return reply.code(200).send({
-            filesCount: filteredUserRevisions.length,
+            filesCount: totalFiles,
             // totalRevisions: allUserRevisions.length,
             // linkRevisionsCount: linkRevisions.length,
-            claimTypeCounts: formTypesToTrack
+            claimTypeCounts: {
+                ...formTypesToTrack,
+                aqua_files: aquaFiles
+            }
         })
 
     });

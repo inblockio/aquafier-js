@@ -1,79 +1,57 @@
 import { useEffect, useState } from 'react'
-import { Filter, Grid3X3, List, X, ChevronLeft, ChevronRight } from 'lucide-react'
-import FileListItem from './files_list_item'
-import { fetchFiles, fetchSystemFiles, getAquaTreeFileName, isWorkFlowData } from '@/utils/functions'
+import { Filter, Grid3X3, List, X } from 'lucide-react'
+import { getAquaTreeFileName, isWorkFlowData } from '@/utils/functions'
 
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import { ApiFileInfo } from '@/models/FileInfo'
-import { FilesListProps } from '@/types/types'
+import { emptyUserStats, FilesListProps, IUserStats } from '@/types/types'
+import axios from 'axios'
+import { API_ENDPOINTS } from '@/utils/constants'
+import WorkflowSpecificTable from './WorkflowSpecificTable'
 
 export default function FilesList(filesListProps: FilesListProps) {
       const [view, setView] = useState<'table' | 'card'>('table')
-      const [hasFetchedSystemAquaTrees, setHasFetchedSystemAquaTrees] = useState(false)
       const [isSmallScreen, setIsSmallScreen] = useState(false)
-      const [uniqueWorkflows, setUniqueWorkflows] = useState<string[]>([])
+      const [uniqueWorkflows, setUniqueWorkflows] = useState<{ name: string, count: number }[]>([])
       const [selectedWorkflow, setSelectedWorkflow] = useState<string>('all') //aqua_files
+      const [stats, setStats] = useState<IUserStats>(emptyUserStats)
 
       // Pagination states
-      const [_currentPage, setCurrentPage] = useState(1)
-      const [isLoadingPage, setIsLoadingPage] = useState(false)
+      // const [_currentPage, setCurrentPage] = useState(1)
+      // const [_isLoadingPage, setIsLoadingPage] = useState(false)
+      const [systemAquaFileNames, setSystemAquaFileNames] = useState<string[]>([])
+
+      console.log("Selected Workflow: ", selectedWorkflow)
 
       // Filter states
       const [showFilterModal, setShowFilterModal] = useState(false)
       const [selectedFilters, setSelectedFilters] = useState<string[]>(['all'])
       const [tempSelectedFilters, setTempSelectedFilters] = useState<string[]>(['all'])
 
-      const { files, setFiles, systemFileInfo, backend_url, session, setSystemFileInfo } = useStore(appStore)
+      const { files, systemFileInfo, backend_url, session } = useStore(appStore)
 
-      const systemAquaTreeFileNames = systemFileInfo.map(e => {
-            try {
-                  return getAquaTreeFileName(e.aquaTree!)
-            } catch (e) {
-                  return ''
-            }
-      })
+      // const systemAquaTreeFileNames = systemFileInfo.map(e => {
+      //       try {
+      //             return getAquaTreeFileName(e.aquaTree!)
+      //       } catch (e) {
+      //             return ''
+      //       }
+      // })
 
-      // Fetch files for a specific page
-      const fetchFilesPage = async (page: number) => {
+      const loadSystemAquaFileNames = async () => {
             if (!session?.nonce) return
-
-            setIsLoadingPage(true)
             try {
-                  //       const response = await fetch(`${backend_url}/files?page=${page}`, {
-                  //             headers: {
-                  //                   'Authorization': `Bearer ${session.nonce}`
-                  //             }
-                  //       })
-                  //       const data = await response.json()
-
-                  //       if (data.success) {
-                  //             // Update your store with the new file data
-                  //             // You'll need to add a setFiles action to your store
-                  //             appStore.setState({
-                  //                   files: {
-                  //                         ...files,
-                  //                         fileData: data.data,
-                  //                         status: 'loaded'
-                  //                   }
-                  //             })
-                  //       }
-
-                  const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files?page=${page}`, session!.nonce)
-                  setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
-
+                  const response = await axios.get(`${backend_url}/${API_ENDPOINTS.SYSTEM_AQUA_FILES_NAMES}`, {
+                        headers: {
+                              'nonce': session.nonce,
+                              'metamask_address': session.address
+                        }
+                  })
+                  setSystemAquaFileNames(response.data.data)
             } catch (error) {
-                  console.error('Error fetching files:', error)
-            } finally {
-                  setIsLoadingPage(false)
+                  console.log("Error getting system aqua file names", error)
             }
-      }
-
-      // Handle page change
-      const handlePageChange = (newPage: number) => {
-            if (newPage < 1 || newPage > (files.pagination?.totalPages || 1)) return
-            setCurrentPage(newPage)
-            fetchFilesPage(newPage)
       }
 
       // Add screen size detector
@@ -90,41 +68,40 @@ export default function FilesList(filesListProps: FilesListProps) {
             }
       }, [])
 
-      // Extract unique workflows from files
-      useEffect(() => {
-            if (systemFileInfo.length == 0) {
-                  if (!hasFetchedSystemAquaTrees) {
-                        setHasFetchedSystemAquaTrees(true);
-                        (async () => {
-                              const url3 = `${backend_url}/system/aqua_tree`
-                              const systemFiles = await fetchSystemFiles(url3, session?.address)
-                              setSystemFileInfo(systemFiles)
-                        })()
-                  }
-            } else {
-                  const someData = systemFileInfo.map(e => {
-                        try {
-                              return getAquaTreeFileName(e.aquaTree!)
-                        } catch (e) {
-                              return ''
-                        }
-                  })
-
-                  const workflows = new Set<string>()
-
-                  files.fileData.forEach(file => {
-                        try {
-                              const workFlow = isWorkFlowData(file.aquaTree!, someData)
-                              if (workFlow.isWorkFlow && workFlow.workFlow) {
-                                    workflows.add(workFlow.workFlow)
+      const getUserStats = async () => {
+            if (session) {
+                  try {
+                        let result = await axios.get(`${backend_url}/${API_ENDPOINTS.USER_STATS}`, {
+                              headers: {
+                                    'nonce': session.nonce,
+                                    'metamask_address': session.address
                               }
-                        } catch (e) {
+                        })
+                        setStats(result.data)
+                        let uniqueWorkflows = new Set<{ name: string; count: number }>()
+                        let claimTypeCounts = result.data.claimTypeCounts
+                        const claimTypes = Object.keys(claimTypeCounts)
+                        for (let i = 0; i < claimTypes.length; i++) {
+                              let claimType = claimTypes[i]
+                              if (parseInt(claimTypeCounts[claimType]) > 0) {
+                                    uniqueWorkflows.add({ name: claimType, count: parseInt(claimTypeCounts[claimType]) })
+                              }
                         }
-                  })
-
-                  setUniqueWorkflows(Array.from(workflows).sort())
+                        setUniqueWorkflows(Array.from(uniqueWorkflows))
+                  } catch (error) {
+                        console.log("Error getting stats", error)
+                  }
             }
-      }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(',')])
+      }
+
+
+      // Upgraded way of identifying different workflows based on user stats endpoint
+      useEffect(() => {
+            if (session?.nonce) {
+                  getUserStats()
+                  loadSystemAquaFileNames()
+            }
+      }, [session?.address, session?.nonce])
 
       // Filter files based on selected filters AND selected workflow
       const getFilteredFiles = (): ApiFileInfo[] => {
@@ -222,9 +199,9 @@ export default function FilesList(filesListProps: FilesListProps) {
 
             uniqueWorkflows.forEach(workflow => {
                   options.push({
-                        value: workflow,
-                        label: capitalizeWords(workflow.replace(/_/g, ' ')),
-                        count: workflowCounts[workflow] || 0
+                        value: workflow.name,
+                        label: capitalizeWords(workflow.name.replace(/_/g, ' ')),
+                        count: workflow.count ?? 0
                   })
             })
 
@@ -279,133 +256,7 @@ export default function FilesList(filesListProps: FilesListProps) {
             return 'Filtered Items'
       }
 
-      // Pagination component
-      const renderPagination = () => {
-            const pagination = files.pagination
-            if (!pagination || pagination.totalPages <= 1) return null
 
-            const { currentPage, totalPages, hasNextPage, hasPreviousPage, startIndex, endIndex, totalItems } = pagination
-
-            return (
-                  <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
-                        <div className="flex items-center justify-between w-full">
-                              <div className="text-sm text-gray-700">
-                                    Showing page <span className="font-medium">{currentPage}</span> of{' '}
-                                    <span className="font-medium">{totalPages}</span>
-                              </div>
-
-                              <div className="text-sm text-gray-700">
-                                    Showing <span className="font-medium">{startIndex}</span> to{' '}
-                                    <span className="font-medium">{endIndex}</span> of{' '}
-                                    <span className="font-medium">{totalItems}</span> results
-                              </div>
-
-                              <div className="flex items-center space-x-2">
-                                    <button
-                                          onClick={() => handlePageChange(currentPage - 1)}
-                                          disabled={!hasPreviousPage || isLoadingPage}
-                                          className={`relative inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${!hasPreviousPage || isLoadingPage
-                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                                                }`}
-                                    >
-                                          <ChevronLeft className="w-4 h-4" />
-                                          Previous
-                                    </button>
-                                    <button
-                                          onClick={() => handlePageChange(currentPage + 1)}
-                                          disabled={!hasNextPage || isLoadingPage}
-                                          className={`relative inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${!hasNextPage || isLoadingPage
-                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                                                }`}
-                                    >
-                                          Next
-                                          <ChevronRight className="w-4 h-4" />
-                                    </button>
-                              </div>
-                        </div>
-                  </div>
-            )
-      }
-
-      const renderFilesListCard = () => {
-            return <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredFiles
-                        .sort((a, b) => {
-                              const filenameA = getAquaTreeFileName(a.aquaTree!)
-                              const filenameB = getAquaTreeFileName(b.aquaTree!)
-                              return filenameA.localeCompare(filenameB)
-                        })
-                        .map((file, index) => {
-                              return (
-                                    <FileListItem
-                                          showWorkFlowsOnly={false}
-                                          key={`card-${index}`}
-                                          index={index}
-                                          file={file}
-                                          systemFileInfo={systemFileInfo}
-                                          backendUrl={backend_url}
-                                          nonce={session?.nonce ?? ''}
-                                          viewMode={view}
-                                          filesListProps={filesListProps}
-                                    />
-                              )
-                        })}
-            </div>
-      }
-
-      const renderFilesList = () => {
-            let hasUndefined = false
-            for (let i = 0; i < filteredFiles.length; i++) {
-                  if (filteredFiles[i].aquaTree === undefined) {
-                        hasUndefined = true
-                        break
-                  }
-                  if (filteredFiles[i].aquaTree?.revisions === undefined) {
-                        hasUndefined = true
-                        break
-                  }
-            }
-            if (hasUndefined) {
-                  return <div>No files available.</div>
-            }
-            return <table className="w-full border-collapse">
-                  <thead>
-                        <tr className="bg-gray-50">
-                              {filesListProps.showCheckbox == true ? <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-12 rounded-tl-md"> </th> : null}
-                              <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-1/3 rounded-tl-md">Name</th>
-                              <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-30">Type</th>
-                              <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-40">Uploaded At</th>
-                              <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-24">File Size</th>
-                              {filesListProps.showFileActions == true ? <th className="min-w-[370px] py-3 px-4 text-left text-sm font-medium text-gray-700 w-1/4 rounded-tr-md">Actions</th> : null}
-                        </tr>
-                  </thead>
-                  <tbody>
-                        {filteredFiles
-                              .sort((a, b) => {
-                                    const filenameA = getAquaTreeFileName(a.aquaTree!)
-                                    const filenameB = getAquaTreeFileName(b.aquaTree!)
-                                    return filenameA.localeCompare(filenameB)
-                              })
-                              .map((file, index) => {
-                                    return (
-                                          <FileListItem
-                                                showWorkFlowsOnly={false}
-                                                key={index}
-                                                index={index}
-                                                file={file}
-                                                systemFileInfo={systemFileInfo}
-                                                backendUrl={backend_url}
-                                                nonce={session?.nonce ?? ''}
-                                                viewMode={view}
-                                                filesListProps={filesListProps}
-                                          />
-                                    )
-                              })}
-                  </tbody>
-            </table>
-      }
 
       const renderWorkflowTabs = () => {
             if (uniqueWorkflows.length === 0 || !selectedFilters.includes('all')) return null
@@ -422,47 +273,24 @@ export default function FilesList(filesListProps: FilesListProps) {
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                                 }`}
                                     >
-                                          All Files ({files.pagination?.itemsPerPage})
+                                          All Files ({stats.filesCount})
                                     </button>
 
-                                    <button
-                                          onClick={() => setSelectedWorkflow('aqua_files')}
-                                          className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${selectedWorkflow === 'aqua_files'
-                                                ? 'border-blue-500 text-blue-600'
-                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                                }`}
-                                    >
-                                          Aqua Files ({files.fileData.filter((file) => {
-                                                const workFlow = isWorkFlowData(file.aquaTree!, systemAquaTreeFileNames)
-                                                if (workFlow && workFlow.isWorkFlow) {
-                                                      return null
-                                                }
-                                                return file
-                                          }).length})
-                                    </button>
-
+                                   
 
                                     {
-                                          view === 'table' && uniqueWorkflows.map((workflow) => {
-                                                const workflowCount = files.fileData.filter(file => {
-                                                      try {
-                                                            const workFlow = isWorkFlowData(file.aquaTree!, systemAquaTreeFileNames)
-                                                            return workFlow.isWorkFlow && workFlow.workFlow === workflow
-                                                      } catch (e) {
-                                                            return false
-                                                      }
-                                                }).length
+                                          view === 'table' && uniqueWorkflows.sort((a, b) => a.name.localeCompare(b.name)).map((workflow) => {
 
                                                 return (
                                                       <button
-                                                            key={workflow}
-                                                            onClick={() => setSelectedWorkflow(workflow)}
-                                                            className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${selectedWorkflow === workflow
+                                                            key={workflow.name}
+                                                            onClick={() => setSelectedWorkflow(workflow.name)}
+                                                            className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${selectedWorkflow === workflow.name
                                                                   ? 'border-blue-500 text-blue-600'
                                                                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                                                   }`}
                                                       >
-                                                            {capitalizeWords(workflow.replace(/_/g, ' '))} ({workflowCount})
+                                                            {capitalizeWords(workflow.name.replace(/_/g, ' '))} ({workflow.count ?? 0})
                                                       </button>
                                                 )
                                           })
@@ -598,78 +426,15 @@ export default function FilesList(filesListProps: FilesListProps) {
                         }
 
                         {renderWorkflowTabs()}
-                        {/* We replace this with carousel slides for nice slides in small screen */}
-                        {/* <div className="w-full">
-                              <CarouselTabsForFiles />
-                        </div> */}
 
+                        <WorkflowSpecificTable
+                              workflowName={selectedWorkflow}
+                              view={view}
+                              filesListProps={filesListProps}
+                              isSmallScreen={isSmallScreen}
+                              systemAquaFileNames={systemAquaFileNames}
+                        />
 
-                        {!isSmallScreen ? (
-                              <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-                                    {/* Add this count bar */}
-                                    <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
-                                          <p className="text-sm text-gray-700">
-                                                {selectedFilters.includes('all')
-                                                      ? `Showing ${files.pagination?.startIndex || 0} to ${files.pagination?.endIndex || 0} of ${files.pagination?.totalItems || 0} files`
-                                                      : `Showing ${filteredFiles.length} filtered files`}
-                                          </p>
-                                    </div>
-
-                                    <div className="p-1">
-                                          {isLoadingPage ? (
-                                                <div className="flex items-center justify-center py-12">
-                                                      <div className="text-gray-500">Loading...</div>
-                                                </div>
-                                          ) : (
-                                                view === 'table' ? renderFilesList() : renderFilesListCard()
-                                          )}
-                                    </div>
-                                    {renderPagination()}
-                              </div>
-                        ) : null}
-
-                        {isSmallScreen ? (
-                              <>
-                                    <div className="space-y-4">
-                                          {isLoadingPage ? (
-                                                <div className="flex items-center justify-center py-12">
-                                                      <div className="text-gray-500">Loading...</div>
-                                                </div>
-                                          ) : (
-                                                filteredFiles
-                                                      .sort((a, b) => {
-                                                            const filenameA = getAquaTreeFileName(a.aquaTree!)
-                                                            const filenameB = getAquaTreeFileName(b.aquaTree!)
-                                                            return filenameA.localeCompare(filenameB)
-                                                      })
-                                                      .map((file, index) => (
-                                                            <div key={`mobile-${index}`} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-                                                                  <FileListItem
-                                                                        showWorkFlowsOnly={false}
-                                                                        key={`mobile-item-${index}`}
-                                                                        index={index}
-                                                                        file={file}
-                                                                        systemFileInfo={systemFileInfo}
-                                                                        backendUrl={backend_url}
-                                                                        nonce={session?.nonce ?? ''}
-                                                                        viewMode={'card'}
-                                                                        filesListProps={filesListProps}
-                                                                  />
-                                                            </div>
-                                                      ))
-                                          )}
-                                    </div>
-                                    {renderPagination()}
-                              </>
-                        ) : null}
-
-                        {filteredFiles.length === 0 && !isLoadingPage && (
-                              <div className="text-center py-12">
-                                    <p className="text-gray-500 text-lg">
-                                          No files found for the selected filters.
-                                    </p>
-                              </div>
-                        )}
                   </div>
 
                   {renderFilterModal()}

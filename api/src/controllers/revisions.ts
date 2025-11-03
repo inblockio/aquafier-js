@@ -4,6 +4,7 @@ import { DeleteRevision, FetchAquaTreeRequest, SaveRevisionForUser } from '../mo
 import { getHost, getPort } from '../utils/api_utils';
 import {
     deleteAquaTree,
+    fetchAquatreeFoUser,
     getSignatureAquaTrees,
     getUserApiFileInfo,
     saveARevisionInAquaTree
@@ -60,7 +61,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(latestRevisionHash, url)
 
             let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
-            
+
             displayData.push({
                 aquaTree: sortedAquaTree,
                 fileObject: fileObject
@@ -589,7 +590,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
         return url
     }
 
-    // Get user data stats
+    // Get user files based on a given claim type
     fastify.get('/tree/per_type', {
         preHandler: authenticate
     }, async (request: AuthenticatedRequest, reply) => {
@@ -601,12 +602,12 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
         const invalidClaimTypes = confirmThatAllClaimTypesAreValid(claimTypes)
         let cleanedWalletAddress = wallet_address
-        if(wallet_address){
+        if (wallet_address) {
             cleanedWalletAddress = ethers.getAddress(wallet_address)
         }
 
         let baseAddress = userAddress
-        if(use_wallet){
+        if (use_wallet) {
             baseAddress = use_wallet
         }
 
@@ -646,7 +647,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
         // First, find genesis form revisions that contain the wallet address
         let genesisFormHashes: string[] = []
-        if(cleanedWalletAddress){
+        if (cleanedWalletAddress) {
             // Optimization 1: Use Prisma with optimized query structure
             // Optimization 2: Add take limit to prevent excessive results
             const genesisFormRevisions = await prisma.revision.findMany({
@@ -675,12 +676,12 @@ export default async function revisionsController(fastify: FastifyInstance) {
                     pubkey_hash: 'asc'
                 }
             });
-            
+
             genesisFormHashes = genesisFormRevisions.map(rev => rev.pubkey_hash);
             console.log(cliGreenify(`Found ${genesisFormHashes.length} genesis form revisions containing wallet address`));
-            
+
             // Optimization 3: Early exit if no matching forms found
-            if(genesisFormHashes.length === 0) {
+            if (genesisFormHashes.length === 0) {
                 console.log(cliRedify('No genesis form revisions found for wallet address, returning empty result'));
                 return reply.code(200).send({
                     aquaTrees: [],
@@ -716,7 +717,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
         }
 
         // If we have genesis form hashes, filter links that reference them
-        if(genesisFormHashes.length > 0){
+        if (genesisFormHashes.length > 0) {
             linkWhereClause.previous = {
                 in: genesisFormHashes
             }
@@ -824,5 +825,210 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
         })
     });
+
+    // Get all user files
+    fastify.get('/tree/all_files', {
+        preHandler: authenticate
+    }, async (request: AuthenticatedRequest, reply) => {
+        const userAddress = request.user?.address;
+
+        if (!userAddress) {
+            return reply.code(401).send({ error: 'Unauthorized' });
+        }
+
+        const queryStart = performance.now()
+
+        // Get pagination parameters from query
+        const { page = 1, limit = 100 } = request.query as { page?: string | number, limit?: string | number };
+        const pageNum = typeof page === 'string' ? parseInt(page, 10) : page;
+        const limitNum = typeof limit === 'string' ? parseInt(limit, 10) : limit;
+        const skip = (pageNum - 1) * limitNum;
+
+        const url = getBaseUrl(request)
+
+        // Get total count for pagination metadata
+        const totalCount = await prisma.latest.count({
+            where: {
+                AND: {
+                    user: userAddress,
+                    // template_id: null,
+                    // is_workflow: false
+                }
+            }
+        });
+
+        // Get paginated latest records
+        const latestRecords = await prisma.latest.findMany({
+            where: {
+                AND: {
+                    user: userAddress,
+                    // template_id: null,
+                    // is_workflow: false
+                }
+            },
+            select: {
+                hash: true
+            },
+            skip: skip,
+            take: limitNum,
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        let displayData: Array<{
+            aquaTree: AquaTree,
+            fileObject: FileObject[]
+        }> = []
+
+        // Process all revision hashes in parallel for better performance
+        const displayDataPromises = latestRecords.map(async (record) => {
+            try {
+                const revisionHash = record.hash;
+                const aquaTreeJustRevisions = await buildEntireTreeFromGivenRevisionHash(revisionHash);
+                const latestRevisionHash = aquaTreeJustRevisions[aquaTreeJustRevisions.length - 1].revisionHash;
+                const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(latestRevisionHash, url);
+                const sortedAquaTree = OrderRevisionInAquaTree(anAquaTree);
+                return {
+                    aquaTree: sortedAquaTree,
+                    fileObject: fileObject
+                };
+            } catch (e) {
+                throw new Error(`Error processing revision ${record.hash}: ${e}`);
+            }
+        });
+
+        try {
+            displayData = await Promise.all(displayDataPromises);
+        } catch (e) {
+            return reply.code(500).send({ success: false, message: `Error ${e}` });
+        }
+
+        const queryEnd = performance.now()
+        const queryDuration = (queryEnd - queryStart) / 1000
+        // Logger.info(`Query duration: ${queryDuration} seconds`)
+        // console.log(cliGreenify(`Query duration: ${queryDuration} seconds`))
+
+        const totalPages = Math.ceil(totalCount / limitNum);
+        const hasNextPage = pageNum < totalPages;
+        const hasPrevPage = pageNum > 1;
+
+        return reply.code(200).send({
+            aquaTrees: deleteChildrenFieldFromAquaTrees(displayData),
+            linkRevisionsForTrackedClaimTypes: [],
+            claimTypeCounts: {},
+            pagination: {
+                currentPage: pageNum,
+                totalPages,
+                totalCount,
+                limit: limitNum,
+                hasNextPage,
+                hasPrevPage
+            }
+        })
+    })
+
+
+    // Get aqua files only, files that are not part of any workflow
+    fastify.get('/tree/aqua_files', {
+        preHandler: authenticate
+    }, async (request: AuthenticatedRequest, reply) => {
+        const userAddress = request.user?.address;
+
+        if (!userAddress) {
+            return reply.code(401).send({ error: 'Unauthorized' });
+        }
+
+        const queryStart = performance.now()
+
+        // Get pagination parameters from query
+        const { page = 1, limit = 100 } = request.query as { page?: string | number, limit?: string | number };
+        const pageNum = typeof page === 'string' ? parseInt(page, 10) : page;
+        const limitNum = typeof limit === 'string' ? parseInt(limit, 10) : limit;
+        const skip = (pageNum - 1) * limitNum;
+
+        const url = getBaseUrl(request)
+
+        // Query genesis revisions of type 'file' for the user
+        const whereClause = {
+            pubkey_hash: {
+                startsWith: userAddress
+            },
+            revision_type: "file",
+            OR: [
+                { previous: null },
+                { previous: "" }
+            ]
+        };
+
+        // Get total count for pagination metadata
+        const totalCount = await prisma.revision.count({
+            where: whereClause
+        });
+
+        // Get paginated genesis file revisions
+        const genesisFileRevisions = await prisma.revision.findMany({
+            where: whereClause,
+            select: {
+                pubkey_hash: true
+            },
+            skip: skip,
+            take: limitNum,
+            orderBy: {
+                local_timestamp: 'desc'
+            }
+        });
+
+        let displayData: Array<{
+            aquaTree: AquaTree,
+            fileObject: FileObject[]
+        }> = []
+
+        // Process all revision hashes in parallel for better performance
+        const displayDataPromises = genesisFileRevisions.map(async (revision) => {
+            try {
+                const revisionHash = revision.pubkey_hash;
+                const aquaTreeJustRevisions = await buildEntireTreeFromGivenRevisionHash(revisionHash);
+                const latestRevisionHash = aquaTreeJustRevisions[aquaTreeJustRevisions.length - 1].revisionHash;
+                const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(latestRevisionHash, url);
+                const sortedAquaTree = OrderRevisionInAquaTree(anAquaTree);
+                return {
+                    aquaTree: sortedAquaTree,
+                    fileObject: fileObject
+                };
+            } catch (e) {
+                throw new Error(`Error processing revision ${revision.pubkey_hash}: ${e}`);
+            }
+        });
+
+        try {
+            displayData = await Promise.all(displayDataPromises);
+        } catch (e) {
+            return reply.code(500).send({ success: false, message: `Error ${e}` });
+        }
+
+        const queryEnd = performance.now()
+        const queryDuration = (queryEnd - queryStart) / 1000
+        Logger.info(`Query duration: ${queryDuration} seconds`)
+        console.log(cliGreenify(`Query duration: ${queryDuration} seconds`))
+
+        const totalPages = Math.ceil(totalCount / limitNum);
+        const hasNextPage = pageNum < totalPages;
+        const hasPrevPage = pageNum > 1;
+
+        return reply.code(200).send({
+            aquaTrees: deleteChildrenFieldFromAquaTrees(displayData),
+            linkRevisionsForTrackedClaimTypes: [],
+            claimTypeCounts: {},
+            pagination: {
+                currentPage: pageNum,
+                totalPages,
+                totalCount,
+                limit: limitNum,
+                hasNextPage,
+                hasPrevPage
+            }
+        })
+    })
 
 }

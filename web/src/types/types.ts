@@ -3,21 +3,21 @@ import { IconType } from 'react-icons/lib'
 import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '../models/FileInfo'
 
 export interface ApiFilePaginationData {
-            currentPage: number
-            totalPages: number
-            totalItems: number
-            itemsPerPage: number
-            hasNextPage: boolean
-            hasPreviousPage: boolean
-            startIndex: number;
-        endIndex: number;
-      }
+      currentPage: number
+      totalPages: number
+      totalItems: number
+      itemsPerPage: number
+      hasNextPage: boolean
+      hasPreviousPage: boolean
+      startIndex: number;
+      endIndex: number;
+}
 
 export interface ApiFileInfoState {
       fileData: ApiFileInfo[],
       status: 'loading' | 'loaded' | 'error' | 'idle'
       error?: string
-       pagination?: ApiFilePaginationData
+      pagination?: ApiFilePaginationData
 }
 
 
@@ -284,4 +284,40 @@ export interface ICompleteClaimInformation {
       processedInfo: ClaimInformation,
       attestations: Array<IAttestationEntry>,
       sharedContracts: Contract[]
+}
+
+export interface IUserStats {
+      filesCount: number,
+      claimTypeCounts: {
+            aqua_files: number,
+            access_agreement: number,
+            aqua_sign: number,
+            cheque: number,
+            dba_claim: number,
+            identity_attestation: number,
+            identity_claim: number,
+            user_signature: number,
+            domain_claim: number,
+            email_claim: number,
+            phone_number_claim: number,
+            user_profile: number
+      }
+}
+
+export const emptyUserStats: IUserStats = {
+      filesCount: 0,
+      claimTypeCounts: {
+            aqua_files: 0,
+            access_agreement: 0,
+            aqua_sign: 0,
+            cheque: 0,
+            dba_claim: 0,
+            identity_attestation: 0,
+            identity_claim: 0,
+            user_signature: 0,
+            domain_claim: 0,
+            email_claim: 0,
+            phone_number_claim: 0,
+            user_profile: 0
+      }
 }

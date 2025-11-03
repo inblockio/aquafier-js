@@ -1,5 +1,6 @@
 import { APMConfig } from "@/types/apm"
-import {WebConfig} from "../types/types"
+import { WebConfig } from "../types/types"
+import { Building2, CheckCircle, CreditCard, Droplet, FileText, Globe, Mail, PenTool, Phone, Shield, User, UserCircle } from "lucide-react"
 // import {APMConfig} from "@/types/apm.ts";
 
 export const SEPOLIA_SMART_CONTRACT_ADDRESS = '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611'
@@ -58,7 +59,7 @@ export const initializeBackendUrl = async (): Promise<{
       apmConfig: APMConfig
 }> => {
       let BACKEND_URL = 'http://127.0.0.1:3000'
-      let configObj:WebConfig = {}
+      let configObj: WebConfig = {}
       let apmConfig: APMConfig = new APMConfig();
       try {
             // Fetch the config.json file from the public folder
@@ -105,7 +106,7 @@ export const initializeBackendUrl = async (): Promise<{
             console.error('Error reading config:', err)
       }
 
-      return {backend_url: BACKEND_URL, config: configObj, apmConfig: apmConfig}
+      return { backend_url: BACKEND_URL, config: configObj, apmConfig: apmConfig }
 }
 
 export const testWitness = {
@@ -139,4 +140,28 @@ export const API_ENDPOINTS = {
       NOTIFICATIONS_READ_ALL: '/notifications/read-all',
       MARK_NOTIFICATION_AS_READ: '/notifications/:id/read',
       GET_PER_TYPE: 'tree/per_type',
+      USER_STATS: 'user_data_stats',
+      ALL_USER_FILES: 'tree/all_files',
+      USER_AQUA_FILES: 'tree/aqua_files',
+      SYSTEM_AQUA_FILES: 'system/aqua_tree',
+      SYSTEM_AQUA_FILES_NAMES: 'system/aqua_tree/names',
 }
+
+
+export const iconMap: Record<string, React.FC<React.SVGProps<SVGSVGElement>>> = {
+      access_agreement: Shield,
+      aqua_sign: Droplet,
+      cheque: CreditCard,
+      dba_claim: Building2,
+      identity_attestation: CheckCircle,
+      identity_claim: User,
+      user_signature: PenTool,
+      domain_claim: Globe,
+      email_claim: Mail,
+      phone_number_claim: Phone,
+      user_profile: UserCircle
+};
+
+export const getClaimIcon = (claimType: string) => {
+      return iconMap[claimType] || FileText;
+};

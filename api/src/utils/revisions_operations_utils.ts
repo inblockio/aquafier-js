@@ -18,6 +18,7 @@ import {AquaTreeFileData, LinkedRevisionResult, ProcessRevisionResult, UpdateGen
 import {AQUA_VERSION, SYSTEM_WALLET_ADDRESS, systemTemplateHashes} from '../models/constants';
 import {getFileSize} from "./file_utils";
 import Logger from "./logger";
+import { getAquaTreeFileName } from './api_utils';
 
 // Main refactored function
 export async function createAquaTreeFromRevisions(
@@ -127,13 +128,13 @@ export async function createAquaTreeFromRevisions(
         const aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(aquaTree);
 
         // NOTE: DO NOT delete this, it might be helpful if the current tree is not directly included in fileObjects
-        // fileObjects.push(
-        //     {
-        //         fileContent: JSON.stringify(aquaTree),
-        //         fileName: getAquaTreeFileName(aquaTree),
-        //         path: '',
-        //     }
-        // );
+        fileObjects.push(
+            {
+                fileContent: JSON.stringify(aquaTree),
+                fileName: getAquaTreeFileName(aquaTree),
+                path: '',
+            }
+        );
 
         return [aquaTreeWithOrderdRevision, fileObjects];
 

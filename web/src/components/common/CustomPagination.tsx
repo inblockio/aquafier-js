@@ -15,6 +15,7 @@ interface CustomPaginationProps {
   siblings?: number; // Number of pages to show on each side of current page
   boundaries?: number; // Number of pages to show at the start and end
   hideWithOnePage?: boolean;
+  disabled?: boolean;
 }
 
 function CustomPagination({
@@ -24,6 +25,7 @@ function CustomPagination({
   siblings = 1,
   boundaries = 1,
   hideWithOnePage = false,
+  disabled = false,
 }: CustomPaginationProps) {
   // Hide pagination if only one page and hideWithOnePage is true
   if (hideWithOnePage && totalPages <= 1) {
@@ -111,7 +113,7 @@ function CustomPagination({
         <PaginationItem>
           <PaginationPrevious
             onClick={handlePrevious}
-            className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+            className={(currentPage === 1 || disabled) ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
           />
         </PaginationItem>
 
@@ -129,7 +131,7 @@ function CustomPagination({
               <PaginationLink
                 onClick={() => handlePageClick(pageNum)}
                 isActive={currentPage === pageNum}
-                className="cursor-pointer"
+                className={(disabled) ? 'cursor-not-allowed pointer-events-none opacity-50' : 'cursor-pointer'}
               >
                 {pageNum}
               </PaginationLink>
@@ -140,7 +142,7 @@ function CustomPagination({
         <PaginationItem>
           <PaginationNext
             onClick={handleNext}
-            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+            className={(currentPage === totalPages || disabled) ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
           />
         </PaginationItem>
       </PaginationContent>

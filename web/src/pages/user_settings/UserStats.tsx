@@ -2,38 +2,12 @@ import React, { useEffect } from 'react';
 import {
     FileText,
     Shield,
-    Droplet,
-    CreditCard,
-    Building2,
-    CheckCircle,
-    User,
-    PenTool,
-    Globe,
-    Mail,
-    Phone,
-    UserCircle
-} from 'lucide-react';
+    CheckCircle} from 'lucide-react';
 import axios from 'axios';
 import { useStore } from 'zustand';
 import appStore from '@/store';
-
-const getClaimIcon = (claimType: string) => {
-    const iconMap: Record<string, React.FC<React.SVGProps<SVGSVGElement>>> = {
-        access_agreement: Shield,
-        aqua_sign: Droplet,
-        cheque: CreditCard,
-        dba_claim: Building2,
-        identity_attestation: CheckCircle,
-        identity_claim: User,
-        user_signature: PenTool,
-        domain_claim: Globe,
-        email_claim: Mail,
-        phone_number_claim: Phone,
-        user_profile: UserCircle
-    };
-
-    return iconMap[claimType] || FileText;
-};
+import { API_ENDPOINTS, getClaimIcon } from '@/utils/constants';
+import { emptyUserStats, IUserStats } from '@/types/types';
 
 const formatClaimName = (claimType: string) => {
     return claimType
@@ -45,27 +19,12 @@ const formatClaimName = (claimType: string) => {
 const UserStats = () => {
 
     const { session, backend_url } = useStore(appStore)
-    const [stats, setStats] = React.useState({
-        filesCount: 0,
-        claimTypeCounts: {
-            access_agreement: 0,
-            aqua_sign: 0,
-            cheque: 0,
-            dba_claim: 0,
-            identity_attestation: 0,
-            identity_claim: 0,
-            user_signature: 0,
-            domain_claim: 0,
-            email_claim: 0,
-            phone_number_claim: 0,
-            user_profile: 0
-        }
-    })
+    const [stats, setStats] = React.useState<IUserStats>(emptyUserStats)
 
     const getUserStats = async () => {
         if (session) {
             try {
-                let result = await axios.get(`${backend_url}/user_data_stats`, {
+                let result = await axios.get(`${backend_url}/${API_ENDPOINTS.USER_STATS}`, {
                     headers: {
                         'nonce': session.nonce,
                         'metamask_address': session.address

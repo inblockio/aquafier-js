@@ -37,6 +37,7 @@ export default function FilesListItem({
       file,
       index,
       systemFileInfo,
+      systemAquaFileNames,
       backendUrl,
       nonce,
       viewMode = 'table',
@@ -46,6 +47,7 @@ export default function FilesListItem({
       file: ApiFileInfo
       index: number
       systemFileInfo: ApiFileInfo[]
+      systemAquaFileNames: string[]
       backendUrl: string
       nonce: string
       viewMode?: 'table' | 'card' | 'actions-only'
@@ -57,17 +59,17 @@ export default function FilesListItem({
       const [workflowInfo, setWorkFlowInfo] = useState<{ isWorkFlow: boolean; workFlow: string } | undefined>(undefined)
 
       useEffect(() => {
-            const someData = systemFileInfo.map(e => {
-                  try {
-                        return getAquaTreeFileName(e.aquaTree!)
-                  } catch (e) {
-                        return ''
-                  }
-            })
+            // const someData = systemFileInfo.map(e => {
+            //       try {
+            //             return getAquaTreeFileName(e.aquaTree!)
+            //       } catch (e) {
+            //             return ''
+            //       }
+            // })
 
             const fileObject = getAquaTreeFileObject(file)
             setCurrentFileObject(fileObject)
-            const workFlow = isWorkFlowData(file.aquaTree!, someData)
+            const workFlow = isWorkFlowData(file.aquaTree!, systemAquaFileNames)
             setWorkFlowInfo(workFlow)
       }, [])
 

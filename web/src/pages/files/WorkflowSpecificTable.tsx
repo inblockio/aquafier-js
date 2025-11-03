@@ -1,0 +1,151 @@
+import { ApiFileInfo } from "@/models/FileInfo"
+import appStore from "@/store"
+import { GlobalPagination } from "@/types"
+import { API_ENDPOINTS } from "@/utils/constants"
+import axios from "axios"
+import { useEffect, useState } from "react"
+import { useStore } from "zustand"
+import { RenderFilesList, RenderFilesListCard } from "./commons"
+import { FilesListProps } from "@/types/types"
+import CustomPagination from "@/components/common/CustomPagination"
+import { getAquaTreeFileName } from "@/utils/functions"
+import FilesListItem from "./files_list_item"
+
+interface IWorkflowSpecificTable {
+    workflowName: string
+    view: 'table' | 'card'
+    filesListProps: FilesListProps
+    isSmallScreen: boolean
+    systemAquaFileNames: string[]
+}
+
+const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScreen, systemAquaFileNames }: IWorkflowSpecificTable) => {
+
+    const { session, backend_url } = useStore(appStore)
+
+    const [files, setFiles] = useState<ApiFileInfo[]>([])
+    const [currentPage, setCurrentPage] = useState(1)
+    const [pagination, setPagination] = useState<GlobalPagination | null>(null)
+    const [loading, setLoading] = useState(true)
+    // const [isProcessingClaims, setIsProcessingClaims] = useState(true)
+
+    const loadFiles = async () => {
+        if (!session?.address || !backend_url) return;
+        setFiles([])
+        try {
+            let endpoint = API_ENDPOINTS.GET_PER_TYPE
+            if (workflowName === 'all') {
+                endpoint = API_ENDPOINTS.ALL_USER_FILES
+            } else if (workflowName === 'aqua_files') {
+                endpoint = API_ENDPOINTS.USER_AQUA_FILES
+            }
+            setLoading(true)
+            const params = {
+                page: currentPage,
+                limit: 2,
+                claim_types: JSON.stringify([workflowName]),
+                // wallet_address: session?.address
+            }
+            const filesDataQuery = await axios.get(`${backend_url}/${endpoint}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'nonce': `${session!.nonce}`
+                },
+                params
+            })
+            const response = filesDataQuery.data
+            const aquaTrees = response.aquaTrees
+            setPagination(response.pagination)
+            setFiles(aquaTrees)
+            setLoading(false)
+        } catch (error) {
+            setFiles([])
+            setLoading(false)
+            console.log("Error loading files", error)
+        }
+    }
+
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [workflowName])
+
+    useEffect(() => {
+        loadFiles()
+    }, [backend_url, JSON.stringify(session), `${currentPage}-${workflowName}`]);
+
+    return (
+        <div className="flex flex-col gap-4 pb-4">
+            {
+                isSmallScreen ? (
+                    <div className="space-y-4">
+                        {
+                            loading ? (
+                                <div className="flex items-center justify-center py-12">
+                                <div className="text-gray-500">Loading...</div>
+                            </div>
+                            ):null
+                        }
+                        {!loading && files.length > 0 ? (
+                            files
+                                .sort((a, b) => {
+                                    const filenameA = getAquaTreeFileName(a.aquaTree!)
+                                    const filenameB = getAquaTreeFileName(b.aquaTree!)
+                                    return filenameA.localeCompare(filenameB)
+                                })
+                                .map((file, index) => (
+                                    <div key={`mobile-${index}`}>
+                                        <FilesListItem
+                                            showWorkFlowsOnly={false}
+                                            // key={`mobile-item-${index}`}
+                                            index={index}
+                                            file={file}
+                                            systemFileInfo={[]}
+                                            backendUrl={backend_url}
+                                            nonce={session?.nonce ?? ''}
+                                            viewMode={'card'}
+                                            filesListProps={filesListProps}
+                                            systemAquaFileNames={systemAquaFileNames}
+                                        />
+                                    </div>
+                                ))
+                        ): null}
+                        {!loading && files.length === 0 ? (
+                            <div className="flex items-center justify-center py-12">
+                                <div className="text-gray-500">No files found</div>
+                            </div>
+                        ): null}
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto md:h-[calc(100vh-350px)] overflow-y-auto">
+                        {view === 'table' ? (
+                            <RenderFilesList
+                                filteredFiles={files}
+                                filesListProps={filesListProps}
+                                view={view}
+                                systemAquaFileNames={systemAquaFileNames}
+                                loading={loading}
+                            />
+                        ) : (
+                            <RenderFilesListCard
+                                filteredFiles={files}
+                                filesListProps={filesListProps}
+                                view={view}
+                                loading={loading}
+                                systemAquaFileNames={systemAquaFileNames}
+                            />
+                        )}
+                    </div>
+
+                )
+            }
+            <CustomPagination
+                currentPage={currentPage}
+                totalPages={pagination?.totalPages ?? 1}
+                onPageChange={setCurrentPage}
+                disabled={files.length === 0}
+            />
+        </div>
+    )
+}
+
+export default WorkflowSpecificTable

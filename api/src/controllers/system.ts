@@ -1,7 +1,7 @@
 import {FastifyInstance} from 'fastify';
 import fastifyRateLimit from '@fastify/rate-limit';
 import {prisma} from '../database/db';
-import {checkFolderExists, getHost, getPort} from '../utils/api_utils';
+import {checkFolderExists, getAquaTreeFileName, getHost, getPort} from '../utils/api_utils';
 import {fetchAquatreeFoUser} from '../utils/revisions_utils';
 import {SYSTEM_WALLET_ADDRESS} from '../models/constants';
 import path from 'path';
@@ -132,6 +132,76 @@ export default async function systemController(fastify: FastifyInstance) {
         let displayData = await fetchAquatreeFoUser(url, trees)
 
         return reply.code(200).send({ data: deleteChildrenFieldFromAquaTrees(displayData) })
+    });
+
+    fastify.get('/system/aqua_tree/names', async (request, reply) => {
+
+        // fetch all from latetst
+        let trees: {
+            hash: string;
+            user: string;
+            template_id: string | null;
+        }[] = await prisma.latest.findMany({
+            where: {
+                user: SYSTEM_WALLET_ADDRESS
+            }
+        });
+
+           // Get the host from the request headers
+        const host = request.headers.host || `${getHost()}:${getPort()}`;
+
+         // Get the protocol (http or https)
+        const protocol = request.protocol || 'https'
+
+        // Construct the full URL
+        const url = `${protocol}://${host}`;
+
+        const metamaskAddress = request.headers['metamask_address'];
+        if (!metamaskAddress || typeof metamaskAddress !== 'string' || metamaskAddress.trim() === '') {
+
+             // throw Error(`Fetching AquaTree for user ${metamaskAddress} with url ${url}  -- ${JSON.stringify(trees, null, 4)}`)
+        let displayData = await fetchAquatreeFoUser(url, trees)
+            return reply.code(200).send({ data: displayData });
+
+        } else {
+
+            // throw Error(`Metamask address is not provided or is invalid ${metamaskAddress}`);
+            let data = await prisma.latest.findMany({
+                where: {
+                    AND: {
+                        user: {
+                            contains: metamaskAddress,
+                            mode: 'insensitive'
+                        },
+                        template_id: {
+                            not: null
+                        }
+                    }
+                }
+            });
+
+            if (data.length > 0) {
+                trees.push(...data)
+            }
+        }
+
+        if (trees.length == 0) {
+            return reply.code(200).send({ data: [] });
+        }
+
+        // throw Error(`Fetching AquaTree for user ${metamaskAddress} with url ${url}  -- ${JSON.stringify(trees, null, 4)}`)
+        let displayData = await fetchAquatreeFoUser(url, trees)
+
+        const systemAquaTreeFileNames = displayData.map(e => {
+            try {
+                  return getAquaTreeFileName(e.aquaTree!)
+            } catch (e) {
+                  return ''
+            }
+      })
+
+
+        return reply.code(200).send({ data: systemAquaTreeFileNames })
     });
 
 }

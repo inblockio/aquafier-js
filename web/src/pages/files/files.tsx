@@ -253,7 +253,6 @@ const FilesPage = () => {
             await filesForUpload(selectedFiles)
             // Clear the file input immediately after processing
             clearFileInput()
-
       }
 
       const processUploadQueue = async (uploads: UploadStatus[]) => {
@@ -442,9 +441,6 @@ const FilesPage = () => {
                   </div>
 
             }
-            // if (files.status === 'error') {
-            //    return   <div className="text-center text-red-500">Error loading files. Please try again.</div>
-            // }
 
             if (files.status === 'error') {
                   if (!showError) {
@@ -471,18 +467,19 @@ const FilesPage = () => {
             }
 
 
-            // return <>
-            //       data {files.fileData.length}--{JSON.stringify(files.pagination)}
-            // </>
-
-            return <FilesList selectedFiles={[]} activeFile={null} showFileActions={true} showCheckbox={false} showHeader={true} onFileDeSelected={() => { }} onFileSelected={() => {
-
-            }} />
-
-
-
-
+            return (
+                  <FilesList
+                        selectedFiles={[]}
+                        activeFile={null}
+                        showFileActions={true}
+                        showCheckbox={false}
+                        showHeader={true}
+                        onFileDeSelected={() => { }} onFileSelected={() => {
+                        }}
+                  />
+            )
       }
+
       return (
             <div className="w-full max-w-full box-border overflow-x-hidden">
                   {/* Action Bar */}
@@ -512,9 +509,6 @@ const FilesPage = () => {
                                           <Plus className="w-4 h-4" />
                                           <span>Document Signature </span>
                                     </Button>
-
-
-
                                     <ClaimTypesDropdownButton />
                                     <Button
                                           className="flex items-center gap-1 sm:gap-2 text-gray-700 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer whitespace-nowrap shadow-sm"
@@ -557,12 +551,6 @@ const FilesPage = () => {
                                                                               let newFilesList = filesListForUpload.filter((item2) => item2.file.name != item.file.name)
                                                                               setFilesListForUpload(newFilesList)
                                                                         }}
-                                                                        // uploadedIndexes={[]}
-                                                                        // updateUploadedIndex={index => {
-                                                                        //       setFilesListForUpload(prev => prev.filter((_, i) => i !== index))
-                                                                        //       clearFileInput() // Clear file input after removal
-                                                                        // }}
-                                                                        // fileIndex={index}
                                                                         autoUpload={false}
                                                                   />
                                                             ) : null}
@@ -575,12 +563,6 @@ const FilesPage = () => {
                                                                               let newFilesList = filesListForUpload.filter((item2) => item2.file.name != item.file.name)
                                                                               setFilesListForUpload(newFilesList)
                                                                         }}
-                                                                        // uploadedIndexes={[]}
-                                                                        // updateUploadedIndex={index => {
-                                                                        //       setFilesListForUpload(prev => prev.filter((_, i) => i !== index))
-                                                                        //       clearFileInput() // Clear file input after removal
-                                                                        // }}
-                                                                        // fileIndex={index}
                                                                         autoUpload={false}
                                                                   />
                                                             ) : null}
@@ -593,16 +575,6 @@ const FilesPage = () => {
                                                                               let newFilesList = filesListForUpload.filter((item2) => item2.file.name != item.file.name)
                                                                               setFilesListForUpload(newFilesList)
                                                                         }}
-                                                                        // uploadedIndexes={[]}
-                                                                        // updateUploadedIndex={index => {
-                                                                        //       if (fileData.isLoading) {
-                                                                        //             toast.info('File is uploading, please wait')
-                                                                        //             return
-                                                                        //       }
-                                                                        //       setFilesListForUpload(prev => prev.filter((_, i) => i !== index))
-                                                                        //       clearFileInput() // Clear file input after removal
-                                                                        // }}
-                                                                        // fileIndex={index}
                                                                         autoUpload={false}
                                                                   />
                                                             ) : null}
