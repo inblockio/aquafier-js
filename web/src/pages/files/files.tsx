@@ -481,9 +481,9 @@ const FilesPage = () => {
       return (
             <div className="w-full max-w-full box-border overflow-x-hidden">
                   {/* Action Bar */}
-                  <div className="border-b border-gray-100 px-2 sm:px-6 pt-2 overflow-hidden w-full max-w-full">
-                        <div className="w-full overflow-x-auto pb-2">
-                              <div className="flex items-center gap-2 sm:gap-4 flex-nowrap min-w-max">
+                  <div className="border-b border-gray-100 px-0 sm:px-4 pt-2 max-w-full">
+                        <div className="w-full">
+                              <div className="pb-2 flex items-center gap-2 sm:gap-4 px-2 flex-nowrap w-full overflow-x-auto">
                                     <Button
                                           data-testid="file-upload-dropzone"
                                           className="flex items-center gap-1 sm:gap-2 text-white px-3 sm:px-5 py-2 sm:py-3 rounded-md text-xs sm:text-sm font-medium hover:brightness-90 transition-all cursor-pointer whitespace-nowrap shadow-sm"

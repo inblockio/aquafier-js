@@ -37,7 +37,7 @@ export default function NewShadcnLayoutWithSidebar() {
                               <ConnectWalletPage />
                         </>
                   ) : (
-                        <SidebarProvider>
+                        <SidebarProvider className='overflow-x-hidden'>
                               <WebsocketFragment />
                               <AppSidebar className="hidden md:block" />
                               <SidebarInset>
@@ -77,7 +77,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                                 </div>
                                           </div>
                                     </header>
-                                    <div className="flex-1 w-full max-w-full overflow-hidden px-2">
+                                    <div className="flex- w-full min-w-0 overflow-x-hidden px-1">
                                           <Toaster position="top-center" richColors />
                                           <Outlet />
                                     </div>
