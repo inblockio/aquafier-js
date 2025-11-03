@@ -152,7 +152,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
             }
       }, [JSON.stringify(Object.keys(selectedFileInfo?.aquaTree?.revisions || {})), deletedRevisions.length])
       return (
-            <div className=" h-full">
+            <div className="h-auto md:h-full">
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-full">
                         <div className="md:col-span-8 flex flex-col min-h-0 h-full">
                               <div className="h-full rounded-2xl bg-gray-100">
@@ -193,8 +193,8 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                               </div>
                         </div>
                         <div className="md:col-span-4 flex flex-col min-h-0 border-l border-gray-300 overflow-y-auto">
-                              <div className="flex flex-col h-full px-4 pb-5">
-                                    <div className="space-y-4 mb-4">
+                              <div className="flex flex-col h-full px-1 md:px-4 pb-2 gap-4">
+                                    <div className="space-y-4">
                                           <CustomAlert
                                                 type={displayColorBasedOnVerificationAlert(verificationResults)}
                                                 title={displayBasedOnVerificationStatusText(verificationResults)}
@@ -240,7 +240,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                                           </CollapsibleContent>
                                     </Collapsible>
                                     {/* <LogViewer logs={allLogs} className="mt-4" /> */}
-                                    <div className="!h-[40px] !min-h-[40px]" />
+                                    {/* <div className="!h-[40px] !min-h-[40px]" /> */}
                               </div>
                         </div>
                   </div>
