@@ -293,7 +293,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             setIsLoading(true);
             try {
                   let _files: ApiFileInfo[] = []
-                  let _systemWorkflowNames: string[] = []
+                  let systemWorkflowNames: string[] = await loadSystemAquaFileNames()
                   if (files) {
                         _files = files
                   } else {
@@ -311,14 +311,12 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                               },
                               params
                         })
-                        const systemWorkflowNamesPromise = loadSystemAquaFileNames()
-                        const [filesDataQuery, systemWorkflowNames] = await Promise.all([filesDataQueryPromise, systemWorkflowNamesPromise])
+                        const [filesDataQuery] = await Promise.all([filesDataQueryPromise])
                         const response = filesDataQuery.data
                         const aquaTrees = response.aquaTrees
                         _files = aquaTrees
-                        _systemWorkflowNames = systemWorkflowNames
                   }
-                  processFilesToGetWorkflows(_files, _systemWorkflowNames);
+                  processFilesToGetWorkflows(_files, systemWorkflowNames);
             } catch (error) {
                   console.error('Failed to load workflows:', error);
                   // Consider setting an error state here
@@ -756,7 +754,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             if (walletAddress && session?.nonce) {
                   loadWorkflows()
             }
-      }, [walletAddress, session?.nonce])
+      }, [walletAddress, session?.nonce, files])
 
       if (claims.length === 0 && !isLoading) {
             return (
