@@ -75,69 +75,84 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
 
     return (
         <div className="flex flex-col gap-4 pb-4">
-            {
-                isSmallScreen ? (
-                    <div className="space-y-4">
-                        {
-                            loading ? (
-                                <div className="flex items-center justify-center py-12">
-                                <div className="text-gray-500">Loading...</div>
-                            </div>
-                            ):null
-                        }
-                        {!loading && files.length > 0 ? (
-                            files
-                                .sort((a, b) => {
-                                    const filenameA = getAquaTreeFileName(a.aquaTree!)
-                                    const filenameB = getAquaTreeFileName(b.aquaTree!)
-                                    return filenameA.localeCompare(filenameB)
-                                })
-                                .map((file, index) => (
-                                    <div key={`mobile-${index}`}>
-                                        <FilesListItem
-                                            showWorkFlowsOnly={false}
-                                            // key={`mobile-item-${index}`}
-                                            index={index}
-                                            file={file}
-                                            systemFileInfo={[]}
-                                            backendUrl={backend_url}
-                                            nonce={session?.nonce ?? ''}
-                                            viewMode={'card'}
-                                            filesListProps={filesListProps}
-                                            systemAquaFileNames={systemAquaFileNames}
-                                        />
-                                    </div>
-                                ))
-                        ): null}
-                        {!loading && files.length === 0 ? (
-                            <div className="flex items-center justify-center py-12">
-                                <div className="text-gray-500">No files found</div>
-                            </div>
-                        ): null}
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto md:h-[calc(100vh-350px)] overflow-y-auto">
-                        {view === 'table' ? (
-                            <RenderFilesList
-                                filteredFiles={files}
-                                filesListProps={filesListProps}
-                                view={view}
-                                systemAquaFileNames={systemAquaFileNames}
-                                loading={loading}
-                            />
-                        ) : (
-                            <RenderFilesListCard
-                                filteredFiles={files}
-                                filesListProps={filesListProps}
-                                view={view}
-                                loading={loading}
-                                systemAquaFileNames={systemAquaFileNames}
-                            />
-                        )}
-                    </div>
+            {!filesListProps.showFileActions ? (
+                <div className="overflow-x-auto md:h-[calc(100vh-350px)] overflow-y-auto">
+                    <RenderFilesList
+                        filteredFiles={files}
+                        filesListProps={filesListProps}
+                        view={view}
+                        systemAquaFileNames={systemAquaFileNames}
+                        loading={loading}
+                    />
+                </div>
 
-                )
-            }
+            ) : (
+                <>
+                    {
+                        isSmallScreen ? (
+                            <div className="space-y-4">
+                                {
+                                    loading ? (
+                                        <div className="flex items-center justify-center py-12">
+                                            <div className="text-gray-500">Loading...</div>
+                                        </div>
+                                    ) : null
+                                }
+                                {!loading && files.length > 0 ? (
+                                    files
+                                        .sort((a, b) => {
+                                            const filenameA = getAquaTreeFileName(a.aquaTree!)
+                                            const filenameB = getAquaTreeFileName(b.aquaTree!)
+                                            return filenameA.localeCompare(filenameB)
+                                        })
+                                        .map((file, index) => (
+                                            <div key={`mobile-${index}`}>
+                                                <FilesListItem
+                                                    showWorkFlowsOnly={false}
+                                                    // key={`mobile-item-${index}`}
+                                                    index={index}
+                                                    file={file}
+                                                    systemFileInfo={[]}
+                                                    backendUrl={backend_url}
+                                                    nonce={session?.nonce ?? ''}
+                                                    viewMode={'card'}
+                                                    filesListProps={filesListProps}
+                                                    systemAquaFileNames={systemAquaFileNames}
+                                                />
+                                            </div>
+                                        ))
+                                ) : null}
+                                {!loading && files.length === 0 ? (
+                                    <div className="flex items-center justify-center py-12">
+                                        <div className="text-gray-500">No files found</div>
+                                    </div>
+                                ) : null}
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto md:h-[calc(100vh-350px)] overflow-y-auto">
+                                {view === 'table' ? (
+                                    <RenderFilesList
+                                        filteredFiles={files}
+                                        filesListProps={filesListProps}
+                                        view={view}
+                                        systemAquaFileNames={systemAquaFileNames}
+                                        loading={loading}
+                                    />
+                                ) : (
+                                    <RenderFilesListCard
+                                        filteredFiles={files}
+                                        filesListProps={filesListProps}
+                                        view={view}
+                                        loading={loading}
+                                        systemAquaFileNames={systemAquaFileNames}
+                                    />
+                                )}
+                            </div>
+
+                        )
+                    }
+                </>
+            )}
             <CustomPagination
                 currentPage={currentPage}
                 totalPages={pagination?.totalPages ?? 1}

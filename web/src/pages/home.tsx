@@ -24,7 +24,6 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Link } from 'react-router-dom'
-import SyntaxHighlighter from 'react-syntax-highlighter'
 
 
 const HeroSection = () => (
@@ -149,49 +148,37 @@ const FeaturesSection = () => (
       </section>
 )
 
-const aquaTreeJSON = `{
-  "revisions": {
-    "0x54be8a35206dea3cf153ee1152dfb258b4e6af5d30c68ad2f060b9ab275d3065": {
-      "file_hash": "a9041193cecffad533b8eaee36f419a1f2406fc8e6a01c2014d4ee7002723c42",
-      "file_nonce": "64156222dc68977bb36dde2e1cd2a294749f0c6efb88742bf8cb2e4b32b88724",
-      "forms_amount": "0.3",
-      "forms_currency": "ETH",
-      "forms_receiver": "0x4a79b0d4b8feda7af5902da2d15d73a7e5fdefd4",
-      "forms_sender": "0xbdc64c49bf736cfe1b8233b083d3d632f26feb27",
-      "leaves": [
-        "a5dd17a31728982d7d349d94d2efb7f0f7dc582a01ada0a1b5602caffd7edbed",
-        "b456e8f4eb7373ea03584cb9ebd66d2c1c023dada91282d6ff6311af7c40e94b",
-        "130625d45114805fdfe7b6c84635ccf20d6284039f1385a1196f492eb888d26b",
-        "831d23b3883442d5d261da2ac9d41339b12bc9052a1ccef27917cb570cbc0232",
-        "fee6445323587d801908747e6e5c526a4feda60ae958994805761810a1b76eba",
-        "6e44f260490db970aa88fc21969f9018efb09b68e2e105765740fde4c82fff8e",
-        "b63814557ff2b5f44b0e7b467000e53cf79b33f46279bfb43dc383b7979d4501",
-        "d781acf7ba880ecae581ffd8debcb4f5cb430bc2f237e27a6098471a9f7ffa60",
-        "43fcaef3dc4b2a2d0550543b638048edcfb710da9276da109a9e011ed1a53ed1",
-        "39ccd407bb105ed3be74df4a546d9b10c4f6c80e48b559102b04fa2b29aa83b4"
-      ],
-      "local_timestamp": "20250424133946",
-      "previous_verification_hash": "",
-      "revision_type": "form",
-      "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: tree"
-    }
-  },
-  "file_index": {
-    "0x54be8a35206dea3cf153ee1152dfb258b4e6af5d30c68ad2f060b9ab275d3065": "./cheque.json"
-  },
-  "tree": {
-    "hash": "0x54be8a35206dea3cf153ee1152dfb258b4e6af5d30c68ad2f060b9ab275d3065",
-    "children": []
-  },
-  "treeMapping": {
-    "paths": {
-      "0x54be8a35206dea3cf153ee1152dfb258b4e6af5d30c68ad2f060b9ab275d3065": [
-        "0x54be8a35206dea3cf153ee1152dfb258b4e6af5d30c68ad2f060b9ab275d3065"
-      ]
-    },
-    "latestHash": "0x54be8a35206dea3cf153ee1152dfb258b4e6af5d30c68ad2f060b9ab275d3065"
-  }
-}`
+const aquaTreeJSON = JSON.stringify({
+      "revisions": {
+        "0x54be8a35206dea3cf153ee1152dfb258b4e6af5d30c68ad2f060b9ab275d3065": {
+          "file_hash": "a9041193cecffad533b8eaee36f419a1f2406fc8e6a01c2014d4ee7002723c42",
+          "file_nonce": "64156222dc68977bb36dde2e1cd2a294749f0c6efb88742bf8cb2e4b32b88724",
+          "forms_amount": "0.3",
+          "forms_currency": "ETH",
+          "forms_receiver": "0x4a79b0d4b8feda7af5902da2d15d73a7e5fdefd4",
+          "forms_sender": "0xbdc64c49bf736cfe1b8233b083d3d632f26feb27",
+          "leaves": [
+            "a5dd17a31728982d7d349d94d2efb7f0f7dc582a01ada0a1b5602caffd7edbed",
+            "b456e8f4eb7373ea03584cb9ebd66d2c1c023dada91282d6ff6311af7c40e94b",
+            "130625d45114805fdfe7b6c84635ccf20d6284039f1385a1196f492eb888d26b",
+            "831d23b3883442d5d261da2ac9d41339b12bc9052a1ccef27917cb570cbc0232",
+            "fee6445323587d801908747e6e5c526a4feda60ae958994805761810a1b76eba",
+            "6e44f260490db970aa88fc21969f9018efb09b68e2e105765740fde4c82fff8e",
+            "b63814557ff2b5f44b0e7b467000e53cf79b33f46279bfb43dc383b7979d4501",
+            "d781acf7ba880ecae581ffd8debcb4f5cb430bc2f237e27a6098471a9f7ffa60",
+            "43fcaef3dc4b2a2d0550543b638048edcfb710da9276da109a9e011ed1a53ed1",
+            "39ccd407bb105ed3be74df4a546d9b10c4f6c80e48b559102b04fa2b29aa83b4"
+          ],
+          "local_timestamp": "20250424133946",
+          "previous_verification_hash": "",
+          "revision_type": "form",
+          "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: tree"
+        }
+      },
+      "file_index": {
+        "0x54be8a35206dea3cf153ee1152dfb258b4e6af5d30c68ad2f060b9ab275d3065": "./cheque.json"
+      }
+    }, null, 4)
 
 const HowItWorksSection = () => (
       <section id="how-it-works" className="py-20 md:py-28 bg-orange-50/20 dark:bg-orange-900/10 relative overflow-hidden">
@@ -261,19 +248,13 @@ const HowItWorksSection = () => (
                                                 </div>
                                                 <div className="text-orange-300 text-xs">aquatree.json</div>
                                           </div>
-                                          {/* <pre className="text-orange-100">
-                <code className="language-json">{aquaTreeJSON}</code>
-              </pre> */}
+
                                           <div className="box-border h-[380px] overflow-y-auto">
-                                                <SyntaxHighlighter
-                                                      language="json"
-                                                      wrapLines={true}
-                                                      customStyle={{
-                                                            padding: 'calc(var(--spacing) * 6)',
-                                                      }}
-                                                >
-                                                      {aquaTreeJSON}
-                                                </SyntaxHighlighter>
+                                                <pre className="text-orange-100 p-6">
+                                                      <code className="language-json" style={{
+                                                            letterSpacing: "1px"
+                                                      }}>{aquaTreeJSON}</code>
+                                                </pre>
                                           </div>
                                     </div>
                               </div>

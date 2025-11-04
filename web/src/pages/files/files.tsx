@@ -481,9 +481,9 @@ const FilesPage = () => {
       return (
             <div className="w-full max-w-full box-border overflow-x-hidden">
                   {/* Action Bar */}
-                  <div className="border-b border-gray-100 px-2 sm:px-6 pt-2 overflow-hidden w-full max-w-full">
-                        <div className="w-full overflow-x-auto pb-2">
-                              <div className="flex items-center gap-2 sm:gap-4 flex-nowrap min-w-max">
+                  <div className="border-b border-gray-100 px-0 sm:px-4 pt-2 max-w-full">
+                        <div className="w-full">
+                              <div className="pb-2 flex items-center gap-2 sm:gap-4 px-2 flex-nowrap w-full overflow-x-auto">
                                     <Button
                                           data-testid="file-upload-dropzone"
                                           className="flex items-center gap-1 sm:gap-2 text-white px-3 sm:px-5 py-2 sm:py-3 rounded-md text-xs sm:text-sm font-medium hover:brightness-90 transition-all cursor-pointer whitespace-nowrap shadow-sm"
@@ -639,7 +639,7 @@ const FilesPage = () => {
                               }
                         }}
                   >
-                        <DialogContent showCloseButton={false} className="!max-w-[95vw] !w-[95vw] !h-auto md:!h-[95vh] max-h-[95vh] overflow-y-auto !p-0 gap-0 flex flex-col">
+                        <DialogContent showCloseButton={false} className="!max-w-[96vw] !w-[96vw] !h-[96vh] md:!h-[96vh] max-h-[96vh] !p-0 gap-0 flex flex-col">
                               {/* Close Button */}
                               <div className="absolute top-4 right-4 z-10">
                                     <Button
@@ -659,10 +659,18 @@ const FilesPage = () => {
                                     <div className="flex flex-col flex-1 h-[calc(100%-60px)]">
                                           {/* Header - fixed height */}
                                           <DialogHeader className="!h-[60px] !min-h-[60px] !max-h-[60px] flex justify-center px-6">
-                                                <DialogTitle style={{ textAlign: 'start' }}>{getAquaTreeFileName(selectedFileInfo.aquaTree!)}</DialogTitle>
+                                                <DialogTitle style={{
+                                                       textAlign: 'start',
+                                                       maxWidth: '90%',
+                                                       overflow: 'hidden',
+                                                       textOverflow: 'ellipsis',
+                                                       whiteSpace: 'nowrap'
+                                                 }}>
+                                                      {getAquaTreeFileName(selectedFileInfo.aquaTree!)}
+                                                 </DialogTitle>
                                           </DialogHeader>
                                           {/* Content - takes all available space */}
-                                          <div className="h-auto md:h-[calc(100%-60px)]">
+                                          <div className="h-[calc(100%-60px)] overflow-y-auto">
                                                 <CompleteChainView
                                                       callBack={function (_drawerStatus: IDrawerStatus): void {
                                                             setDrawerStatus(_drawerStatus)
@@ -677,7 +685,6 @@ const FilesPage = () => {
                                     <Button
                                           variant="outline"
                                           className="bg-black text-white-500 hover:bg-black-700 text-white cursor-pointer"
-                                          style={{}}
                                           onClick={() => {
                                                 setSelectedFileInfo(null)
                                                 setOpenDialog(null)

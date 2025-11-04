@@ -63,7 +63,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
             try {
                   const aquafier = new Aquafier()
                   setLinking(true)
-                
+
                   const aquaTreeWrapper: AquaTreeWrapper = {
                         aquaTree: item.aquaTree!,
                         revision: '',
@@ -83,7 +83,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                               toast.error(`An error occurred when linking`)
                               return
                         }
-                     
+
                         // reassign to ensure we keep linking to the latest version
                         aquaTreeWrapper.aquaTree = result.data.aquaTree!!
 
@@ -130,9 +130,9 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
       const refetchAllUserFiles = async () => {
             // refetch all the files to ensure the front end state is the same as the backend
             try {
-                 
-                              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+
+                  const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                  setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
             } catch (e) {
                   toast.error('Error updating files')
@@ -215,17 +215,19 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
 
                                                       {/* File List */}
                                                       <div className="overflow-hidden flex-1 px-2">
-                                                            {/* <div className="border border-gray-200 rounded-lg overflow-hidden flex-1 px-2"> */}
-                                                            {/* <div className="max-h-96 min-h-80 overflow-y-auto"> */}
 
-                                                            <FilesList showFileActions={false} selectedFiles={linkItems} activeFile={item} showCheckbox={true} showHeader={true} onFileDeSelected={(file) => {
-
-                                                                  let newData = linkItems.filter((f: ApiFileInfo) => getGenesisHash(f.aquaTree!) !== getGenesisHash(file.aquaTree!));
-                                                                  setLinkItems(newData)
-                                                            }} onFileSelected={(file) => {
-                                                                  setLinkItems([...linkItems, file])
-                                                            }} />
-                                                            {/* </div> */}
+                                                            <FilesList
+                                                                  showFileActions={false}
+                                                                  selectedFiles={linkItems} activeFile={item}
+                                                                  showCheckbox={true}
+                                                                  showHeader={true}
+                                                                  onFileDeSelected={(file) => {
+                                                                        let newData = linkItems.filter((f: ApiFileInfo) => getGenesisHash(f.aquaTree!) !== getGenesisHash(file.aquaTree!));
+                                                                        setLinkItems(newData)
+                                                                  }} onFileSelected={(file) => {
+                                                                        setLinkItems([...linkItems, file])
+                                                                  }}
+                                                            />
                                                       </div>
                                                 </div>
 

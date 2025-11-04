@@ -36,7 +36,6 @@ export default function FilesListItem({
       showWorkFlowsOnly,
       file,
       index,
-      systemFileInfo,
       systemAquaFileNames,
       backendUrl,
       nonce,
@@ -58,28 +57,35 @@ export default function FilesListItem({
       const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined)
       const [workflowInfo, setWorkFlowInfo] = useState<{ isWorkFlow: boolean; workFlow: string } | undefined>(undefined)
 
-      useEffect(() => {
+      const prepareAquaTreeForRendering = () => {
+            if (systemAquaFileNames.length === 0) {
+                  return
+            }
             const fileObject = getAquaTreeFileObject(file)
             setCurrentFileObject(fileObject)
             const workFlow = isWorkFlowData(file.aquaTree!, systemAquaFileNames)
             setWorkFlowInfo(workFlow)
-      }, [])
+      }
 
       useEffect(() => {
-            const someData = systemFileInfo.map(e => {
-                  try {
-                        return getAquaTreeFileName(e.aquaTree!)
-                  } catch (e) {
-                        return ''
-                  }
-            })
+            prepareAquaTreeForRendering()
+      }, [systemAquaFileNames, file])
 
-            const fileObject = getAquaTreeFileObject(file)
-            setCurrentFileObject(fileObject)
-            const workFlow = isWorkFlowData(file.aquaTree!, someData)
+      // useEffect(() => {
+      // const someData = systemFileInfo.map(e => {
+      //       try {
+      //             return getAquaTreeFileName(e.aquaTree!)
+      //       } catch (e) {
+      //             return ''
+      //       }
+      // })
 
-            setWorkFlowInfo(workFlow)
-      }, [file, systemFileInfo])
+      // const fileObject = getAquaTreeFileObject(file)
+      // setCurrentFileObject(fileObject)
+      // const workFlow = isWorkFlowData(file.aquaTree!, someData)
+
+      // setWorkFlowInfo(workFlow)
+      // }, [file, systemAquaFileNames])
 
       const getFileInfo = () => {
             if (currentFileObject) {
@@ -408,8 +414,8 @@ export default function FilesListItem({
 
 
                   if (creatorWallet) {
-return <>
-                              
+                        return <>
+
                               <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
                                     <p className="text-xs ">Profile Owner   {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
                                     <WalletAdrressClaim walletAddress={creatorWallet} />
@@ -563,7 +569,7 @@ return <>
 
 
             if (workflowInfo?.workFlow == "user_signature") {
- let genesisHash = getGenesisHash(file.aquaTree!)
+                  let genesisHash = getGenesisHash(file.aquaTree!)
                   if (!genesisHash) {
                         return <div />
                   }
@@ -627,7 +633,7 @@ return <>
                                     )}
                               </div>
                         </div>
- 
+
                         {/* File details grid */}
                         <div className="grid grid-cols-2 gap-4 mb-6">
                               <div className="space-y-1">
@@ -682,5 +688,5 @@ return <>
       }
 
       return null
-   
+
 }

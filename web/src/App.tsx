@@ -121,14 +121,14 @@ function App() {
         <BrowserRouter>
             <LoadConfiguration />
             <ErrorBoundary>
-            <Routes>
-                <Route path="/" element={<TailwindMainLayout />}>
+                <Routes>
+                    <Route path="/" element={<TailwindMainLayout />}>
                         <Route index element={<Home />} />
                         <Route path="terms-and-conditions" element={<TermsAndConditions />} />
                         <Route path="privacy-policy" element={<PrivacyPolicy />} />
                     </Route>
 
-                <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
+                    <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
 
                         <Route index element={<FilesPage />} />
                         <Route path="templates" element={<TemplatesPage />} />
@@ -156,8 +156,8 @@ function App() {
                         <Route path="loading" element={<Loading />} />
                     </Route>
 
-                <Route path="*" element={<PageNotFound />} />
-            </Routes>
+                    <Route path="*" element={<PageNotFound />} />
+                </Routes>
             </ErrorBoundary>
         </BrowserRouter>
     )

@@ -21,8 +21,8 @@ import ShareComponent from '@/components/aqua_chain_actions/Share_component'
 export default function NewShadcnLayoutWithSidebar() {
       const {
             session,
-            selectedFileInfo,
             setSelectedFileInfo,
+            selectedFileInfo,
             openDialog,
             setOpenDialog,
             formTemplates
@@ -37,7 +37,7 @@ export default function NewShadcnLayoutWithSidebar() {
                               <ConnectWalletPage />
                         </>
                   ) : (
-                        <SidebarProvider>
+                        <SidebarProvider className='overflow-x-hidden'>
                               <WebsocketFragment />
                               <AppSidebar className="hidden md:block" />
                               <SidebarInset>
@@ -77,7 +77,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                                 </div>
                                           </div>
                                     </header>
-                                    <div className="flex-1 w-full max-w-full overflow-hidden px-2">
+                                    <div className="flex- w-full min-w-0 overflow-x-hidden px-1">
                                           <Toaster position="top-center" richColors />
                                           <Outlet />
                                     </div>
@@ -155,10 +155,10 @@ export default function NewShadcnLayoutWithSidebar() {
                         <DialogContent
                               className={
                                     openDialog?.dialogType === 'form_template_editor' ?
-                                          "[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] sm:!max-w-[95vw] sm:!w-[95vw] sm:h-[95vh] sm:max-h-[95vh] flex flex-col" :
+                                          "[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[98vh] max-h-[98vh] sm:!max-w-[95vw] sm:!w-[95vw] sm:h-[98vh] sm:max-h-[98vh] flex flex-col" :
                                           openDialog?.dialogType === 'identity_attestation' ?
                                                 "[&>button]:hidden !max-w-[65vw] !w-[65vw] h-[85vh] max-h-[85vh] sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[85vh] sm:max-h-[85vh] flex flex-col" :
-                                                "[&>button]:hidden sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[65vh] sm:max-h-[65vh] !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-0 gap-0"
+                                                "[&>button]:hidden sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[65vh] sm:max-h-[65vh] !max-w-[95vw] !w-[95vw] h-[98vh] max-h-[95vh] flex flex-col p-0 gap-0"
                               }>
                               <div className="absolute top-4 right-4">
                                     <Button
@@ -269,10 +269,31 @@ export default function NewShadcnLayoutWithSidebar() {
                         </DialogContent>
                   </Dialog>
 
-                  {/* Enhanced Share Dialog */}
-                  {openDialog?.dialogType === 'share_dialog' && selectedFileInfo && (
-                        <ShareComponent />
-                  )}
+
+                  <Dialog
+                        open={openDialog !== null && openDialog.isOpen && openDialog.dialogType == 'share_dialog'}
+                        onOpenChange={openState => {
+                              // setIsSelectedFileDialogOpen(openState)
+                              if (!openState) {
+                                    setSelectedFileInfo(null)
+                                    setOpenDialog(null)
+                              }
+                        }}
+                  >
+                        <DialogContent showCloseButton={false} className="!max-w-[96vw] !w-[96vw] md:!w-[65vw] !h-[98vh] md:!h-[75vh] max-h-[98vh] !p-0 gap-0 flex flex-col overflow-hidden">
+                              <div className="h-full">
+                                    {
+                                          selectedFileInfo ? (
+                                                <ShareComponent />
+                                          ) : (
+                                                <div className="h-full w-full flex items-center justify-center">
+                                                      <p className="text-center text-lg">No file selected</p>
+                                                </div>
+                                          )
+                                    }
+                              </div>
+                        </DialogContent>
+                  </Dialog>
             </>
       )
 }

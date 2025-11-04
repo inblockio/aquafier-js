@@ -174,7 +174,6 @@ const Footer = () => (
 
 const TailwindMainLayout = () => {
 
-
       const { webConfig } = useStore(appStore)
       // const [loadingConfig, setLoadingConfig] = useState(true)
 
@@ -296,8 +295,6 @@ const TailwindMainLayout = () => {
                                           </main>
                                           <Footer />
                                     </div>
-
-
                               </>
                   }
 

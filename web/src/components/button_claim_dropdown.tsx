@@ -3,6 +3,7 @@ import { ChevronDown, Globe, Mail, Phone, Plus, Scale, Signature, UserLock } fro
 import { createPortal } from 'react-dom';
 import appStore from '../store'
 import { useStore } from 'zustand'
+import { Button } from './ui/button';
 
 export default function ClaimTypesDropdownButton() {
   const { setOpenDialog, user_profile } = useStore(appStore)
@@ -155,7 +156,7 @@ export default function ClaimTypesDropdownButton() {
   return (
     <>
       <div className="relative inline-block text-left">
-        <button
+        <Button
           ref={buttonRef}
           type="button"
           className="flex items-center gap-1 sm:gap-2 text-white px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium hover:bg-gray-700 transition-colors cursor-pointer whitespace-nowrap shadow-sm"
@@ -171,7 +172,7 @@ export default function ClaimTypesDropdownButton() {
             className={`h-4 w-4 text-white transition-transform duration-200 ${isOpen ? 'rotate-180' : ''
               }`}
           />
-        </button>
+        </Button>
       </div>
 
       {typeof document !== 'undefined' && createPortal(dropdownContent, document.body)}
