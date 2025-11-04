@@ -470,7 +470,7 @@ if (hasProtocol && !isAllowed) {
             }
         }
     } else {
-        Logger.warn(`Assets path ${assetsPath} does not exist`)
+        // Logger.warn(`Assets path ${assetsPath} does not exist`)
     }
 
   let templateAquaTreeData = path.join(assetsPath, `${revisionDataPar.template_name}.json.aqua.json`); 

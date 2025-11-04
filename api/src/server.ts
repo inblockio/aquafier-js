@@ -100,13 +100,13 @@ function buildServer() {
         ...ensureDomainViewForCors(process.env.FRONTEND_URL),
     ]; // Allow your React app origins
 
-    Logger.info("Allowed CORS origins: ", JSON.stringify(corsAllowedOrigins, null, 2));
+    // Logger.info("Allowed CORS origins: ", JSON.stringify(corsAllowedOrigins, null, 2));
 
 
 // Remove duplicates using Set
     corsAllowedOrigins = [...new Set(corsAllowedOrigins.flat())];
 
-    Logger.info("Without duplicates Allowed CORS origins: ", JSON.stringify(corsAllowedOrigins, null, 2));
+    // Logger.info("Without duplicates Allowed CORS origins: ", JSON.stringify(corsAllowedOrigins, null, 2));
 
     // Register the CORS plugin
     fastify.register(cors, {

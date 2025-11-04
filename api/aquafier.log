@@ -1,0 +1,371 @@
+{"0":"10.0.32.1","@timestamp":"2025-11-04T16:25:24.977Z","ecs.version":"8.10.0","log.level":"info","message":"🔧 DNS servers set to:","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.357Z","ecs.version":"8.10.0","log.level":"info","message":"Allowed CORS origins: ","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.358Z","ecs.version":"8.10.0","log.level":"info","message":"Without duplicates Allowed CORS origins: ","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.425Z","dashboards":["https://aquafier.inblock.io","https://dev.inblock.io"],"ecs.version":"8.10.0","host":"localhost","log.level":"info","message":"Server started","port":3000,"service":"api","website":"https://aqua-protocol.org/"}
+{"@timestamp":"2025-11-04T16:25:25.484Z","ecs.version":"8.10.0","log.level":"info","message":"Assets path /home/dalmas/E/blockchain/aqua_protocol_v2/aqua_Web/api/assets","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.493Z","ecs.version":"8.10.0","log.level":"info","message":"file access_agreement.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.494Z","ecs.version":"8.10.0","log.level":"info","message":"file access_agreement.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.494Z","ecs.version":"8.10.0","log.level":"info","message":"file access_agreement_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.494Z","ecs.version":"8.10.0","log.level":"info","message":"file aqua_sign.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.494Z","ecs.version":"8.10.0","log.level":"info","message":"file aqua_sign.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.494Z","ecs.version":"8.10.0","log.level":"info","message":"file aqua_sign_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.494Z","ecs.version":"8.10.0","log.level":"info","message":"file cheque.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.494Z","ecs.version":"8.10.0","log.level":"info","message":"file cheque.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.494Z","ecs.version":"8.10.0","log.level":"info","message":"file cheque_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.494Z","ecs.version":"8.10.0","log.level":"info","message":"file dba_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.494Z","ecs.version":"8.10.0","log.level":"info","message":"file dba_claim.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.494Z","ecs.version":"8.10.0","log.level":"info","message":"file dba_claim_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.494Z","ecs.version":"8.10.0","log.level":"info","message":"file domain_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.494Z","ecs.version":"8.10.0","log.level":"info","message":"file domain_claim.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.494Z","ecs.version":"8.10.0","log.level":"info","message":"file domain_claim_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.494Z","ecs.version":"8.10.0","log.level":"info","message":"file email_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.494Z","ecs.version":"8.10.0","log.level":"info","message":"file email_claim.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.495Z","ecs.version":"8.10.0","log.level":"info","message":"file email_claim_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.495Z","ecs.version":"8.10.0","log.level":"info","message":"file identity_attestation.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.495Z","ecs.version":"8.10.0","log.level":"info","message":"file identity_attestation.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.495Z","ecs.version":"8.10.0","log.level":"info","message":"file identity_attestation_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.495Z","ecs.version":"8.10.0","log.level":"info","message":"file identity_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.495Z","ecs.version":"8.10.0","log.level":"info","message":"file identity_claim.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.495Z","ecs.version":"8.10.0","log.level":"info","message":"file identity_claim_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.495Z","ecs.version":"8.10.0","log.level":"info","message":"file phone_number_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.495Z","ecs.version":"8.10.0","log.level":"info","message":"file phone_number_claim.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.495Z","ecs.version":"8.10.0","log.level":"info","message":"file phone_number_claim_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.495Z","ecs.version":"8.10.0","log.level":"info","message":"file user_profile.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.495Z","ecs.version":"8.10.0","log.level":"info","message":"file user_profile.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.495Z","ecs.version":"8.10.0","log.level":"info","message":"file user_profile_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.495Z","ecs.version":"8.10.0","log.level":"info","message":"file user_signature.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.495Z","ecs.version":"8.10.0","log.level":"info","message":"file user_signature.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:25:25.495Z","ecs.version":"8.10.0","log.level":"info","message":"file user_signature_fields.json","service":"api"}
+{"0":"10.0.32.1","@timestamp":"2025-11-04T16:26:08.909Z","ecs.version":"8.10.0","log.level":"info","message":"🔧 DNS servers set to:","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.324Z","ecs.version":"8.10.0","log.level":"info","message":"Allowed CORS origins: ","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.324Z","ecs.version":"8.10.0","log.level":"info","message":"Without duplicates Allowed CORS origins: ","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.405Z","dashboards":["https://aquafier.inblock.io","https://dev.inblock.io"],"ecs.version":"8.10.0","host":"localhost","log.level":"info","message":"Server started","port":3000,"service":"api","website":"https://aqua-protocol.org/"}
+{"@timestamp":"2025-11-04T16:26:09.466Z","ecs.version":"8.10.0","log.level":"info","message":"Assets path /home/dalmas/E/blockchain/aqua_protocol_v2/aqua_Web/api/assets","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.470Z","ecs.version":"8.10.0","log.level":"info","message":"file access_agreement.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.470Z","ecs.version":"8.10.0","log.level":"info","message":"file access_agreement.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.470Z","ecs.version":"8.10.0","log.level":"info","message":"file access_agreement_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.470Z","ecs.version":"8.10.0","log.level":"info","message":"file aqua_sign.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.470Z","ecs.version":"8.10.0","log.level":"info","message":"file aqua_sign.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.470Z","ecs.version":"8.10.0","log.level":"info","message":"file aqua_sign_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.470Z","ecs.version":"8.10.0","log.level":"info","message":"file cheque.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.470Z","ecs.version":"8.10.0","log.level":"info","message":"file cheque.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file cheque_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file dba_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file dba_claim.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file dba_claim_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file domain_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file domain_claim.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file domain_claim_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file email_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file email_claim.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file email_claim_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file identity_attestation.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file identity_attestation.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file identity_attestation_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file identity_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file identity_claim.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file identity_claim_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file phone_number_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file phone_number_claim.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file phone_number_claim_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file user_profile.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file user_profile.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.471Z","ecs.version":"8.10.0","log.level":"info","message":"file user_profile_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.472Z","ecs.version":"8.10.0","log.level":"info","message":"file user_signature.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.472Z","ecs.version":"8.10.0","log.level":"info","message":"file user_signature.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:09.472Z","ecs.version":"8.10.0","log.level":"info","message":"file user_signature_fields.json","service":"api"}
+{"0":"10.0.32.1","@timestamp":"2025-11-04T16:26:52.302Z","ecs.version":"8.10.0","log.level":"info","message":"🔧 DNS servers set to:","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.763Z","dashboards":["https://aquafier.inblock.io","https://dev.inblock.io"],"ecs.version":"8.10.0","host":"localhost","log.level":"info","message":"Server started","port":3000,"service":"api","website":"https://aqua-protocol.org/"}
+{"@timestamp":"2025-11-04T16:26:52.818Z","ecs.version":"8.10.0","log.level":"info","message":"Assets path /home/dalmas/E/blockchain/aqua_protocol_v2/aqua_Web/api/assets","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.821Z","ecs.version":"8.10.0","log.level":"info","message":"file access_agreement.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.822Z","ecs.version":"8.10.0","log.level":"info","message":"file access_agreement.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.822Z","ecs.version":"8.10.0","log.level":"info","message":"file access_agreement_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.822Z","ecs.version":"8.10.0","log.level":"info","message":"file aqua_sign.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.822Z","ecs.version":"8.10.0","log.level":"info","message":"file aqua_sign.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.822Z","ecs.version":"8.10.0","log.level":"info","message":"file aqua_sign_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.822Z","ecs.version":"8.10.0","log.level":"info","message":"file cheque.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.823Z","ecs.version":"8.10.0","log.level":"info","message":"file cheque.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.823Z","ecs.version":"8.10.0","log.level":"info","message":"file cheque_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.823Z","ecs.version":"8.10.0","log.level":"info","message":"file dba_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.823Z","ecs.version":"8.10.0","log.level":"info","message":"file dba_claim.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.823Z","ecs.version":"8.10.0","log.level":"info","message":"file dba_claim_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.823Z","ecs.version":"8.10.0","log.level":"info","message":"file domain_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.823Z","ecs.version":"8.10.0","log.level":"info","message":"file domain_claim.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.823Z","ecs.version":"8.10.0","log.level":"info","message":"file domain_claim_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.823Z","ecs.version":"8.10.0","log.level":"info","message":"file email_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.823Z","ecs.version":"8.10.0","log.level":"info","message":"file email_claim.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.823Z","ecs.version":"8.10.0","log.level":"info","message":"file email_claim_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.823Z","ecs.version":"8.10.0","log.level":"info","message":"file identity_attestation.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.823Z","ecs.version":"8.10.0","log.level":"info","message":"file identity_attestation.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.823Z","ecs.version":"8.10.0","log.level":"info","message":"file identity_attestation_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.823Z","ecs.version":"8.10.0","log.level":"info","message":"file identity_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.823Z","ecs.version":"8.10.0","log.level":"info","message":"file identity_claim.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.824Z","ecs.version":"8.10.0","log.level":"info","message":"file identity_claim_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.824Z","ecs.version":"8.10.0","log.level":"info","message":"file phone_number_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.824Z","ecs.version":"8.10.0","log.level":"info","message":"file phone_number_claim.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.824Z","ecs.version":"8.10.0","log.level":"info","message":"file phone_number_claim_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.824Z","ecs.version":"8.10.0","log.level":"info","message":"file user_profile.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.824Z","ecs.version":"8.10.0","log.level":"info","message":"file user_profile.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.824Z","ecs.version":"8.10.0","log.level":"info","message":"file user_profile_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.824Z","ecs.version":"8.10.0","log.level":"info","message":"file user_signature.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.824Z","ecs.version":"8.10.0","log.level":"info","message":"file user_signature.json.aqua.json","service":"api"}
+{"@timestamp":"2025-11-04T16:26:52.824Z","ecs.version":"8.10.0","log.level":"info","message":"file user_signature_fields.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:21.764Z","ecs.version":"8.10.0","event":{"action":"user-login","category":"authentication","outcome":"success","type":"access"},"log.level":"info","message":"Authentication user-login","service":"api","user":{"id":"0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7"}}
+{"@timestamp":"2025-11-04T16:27:23.337Z","ecs.version":"8.10.0","error":{"code":"SERVER_ERROR","info":{"requestUrl":"https://mainnet.infura.io/v3/936b5b98923b44289fa0dd1154d85f00","responseBody":"project ID does not have access to this network, see https://infura.io/dashboard\n","responseStatus":"401 Unauthorized"},"message":"server response 401 Unauthorized (request={  }, response={  }, error=null, info={ \"requestUrl\": \"https://mainnet.infura.io/v3/936b5b98923b44289fa0dd1154d85f00\", \"responseBody\": \"project ID does not have access to this network, see https://infura.io/dashboard\\n\", \"responseStatus\": \"401 Unauthorized\" }, code=SERVER_ERROR, version=6.15.0)","request":{},"response":{},"shortMessage":"server response 401 Unauthorized","stack_trace":"Error: server response 401 Unauthorized (request={  }, response={  }, error=null, info={ \"requestUrl\": \"https://mainnet.infura.io/v3/936b5b98923b44289fa0dd1154d85f00\", \"responseBody\": \"project ID does not have access to this network, see https://infura.io/dashboard\\n\", \"responseStatus\": \"401 Unauthorized\" }, code=SERVER_ERROR, version=6.15.0)\n    at makeError (/home/dalmas/E/blockchain/aqua_protocol_v2/aqua_Web/api/node_modules/ethers/src.ts/utils/errors.ts:698:21)\n    at assert (/home/dalmas/E/blockchain/aqua_protocol_v2/aqua_Web/api/node_modules/ethers/src.ts/utils/errors.ts:719:25)\n    at FetchResponse.assertOk (/home/dalmas/E/blockchain/aqua_protocol_v2/aqua_Web/api/node_modules/ethers/src.ts/utils/fetch.ts:950:9)\n    at JsonRpcProvider._send (/home/dalmas/E/blockchain/aqua_protocol_v2/aqua_Web/api/node_modules/ethers/src.ts/providers/provider-jsonrpc.ts:1272:18)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async <anonymous> (/home/dalmas/E/blockchain/aqua_protocol_v2/aqua_Web/api/node_modules/ethers/src.ts/providers/provider-jsonrpc.ts:734:27)\n    at async JsonRpcProvider._detectNetwork (/home/dalmas/E/blockchain/aqua_protocol_v2/aqua_Web/api/node_modules/ethers/src.ts/providers/provider-jsonrpc.ts:751:16)\n    at async <anonymous> (/home/dalmas/E/blockchain/aqua_protocol_v2/aqua_Web/api/node_modules/ethers/src.ts/providers/abstract-provider.ts:878:37)\n    at async JsonRpcProvider.getNetwork (/home/dalmas/E/blockchain/aqua_protocol_v2/aqua_Web/api/node_modules/ethers/src.ts/providers/abstract-provider.ts:890:21)\n    at async EnsResolver.getEnsAddress (/home/dalmas/E/blockchain/aqua_protocol_v2/aqua_Web/api/node_modules/ethers/src.ts/providers/ens-resolver.ts:540:25)","type":"Error"},"log.level":"error","message":"Error fetching ENS name: server response 401 Unauthorized (request={  }, response={  }, error=null, info={ \"requestUrl\": \"https://mainnet.infura.io/v3/936b5b98923b44289fa0dd1154d85f00\", \"responseBody\": \"project ID does not have access to this network, see https://infura.io/dashboard\\n\", \"responseStatus\": \"401 Unauthorized\" }, code=SERVER_ERROR, version=6.15.0)","service":"api"}
+{"@timestamp":"2025-11-04T16:27:23.356Z","ecs.version":"8.10.0","event":{"action":"login","category":"authentication","type":"start"},"log.level":"info","message":"User login","service":"api","session":{"id":"Nx3g654JFhuHm1hVO"},"user":{"id":"0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7","name":"0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7"}}
+{"@timestamp":"2025-11-04T16:27:23.357Z","ecs.version":"8.10.0","event":{"action":"user-login","category":"database","duration":43000000,"outcome":"success","type":"creation"},"log.level":"info","message":"User login successful","service":"api","table":"users-login","userId":"0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7"}
+{"@timestamp":"2025-11-04T16:27:23.403Z","ecs.version":"8.10.0","log.level":"info","message":"Client connected to WebSocket with user ID: 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7","service":"api"}
+{"@timestamp":"2025-11-04T16:27:23.420Z","ecs.version":"8.10.0","log.level":"info","message":"Client connected to WebSocket with user ID: 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7","service":"api"}
+{"@timestamp":"2025-11-04T16:27:23.420Z","ecs.version":"8.10.0","log.level":"info","message":"User 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7 is already connected, closing previous connection","service":"api"}
+{"@timestamp":"2025-11-04T16:27:23.431Z","ecs.version":"8.10.0","log.level":"info","message":"Client 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7 disconnected from WebSocket","service":"api"}
+{"@timestamp":"2025-11-04T16:27:23.437Z","ecs.version":"8.10.0","log.level":"info","message":"Client connected to WebSocket with user ID: 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7","service":"api"}
+{"@timestamp":"2025-11-04T16:27:23.596Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x6080590df9339a85351579cc7e37287a26cbc5942d24f3133193358362b16750 not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:23.647Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x3f732d510e4aa576ce13417d5c365f58f2a80e4062f98f9b45aa57f51394ac1a not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:23.666Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x6080590df9339a85351579cc7e37287a26cbc5942d24f3133193358362b16750 not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:23.876Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x3f732d510e4aa576ce13417d5c365f58f2a80e4062f98f9b45aa57f51394ac1a not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:23.908Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x6080590df9339a85351579cc7e37287a26cbc5942d24f3133193358362b16750 not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:24.054Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x3f732d510e4aa576ce13417d5c365f58f2a80e4062f98f9b45aa57f51394ac1a not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:24.365Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x6080590df9339a85351579cc7e37287a26cbc5942d24f3133193358362b16750 not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:24.532Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x3f732d510e4aa576ce13417d5c365f58f2a80e4062f98f9b45aa57f51394ac1a not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:24.843Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x6080590df9339a85351579cc7e37287a26cbc5942d24f3133193358362b16750 not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:25.023Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x3f732d510e4aa576ce13417d5c365f58f2a80e4062f98f9b45aa57f51394ac1a not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:25.335Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x6080590df9339a85351579cc7e37287a26cbc5942d24f3133193358362b16750 not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:25.616Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x3f732d510e4aa576ce13417d5c365f58f2a80e4062f98f9b45aa57f51394ac1a not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:26.163Z","ecs.version":"8.10.0","log.level":"info","message":"URL: \u001b[31mhttp://127.0.0.1:3000\u001b[0m, Address: \u001b[32m0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7\u001b[0m","service":"api"}
+{"@timestamp":"2025-11-04T16:27:26.302Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x6080590df9339a85351579cc7e37287a26cbc5942d24f3133193358362b16750 not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:26.325Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x6080590df9339a85351579cc7e37287a26cbc5942d24f3133193358362b16750 not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:26.595Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x6080590df9339a85351579cc7e37287a26cbc5942d24f3133193358362b16750 not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:26.846Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x3f732d510e4aa576ce13417d5c365f58f2a80e4062f98f9b45aa57f51394ac1a not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:27.324Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x3dd2a46f8918f3e54877238f20cb4e1be9022799cde61f6baf527b83f8f06427 not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.738Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.738Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name aqua_sign.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name domain_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name email_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name email_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.739Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name identity_attestation.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name identity_attestation.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name identity_attestation.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name identity_attestation.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name identity_attestation.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name identity_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name identity_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name identity_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name identity_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name aqua_sign.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.740Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name user_profile.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name user_signature.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.741Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.759Z","ecs.version":"8.10.0","log.level":"info","message":"URL: \u001b[31mhttp://127.0.0.1:3000\u001b[0m, Address: \u001b[32m0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7\u001b[0m","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.828Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x6080590df9339a85351579cc7e37287a26cbc5942d24f3133193358362b16750 not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:28.944Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x6080590df9339a85351579cc7e37287a26cbc5942d24f3133193358362b16750 not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:29.235Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x6080590df9339a85351579cc7e37287a26cbc5942d24f3133193358362b16750 not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:29.318Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x3f732d510e4aa576ce13417d5c365f58f2a80e4062f98f9b45aa57f51394ac1a not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:29.876Z","ecs.version":"8.10.0","log.level":"error","message":"Revision with hash 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7_0x3dd2a46f8918f3e54877238f20cb4e1be9022799cde61f6baf527b83f8f06427 not found in system","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name aqua_sign.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name domain_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name email_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name email_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.333Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name identity_attestation.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name identity_attestation.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name identity_attestation.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name identity_attestation.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name identity_attestation.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name identity_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name identity_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name identity_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name identity_claim.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name aqua_sign.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.334Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name user_profile.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = true name user_signature.json","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}
+{"@timestamp":"2025-11-04T16:27:31.335Z","ecs.version":"8.10.0","log.level":"info","message":"Workflow check on workflow endpoint isWorkFlow = false name ","service":"api"}

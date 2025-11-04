@@ -25,14 +25,15 @@ const otelFormat = winston.format((info) => {
 });
 
 const Logger = winston.createLogger({
-  level: 'info',
+  level: process.env.NODE_ENV === 'production' ? 'warn' : 'info',
   defaultMeta: { service: process.env.SERVICE_NAME || 'api' },
   format: winston.format.combine(
     otelFormat(),
     ecsFormat({ convertReqRes: true })
   ),
   transports: [
-    new winston.transports.Console({
+    new winston.transports.File({
+      filename: 'aquafier.log',
       handleExceptions: true,
       handleRejections: true,
     }),
