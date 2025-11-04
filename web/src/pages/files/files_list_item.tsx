@@ -59,7 +59,7 @@ export default function FilesListItem({
 
       const prepareAquaTreeForRendering = () => {
             if (systemAquaFileNames.length === 0) {
-                  console.error("System file names not found")
+                  return
             }
             const fileObject = getAquaTreeFileObject(file)
             setCurrentFileObject(fileObject)
