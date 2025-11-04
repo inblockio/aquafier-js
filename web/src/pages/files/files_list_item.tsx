@@ -63,7 +63,7 @@ export default function FilesListItem({
             setCurrentFileObject(fileObject)
             const workFlow = isWorkFlowData(file.aquaTree!, systemAquaFileNames)
             setWorkFlowInfo(workFlow)
-      }, [])
+      }, [systemAquaFileNames])
 
       useEffect(() => {
             const someData = systemFileInfo.map(e => {

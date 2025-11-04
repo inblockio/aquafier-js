@@ -685,7 +685,6 @@ const FilesPage = () => {
                                     <Button
                                           variant="outline"
                                           className="bg-black text-white-500 hover:bg-black-700 text-white cursor-pointer"
-                                          style={{}}
                                           onClick={() => {
                                                 setSelectedFileInfo(null)
                                                 setOpenDialog(null)
