@@ -3,7 +3,7 @@ import { useLocation, useParams } from 'react-router-dom'
 import appStore from '../../store'
 import { useStore } from 'zustand'
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
-import { getGenesisHash, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
+import { cleanEthAddress, getGenesisHash, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
 import { ClipLoader } from 'react-spinners'
 import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileInfo'
 import axios from 'axios'
@@ -21,8 +21,7 @@ import UserSignatureClaim from './UserSignatureClaim'
 import { AddressView } from './AddressView'
 import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_claim'
 import { GlobalPagination } from '@/types'
-import { API_ENDPOINTS } from '@/utils/constants'
-import { ethers } from 'ethers'
+import { API_ENDPOINTS, IDENTITY_CLAIMS } from '@/utils/constants'
 
 
 export default function ClaimsWorkflowPage() {
@@ -245,19 +244,6 @@ export default function ClaimsWorkflowPage() {
             }
       }
 
-      const cleanEthAddress = (address?: string) => {
-            if (!address) {
-                  return false
-            }
-            let isGood = true
-            try {
-                  ethers.getAddress(address)
-            } catch (e) {
-                  isGood = false
-            }
-            return isGood
-      }
-
       async function loadClaimsFileData() {
             setFiles([])
             setClaims([])
@@ -268,13 +254,12 @@ export default function ClaimsWorkflowPage() {
                   })
                   return
             }
-
             setIsLoading(true);
             try {
                   const params = {
                         page: currentPage,
                         limit: 100,
-                        claim_types: JSON.stringify(['identity_claim', 'identity_attestation', 'user_signature', 'email_claim', 'phone_number_claim', 'domain_claim']),
+                        claim_types: JSON.stringify(IDENTITY_CLAIMS),
                         wallet_address: walletAddress,
                         use_wallet: session?.address,
                   }
