@@ -22,6 +22,8 @@ import { AddressView } from './AddressView'
 import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_claim'
 import { GlobalPagination } from '@/types'
 import { API_ENDPOINTS, IDENTITY_CLAIMS } from '@/utils/constants'
+import { useReloadWatcher } from '@/hooks/useReloadWatcher'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 
 
 export default function ClaimsWorkflowPage() {
@@ -308,6 +310,12 @@ export default function ClaimsWorkflowPage() {
       //       return `${totalRevisions}-${aquaTreeHashes.sort().join('|')}`;
       // }, [files]);
 
+      useReloadWatcher({
+            key: RELOAD_KEYS.user_profile,
+            onReload: () => {
+                  loadClaimsFileData()
+            }
+      })
 
       useEffect(() => {
             loadClaimsFileData()

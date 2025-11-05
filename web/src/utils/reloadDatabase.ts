@@ -84,7 +84,7 @@ export const RELOAD_KEYS = {
     all_files: "all_files",
     notifications: "notifications",
     claims_and_attestations: "claims_and_attestations",
-    user_stats: "user_stats"
+    user_stats: "user_stats",
 };
 
 /**
@@ -110,7 +110,7 @@ export const triggerWorkflowReload = async (workflowType: string, watchAll?: boo
             await triggerReload(reloadKey);
             
             // Also trigger claims_and_attestations if it's an identity claim
-            const identityClaims = ['identity_claim', 'user_signature', 'email_claim', 'phone_number_claim', 'domain_claim'];
+            const identityClaims = ['identity_claim', 'user_signature', 'email_claim', 'phone_number_claim', 'domain_claim', 'identity_attestation'];
             if (identityClaims.includes(workflowType)) {
                 await triggerReload(RELOAD_KEYS.claims_and_attestations);
             }

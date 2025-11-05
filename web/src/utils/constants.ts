@@ -166,4 +166,4 @@ export const getClaimIcon = (claimType: string) => {
       return iconMap[claimType] || FileText;
 };
 
-export const IDENTITY_CLAIMS = ['identity_claim', 'user_signature', 'email_claim', 'phone_number_claim', 'domain_claim']
+export const IDENTITY_CLAIMS = ['identity_claim', 'user_signature', 'email_claim', 'phone_number_claim', 'domain_claim', 'identity_attestation']

@@ -169,8 +169,9 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
                                                                   handleClick()
                                                             }}
                                                       >
-                                                            {isLoading ? "Loading...": null}
-                                                            {showWalletAddress ? walletAddress : identityClaimDetails?.name || walletAddress}
+                                                            {isLoading ? "Loading...": (
+                                                                  <>{showWalletAddress ? walletAddress : identityClaimDetails?.name || walletAddress}</>
+                                                            )}
                                                       </p>
                                                 </div>
                                           )}
