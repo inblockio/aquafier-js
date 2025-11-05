@@ -30,8 +30,10 @@ import { ApiFileInfo } from '@/models/FileInfo'
 import ClaimTypesDropdownButton from '@/components/button_claim_dropdown'
 import { toast } from 'sonner'
 import { GlobalPagination } from '@/types'
-import { API_ENDPOINTS } from '@/utils/constants'
+import { API_ENDPOINTS, IDENTITY_CLAIMS } from '@/utils/constants'
 import CustomPagination from '@/components/common/CustomPagination'
+import { useReloadWatcher } from '@/hooks/useReloadWatcher'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 
 
 const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowItem) => {
@@ -104,7 +106,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
             let allHashes = Object.keys(apiFileInfo.aquaTree?.revisions || {})
             const firstRevsion = apiFileInfo.aquaTree?.revisions[allHashes[0]]
             if (firstRevsion) {
-                  let formName = firstRevsion[`forms_name`]
+                  let formName = firstRevsion[`forms_name`] || firstRevsion[`forms_email`]
                   if (formName) {
                         setClaimName(formName)
                   }
@@ -256,37 +258,47 @@ const ClaimsAndAttestationPage = () => {
             setWorkflowsUi(newData)
       }
 
-      useEffect(() => {
-            (async () => {
-                  try {
-                        setIsLoading(true)
-                        const params = {
-                              page: currentPage,
-                              limit: 10,
-                              claim_types: JSON.stringify(['identity_claim', 'user_signature', 'email_claim', 'phone_number_claim', 'domain_claim']),
-                              wallet_address: session?.address
-                        }
-                        const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
-                              headers: {
-                                    'Content-Type': 'application/json',
-                                    'nonce': `${session!.nonce}`
-                              },
-                              params
-                        })
-                        const response = filesDataQuery.data
-                        const aquaTrees = response.aquaTrees
-                        setPagination(response.pagination)
-                        processFilesToWorkflowUi(aquaTrees)
-
-                  } catch (error) {
-                        console.error('Error fetching workflows:', error)
-                        toast.error('Failed to load claims and attestations')
-                  } finally {
-                        setIsLoading(false);
+      async function loadWorkflowsData() {
+            try {
+                  setIsLoading(true)
+                  const params = {
+                        page: currentPage,
+                        limit: 10,
+                        claim_types: JSON.stringify(IDENTITY_CLAIMS),
+                        wallet_address: session?.address
                   }
-            })()
+                  const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
+                        headers: {
+                              'Content-Type': 'application/json',
+                              'nonce': `${session!.nonce}`
+                        },
+                        params
+                  })
+                  const response = filesDataQuery.data
+                  const aquaTrees = response.aquaTrees
+                  setPagination(response.pagination)
+                  processFilesToWorkflowUi(aquaTrees)
 
-      }, [])
+            } catch (error) {
+                  console.error('Error fetching workflows:', error)
+                  toast.error('Failed to load claims and attestations')
+            } finally {
+                  setIsLoading(false);
+            }
+      }
+
+      // Watch for reload triggers
+      useReloadWatcher({
+            key: RELOAD_KEYS.claims_and_attestations,
+            onReload: () => {
+                  console.log('Reloading claims and attestations...');
+                  loadWorkflowsData();
+            }
+      });
+
+      useEffect(() => {
+            loadWorkflowsData()
+      }, [currentPage])
 
       return (
             <>

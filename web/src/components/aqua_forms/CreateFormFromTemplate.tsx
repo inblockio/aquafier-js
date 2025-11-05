@@ -62,6 +62,7 @@ import { ApiFileInfo } from '@/models/FileInfo'
 import SignatureCanvas from 'react-signature-canvas'
 import { Session } from '@/types'
 import { ApiInfoData } from '@/types/types'
+import { triggerWorkflowReload } from '@/utils/reloadDatabase'
 
 // const CreateFormF romTemplate  = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
@@ -949,6 +950,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
                   await saveAquaTree(signedAquaTree, fileObject, true, false, secondRevision.signature_wallet_address!)
             }
+
+            // Trigger reload for the specific workflow type and stats
+            await triggerWorkflowReload(selectedTemplate.name, true);
       }
 
       // Clear signature canvas

@@ -1,7 +1,5 @@
 import React, { useState, JSX } from 'react';
 import {
-//   FaCheck,
-//   FaTimes,
   FaChevronDown,
   FaChevronUp,
   FaInfoCircle,
@@ -97,66 +95,6 @@ const ImprovedDNSLogs: React.FC<ImprovedDNSLogsProps> = ({
 
   return (
     <div className="w-full">
-      {/* Main verification card */}
-      {/* <div
-        className={`rounded-lg shadow-sm border p-6 mb-4 ${
-          verificationResult.success
-            ? 'bg-green-50 border-green-200'
-            : 'bg-red-50 border-red-200'
-        }`}
-      > */}
-        {/* <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            {verificationResult.success ? (
-              <FaCheck className="text-green-500 mr-2" />
-            ) : (
-              <FaTimes className="text-red-500 mr-2" />
-            )}
-            <p
-              className={`text-sm font-medium ${
-                verificationResult.success ? 'text-green-800' : 'text-red-800'
-              }`}
-            >
-              {verificationResult.success
-                ? 'Domain Ownership Verified'
-                : 'Verification Failed'}
-            </p>
-          </div>
-          {verificationResult?.logs?.length > 0 && (
-            <button
-              onClick={onToggleLogs}
-              className="text-gray-500 hover:text-gray-700 flex items-center gap-2 px-3 py-1 rounded-md hover:bg-white/50 transition-colors"
-            >
-              <span className="text-sm font-medium">View Logs</span>
-              {showLogs ? (
-                <FaChevronUp className="text-xs" />
-              ) : (
-                <FaChevronDown className="text-xs" />
-              )}
-            </button>
-          )}
-        </div> */}
-
-        {/* <p
-          className={`mt-1 text-sm ${
-            verificationResult.success ? 'text-green-700' : 'text-red-700'
-          }`}
-        >
-          {verificationMessage}
-        </p>
-
-        {verificationResult.totalRecords > 0 && (
-          <p className="text-sm text-gray-600 mt-1">
-            Records: {verificationResult.verifiedRecords}/
-            {verificationResult.totalRecords} verified
-          </p>
-        )}
-
-        {verificationResult.dnssecValidated && (
-          <p className="text-xs text-green-600 mt-1">DNSSEC Validated</p>
-        )}
-      </div> */}
-
       {/* Logs Section */}
       {showLogs && verificationResult?.logs?.length > 0 && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mt-5">

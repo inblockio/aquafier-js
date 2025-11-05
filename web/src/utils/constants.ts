@@ -165,3 +165,5 @@ export const iconMap: Record<string, React.FC<React.SVGProps<SVGSVGElement>>> = 
 export const getClaimIcon = (claimType: string) => {
       return iconMap[claimType] || FileText;
 };
+
+export const IDENTITY_CLAIMS = ['identity_claim', 'user_signature', 'email_claim', 'phone_number_claim', 'domain_claim']

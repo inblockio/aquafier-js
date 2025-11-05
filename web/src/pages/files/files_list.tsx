@@ -9,6 +9,8 @@ import { emptyUserStats, FilesListProps, IUserStats } from '@/types/types'
 import axios from 'axios'
 import { API_ENDPOINTS } from '@/utils/constants'
 import WorkflowSpecificTable from './WorkflowSpecificTable'
+import { useReloadWatcher } from '@/hooks/useReloadWatcher'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 
 export default function FilesList(filesListProps: FilesListProps) {
       const [view, setView] = useState<'table' | 'card'>('table')
@@ -89,6 +91,15 @@ export default function FilesList(filesListProps: FilesListProps) {
                   loadSystemAquaFileNames()
             }
       }, [session?.address, session?.nonce])
+
+      // Watch for stats reload triggers
+      useReloadWatcher({
+            key: RELOAD_KEYS.user_stats,
+            onReload: () => {
+                  console.log('Reloading user stats...');
+                  getUserStats();
+            }
+      });
 
       // Filter files based on selected filters AND selected workflow
       const getFilteredFiles = (): ApiFileInfo[] => {

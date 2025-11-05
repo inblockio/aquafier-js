@@ -17,14 +17,12 @@ import TemplatesPage from './pages/templates_page'
 import CreateFormInstance from './pages/create_form_instance'
 import NewShadcnLayoutWithSidebar from './layouts/NewShadcnLayoutWithSidebar'
 import PdfWorkflowPage from './pages/aqua_sign_wokflow/PdfWorkflowPage'
-import DomainAttestationPage from './pages/domain_attestation'
 import FilesSharedContracts from './pages/files_share/files_shared_contracts'
 import WorkflowsTablePage from './pages/aqua_sign_wokflow/WorkflowsTablePage'
 import SharePage from './pages/share_page'
 import TermsAndConditions from './pages/legal/TermsAndConditions'
 import PrivacyPolicy from './pages/legal/PrivacyPolicy'
 import ClaimsAndAttestationPage from './pages/claim_and_attestation'
-import ClaimsWorkflowPage from './pages/claims_workflow/claimsWorkflowPage'
 import ClaimsWorkflowPageV2 from './pages/v2_claims_workflow/claimsWorkflowPage'
 // Import appkit config to initialize AppKit at module level
 // import './config/appkit'
@@ -138,14 +136,12 @@ function App() {
                         <Route path="workflows" element={<WorkflowsTablePage />} />
                         <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage />} />
                         <Route path="contact_list" element={<ContactsPageV2 />} />
-                        <Route path="claims/workflow" element={<ClaimsWorkflowPage />} />
                         <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2 />} />
 
                         <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
                         <Route path="pdf-signer" element={<PdfSigner fileData={null} setActiveStep={_one => {
                         }} />} />
                         <Route path="files_workflows" element={<FilesPage />} />
-                        <Route path="domain_attestation" element={<DomainAttestationPage />} />
 
 
 

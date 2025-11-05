@@ -49,6 +49,7 @@ import { API_ENDPOINTS } from '@/utils/constants'
 import { GlobalPagination } from '@/types'
 import CustomPagination from '@/components/common/CustomPagination'
 import { useNavigate } from 'react-router-dom'
+import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 
 const getStatusIcon = (status: string) => {
       switch (status) {
@@ -283,36 +284,47 @@ export default function WorkflowsTablePage() {
             setWorkflowsUi(newData)
       }
 
-      useEffect(() => {
+      // Extract data loading logic into a separate function
+      const loadWorkflowsData = async (page: number = currentPage) => {
+            if (!session || !backend_url) return;
+            
             setIsLoading(true);
-            (async () => {
-
-                  try {
-                        setIsLoading(true)
-                        const params = {
-                              page: currentPage,
-                              limit: 10,
-                              claim_types: JSON.stringify(['aqua_sign'])
-                        }
-                        const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
-                              headers: {
-                                    'Content-Type': 'application/json',
-                                    'nonce': `${session!.nonce}`
-                              },
-                              params
-                        })
-                        const response = filesDataQuery.data
-                        const aquaTrees = response.aquaTrees
-                        setPagination(response.pagination)
-                        processFilesToWorkflowUi(aquaTrees)
-                  } catch (error) {
-                        toast.error('Error fetching workflows')
-                        console.log(error)
-                  } finally {
-                        setIsLoading(false);
+            try {
+                  const params = {
+                        page,
+                        limit: 10,
+                        claim_types: JSON.stringify(['aqua_sign'])
                   }
-            })()
+                  const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
+                        headers: {
+                              'Content-Type': 'application/json',
+                              'nonce': `${session!.nonce}`
+                        },
+                        params
+                  })
+                  const response = filesDataQuery.data
+                  const aquaTrees = response.aquaTrees
+                  setPagination(response.pagination)
+                  processFilesToWorkflowUi(aquaTrees)
+            } catch (error) {
+                  toast.error('Error fetching workflows')
+                  console.log(error)
+            } finally {
+                  setIsLoading(false);
+            }
+      }
 
+      // Watch for reload triggers
+      useReloadWatcher({
+            key: 'aqua_sign',
+            onReload: () => {
+                  console.log('Reloading Aqua Sign workflows...');
+                  loadWorkflowsData();
+            }
+      });
+
+      useEffect(() => {
+            loadWorkflowsData(currentPage);
       }, [currentPage])
 
     
