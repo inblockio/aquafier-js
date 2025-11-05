@@ -81,6 +81,7 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
                                                       {identityClaimDetails ? (
                                                             <Button size={"icon-sm"} variant={"outline"} className='cursor-pointer' onClick={(e) => {
                                                                   e.stopPropagation()
+                                                                  e.preventDefault()
                                                                   setShowWalletAddress(prev => !prev)
                                                             }}>
                                                                   <ArrowRightLeft size={16} />
@@ -94,6 +95,7 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
                                                                   textWrap: "wrap"
                                                             }}
                                                             onClick={(e) => {
+                                                                  e.preventDefault()
                                                                   e.stopPropagation()
                                                                   handleClick()
                                                             }}
