@@ -7,3 +7,4 @@ api/media
 api/src/media
 **/media/**
 .tap
+aquafier.log
