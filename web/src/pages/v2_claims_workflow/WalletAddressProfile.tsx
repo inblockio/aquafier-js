@@ -769,7 +769,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
 
       return (
-            <div className={`${width ? width : 'w-full'} bg-transparent`}>
+            <div className={`${width ? width : 'w-full'} bg-transparent max-h-[50vh] overflow-y-auto`}>
                   <div className={`flex p-2 flex-col ${noBg ? '' : 'bg-gradient-to-br from-white to-slate-200 border border-slate-200'} ${shadowClasses} rounded-xl gap-4 transition-shadow duration-300`}>
                         {
                               isLoading ? <div className="py-6 flex flex-col items-center justify-center h-full w-full">
