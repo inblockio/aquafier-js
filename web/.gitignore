@@ -3,3 +3,5 @@ dist
 android
 .env
 .nvmrc
+fixes
+api/aquafier.log
