@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
+import { Input } from './ui/input';
+import { ContactsService } from '@/storage/databases/contactsDb';
+import { ContactProfile } from '@/types/types';
 
 interface WalletAutosuggestProps {
   field: {
@@ -9,41 +11,44 @@ interface WalletAutosuggestProps {
   address: string;
   multipleAddresses: string[];
   setMultipleAddresses: (addresses: string[]) => void;
-  walletAddresses: Map<string, string>; // New prop: Map of display name -> wallet address
+  walletAddresses?: Map<string, string>; // Optional legacy prop for backward compatibility
   placeholder?: string;
   className?: string;
   disabled?: boolean;
 }
-
 export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({ 
   field, 
   index, 
   address, 
   multipleAddresses, 
-  setMultipleAddresses,
-  walletAddresses, // Now a required prop
-  placeholder = "Enter signer wallet address",
-  className = "rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500",
-  disabled = false
+  setMultipleAddresses, 
+  placeholder = "Enter wallet address...", 
+  className = "", 
+  disabled = false 
 }) => {
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<ContactProfile[]>([]);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const [activeSuggestion, setActiveSuggestion] = useState<number>(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+  const contactsService = ContactsService.getInstance();
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  // Filter suggestions based on input - now checks Map keys
-  const filterSuggestions = (input: string): string[] => {
+  // Filter suggestions based on input - searches contacts database
+  const filterSuggestions = async (input: string): Promise<ContactProfile[]> => {
     if (!input || input.length < 1) {
       return [];
     }
     
-    return Array.from(walletAddresses.keys()).filter((key: string) => 
-      key.toLowerCase().includes(input.toLowerCase())
-    ).slice(0, 5); // Limit to 5 suggestions
+    try {
+      const searchResults = await contactsService.searchContacts(input);
+      return searchResults.slice(0, 5); // Limit to 5 suggestions
+    } catch (error) {
+      console.error('Error searching contacts:', error);
+      return [];
+    }
   };
 
-  const handleInputChange = (ev: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleInputChange = async (ev: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const value: string = ev.target.value;
     
     // Update the addresses array
@@ -56,25 +61,21 @@ export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
     setMultipleAddresses(newData);
 
     // Update suggestions
-    const filtered: string[] = filterSuggestions(value);
+    const filtered: ContactProfile[] = await filterSuggestions(value);
     setSuggestions(filtered);
     setShowSuggestions(filtered.length > 0);
     setActiveSuggestion(-1);
   };
 
-  const handleSuggestionClick = (suggestionKey: string): void => {
-    // Get the actual wallet address from the Map using the key
-    const walletAddress = walletAddresses.get(suggestionKey);
-    
-    if (walletAddress) {
-      const newData: string[] = multipleAddresses.map((e: string, i: number) => {
-        if (i === index) {
-          return walletAddress; // Set the Map value (actual wallet address)
-        }
-        return e;
-      });
-      setMultipleAddresses(newData);
-    }
+  const handleSuggestionClick = (contact: ContactProfile): void => {
+    // Use the contact's wallet address
+    const newData: string[] = multipleAddresses.map((e: string, i: number) => {
+      if (i === index) {
+        return contact.walletAddress; // Set the contact's wallet address
+      }
+      return e;
+    });
+    setMultipleAddresses(newData);
     
     setShowSuggestions(false);
     setActiveSuggestion(-1);
@@ -129,9 +130,14 @@ export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
 
   // Update suggestions when address changes externally
   useEffect(() => {
-    const filtered: string[] = filterSuggestions(address);
-    setSuggestions(filtered);
-  }, [address, walletAddresses]);
+    const updateSuggestions = async () => {
+      if (address) {
+        const filtered = await filterSuggestions(address);
+        setSuggestions(filtered);
+      }
+    };
+    updateSuggestions();
+  }, [address]);
 
   return (
     <div className="relative w-full">
@@ -155,21 +161,24 @@ export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
           ref={suggestionsRef}
           className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto"
         >
-          {suggestions.map((suggestionKey: string, suggestionIndex: number) => (
+          {suggestions.map((contact: ContactProfile, suggestionIndex: number) => (
             <div
-              key={suggestionKey}
+              key={contact.walletAddress}
               className={`px-4 py-2 cursor-pointer text-sm border-b border-gray-100 last:border-b-0 ${
                 suggestionIndex === activeSuggestion
                   ? 'bg-blue-50 text-blue-700'
                   : 'text-gray-700 hover:bg-gray-50'
               }`}
-              onClick={() => handleSuggestionClick(suggestionKey)}
+              onClick={() => handleSuggestionClick(contact)}
               onMouseEnter={() => setActiveSuggestion(suggestionIndex)}
             >
-              <div className="truncate" title={suggestionKey}>
-                <div className="font-medium">{suggestionKey}</div>
-                <div className="text-xs text-gray-500 font-mono mt-1" title={walletAddresses.get(suggestionKey)}>
-                  {walletAddresses.get(suggestionKey)}
+              <div className="truncate">
+                <div className="font-medium">
+                  {contact.name || 'Unnamed Contact'}
+                  {contact.email && <span className="text-xs ml-2 text-gray-500">({contact.email})</span>}
+                </div>
+                <div className="text-xs text-gray-500 font-mono mt-1" title={contact.walletAddress}>
+                  {contact.walletAddress.slice(0, 10)}...{contact.walletAddress.slice(-6)}
                 </div>
               </div>
             </div>
