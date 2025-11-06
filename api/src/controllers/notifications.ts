@@ -3,6 +3,7 @@
 import { FastifyInstance, FastifyRequest } from "fastify";
 import { authenticate, AuthenticatedRequest } from "../middleware/auth_middleware";
 import { PrismaClient } from "@prisma/client";
+import { sendNotificationReloadToWallet } from "./websocketController2";
 
 const prisma = new PrismaClient();
 
@@ -73,6 +74,8 @@ export default async function notificationsController(fastify: FastifyInstance) 
                     is_read: false
                 }
             });
+
+            sendNotificationReloadToWallet(receiver);
             
             return reply.code(201).send(notification);
         } catch (error : any) {

@@ -33,6 +33,7 @@ import Logger from "./utils/logger";
 import DNSClaimVerificationController from './controllers/dns_claim_verification';
 import metricsController from './controllers/metrics';
 import workflowsController from './controllers/workflow';
+import enhancedWebSocketController from './controllers/websocketController2';
 
 
 function buildServer() {
@@ -154,6 +155,7 @@ function buildServer() {
     fastify.register(chequeApiController);
     fastify.register(systemController);
     fastify.register(webSocketController);
+    fastify.register(enhancedWebSocketController);
     fastify.register(notificationsController);
     fastify.register(ApiController);
     fastify.register(DNSClaimVerificationController);

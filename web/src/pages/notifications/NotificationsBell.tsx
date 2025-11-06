@@ -9,6 +9,8 @@ import { API_ENDPOINTS } from '../../utils/constants'
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover'
 import { Badge } from '../../components/ui/badge'
 import { Button } from '../../components/ui/button'
+// import { useNotificationWebSocket } from '../../hooks/useNotificationWebSocket'
+import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocketContext'
 
 const NotificationsBell = () => {
       const [notifications, setNotifications] = useState<INotification[]>([])
@@ -16,6 +18,9 @@ const NotificationsBell = () => {
       const [isLoading, setIsLoading] = useState<boolean>(false)
       const [isOpen, setIsOpen] = useState<boolean>(false)
       const { backend_url, session } = appStore.getState()
+      // In any component that needs notifications
+      const { isConnected, subscribe, connectionError } = useNotificationWebSocketContext();
+
 
       const fetchNotifications = async () => {
             if (!session?.address) return
@@ -70,16 +75,26 @@ const NotificationsBell = () => {
             }
       }, [isOpen, session?.address])
 
-      // Poll for new notifications every minute
-      useEffect(() => {
-            const interval = setInterval(() => {
-                  if (session?.address) {
-                        fetchNotifications()
-                  }
-            }, 60000) // 1 minute
-
-            return () => clearInterval(interval)
-      }, [session?.address])
+      // WebSocket connection for real-time notifications
+      // const { isConnected, connectionError } = useNotificationWebSocket({
+      //       walletAddress: session?.address,
+      //       userId: session?.address, // Using wallet address as userId for now
+      //       onNotificationReload: () => {
+      //             // console.log('WebSocket notification reload triggered');
+      //             fetchNotifications();
+      //       },
+      //       onMessage: (message) => {
+      //             // console.log('WebSocket message received in NotificationsBell:', message);
+      //             // Handle other message types if needed
+      //             if (message.type === 'wallet_update' || message.type === 'contract_update') {
+      //                   // Optionally reload notifications for these events too
+      //                   fetchNotifications();
+      //             }
+      //             // if(message.data && message.data.target === 'notifications') {
+      //             //       fetchNotifications();
+      //             // }
+      //       }
+      // });
 
       // Initial fetch
       useEffect(() => {
@@ -88,16 +103,39 @@ const NotificationsBell = () => {
             }
       }, [])
 
+      useEffect(() => {
+            const unsubscribe = subscribe((message) => {
+                  // Handle message
+                  console.log('WebSocket message received in NotificationsBell:', message);
+                  
+                  // Handle notification reload specifically
+                  if (message.type === 'notification_reload' || 
+                      (message.data && message.data.target === 'notifications')) {
+                        fetchNotifications();
+                  }
+                  
+                  // Handle other message types
+                  if (message.type === 'wallet_update' || message.type === 'contract_update') {
+                        // Optionally reload notifications for these events too
+                        fetchNotifications();
+                  }
+            });
+            return unsubscribe;
+      }, []);
+
       return (
             <Popover open={isOpen} onOpenChange={setIsOpen} modal>
                   <PopoverTrigger asChild>
                         <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
-                              <Bell className="h-5 w-5" />
+                              <Bell className={`h-5 w-5 ${isConnected ? 'text-green-600' : connectionError ? 'text-red-600' : 'text-gray-600'}`} />
                               {unreadCount > 0 && (
                                     <Badge className="absolute -top-1 -right-1 px-1 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-xs" variant="destructive">
                                           {unreadCount > 99 ? '99+' : unreadCount}
                                     </Badge>
                               )}
+                              {/* WebSocket connection indicator */}
+                              <div className={`absolute -bottom-1 -right-1 w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : connectionError ? 'bg-red-500' : 'bg-gray-400'
+                                    }`} title={isConnected ? 'Connected' : connectionError ? 'Connection Error' : 'Connecting...'} />
                         </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-74 p-0 rounded-md" align="end">

@@ -17,6 +17,7 @@ import { AppSidebar } from '../components/app_sidebar'
 import WebsocketFragment from '@/components/navbar/WebsocketFragment'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import ShareComponent from '@/components/aqua_chain_actions/Share_component'
+import { NotificationWebSocketProvider } from '@/contexts/NotificationWebSocketContext'
 
 export default function NewShadcnLayoutWithSidebar() {
       const {
@@ -31,7 +32,7 @@ export default function NewShadcnLayoutWithSidebar() {
 
 
       return (
-            <>
+            <NotificationWebSocketProvider>
                   {session == null ? (
                         <>
                               <ConnectWalletPage />
@@ -294,6 +295,6 @@ export default function NewShadcnLayoutWithSidebar() {
                               </div>
                         </DialogContent>
                   </Dialog>
-            </>
+            </NotificationWebSocketProvider>
       )
 }
