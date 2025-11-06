@@ -2,7 +2,6 @@ import { useState } from 'react'
 import FormTemplateEditorShadcn from '@/components/aqua_forms/FormTemplateEditorShadcn'
 import FormTemplateListShadcn from '@/components/aqua_forms/FormTemplateListShadcn'
 import { FormTemplate } from '@/components/aqua_forms/types'
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { LuPlus } from 'react-icons/lu'
 import { Dialog, DialogContent } from '../components/ui/dialog'
@@ -48,11 +47,9 @@ const TemplatesPage = () => {
             <div className="container mx-auto py-4">
                   <div className="flex justify-between items-center mb-6">
                         <h1 className="text-2xl font-bold">Form Templates</h1>
-                        {/* {activeTab === 'list' && ( */}
                         <Button data-testid="action-create-template-button" onClick={handleCreateNew} className="flex items-center gap-2">
                               <LuPlus className="h-4 w-4" /> New Template
                         </Button>
-                        {/* )} */}
                   </div>
 
 
@@ -98,32 +95,6 @@ const TemplatesPage = () => {
                         </DialogContent>
                   </Dialog>
 
-
-
-                  {/* <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                        <TabsList className="grid w-full max-w-md grid-cols-2">
-                              <TabsTrigger data-testid="templates-list-tab" value="list">
-                                    Templates List
-                              </TabsTrigger>
-                              <TabsTrigger data-testid="templates-edito-tab" value="editor" disabled={!isCreating && !selectedTemplate}>
-                                    Template Editor
-                              </TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="list" className="mt-6">
-                              <FormTemplateListShadcn onEdit={handleEditTemplate} onView={handleViewTemplate} onRefresh={() => {}} />
-                        </TabsContent>
-
-                        <TabsContent value="editor" className="mt-6">
-                              {(isCreating || selectedTemplate) && (
-                                    <FormTemplateEditorShadcn
-                                          initialTemplate={selectedTemplate || undefined}
-                                          onSave={handleSave}
-                                          updating={!isCreating && (selectedTemplate !== undefined || selectedTemplate !== null)}
-                                    />
-                              )} 
-                        </TabsContent>
-                  </Tabs> */}
             </div>
       )
 }

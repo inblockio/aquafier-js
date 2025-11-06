@@ -48,6 +48,8 @@ import axios from 'axios'
 import { API_ENDPOINTS } from '@/utils/constants'
 import { GlobalPagination } from '@/types'
 import CustomPagination from '@/components/common/CustomPagination'
+import { useNavigate } from 'react-router-dom'
+import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 
 const getStatusIcon = (status: string) => {
       switch (status) {
@@ -85,6 +87,8 @@ const getProgressPercentage = (total: number, remaining: number) => {
 }
 
 const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowItem) => {
+      const {setSelectedFileInfo} = useStore(appStore)
+      const navigate = useNavigate()
       const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined)
       const [contractInformation, setContractInformation] = useState<IContractInformation | undefined>(undefined)
       const { session, backend_url } = useStore(appStore)
@@ -158,7 +162,11 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
       }, [apiFileInfo])
 
       return (
-            <TableRow key={`${workflowName}-${index}`} className="hover:bg-muted/50 h-fit">
+            <TableRow key={`${workflowName}-${index}`} className="hover:bg-muted/50 h-fit cursor-pointer" onClick={e => {
+                  e.preventDefault()
+                  setSelectedFileInfo(apiFileInfo)
+                  navigate('/app/pdf/workflow')
+            }}>
                   <TableCell className="font-medium w-[300px] max-w-[300px] min-w-[300px]">
                         <div className="w-full flex items-center gap-3">
                               <div className="flex-shrink-0">
@@ -172,17 +180,18 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                               </div>
                         </div>
                   </TableCell>
-                  {/* <TableCell className="w-[200px]">
-        <p className="text-sm capitalize">{workflowName.split("_").join(" ").trim()}</p>
-      </TableCell> */}
                   <TableCell className="w-[200px]">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 w-fit" onClick={e => {
+                        e.stopPropagation()
+                  }}>
                               <div className="flex -space-x-2">
                                     {signers?.slice(0, 3).map((signer: string, index: number) => (
                                           <WalletAdrressClaim key={index} avatarOnly={true} walletAddress={signer} />
                                     ))}
                                     {signers?.length > 3 && (
-                                          <Avatar className="h-8 w-8 border-2 border-background">
+                                          <Avatar className="h-8 w-8 border-2 border-background" onClick={e => {
+                                                e.preventDefault()
+                                          }}>
                                                 <AvatarFallback className="text-xs">+{signers?.length - 3}</AvatarFallback>
                                           </Avatar>
                                     )}
@@ -275,36 +284,47 @@ export default function WorkflowsTablePage() {
             setWorkflowsUi(newData)
       }
 
-      useEffect(() => {
+      // Extract data loading logic into a separate function
+      const loadWorkflowsData = async (page: number = currentPage) => {
+            if (!session || !backend_url) return;
+            
             setIsLoading(true);
-            (async () => {
-
-                  try {
-                        setIsLoading(true)
-                        const params = {
-                              page: currentPage,
-                              limit: 10,
-                              claim_types: JSON.stringify(['aqua_sign'])
-                        }
-                        const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
-                              headers: {
-                                    'Content-Type': 'application/json',
-                                    'nonce': `${session!.nonce}`
-                              },
-                              params
-                        })
-                        const response = filesDataQuery.data
-                        const aquaTrees = response.aquaTrees
-                        setPagination(response.pagination)
-                        processFilesToWorkflowUi(aquaTrees)
-                  } catch (error) {
-                        toast.error('Error fetching workflows')
-                        console.log(error)
-                  } finally {
-                        setIsLoading(false);
+            try {
+                  const params = {
+                        page,
+                        limit: 10,
+                        claim_types: JSON.stringify(['aqua_sign'])
                   }
-            })()
+                  const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
+                        headers: {
+                              'Content-Type': 'application/json',
+                              'nonce': `${session!.nonce}`
+                        },
+                        params
+                  })
+                  const response = filesDataQuery.data
+                  const aquaTrees = response.aquaTrees
+                  setPagination(response.pagination)
+                  processFilesToWorkflowUi(aquaTrees)
+            } catch (error) {
+                  toast.error('Error fetching workflows')
+                  console.log(error)
+            } finally {
+                  setIsLoading(false);
+            }
+      }
 
+      // Watch for reload triggers
+      useReloadWatcher({
+            key: 'aqua_sign',
+            onReload: () => {
+                  console.log('Reloading Aqua Sign workflows...');
+                  loadWorkflowsData();
+            }
+      });
+
+      useEffect(() => {
+            loadWorkflowsData(currentPage);
       }, [currentPage])
 
     

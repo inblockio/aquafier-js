@@ -1,12 +1,12 @@
-import {useStore} from 'zustand'
+import { useStore } from 'zustand'
 import appStore from '../../store'
-import {convertToWebsocketUrl, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash} from '../../utils/functions'
+import { convertToWebsocketUrl, ensureDomainUrlHasSSL } from '../../utils/functions'
 import axios from 'axios'
-import {useEffect, useRef, useState} from 'react'
-import {WebSocketMessage} from '../../types/types'
+import { useEffect, useRef, useState } from 'react'
+import { WebSocketMessage } from '../../types/types'
 import WebSocketActions from '../../constants/constants'
 
-import {toast} from 'sonner'
+import { toast } from 'sonner'
 
 // Add these at the component level (outside the component if using class)
 let pingInterval: NodeJS.Timeout | null = null
@@ -17,7 +17,7 @@ const RECONNECT_BASE_DELAY = 1000 // 1 second base delay
 const RECONNECT_MAX_DELAY = 30000 // 30 seconds maximum delay
 
 const WebsocketFragment = () => {
-      const { backend_url, session, setFiles, setSelectedFileInfo, selectedFileInfo, setContracts } = useStore(appStore)
+      const { backend_url, session, selectedFileInfo, setContracts } = useStore(appStore)
       const [localSession, setLocalSession] = useState(session)
 
       const [ws, setWs] = useState<WebSocket | null>(null)
@@ -37,7 +37,7 @@ const WebsocketFragment = () => {
                   // Step 1: Ensure SSL if needed
                   const validHttpAndDomain = ensureDomainUrlHasSSL(backend_url)
                   const response = await axios.get(`${validHttpAndDomain}/ws/clients`)
-                   response.data.clients.map((client: any) => client.userId)
+                  response.data.clients.map((client: any) => client.userId)
                   // setConnectedUsers(users);
             } catch (error) {
                   console.error('Error fetching connected users:', error)
@@ -80,7 +80,7 @@ const WebsocketFragment = () => {
 
                   // Stop if we've reached maximum attempts
                   if (attemptCount >= MAX_RECONNECT_ATTEMPTS) {
-                        toast.error( 'Could not reconnect to server. Please refresh the page.')
+                        toast.error('Could not reconnect to server. Please refresh the page.')
                         return
                   }
 
@@ -128,41 +128,41 @@ const WebsocketFragment = () => {
                               const message: WebSocketMessage = JSON.parse(event.data)
 
                               if (message.action === WebSocketActions.REFETCH_FILES) {
-                                    ;(async () => {
+                                    ; (async () => {
                                           if (walletAddressRef.current && nounceRef.current) {
-                                                const url = `${backend_url}/explorer_files`
-                                                const actualUrlToFetch = ensureDomainUrlHasSSL(url)
-                                                // const files = await fetchFiles(walletAddressRef.current, actualUrlToFetch, nounceRef.current)
-                                                // setFiles({ fileData: files, status: 'loaded' })
+                                                // const url = `${backend_url}/explorer_files`
+                                                // const actualUrlToFetch = ensureDomainUrlHasSSL(url)
+                                                // // const files = await fetchFiles(walletAddressRef.current, actualUrlToFetch, nounceRef.current)
+                                                // // setFiles({ fileData: files, status: 'loaded' })
 
 
- const filesApi = await fetchFiles(session!.address, actualUrlToFetch, session!.nonce)
-                                      setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
-        
+                                                // const filesApi = await fetchFiles(session!.address, actualUrlToFetch, session!.nonce)
+                                                // setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
-                                      const currentSelectedFile = selectedFileRef.current
 
-                                                if (currentSelectedFile) {
-                                                      // if (userSelectedFile) {
-                                                      const genesisHash = getGenesisHash(currentSelectedFile!.aquaTree!)
-                                                      if (genesisHash) {
-                                                            for (const itemTree of filesApi.files) {
-                                                                  const genesisHashItem = getGenesisHash(itemTree.aquaTree!)
-                                                                  if (genesisHashItem) {
-                                                                        if (genesisHashItem == genesisHash) {
-                                                                              setSelectedFileInfo(itemTree)
-                                                                              break
-                                                                        }
-                                                                  }
-                                                            }
-                                                      }
-                                                }
+                                                // const currentSelectedFile = selectedFileRef.current
+
+                                                // if (currentSelectedFile) {
+                                                //       // if (userSelectedFile) {
+                                                //       const genesisHash = getGenesisHash(currentSelectedFile!.aquaTree!)
+                                                //       if (genesisHash) {
+                                                //             for (const itemTree of filesApi.files) {
+                                                //                   const genesisHashItem = getGenesisHash(itemTree.aquaTree!)
+                                                //                   if (genesisHashItem) {
+                                                //                         if (genesisHashItem == genesisHash) {
+                                                //                               setSelectedFileInfo(itemTree)
+                                                //                               break
+                                                //                         }
+                                                //                   }
+                                                //             }
+                                                //       }
+                                                // }
                                           }
                                     })()
                               } else if (message.action === WebSocketActions.REFETCH_SHARE_CONTRACTS) {
-                                    
+
                               } else if (message.action === WebSocketActions.REFETCH_SHARE_CONTRACTS) {
-                                    ;(async () => {
+                                    ; (async () => {
                                           try {
                                                 const url = `${backend_url}/contracts`
                                                 const response = await axios.get(url, {
@@ -177,7 +177,7 @@ const WebsocketFragment = () => {
                                                       setContracts(response.data?.contracts)
                                                 }
 
-                                                toast.success( `An item was shared to your account`)
+                                                toast.success(`An item was shared to your account`)
                                           } catch (e) {
                                           }
                                     })()
@@ -228,7 +228,7 @@ const WebsocketFragment = () => {
                         }
 
                         if (!isExplicitDisconnect) {
-                              toast.error( `Realtime connection error occurred`)
+                              toast.error(`Realtime connection error occurred`)
 
                               // The onclose handler will trigger reconnection
                         }

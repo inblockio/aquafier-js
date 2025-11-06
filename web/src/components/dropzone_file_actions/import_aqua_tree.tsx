@@ -1,12 +1,11 @@
-import React, {useRef, useState} from 'react'
-import {LuImport} from 'react-icons/lu'
-import {useStore} from 'zustand'
+import React, { useRef, useState } from 'react'
+import { LuImport } from 'react-icons/lu'
+import { useStore } from 'zustand'
 import appStore from '../../store'
 import {
     allLinkRevisionHashes,
     dummyCredential,
     ensureDomainUrlHasSSL,
-    fetchFiles,
     getAquaTreeFileName,
     getFileName,
     getGenesisHash,
@@ -15,15 +14,15 @@ import {
     readFileContent,
     validateAquaTree,
 } from '../../utils/functions'
-import Aquafier, {AquaTree, CredentialsData, FileObject} from 'aqua-js-sdk'
-import {IDropzoneAction, UploadLinkAquaTreeExpectedData} from '../../types/types'
-import {Input} from '@/components/ui/input'
-import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog'
-import {Button} from '@/components/ui/button'
-import {toast} from 'sonner'
+import Aquafier, { AquaTree, CredentialsData, FileObject } from 'aqua-js-sdk'
+import { IDropzoneAction, UploadLinkAquaTreeExpectedData } from '../../types/types'
+import { Input } from '@/components/ui/input'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
+import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 
-// export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction2) => {
-export const ImportAquaTree = ({file, filesWrapper, removeFilesListForUpload}: IDropzoneAction) => {
+export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }: IDropzoneAction) => {
     const aquafier = new Aquafier()
     const [uploading, setUploading] = useState(false)
     // const [uploaded, setUploaded] = useState(false)
@@ -39,7 +38,7 @@ export const ImportAquaTree = ({file, filesWrapper, removeFilesListForUpload}: I
     >([])
     const [expectedFile, setExpectedFile] = useState<UploadLinkAquaTreeExpectedData | null>(null)
 
-    const {files, metamaskAddress, setFiles, backend_url, session, user_profile} = useStore(appStore)
+    const { files, metamaskAddress, backend_url, session, user_profile } = useStore(appStore)
 
     const uploadFileData = async (aquaFile: File, assetFile: File | null, isWorkflow: boolean = false) => {
         const formData = new FormData()
@@ -60,27 +59,16 @@ export const ImportAquaTree = ({file, filesWrapper, removeFilesListForUpload}: I
                 },
             })
 
-            // const responseData = await response.json()
-            // setFiles([...responseData.files])
-
-            //   setFiles({ fileData: [...responseData.data, file], status: 'loaded' })
-
-            //  const filesFromApi: Array<ApiFileInfo> = responseData.files
-            //                     setFiles({ fileData: filesFromApi, status: 'loaded' })
-            // setUploaded(true)
-
-            // const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-            // setFiles({fileData: files, status: 'loaded'})
-
-              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
-
-                              
             setUploading(false)
             setSelectedFileName('')
             toast.success('File uploaded successfully')
-            // updateUploadedIndex(fileIndex)
             removeFilesListForUpload(filesWrapper)
+
+            // Trigger reload for all files and stats
+            // await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+            // await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
+            await triggerWorkflowReload(RELOAD_KEYS.user_stats, true);
+
             return
         } catch (error) {
             setUploading(false)
@@ -97,7 +85,7 @@ export const ImportAquaTree = ({file, filesWrapper, removeFilesListForUpload}: I
             path: '',
         }
 
-        const newFileObjects = [{fileObject: mainAquaFileObject, file: file}]
+        const newFileObjects = [{ fileObject: mainAquaFileObject, file: file }]
         setAllFileObjectsWrapper(newFileObjects)
 
         const genHash = getGenesisHash(aquaTree)
@@ -466,10 +454,10 @@ export const ImportAquaTree = ({file, filesWrapper, removeFilesListForUpload}: I
                 variant="outline"
                 className="w-24 bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
                 onClick={importFile}
-                // disabled={uploadedIndexes.includes(fileIndex) || uploaded}
+            // disabled={uploadedIndexes.includes(fileIndex) || uploaded}
             >
                 {uploading ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-700"></div> :
-                    <LuImport className="w-4 h-4 mr-1"/>}
+                    <LuImport className="w-4 h-4 mr-1" />}
                 Import
             </Button>
 
@@ -505,7 +493,7 @@ export const ImportAquaTree = ({file, filesWrapper, removeFilesListForUpload}: I
                                 >
                                     Select File
                                 </Button>
-                                <Input type="file" className="hidden" ref={fileInputRef} onChange={handleFileSelect}/>
+                                <Input type="file" className="hidden" ref={fileInputRef} onChange={handleFileSelect} />
                             </div>
 
                             {selectedFileName.length > 0 &&
@@ -515,7 +503,7 @@ export const ImportAquaTree = ({file, filesWrapper, removeFilesListForUpload}: I
 
                     <DialogFooter className="border-t border-gray-200 pt-3">
                         <Button data-testid="action-cancel-77-button" variant="outline" onClick={closeModal}
-                                className="bg-black text-white hover:bg-gray-800">
+                            className="bg-black text-white hover:bg-gray-800">
                             Cancel
                         </Button>
                     </DialogFooter>

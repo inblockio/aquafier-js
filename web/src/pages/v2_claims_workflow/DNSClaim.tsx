@@ -6,7 +6,7 @@ import {ShareButton} from '@/components/aqua_chain_actions/share_aqua_chain'
 import {ApiFileInfo} from '@/models/FileInfo'
 import {useStore} from 'zustand'
 import appStore from '@/store'
-import ImprovedDNSLogs from '../claims_workflow/DNSClaimLogs'
+import ImprovedDNSLogs from './ImprovedDNSLogs'
 import { useLocation } from 'react-router-dom'
 
 interface IDNSClaim {

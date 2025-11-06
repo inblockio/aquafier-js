@@ -76,7 +76,6 @@ export const AddressView: React.FC<AddressViewProps> = ({
               placeholder="Enter wallet address..."
             /> */}
             <WalletAutosuggest
-
               walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, workflows)}
               field={{
                 name: 'address',

@@ -6,7 +6,6 @@ import { AlertCircle, CheckCircle, FileText, FolderPlus, Loader2, Minimize2, Plu
 import { emptyUserStats, FileItemWrapper, IUserStats, UploadStatus } from '@/types/types'
 import {
       checkIfFileExistInUserFiles,
-      fetchFiles,
       getAquaTreeFileName,
       isAquaTree,
       isJSONFile,
@@ -35,11 +34,12 @@ import { ImportAquaTreeZip } from '@/components/dropzone_file_actions/import_aqu
 import { FormRevisionFile } from '@/components/dropzone_file_actions/form_revision'
 
 import ClaimTypesDropdownButton from '@/components/button_claim_dropdown'
+import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
+import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 
 const FilesPage = () => {
       const {
             files,
-            setFiles,
             session,
             backend_url,
             selectedFileInfo,
@@ -67,25 +67,14 @@ const FilesPage = () => {
             }
       }
 
-      // const [showError, setShowError] = useState(false);
-
-      // useEffect(() => {
-      //       if (files.status === 'error') {
-      //             const timer = setTimeout(() => {
-      //                   setShowError(true);
-      //             }, 2000); // Show error after 2 seconds
-
-      //             return () => clearTimeout(timer);
-      //       } else {
-      //             setShowError(false);
-      //       }
-      // }, [files.status]);
 
       const getUserStats = async () => {
             if (!session?.nonce || !session?.address) return
-            
+
             try {
-                  setLoading(true)
+                  if(stats.filesCount === 0){
+                        setLoading(true)
+                  }
                   const result = await axios.get(`${backend_url}/${API_ENDPOINTS.USER_STATS}`, {
                         headers: {
                               'nonce': session.nonce,
@@ -101,10 +90,19 @@ const FilesPage = () => {
       }
 
       useEffect(() => {
-            if(session?.address && session?.nonce && backend_url){
+            if (session?.address && session?.nonce && backend_url) {
                   getUserStats()
             }
       }, [session?.address, session?.nonce, backend_url])
+
+      // Watch for stats reload triggers
+      useReloadWatcher({
+            key: RELOAD_KEYS.user_stats,
+            onReload: () => {
+                  console.log('Reloading user stats...');
+                  getUserStats();
+            }
+      });
 
 
       const handleUploadClick = () => {
@@ -158,9 +156,10 @@ const FilesPage = () => {
                   // const updatedFiles = await fetchFiles(session?.address!, url2, session?.nonce!)
                   // setFiles({ fileData: updatedFiles, status: 'loaded' })
 
-                  const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                  setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
-
+                  // const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                  // setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+                  await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                  await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
 
 
                   toast.success('File uploaded successfully')
@@ -312,9 +311,11 @@ const FilesPage = () => {
             // const files = await fetchFiles(session?.address!, url2, session?.nonce!)
             // setFiles({ fileData: files, status: 'loaded' })
 
-            const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-            setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
-
+            // const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+            // setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+            // Trigger reload for all files and stats
+            await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+            await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
 
       }
 
@@ -660,14 +661,14 @@ const FilesPage = () => {
                                           {/* Header - fixed height */}
                                           <DialogHeader className="!h-[60px] !min-h-[60px] !max-h-[60px] flex justify-center px-6">
                                                 <DialogTitle style={{
-                                                       textAlign: 'start',
-                                                       maxWidth: '90%',
-                                                       overflow: 'hidden',
-                                                       textOverflow: 'ellipsis',
-                                                       whiteSpace: 'nowrap'
-                                                 }}>
+                                                      textAlign: 'start',
+                                                      maxWidth: '90%',
+                                                      overflow: 'hidden',
+                                                      textOverflow: 'ellipsis',
+                                                      whiteSpace: 'nowrap'
+                                                }}>
                                                       {getAquaTreeFileName(selectedFileInfo.aquaTree!)}
-                                                 </DialogTitle>
+                                                </DialogTitle>
                                           </DialogHeader>
                                           {/* Content - takes all available space */}
                                           <div className="h-[calc(100%-60px)] overflow-y-auto">

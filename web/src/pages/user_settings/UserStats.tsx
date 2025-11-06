@@ -2,12 +2,15 @@ import React, { useEffect } from 'react';
 import {
     FileText,
     Shield,
-    CheckCircle} from 'lucide-react';
+    CheckCircle
+} from 'lucide-react';
 import axios from 'axios';
 import { useStore } from 'zustand';
 import appStore from '@/store';
 import { API_ENDPOINTS, getClaimIcon } from '@/utils/constants';
 import { emptyUserStats, IUserStats } from '@/types/types';
+import { useReloadWatcher } from '@/hooks/useReloadWatcher';
+import { RELOAD_KEYS } from '@/utils/reloadDatabase';
 
 const formatClaimName = (claimType: string) => {
     return claimType
@@ -43,6 +46,15 @@ const UserStats = () => {
     useEffect(() => {
         getUserStats()
     }, [backend_url, JSON.stringify(session)])
+
+    // Watch for stats reload triggers
+    useReloadWatcher({
+        key: RELOAD_KEYS.user_stats,
+        onReload: () => {
+            console.log('Reloading user stats...');
+            getUserStats();
+        }
+    });
 
     return (
         <div className="bg-gradient-to-br from-slate-50 to-slate-100 p-2 md:p-8 rounded-2xl">
@@ -106,8 +118,8 @@ const UserStats = () => {
                                 <div
                                     key={claimType}
                                     className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all ${isActive
-                                            ? 'bg-blue-50 border-blue-200 hover:border-blue-300'
-                                            : 'bg-slate-50 border-slate-200 opacity-60'
+                                        ? 'bg-blue-50 border-blue-200 hover:border-blue-300'
+                                        : 'bg-slate-50 border-slate-200 opacity-60'
                                         }`}
                                     dir="ltr"
                                 >

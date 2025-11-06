@@ -1,5 +1,5 @@
 // import { ethers } from "ethers";
-import { getAddress, isAddress } from 'ethers'
+import { ethers, getAddress, isAddress } from 'ethers'
 
 import { ApiFileInfo, ClaimInformation } from '../models/FileInfo'
 import { documentTypes, ERROR_TEXT, ERROR_UKNOWN, imageTypes, musicTypes, videoTypes } from './constants'
@@ -299,15 +299,8 @@ export async function switchNetwork(chainId: string) {
       }
 }
 
-export const getWalletClaims = (systemFileInfo: ApiFileInfo[], files: ApiFileInfo[], walletAddress: string, _setSelectedFileInfo: (file: ApiFileInfo | null) => void): IIdentityClaimDetails | null => {
-      const aquaTemplates: string[] = systemFileInfo.map(e => {
-            try {
-                  return getAquaTreeFileName(e.aquaTree!)
-            } catch (e) {
-                  ('Error processing system file') // More descriptive
-                  return ''
-            }
-      })
+export const getWalletClaims = (aquaTemplateNames: string[], files: ApiFileInfo[], walletAddress: string, _setSelectedFileInfo: (file: ApiFileInfo | null) => void): IIdentityClaimDetails | null => {
+      const aquaTemplates: string[] = aquaTemplateNames
 
       if (files && files.length > 0) {
             let firstClaim: ApiFileInfo | null = null
@@ -2857,4 +2850,18 @@ export async function loadSignatureImage(aquaTree: AquaTree, fileObject: FileObj
             return `${window.location.origin}/images/placeholder-img.png`
       }
       return null
+}
+
+
+export const cleanEthAddress = (address?: string) => {
+      if (!address) {
+            return false
+      }
+      let isGood = true
+      try {
+            ethers.getAddress(address)
+      } catch (e) {
+            isGood = false
+      }
+      return isGood
 }

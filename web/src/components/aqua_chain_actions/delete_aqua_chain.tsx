@@ -1,7 +1,7 @@
 import {LuDelete, LuTrash} from 'react-icons/lu'
 import {Button} from '@/components/ui/button'
 import {Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog'
-import {fetchFiles, getAquaTreeFileName, getFileName, getGenesisHash, isWorkFlowData} from '../../utils/functions'
+import {getAquaTreeFileName, getFileName, getGenesisHash, isWorkFlowData} from '../../utils/functions'
 import {useStore} from 'zustand'
 import appStore from '../../store'
 import axios from 'axios'
@@ -9,9 +9,10 @@ import {ApiFileInfo} from '../../models/FileInfo'
 import {useState} from 'react'
 import {RevionOperation} from '../../models/RevisionOperation'
 import {toast} from 'sonner'
+import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 
 export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, index }: RevionOperation) => {
-      const { files, setFiles, session, backend_url, systemFileInfo } = useStore(appStore)
+      const { files, systemFileInfo } = useStore(appStore)
       const [deleting, setDeleting] = useState(false)
       const [open, setOpen] = useState(false)
       const [isLoading, setIsloading] = useState(false)
@@ -56,16 +57,9 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
       }
 
       const refetchAllUserFiles = async () => {
-            // refetch all the files to ensure the front end state is the same as the backend
-            try {
-                 
-                              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
-
-            } catch (e) {
-                  toast.error('Error updating files')
-                  document.location.reload()
-            }
+            // triggerWorkflowReload(RELOAD_KEYS.user_stats)
+            triggerWorkflowReload(RELOAD_KEYS.all_files, true)
+            triggerWorkflowReload(RELOAD_KEYS.aqua_files, true)
       }
 
       const deleteFileAction = async () => {

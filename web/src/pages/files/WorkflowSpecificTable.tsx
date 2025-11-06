@@ -10,6 +10,8 @@ import { FilesListProps } from "@/types/types"
 import CustomPagination from "@/components/common/CustomPagination"
 import { getAquaTreeFileName } from "@/utils/functions"
 import FilesListItem from "./files_list_item"
+import { useReloadWatcher } from "@/hooks/useReloadWatcher"
+import { RELOAD_KEYS } from "@/utils/reloadDatabase"
 
 interface IWorkflowSpecificTable {
     workflowName: string
@@ -72,6 +74,35 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
     useEffect(() => {
         loadFiles()
     }, [backend_url, JSON.stringify(session), `${currentPage}-${workflowName}`]);
+
+    // Determine the appropriate reload key based on workflow type
+    const getReloadKey = (workflowName: string): string => {
+        // Handle special cases for custom file views
+        if (workflowName === 'all') {
+            return RELOAD_KEYS.all_files;
+        }
+        if (workflowName === 'aqua_files') {
+            return RELOAD_KEYS.aqua_files;
+        }
+        
+        // For specific workflow types, use the workflow name as key if it exists in RELOAD_KEYS
+        const reloadKey = (RELOAD_KEYS as any)[workflowName];
+        if (reloadKey) {
+            return reloadKey;
+        }
+        
+        // Fallback to the workflow name itself
+        return workflowName;
+    };
+
+    // Watch for reload triggers with dynamic key
+    useReloadWatcher({
+        key: getReloadKey(workflowName),
+        onReload: () => {
+            console.log(`Reloading ${workflowName} files...`);
+            loadFiles();
+        }
+    });
 
     return (
         <div className="flex flex-col gap-4 pb-4">

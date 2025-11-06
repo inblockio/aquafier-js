@@ -9,6 +9,9 @@ import { emptyUserStats, FilesListProps, IUserStats } from '@/types/types'
 import axios from 'axios'
 import { API_ENDPOINTS } from '@/utils/constants'
 import WorkflowSpecificTable from './WorkflowSpecificTable'
+import { useReloadWatcher } from '@/hooks/useReloadWatcher'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
+import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 
 export default function FilesList(filesListProps: FilesListProps) {
       const [view, setView] = useState<'table' | 'card'>('table')
@@ -28,17 +31,10 @@ export default function FilesList(filesListProps: FilesListProps) {
 
       const loadSystemAquaFileNames = async () => {
             if (!session?.nonce) return
-            try {
-                  const response = await axios.get(`${backend_url}/${API_ENDPOINTS.SYSTEM_AQUA_FILES_NAMES}`, {
-                        headers: {
-                              'nonce': session.nonce,
-                              'metamask_address': session.address
-                        }
-                  })
-                  setSystemAquaFileNames(response.data.data)
-            } catch (error) {
-                  console.log("Error getting system aqua file names", error)
-            }
+            const aquaSystemNamesService = AquaSystemNamesService.getInstance();
+            const systemNames = await aquaSystemNamesService.getSystemNames();
+            // return systemNames;
+            setSystemAquaFileNames(systemNames);
       }
 
       // Add screen size detector
@@ -89,6 +85,15 @@ export default function FilesList(filesListProps: FilesListProps) {
                   loadSystemAquaFileNames()
             }
       }, [session?.address, session?.nonce])
+
+      // Watch for stats reload triggers
+      useReloadWatcher({
+            key: RELOAD_KEYS.user_stats,
+            onReload: () => {
+                  console.log('Reloading user stats...');
+                  getUserStats();
+            }
+      });
 
       // Filter files based on selected filters AND selected workflow
       const getFilteredFiles = (): ApiFileInfo[] => {

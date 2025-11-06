@@ -251,9 +251,9 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                               <AlertDescription>
                                     <div className="mt-4 space-y-4">
                                           <p>Do you want to import this Aqua Chain?</p>
-                                          <Button data-testid="import-aqua-chain-1-button" size="lg" onClick={importAquaChain} className="w-auto">
+                                          <Button data-testid="import-aqua-chain-1-button" size="lg" disabled={uploading} onClick={importAquaChain} className="w-auto cursor-pointer">
                                                 <LuImport className="mr-2 h-4 w-4" />
-                                                Import
+                                                {uploading ? 'Importing...' : 'Import'}
                                           </Button>
                                     </div>
                               </AlertDescription>

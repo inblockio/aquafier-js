@@ -74,7 +74,7 @@ function buildServer() {
     const fastify = Fastify({
         logger: true,
         bodyLimit: 50 * 1024 * 1024 /* 50MB */,
-        requestTimeout: 120000 /* 2 minutes */
+        requestTimeout: 120000 /* 2 minutes */,
     });
 
     Sentry.setupFastifyErrorHandler(fastify);

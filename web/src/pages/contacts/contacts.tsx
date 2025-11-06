@@ -103,11 +103,11 @@ const ContactsPage = () => {
             const existingProfile = contactProfileMap.get(walletAddress);
 
             if (existingProfile) {
-                existingProfile.file.push(element);
+                existingProfile.files.push(element);
             } else {
                 contactProfileMap.set(walletAddress, {
                     walletAddress,
-                    file: [element],
+                    files: [element],
                     claims: {}
                 });
             }
@@ -315,11 +315,11 @@ const ContactsPage = () => {
                                         </span>
                                     </td>
                                     <td className="py-3 px-4">
-                                        {profileBadges(profile.file)}
+                                        {profileBadges(profile.files)}
                                     </td>
                                     <td className="py-3 px-4">
                                         <span className="inline-flex items-center justify-center rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-800">
-                                            {profile.file.length}
+                                            {profile.files.length}
                                         </span>
                                     </td>
                                 </tr>

@@ -410,9 +410,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                   //       status: 'loaded',
                   // })
 
-                   const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                                      setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
-        
+                  const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                  setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+
 
 
                   // Find and update selected file
@@ -684,15 +684,26 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
             }
 
             // proceed as url and session is set
-            const url = `${backend_url}/tree/user_signatures`
+            // const url = `${backend_url}/tree/user_signatures`
+            const url = `${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`
             try {
-                  const response = await axios.get(url, {
+                  const params = {
+                        page: 1,
+                        limit: 200,
+                        claim_types: JSON.stringify(["user_signature"]),
+                        wallet_address: session?.address,
+                  };
+                  const signaturesQuery = await axios.get(url, {
                         headers: {
                               nonce: session?.nonce,
                         },
+                        params
                   })
 
-                  const userSignaturesApiInfo: Array<ApiFileInfo> = response.data.data
+                  const response = signaturesQuery.data;
+                  const signatureAquaTrees = response.aquaTrees;
+
+                  const userSignaturesApiInfo: Array<ApiFileInfo> = signatureAquaTrees//response.data.data
                   // Make the logic here work with the current Signature Interface
 
                   setMySignaturesAquaTree(userSignaturesApiInfo)

@@ -157,8 +157,8 @@ export default function NewShadcnLayoutWithSidebar() {
                                     openDialog?.dialogType === 'form_template_editor' ?
                                           "[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[98vh] max-h-[98vh] sm:!max-w-[95vw] sm:!w-[95vw] sm:h-[98vh] sm:max-h-[98vh] flex flex-col" :
                                           openDialog?.dialogType === 'identity_attestation' ?
-                                                "[&>button]:hidden !max-w-[65vw] !w-[65vw] h-[85vh] max-h-[85vh] sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[85vh] sm:max-h-[85vh] flex flex-col" :
-                                                "[&>button]:hidden sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[65vh] sm:max-h-[65vh] !max-w-[95vw] !w-[95vw] h-[98vh] max-h-[95vh] flex flex-col p-0 gap-0"
+                                                "[&>button]:hidden !max-w-[65vw] !w-[65vw] h-[90vh] max-h-[90vh] sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[90vh] sm:max-h-[90vh] flex flex-col" :
+                                                "[&>button]:hidden sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[90vh] sm:max-h-[90vh] !max-w-[95vw] !w-[95vw] h-[98vh] max-h-[95vh] flex flex-col p-0 gap-0"
                               }>
                               <div className="absolute top-4 right-4">
                                     <Button

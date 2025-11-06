@@ -80,7 +80,7 @@ export interface IProfileClaim {
 
 export interface ContactProfile {
       walletAddress: string
-      file: Array<ApiFileInfo>
+      files: Array<ApiFileInfo>
 
       // Extra fields
       name?: string;

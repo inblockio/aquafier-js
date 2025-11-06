@@ -1,20 +1,13 @@
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import appStore from "@/store";
 import { ContactProfile } from "@/types/types";
-import { getGenesisHash, isWorkFlowData } from "@/utils/functions";
-import { OrderRevisionInAquaTree, Revision } from "aqua-js-sdk";
 import { ArrowUpAz, Eye, Mail, Phone, Search, Signature, User } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { TbWorld } from "react-icons/tb";
-import { useStore } from "zustand";
 import WalletAddressProfile from "../v2_claims_workflow/WalletAddressProfile";
 import { Button } from "@/components/ui/button";
-import axios from "axios";
-import { API_ENDPOINTS } from "@/utils/constants";
-import { GlobalPagination } from "@/types";
-import { ApiFileInfo } from "@/models/FileInfo";
 import { ClipLoader } from "react-spinners";
+import { useContacts } from "@/hooks/useContactResolver";
 
 
 const letters = ['0', ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))];
@@ -50,10 +43,10 @@ const AZRail = ({ onJump, activeLetter }: { onJump: (letter: string) => void, ac
 
 interface ContactRowProps {
     contact: ContactProfile
-    onSelectAddress: (address: string) => void
+    onProfileSelect: (profile: ContactProfile) => void
 }
 
-const ContactRow = ({ contact, onSelectAddress }: ContactRowProps) => {
+const ContactRow = ({ contact, onProfileSelect }: ContactRowProps) => {
     const normalizeText = (v: string) => (v || '').toString().trim();
 
     const truncateAddress = (addr: string) => {
@@ -191,7 +184,7 @@ const ContactRow = ({ contact, onSelectAddress }: ContactRowProps) => {
                             Share
                         </button> */}
                         <button
-                            onClick={() => onSelectAddress(contact.walletAddress)}
+                            onClick={() => onProfileSelect(contact)}
                             className={`cursor-pointer inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-xs text-neutral-600 hover:bg-neutral-50 focus-visible:outline-neutral-900/20`}
                         >
                             <Eye />
@@ -213,16 +206,6 @@ const GroupHeader = ({ letter }: { letter: string }) => {
     )
 }
 
-const CLAIMS = new Set([
-    "user_profile",
-    "identity_claim",
-    "identity_attestation",
-    "domain_claim",
-    "email_claim",
-    "phone_number_claim",
-    "user_signature",
-]);
-
 
 const ContactsTable = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -232,36 +215,9 @@ const ContactsTable = () => {
 
     const normalizeText = (v: string) => (v || '').toString().trim();
     const [openDialog, setOpenDialog] = useState(false);
-    const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
+    const [selectedProfile, setSelectedProfile] = useState<ContactProfile | null>(null);
 
-    const { session, backend_url } = useStore(appStore);
-    const [contactProfiles, setContactProfiles] = useState<ContactProfile[]>([]);
-
-    const [files, setFiles] = useState<ApiFileInfo[]>([])
-    const [currentPage, _setCurrentPage] = useState(1)
-    const [_pagination, setPagination] = useState<GlobalPagination | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [isProcessingClaims, setIsProcessingClaims] = useState(true)
-
-    const [systemAquaFileNames, setSystemAquaFileNames] = useState<string[]>([])
-
-    const loadSystemAquaFileNames = async () => {
-        if (!session?.nonce) return
-        try {
-            const response = await axios.get(`${backend_url}/${API_ENDPOINTS.SYSTEM_AQUA_FILES_NAMES}`, {
-                headers: {
-                    'nonce': session.nonce,
-                    'metamask_address': session.address
-                }
-            })
-            setSystemAquaFileNames(response.data.data)
-        } catch (error) {
-            console.log("Error getting system aqua file names", error)
-        }
-    }
-
-
-    // const navigate = useNavigate()
+    const { contacts: contactProfiles, loading: contactsLoading } = useContacts();
 
     const groupKey = (c: ContactProfile) => {
         const nm = normalizeText(c.name ?? "");
@@ -275,6 +231,11 @@ const ContactsTable = () => {
     const filterContacts = (query: string) => {
         if (!query) return contactProfiles.slice();
         const q = query.toLowerCase();
+        if(q.startsWith("0x")) {
+            return contactProfiles.filter(c => {
+                return c.walletAddress.toLowerCase().includes(q)
+            })
+        }
         return contactProfiles.filter(c => {
             // return [c.name ?? "", c.walletAddress, c.phone, c.email, c.searchString].some(
             //     v => (v || '').toLowerCase().includes(q)
@@ -323,225 +284,15 @@ const ContactsTable = () => {
         setSortAsc(!sortAsc);
     };
 
-    const loadContactTrees = async () => {
-        if (!session?.address || !backend_url) return;
-        setLoading(true)
-        const params = {
-            page: currentPage,
-            limit: 200,
-            claim_types: JSON.stringify(['identity_claim', 'user_signature', 'identity_attestation', 'email_claim', 'phone_number_claim', 'domain_claim']),
-            // wallet_address: session?.address
-        }
-        const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'nonce': `${session!.nonce}`
-            },
-            params
-        })
-        const response = filesDataQuery.data
-        const aquaTrees = response.aquaTrees
-        setPagination(response.pagination)
-        setFiles(aquaTrees)
-        setLoading(false)
-        //   processFilesToWorkflowUi(aquaTrees)
-    }
 
-    const generateContacts = async () => {
-
-        if (!files?.length || !systemAquaFileNames?.length) return;
-
-        const contactProfileMap = new Map<string, ContactProfile>();
-        setIsProcessingClaims(true)
-
-        // Process files in parallel
-        const processFile = async (element: ApiFileInfo) => {
-            const workFlow = isWorkFlowData(element.aquaTree!, systemAquaFileNames);
-            if (!workFlow.isWorkFlow || !workFlow.workFlow) return null;
-
-            const claimType = workFlow.workFlow;
-            if (!CLAIMS.has(claimType)) return null;
-
-            const orderedAquaTree = OrderRevisionInAquaTree(element.aquaTree!);
-            const allRevisions = Object.values(orderedAquaTree.revisions);
-            let walletAddress = ""
-
-            if (workFlow.workFlow == "identity_attestation") {
-                let genHash = getGenesisHash(element.aquaTree!)
-                if (genHash) {
-                    let genRevision = element.aquaTree!.revisions[genHash]
-                    let walletClaimOwner = genRevision["forms_claim_wallet_address"]
-
-                    if (walletClaimOwner) {
-                        walletAddress = walletClaimOwner
-                    }
-                }
-            } else {
-                const signatureRevision = allRevisions.find(
-                    (r) => r.revision_type === "signature"
-                ) as Revision | undefined;
-
-                if (!signatureRevision?.signature_wallet_address) return null;
-
-                walletAddress = signatureRevision.signature_wallet_address;
-            }
-
-            let claimValue: string = ""
-            let genHash = getGenesisHash(element.aquaTree!)
-
-            if (genHash) {
-                let genRevision = element.aquaTree!.revisions[genHash]
-
-                const claimFieldMap: Record<string, string> = {
-                    "identity_claim": "forms_name",
-                    "email_claim": "forms_email",
-                    "phone_number_claim": "forms_phone_number",
-                    "user_signature": "forms_wallet_address",
-                    "domain_claim": "forms_domain"
-                }
-
-                const fieldName = claimFieldMap[claimType]
-                if (fieldName && genRevision[fieldName]) {
-                    claimValue = genRevision[fieldName]
-                }
-            }
-
-            let searchText = ""
-
-            if (genHash) {
-                let genRevision = element.aquaTree!.revisions[genHash]
-
-                const claimSearchFieldsMap: Record<string, string[]> = {
-                    "identity_claim": ["forms_name", "forms_wallet_address"],
-                    "phone_number_claim": ["forms_phone_number", "forms_wallet_address"],
-                    "email_claim": ["forms_email", "forms_wallet_address"],
-                    "user_signature": ["forms_wallet_address", "forms_name"],
-                    "domain_claim": ["forms_domain", "forms_wallet_address"],
-                    "identity_attestation": ["forms_context", "forms_wallet_address"]
-                }
-
-                const searchFields = claimSearchFieldsMap[claimType]
-                if (searchFields) {
-                    for (const field of searchFields) {
-                        if (genRevision[field]) {
-                            searchText += genRevision[field] + " ";
-                        }
-                    }
-                }
-            }
-
-            return {
-                walletAddress,
-                claimType,
-                claimValue,
-                searchText,
-                element
-            };
-        };
-
-        try {
-            // Process all files in parallel
-            const processedFiles = await Promise.all(files.map(processFile));
-            
-            // Filter out null results and merge into contact profiles
-            const validResults = processedFiles.filter(result => result !== null);
-            
-            for (const result of validResults) {
-                const { walletAddress, claimType, claimValue, searchText, element } = result!;
-                
-                let existingProfile = contactProfileMap.get(walletAddress);
-
-                if (existingProfile) {
-                    existingProfile.file.push(element);
-
-                    // Update name if current name is empty and we have a new name
-                    if (existingProfile.name === "" && claimType === "identity_claim") {
-                        existingProfile.name = claimValue;
-                    }
-                    if (existingProfile.phone === "" && claimType === "phone_number_claim") {
-                        existingProfile.phone = claimValue;
-                    }
-                    if (existingProfile.email === "" && claimType === "email_claim") {
-                        existingProfile.email = claimValue;
-                    }
-
-                    // ALWAYS update claims if we have a claim value (moved outside name condition)
-                    if (claimValue) {
-                        if (existingProfile.claims[claimType]) {
-                            existingProfile.claims[claimType].push(claimValue);
-                        } else {
-                            existingProfile.claims[claimType] = [claimValue];
-                        }
-                    }
-                    // Update search string
-                    existingProfile.searchString = existingProfile.searchString + " " + searchText
-                    contactProfileMap.set(walletAddress, existingProfile);
-
-                } else {
-                    if (walletAddress) {
-                        contactProfileMap.set(walletAddress, {
-                            walletAddress,
-                            file: [element],
-                            name: claimType === "identity_claim" ? claimValue : "",
-                            phone: claimType === "phone_number_claim" ? claimValue : "",
-                            email: claimType === "email_claim" ? claimValue : "",
-                            searchString: searchText,
-                            claims: {
-                                ...(claimValue ? { [claimType]: [claimValue] } : {})
-                            }
-                        });
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Error processing contacts in parallel:', error);
-        }
-        
-        setIsProcessingClaims(false)
-        setContactProfiles(Array.from(contactProfileMap.values()));
-    }
-
-    const handleSelectAddress = (address: string) => {
-        setSelectedAddress(address);
+    const handleSelectProfile = (profile: ContactProfile) => {
+        setSelectedProfile(profile);
         setOpenDialog(true);
     };
 
-    const watchFilesChange = useMemo(() => {
-        if (!files?.length) return '0';
-
-        let totalRevisions = 0;
-        let aquaTreeHashes: string[] = [];
-
-        for (const file of files) {
-            if (file.aquaTree?.revisions) {
-                const revisionCount = Object.keys(file.aquaTree.revisions).length;
-                totalRevisions += revisionCount;
-
-                // Create a stable identifier for this aquaTree based on its revisions
-                const revisionKeys = Object.keys(file.aquaTree.revisions).sort();
-                const aquaTreeHash = `${revisionCount}-${revisionKeys.join(',')}`;
-                aquaTreeHashes.push(aquaTreeHash);
-            }
-        }
-
-        // Create a stable watch value based on total revisions and aquaTree structure
-        return `${totalRevisions}-${aquaTreeHashes.sort().join('|')}`;
-    }, [files]);
-
-    useEffect(() => {
-        loadContactTrees()
-    }, [currentPage, backend_url, JSON.stringify(session)]);
-
-    useEffect(() => {
-        loadSystemAquaFileNames()
-    }, [session?.nonce]);
-
-    useEffect(() => {
-        generateContacts()
-    }, [watchFilesChange, systemAquaFileNames]);
 
     return (
-        <>
+        <>  
             <div className="mx-auto max-w-6xl px-0 sm:px-4 py-2">
                 <header className="mb-6">
                     <h1 className="text-2xl tracking-tight font-semibold text-neutral-900">
@@ -595,12 +346,12 @@ const ContactsTable = () => {
                                         className="h-full overflow-y-auto overscroll-contain border-t border-neutral-100"
                                     >
                                         {
-                                            loading ? <div className="py-6 flex flex-col items-center justify-center h-full w-full">
-                                                <ClipLoader color="#000" loading={loading} size={50} />
+                                            contactsLoading ? <div className="py-6 flex flex-col items-center justify-center h-full w-full">
+                                                <ClipLoader color="#000" loading={contactsLoading} size={50} />
                                                 <p className="text-sm">Loading...</p>
                                             </div> : null
                                         }
-                                        {(totalContacts === 0 && !loading && !isProcessingClaims) ? (
+                                        {(totalContacts === 0 && !contactsLoading) ? (
                                             <div className="p-8 text-center text-neutral-500 text-sm flex flex-col gap-4">
                                                 <p> No contacts found.</p>
                                                 {
@@ -625,7 +376,7 @@ const ContactsTable = () => {
                                                                 <ContactRow
                                                                     key={`${letter}-${idx}-${contact.walletAddress}`}
                                                                     contact={contact}
-                                                                    onSelectAddress={handleSelectAddress}
+                                                                    onProfileSelect={handleSelectProfile}
                                                                 />
                                                             ))}
                                                         </div>
@@ -654,8 +405,8 @@ const ContactsTable = () => {
                         <DialogDescription style={{
                             minHeight: "max(400px, fit-content)"
                         }}>
-                            {selectedAddress ? (
-                                <WalletAddressProfile walletAddress={selectedAddress} />
+                            {selectedProfile ? (
+                                <WalletAddressProfile walletAddress={selectedProfile.walletAddress} files={selectedProfile.files} />
                             ) : null}
                         </DialogDescription>
                     </DialogHeader>

@@ -71,22 +71,6 @@ export default function FilesListItem({
             prepareAquaTreeForRendering()
       }, [systemAquaFileNames, file])
 
-      // useEffect(() => {
-      // const someData = systemFileInfo.map(e => {
-      //       try {
-      //             return getAquaTreeFileName(e.aquaTree!)
-      //       } catch (e) {
-      //             return ''
-      //       }
-      // })
-
-      // const fileObject = getAquaTreeFileObject(file)
-      // setCurrentFileObject(fileObject)
-      // const workFlow = isWorkFlowData(file.aquaTree!, someData)
-
-      // setWorkFlowInfo(workFlow)
-      // }, [file, systemAquaFileNames])
-
       const getFileInfo = () => {
             if (currentFileObject) {
                   return formatBytes(currentFileObject.fileSize ?? 0)
@@ -105,8 +89,6 @@ export default function FilesListItem({
                   return 'Not available'
             }
       }
-
-
 
       const workFlowAquaSignActions = () => {
             return (
