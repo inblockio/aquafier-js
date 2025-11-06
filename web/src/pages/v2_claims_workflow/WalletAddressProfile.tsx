@@ -19,7 +19,7 @@ import {
       timeToHumanFriendly
 } from '@/utils/functions'
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk'
-import { ArrowRight, CheckCircle, LucideCheckCircle, Mail, Phone, Share2, Signature, User, X } from 'lucide-react'
+import { ArrowRight, CheckCircle, LucideCheckCircle, Mail, Phone, Share2, Signature, SignatureIcon, User, X } from 'lucide-react'
 import { Suspense, useEffect, useState } from 'react'
 import { TbWorldWww } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
@@ -28,7 +28,6 @@ import { toast } from 'sonner'
 import { useStore } from 'zustand'
 import axios from 'axios'
 import { getDNSStatusBadge, IDnsVerificationResult, verifyDNS } from '@/utils/verifiy_dns'
-import { BsInfoCircle } from 'react-icons/bs'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 
 interface ISignatureWalletAddressCard {
@@ -258,7 +257,7 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
       )
 }
 
-const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, showShadow, hideOpenProfileButton, noBg, timestamp, files }: ISignatureWalletAddressCard) => {
+const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, showShadow, hideOpenProfileButton, noBg, timestamp, files, signatureHash }: ISignatureWalletAddressCard) => {
       const { workflows, session, setFiles, backend_url, setOpenDialog, setSelectedFileInfo } = useStore(appStore)
       const [claims, setClaims] = useState<IClaim[]>([])
       const [loading, setLoading] = useState(true)
@@ -283,6 +282,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             try {
                   let _files: ApiFileInfo[] = []
                   let systemWorkflowNames: string[] = await loadSystemAquaFileNames()
+                  console.log(systemWorkflowNames)
                   // Load profile from db based on wallet address
                   if (files && files.length > 0) {
                         _files = files;
@@ -291,11 +291,12 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         const { ContactsService } = await import('@/storage/databases/contactsDb');
                         const contactsService = ContactsService.getInstance();
                         const contactProfile = await contactsService.getContactByAddress(walletAddress);
-
+                        console.log("contactProfile", contactProfile)
                         if (contactProfile && contactProfile.files) {
                               _files = contactProfile.files;
                         }
                   }
+                  console.log("files", files, _files, walletAddress)
                   processFilesToGetWorkflows(_files, systemWorkflowNames);
             } catch (error) {
                   console.error('Failed to load workflows:', error);
@@ -736,15 +737,15 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             }
       }, [walletAddress, session?.nonce, files])
 
-      if (claims.length === 0 && !isLoading) {
-            return (
-                  <div className={`${width ? width : 'w-full'} bg-transparent`}>
-                        <div className={`flex p-2 flex-col ${noBg ? '' : 'bg-gradient-to-br from-white to-slate-200 border border-slate-200'} ${shadowClasses} rounded-xl gap-4 transition-shadow duration-300`}>
-                              <p className="text-sm">No claims found</p>
-                        </div>
-                  </div>
-            )
-      }
+      // if (claims.length === 0 && !isLoading) {
+      //       return (
+      //             <div className={`${width ? width : 'w-full'} bg-transparent`}>
+      //                   <div className={`flex p-2 flex-col ${noBg ? '' : 'bg-gradient-to-br from-white to-slate-200 border border-slate-200'} ${shadowClasses} rounded-xl gap-4 transition-shadow duration-300`}>
+      //                         <p className="text-sm">No claims found</p>
+      //                   </div> 
+      //             </div>
+      //       )
+      // }
 
 
 
@@ -781,10 +782,10 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                               (claims.length === 0 && !loading && !isLoading) ? (
                                     <div className="flex flex-col gap-2 bg-slate-100 p-2 rounded-lg">
                                           <p className="text-xs font-medium">Wallet Address</p>
-                                          <div className="flex gap-2">
+                                          {/* <div className="flex gap-2">
                                                 <BsInfoCircle size={15} className="text-primary" />
                                                 <p className="text-sm">Profile not Found!</p>
-                                          </div>
+                                          </div> */}
                                           <div className="flex gap-2 items-center">
                                                 <p className="text-sm font-mono break-all">
                                                       {walletAddress}
@@ -796,11 +797,16 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                                       <p className="text-xs break-all">{timestamp}</p>
                                                 ) : null
                                           }
-                                          {/* {
+                                          {
                                                 signatureHash ? (
-                                                      <p className="text-xs break-all">{signatureHash}</p>
+                                                      <div className="flex gap-2 ">
+                                                            <div className='h-10 w-10 min-h-10 min-w-10 bg-primary/10 rounded-md flex items-center justify-center'>
+                                                            <SignatureIcon size={20} />
+                                                            </div>
+                                                            <p className="text-xs break-all">{signatureHash}</p>
+                                                      </div>
                                                 ) : null
-                                          } */}
+                                          }
                                     </div>
                               ) : null
                         }
@@ -846,7 +852,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                               ) : null
                         }
                         {
-                              !hideOpenProfileButton && (
+                              (!hideOpenProfileButton && claims.length > 0) ? (
                                     <div className="flex justify-end">
                                           <div className="flex gap-1 flex-1 flex-wrap">
                                                 <Button
@@ -871,7 +877,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                                 </Button>
                                           </div>
                                     </div>
-                              )
+                              ) : null
                         }
 
                   </div>
