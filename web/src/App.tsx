@@ -32,6 +32,7 @@ import * as Sentry from "@sentry/react";
 import { init as initApm } from '@elastic/apm-rum'
 import { APMConfig } from "@/types/apm.ts";
 import ContactsPageV2 from './pages/contacts/contactsV2'
+import ContactsLoader from './pages/contacts/ContactsLoader'
 
 
 function startApm(config: APMConfig) {
@@ -118,6 +119,11 @@ function App() {
     return (
         <BrowserRouter>
             <LoadConfiguration />
+             {/* Background ContactsLoader component */}
+             <ContactsLoader 
+                onContactsLoaded={() => {}}
+                onLoadingChange={() => {}}
+            />
             <ErrorBoundary>
                 <Routes>
                     <Route path="/" element={<TailwindMainLayout />}>

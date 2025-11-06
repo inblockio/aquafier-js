@@ -24,6 +24,7 @@ import { GlobalPagination } from '@/types'
 import { API_ENDPOINTS, IDENTITY_CLAIMS } from '@/utils/constants'
 import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 import { RELOAD_KEYS } from '@/utils/reloadDatabase'
+import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 
 
 export default function ClaimsWorkflowPage() {
@@ -95,19 +96,9 @@ export default function ClaimsWorkflowPage() {
 
       const loadSystemAquaFileNames = async () => {
             if (!session?.nonce) return []
-            try {
-                  const response = await axios.get(`${backend_url}/${API_ENDPOINTS.SYSTEM_AQUA_FILES_NAMES}`, {
-                        headers: {
-                              'nonce': session.nonce,
-                              'metamask_address': session.address
-                        }
-                  })
-                  // setSystemAquaFileNames(response.data.data)
-                  return response.data.data
-            } catch (error) {
-                  console.log("Error getting system aqua file names", error)
-                  return []
-            }
+            const aquaSystemNamesService = AquaSystemNamesService.getInstance();
+            const systemNames = await aquaSystemNamesService.getSystemNames();
+            return systemNames;
       }
 
 

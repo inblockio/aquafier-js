@@ -29,7 +29,7 @@ import { useStore } from 'zustand'
 import axios from 'axios'
 import { getDNSStatusBadge, IDnsVerificationResult, verifyDNS } from '@/utils/verifiy_dns'
 import { BsInfoCircle } from 'react-icons/bs'
-import { API_ENDPOINTS } from '@/utils/constants'
+import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 
 interface ISignatureWalletAddressCard {
       index?: number
@@ -266,20 +266,9 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
       const navigate = useNavigate()
 
       const loadSystemAquaFileNames = async () => {
-            if (!session?.nonce) return []
-            try {
-                  const response = await axios.get(`${backend_url}/${API_ENDPOINTS.SYSTEM_AQUA_FILES_NAMES}`, {
-                        headers: {
-                              'nonce': session.nonce,
-                              'metamask_address': session.address
-                        }
-                  })
-                  // setSystemAquaFileNames(response.data.data)
-                  return response.data.data
-            } catch (error) {
-                  console.log("Error getting system aqua file names", error)
-                  return []
-            }
+            const aquaSystemNamesService = AquaSystemNamesService.getInstance();
+            const systemNames = await aquaSystemNamesService.getSystemNames();
+            return systemNames;
       }
 
       const shadowClasses = showShadow ? 'shadow-lg hover:shadow-xl transition-shadow duration-300' : 'shadow-none'
@@ -294,27 +283,18 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             try {
                   let _files: ApiFileInfo[] = []
                   let systemWorkflowNames: string[] = await loadSystemAquaFileNames()
-                  if (files) {
-                        _files = files
+                  // Load profile from db based on wallet address
+                  if (files && files.length > 0) {
+                        _files = files;
                   } else {
-                        const params = {
-                              page: 1,
-                              limit: 100,
-                              claim_types: JSON.stringify(['identity_claim', 'identity_attestation', 'user_signature', 'email_claim', 'phone_number_claim', 'domain_claim']),
-                              wallet_address: walletAddress,
-                              use_wallet: walletAddress,
+                        // Load contact profile from IndexedDB
+                        const { ContactsService } = await import('@/storage/databases/contactsDb');
+                        const contactsService = ContactsService.getInstance();
+                        const contactProfile = await contactsService.getContactByAddress(walletAddress);
+
+                        if (contactProfile && contactProfile.files) {
+                              _files = contactProfile.files;
                         }
-                        const filesDataQueryPromise = axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
-                              headers: {
-                                    'Content-Type': 'application/json',
-                                    'nonce': `${session!.nonce}`
-                              },
-                              params
-                        })
-                        const [filesDataQuery] = await Promise.all([filesDataQueryPromise])
-                        const response = filesDataQuery.data
-                        const aquaTrees = response.aquaTrees
-                        _files = aquaTrees
                   }
                   processFilesToGetWorkflows(_files, systemWorkflowNames);
             } catch (error) {

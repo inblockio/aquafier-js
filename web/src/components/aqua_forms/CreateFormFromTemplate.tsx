@@ -956,6 +956,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             if(selectedTemplate.name === 'identity_attestation'){
                   await triggerWorkflowReload(RELOAD_KEYS.user_profile);
             }
+            // Trigger reload for contacts if not aqua_sign
+            if(!["aqua_sign", "access_agreement", "cheque", "dba_claim"].includes(selectedTemplate.name)){
+                  await triggerWorkflowReload(RELOAD_KEYS.contacts);
+            }
       }
 
       // Clear signature canvas

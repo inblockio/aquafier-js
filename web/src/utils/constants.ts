@@ -167,3 +167,13 @@ export const getClaimIcon = (claimType: string) => {
 };
 
 export const IDENTITY_CLAIMS = ['identity_claim', 'user_signature', 'email_claim', 'phone_number_claim', 'domain_claim', 'identity_attestation']
+
+export const CLAIMS = new Set([
+    "user_profile",
+    "identity_claim",
+    "identity_attestation",
+    "domain_claim",
+    "email_claim",
+    "phone_number_claim",
+    "user_signature",
+]);

@@ -9,6 +9,8 @@ import axios from 'axios'
 import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import UserStats from './UserStats'
+import { ContactsService } from '@/storage/databases/contactsDb'
+import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 
 interface IConfirmDeleteDialog {
       children: React.ReactNode
@@ -77,6 +79,9 @@ const DeleteUserData = () => {
                         setSession(null)
                         setMetamaskAddress(null)
                         setAvatar(undefined)
+                        // Reset local dexie dbs we have created
+                        ContactsService.getInstance().clear()
+                        AquaSystemNamesService.getInstance().clear()
 
                         // Remove cookie
                         document.cookie = 'pkc_nonce=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'

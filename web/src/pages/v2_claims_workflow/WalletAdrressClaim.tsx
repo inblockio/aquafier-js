@@ -11,8 +11,7 @@ import { ArrowRightLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { toast } from 'sonner'
-import { API_ENDPOINTS, IDENTITY_CLAIMS } from '@/utils/constants'
-import axios from 'axios'
+import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 const WalletAddressProfile = lazy(() => import('./WalletAddressProfile'))
 
 interface IWalletAdrressClaim {
@@ -37,7 +36,7 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
             const [files, setFiles] = useState<Array<ApiFileInfo>>([])
             const [isLoading, setIsLoading] = useState(true)
 
-            const { setSelectedFileInfo, session, backend_url } = useStore(appStore)
+            const { setSelectedFileInfo, session } = useStore(appStore)
 
             const [open, setOpen] = useState(false)
 
@@ -46,20 +45,9 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
             }
 
             const loadSystemAquaFileNames = async () => {
-                  if (!session?.nonce) return []
-                  try {
-                        const response = await axios.get(`${backend_url}/${API_ENDPOINTS.SYSTEM_AQUA_FILES_NAMES}`, {
-                              headers: {
-                                    'nonce': session.nonce,
-                                    'metamask_address': session.address
-                              }
-                        })
-                        // setSystemAquaFileNames(response.data.data)
-                        return response.data.data
-                  } catch (error) {
-                        console.log("Error getting system aqua file names", error)
-                        return []
-                  }
+                  const aquaSystemNamesService = AquaSystemNamesService.getInstance();
+                  const systemNames = await aquaSystemNamesService.getSystemNames();
+                  return systemNames;
             }
 
             async function loadClaimsFileData() {
@@ -74,36 +62,26 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
 
                   setIsLoading(true);
                   try {
-                        const params = {
-                              page: 1,
-                              limit: 100,
-                              claim_types: JSON.stringify(IDENTITY_CLAIMS),
-                              wallet_address: walletAddress,
-                              use_wallet: session?.address,
+                        let aquaTrees: ApiFileInfo[] = [];
+                        const aquaTemplateNames = await loadSystemAquaFileNames();
+
+                        // Check if files are passed as props first, then fallback to ContactsDB
+                        // Load contact profile from IndexedDB
+                        const { ContactsService } = await import('@/storage/databases/contactsDb');
+                        const contactsService = ContactsService.getInstance();
+                        const contactProfile = await contactsService.getContactByAddress(walletAddress);
+
+                        if (contactProfile && contactProfile.files) {
+                              aquaTrees = contactProfile.files;
                         }
-                        const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
-                              headers: {
-                                    'Content-Type': 'application/json',
-                                    'nonce': `${session!.nonce}`
-                              },
-                              params
-                        })
-                        const response = filesDataQuery.data
-                        const aquaTrees = response.aquaTrees
-                        const aquaTemplateNames = await loadSystemAquaFileNames()
-                        // setPagination(response.pagination)
                         setFiles(aquaTrees)
                         const identityClaimDetails = getWalletClaims(aquaTemplateNames, aquaTrees, walletAddress, setSelectedFileInfo)
                         setIdentityClaimDetails(identityClaimDetails)
-                        // Process claims after setting files
-                        // await processAllAddressClaims(aquaTrees)
                   } catch (error) {
                         console.error('Error loading claims:', error);
                         toast.error('Failed to load claims');
-                        // setIsProcessingClaims(false)
                   } finally {
                         setIsLoading(false);
-                        // setIsProcessingClaims(false)
                   }
             }
 
@@ -169,7 +147,7 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
                                                                   handleClick()
                                                             }}
                                                       >
-                                                            {isLoading ? "Loading...": (
+                                                            {isLoading ? "Loading..." : (
                                                                   <>{showWalletAddress ? walletAddress : identityClaimDetails?.name || walletAddress}</>
                                                             )}
                                                       </p>
