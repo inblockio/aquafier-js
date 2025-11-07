@@ -282,7 +282,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             try {
                   let _files: ApiFileInfo[] = []
                   let systemWorkflowNames: string[] = await loadSystemAquaFileNames()
-                  console.log(systemWorkflowNames)
+                  // console.log(systemWorkflowNames)
                   // Load profile from db based on wallet address
                   if (files && files.length > 0) {
                         _files = files;
@@ -291,12 +291,12 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         const { ContactsService } = await import('@/storage/databases/contactsDb');
                         const contactsService = ContactsService.getInstance();
                         const contactProfile = await contactsService.getContactByAddress(walletAddress);
-                        console.log("contactProfile", contactProfile)
+                        // console.log("contactProfile", contactProfile)
                         if (contactProfile && contactProfile.files) {
                               _files = contactProfile.files;
                         }
                   }
-                  console.log("files", files, _files, walletAddress)
+                  // console.log("files", files, _files, walletAddress)
                   processFilesToGetWorkflows(_files, systemWorkflowNames);
             } catch (error) {
                   console.error('Failed to load workflows:', error);

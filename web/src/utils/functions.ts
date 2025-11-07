@@ -308,7 +308,7 @@ export const getWalletClaims = (aquaTemplateNames: string[], files: ApiFileInfo[
                   const aquaTree = files[i].aquaTree
                   if (aquaTree) {
                         const { isWorkFlow, workFlow } = isWorkFlowData(aquaTree!, aquaTemplates)
-                        if (isWorkFlow && (workFlow === 'simple_claim' || workFlow === 'identity_claim')) {
+                        if (isWorkFlow && (workFlow === 'simple_claim' || workFlow === 'identity_claim' || workFlow === "user_signature")) {
                               const orderedAquaTree = OrderRevisionInAquaTree(aquaTree)
                               const revisionHashes = Object.keys(orderedAquaTree.revisions)
                               const firstRevisionHash = revisionHashes[0]

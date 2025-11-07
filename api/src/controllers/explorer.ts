@@ -26,6 +26,8 @@ import { sendToUserWebsockerAMessage } from './websocketController';
 // import { systemTemplateHashes } from '../models/constants';
 import { saveAttestationFileAndAquaTree } from '../utils/server_utils';
 import Logger from "../utils/logger";
+import { sendNotificationReloadToWallet } from './websocketController2';
+import { createNotificationAndSendWebSocketNotification } from '../utils/notification_utils';
 // import { saveAquaFile } from '../utils/server_utils';
 // import getStream from 'get-stream';
 // Promisify pipeline
@@ -199,8 +201,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                 }
             }
 
-            Logger.info("Template name: ", templateName)
-            Logger.info("Template id: ", templateId)
+            // Logger.info("Template name: ", templateName)
+            // Logger.info("Template id: ", templateId)
 
 
             if (!fileBuffer) {
@@ -372,7 +374,17 @@ export default async function explorerController(fastify: FastifyInstance) {
                     if (firstRevision.revision_type == "form" && firstRevision.forms_claim_wallet_address) {
                         const claimerWalletAddress = firstRevision.forms_claim_wallet_address
                         // Websocket message to the claimer
-                        sendToUserWebsockerAMessage(claimerWalletAddress, WebSocketActions.REFETCH_FILES)
+                        // sendToUserWebsockerAMessage(claimerWalletAddress, WebSocketActions.REFETCH_FILES)
+                        sendNotificationReloadToWallet(walletAddress, {
+                            target: "workflows"
+                        })
+                        sendNotificationReloadToWallet(session.address, {
+                            target: "workflows"
+                        })
+                        sendNotificationReloadToWallet(claimerWalletAddress, {
+                            target: "workflows"
+                        })
+                        await createNotificationAndSendWebSocketNotification(session.address, claimerWalletAddress, "You have a new attestation!")
                     }
                 } catch (e) {
                     Logger.error(`Attestation Error ${e}`);

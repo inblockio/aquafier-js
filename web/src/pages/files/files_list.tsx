@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Filter, Grid3X3, List, X } from 'lucide-react'
-import { getAquaTreeFileName, isWorkFlowData } from '@/utils/functions'
 
 import { useStore } from 'zustand'
 import appStore from '../../store'
@@ -12,6 +11,7 @@ import WorkflowSpecificTable from './WorkflowSpecificTable'
 import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
+import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocketContext'
 
 export default function FilesList(filesListProps: FilesListProps) {
       const [view, setView] = useState<'table' | 'card'>('table')
@@ -27,7 +27,8 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [selectedFilters, setSelectedFilters] = useState<string[]>(['all'])
       const [tempSelectedFilters, setTempSelectedFilters] = useState<string[]>(['all'])
 
-      const { files, systemFileInfo, backend_url, session } = useStore(appStore)
+      const { backend_url, session } = useStore(appStore)
+      const { subscribe } = useNotificationWebSocketContext();
 
       const loadSystemAquaFileNames = async () => {
             if (!session?.nonce) return
@@ -95,57 +96,76 @@ export default function FilesList(filesListProps: FilesListProps) {
             }
       });
 
+      useEffect(() => {
+            const unsubscribe = subscribe((message) => {
+                  // Handle message
+                  console.log('WebSocket message received in WorkflowSpecificTable:', message);
+
+                  // Handle notification reload specifically
+                  if (message.type === 'notification_reload' && message.data && message.data.target === "workflows") {
+                        getUserStats()
+                  }
+
+                  // Handle other message types
+                  // if (message.type === 'wallet_update' || message.type === 'contract_update') {
+                  //     // Optionally reload notifications for these events too
+                  //     loadFiles();
+                  // }
+            });
+            return unsubscribe;
+      }, []);
+
       // Filter files based on selected filters AND selected workflow
       const getFilteredFiles = (): ApiFileInfo[] => {
-            let filteredByFilters = files.fileData;
+            let filteredByFilters: ApiFileInfo[] = [];
 
-            if (!selectedFilters.includes('all')) {
-                  const someData = systemFileInfo.map(e => {
-                        try {
-                              return getAquaTreeFileName(e.aquaTree!)
-                        } catch (e) {
-                              return ''
-                        }
-                  })
+            // if (!selectedFilters.includes('all')) {
+            //       const someData = systemFileInfo.map(e => {
+            //             try {
+            //                   return getAquaTreeFileName(e.aquaTree!)
+            //             } catch (e) {
+            //                   return ''
+            //             }
+            //       })
 
-                  filteredByFilters = files.fileData.filter(file => {
-                        try {
-                              const workFlow = isWorkFlowData(file.aquaTree!, someData)
+            //       filteredByFilters = files.fileData.filter(file => {
+            //             try {
+            //                   const workFlow = isWorkFlowData(file.aquaTree!, someData)
 
-                              if (workFlow.isWorkFlow && workFlow.workFlow) {
-                                    return selectedFilters.includes(workFlow.workFlow)
-                              } else {
-                                    return selectedFilters.includes('aqua_files')
-                              }
-                        } catch (e) {
-                              return false
-                        }
-                  })
-            }
+            //                   if (workFlow.isWorkFlow && workFlow.workFlow) {
+            //                         return selectedFilters.includes(workFlow.workFlow)
+            //                   } else {
+            //                         return selectedFilters.includes('aqua_files')
+            //                   }
+            //             } catch (e) {
+            //                   return false
+            //             }
+            //       })
+            // }
 
-            if (selectedFilters.includes('all') && selectedWorkflow !== 'all') {
-                  const someData = systemFileInfo.map(e => {
-                        try {
-                              return getAquaTreeFileName(e.aquaTree!)
-                        } catch (e) {
-                              return ''
-                        }
-                  })
+            // if (selectedFilters.includes('all') && selectedWorkflow !== 'all') {
+            //       const someData = systemFileInfo.map(e => {
+            //             try {
+            //                   return getAquaTreeFileName(e.aquaTree!)
+            //             } catch (e) {
+            //                   return ''
+            //             }
+            //       })
 
-                  filteredByFilters = filteredByFilters.filter(file => {
-                        try {
-                              const workFlow = isWorkFlowData(file.aquaTree!, someData)
+            //       filteredByFilters = filteredByFilters.filter(file => {
+            //             try {
+            //                   const workFlow = isWorkFlowData(file.aquaTree!, someData)
 
-                              if (selectedWorkflow === 'aqua_files') {
-                                    return !workFlow.isWorkFlow
-                              }
+            //                   if (selectedWorkflow === 'aqua_files') {
+            //                         return !workFlow.isWorkFlow
+            //                   }
 
-                              return workFlow.isWorkFlow && workFlow.workFlow === selectedWorkflow
-                        } catch (e) {
-                              return false
-                        }
-                  })
-            }
+            //                   return workFlow.isWorkFlow && workFlow.workFlow === selectedWorkflow
+            //             } catch (e) {
+            //                   return false
+            //             }
+            //       })
+            // }
 
             return filteredByFilters
       }
@@ -158,44 +178,44 @@ export default function FilesList(filesListProps: FilesListProps) {
 
       const getFilterOptions = () => {
             const options = [
-                  { value: 'all', label: 'All Files .', count: files.pagination?.totalItems || 0 },
+                  { value: 'all', label: 'All Files .', count: 0 },
                   { value: 'aqua_files', label: 'Aqua Files (Non worklows)', count: 0 }
             ]
 
-            const someData = systemFileInfo.map(e => {
-                  try {
-                        return getAquaTreeFileName(e.aquaTree!)
-                  } catch (e) {
-                        console.error('systemFileInfo : Error processing system file:', e);
-                        return ''
-                  }
-            })
+            // const someData = systemFileInfo.map(e => {
+            //       try {
+            //             return getAquaTreeFileName(e.aquaTree!)
+            //       } catch (e) {
+            //             console.error('systemFileInfo : Error processing system file:', e);
+            //             return ''
+            //       }
+            // })
 
-            let nonWorkflowCount = 0
-            const workflowCounts: { [key: string]: number } = {}
+            // let nonWorkflowCount = 0
+            // const workflowCounts: { [key: string]: number } = {}
 
-            files.fileData.forEach(file => {
-                  try {
-                        const workFlow = isWorkFlowData(file.aquaTree!, someData)
-                        if (workFlow.isWorkFlow && workFlow.workFlow) {
-                              workflowCounts[workFlow.workFlow] = (workflowCounts[workFlow.workFlow] || 0) + 1
-                        } else {
-                              nonWorkflowCount++
-                        }
-                  } catch (e) {
-                        console.error('files : Error processing system file:', e);
-                  }
-            })
+            // files.fileData.forEach(file => {
+            //       try {
+            //             const workFlow = isWorkFlowData(file.aquaTree!, someData)
+            //             if (workFlow.isWorkFlow && workFlow.workFlow) {
+            //                   workflowCounts[workFlow.workFlow] = (workflowCounts[workFlow.workFlow] || 0) + 1
+            //             } else {
+            //                   nonWorkflowCount++
+            //             }
+            //       } catch (e) {
+            //             console.error('files : Error processing system file:', e);
+            //       }
+            // })
 
-            options[1].count = nonWorkflowCount
+            // options[1].count = nonWorkflowCount
 
-            uniqueWorkflows.forEach(workflow => {
-                  options.push({
-                        value: workflow.name,
-                        label: capitalizeWords(workflow.name.replace(/_/g, ' ')),
-                        count: workflow.count ?? 0
-                  })
-            })
+            // uniqueWorkflows.forEach(workflow => {
+            //       options.push({
+            //             value: workflow.name,
+            //             label: capitalizeWords(workflow.name.replace(/_/g, ' ')),
+            //             count: workflow.count ?? 0
+            //       })
+            // })
 
             return options
       }
@@ -248,6 +268,13 @@ export default function FilesList(filesListProps: FilesListProps) {
             return 'Filtered Items'
       }
 
+      const getWorkflowStat = (workflowName: string) => {
+            if (!stats) return 0
+            if (workflowName === 'all') return stats.filesCount
+            if (workflowName === 'aqua_files') return stats.claimTypeCounts.aqua_files
+            return stats.claimTypeCounts[workflowName as keyof typeof stats.claimTypeCounts] || 0
+      }
+
 
 
       const renderWorkflowTabs = () => {
@@ -268,7 +295,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                                           All Files ({stats.filesCount})
                                     </button>
 
-                                   
+
 
                                     {
                                           view === 'table' && uniqueWorkflows.sort((a, b) => a.name.localeCompare(b.name)).map((workflow) => {
@@ -298,7 +325,7 @@ export default function FilesList(filesListProps: FilesListProps) {
 
             return (
                   <div className="fixed inset-0 bg-[#00000080] bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-white rounded-lg shadow-xl p-0 md:p-6 w-full max-w-md mx-4">
+                        <div className="bg-white rounded-lg shadow-xl p-2 md:p-6 w-full max-w-md mx-4">
                               <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-lg font-semibold text-gray-900">Filter Files</h3>
                                     <button
@@ -363,7 +390,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                   <div className="flex-1">
                         {
                               filesListProps.showHeader == true ? (
-                                    <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center justify-between">
                                           <div className="flex items-center space-x-4">
                                                 <h1 className="text-xl font-semibold text-gray-900">
                                                       {getFilteredTitle()}
@@ -372,9 +399,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                                                       <div className="flex items-center space-x-2">
                                                             <div className="px-3 py-1 bg-gray-100 rounded-full">
                                                                   <span className="text-sm text-gray-600">
-                                                                        {files.pagination?.startIndex && files.pagination?.endIndex
-                                                                              ? `${files.pagination.startIndex}-${files.pagination.endIndex} of ${files.pagination.totalItems}`
-                                                                              : `${files.pagination?.totalItems || 0} items`}
+                                                                        {getWorkflowStat(selectedWorkflow)}
                                                                   </span>
                                                             </div>
                                                       </div>

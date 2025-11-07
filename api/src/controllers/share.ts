@@ -2,7 +2,7 @@ import {FastifyInstance} from 'fastify';
 import {prisma} from '../database/db';
 import {ShareRequest} from '../models/request_models';
 // import { verifySiweMessage } from '../utils/auth_utils';
-import {AquaTree, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties} from 'aqua-js-sdk';
+import {AquaTree, cliRedify, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties} from 'aqua-js-sdk';
 import {getHost, getPort} from '../utils/api_utils';
 import {fetchAquaTreeWithForwardRevisions} from '../utils/revisions_utils';
 import {SYSTEM_WALLET_ADDRESS} from '../models/constants';
@@ -10,6 +10,8 @@ import {sendToUserWebsockerAMessage} from './websocketController';
 import WebSocketActions from '../constants/constants';
 import {createAquaTreeFromRevisions} from '../utils/revisions_operations_utils';
 import Logger from "../utils/logger";
+import { sendNotificationReloadToWallet } from './websocketController2';
+import { ethers } from 'ethers';
 
 export default async function shareController(fastify: FastifyInstance) {
 
@@ -201,9 +203,13 @@ export default async function shareController(fastify: FastifyInstance) {
 
         //trigger the other party to refetch explorer files
         // sendToUserWebsockerAMessage(recipient, WebSocketActions.REFETCH_SHARE_CONTRACTS)
+        const responses = []
         for (let i = 0; i < recipients.length; i++) {
-            sendToUserWebsockerAMessage(recipients[i], WebSocketActions.REFETCH_SHARE_CONTRACTS)
+            // sendToUserWebsockerAMessage(recipients[i], WebSocketActions.REFETCH_SHARE_CONTRACTS)
+            let res = sendNotificationReloadToWallet(ethers.getAddress(recipients[i]))
+            responses.push(res)
         }
+        console.log(cliRedify(`Responses: ${JSON.stringify(responses, null, 4)}`))
 
         return reply.code(200).send({ success: true, message: "share contract created successfully." });
 

@@ -15,9 +15,12 @@ import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 interface IConfirmDeleteDialog {
       children: React.ReactNode
       deleteFunc: () => void
+      title?: string,
+      description?: string
+      loading?: boolean
 }
 
-export function ConfirmDeleteDialog({ children, deleteFunc }: IConfirmDeleteDialog) {
+export function ConfirmDeleteDialog({ children, deleteFunc, title, description, loading }: IConfirmDeleteDialog) {
       return (
             <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -25,15 +28,14 @@ export function ConfirmDeleteDialog({ children, deleteFunc }: IConfirmDeleteDial
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                         <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogTitle>{title ? title : 'Are you absolutely sure?'}</AlertDialogTitle>
                               <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete your
-                                    account and remove your data from our servers.
+                                    {description ? description : 'This action cannot be undone. This will permanently delete your account and remove your data from our servers.'}
                               </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={deleteFunc} color='red'>Delete</AlertDialogAction>
+                              <AlertDialogAction onClick={deleteFunc} color='red' disabled={loading ? loading : false}>Delete</AlertDialogAction>
                         </AlertDialogFooter>
                   </AlertDialogContent>
             </AlertDialog>

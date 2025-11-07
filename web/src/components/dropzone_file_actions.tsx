@@ -1,7 +1,7 @@
-import {useCallback, useState} from 'react'
-import {FileText, Folder, Upload} from 'lucide-react'
+import { useCallback, useState } from 'react'
+import { FileText, Folder, Upload } from 'lucide-react'
 
-import {DropEvent, FileSelectEvent} from '@/types/types'
+import { DropEvent, FileSelectEvent } from '@/types/types'
 
 const FileDropZone = ({ setFiles }: { setFiles: (selectedFiles: File[]) => void }) => {
       const [isDragOver, setIsDragOver] = useState(false)
