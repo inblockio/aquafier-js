@@ -99,6 +99,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                                     }
                                     return file
                               }
+                  
                               return file
                               // fileObjectVerifier.push(file)
                         })
@@ -108,10 +109,10 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
 
                         const revisionHashes = Object.keys(selectedFileInfo.aquaTree.revisions || {})
 
+                        const reorderedAquaTree = OrderRevisionInAquaTree(selectedFileInfo.aquaTree!)
                         const verificationResults = await Promise.all(
                               revisionHashes.map(async hash => {
-                                    const revision = selectedFileInfo.aquaTree!.revisions[hash]
-                                    const reorderedAquaTree = OrderRevisionInAquaTree(selectedFileInfo.aquaTree!)
+                                    const revision = reorderedAquaTree.revisions[hash]
                                     const result = await aquafier.verifyAquaTreeRevision(reorderedAquaTree, revision, hash, filesResult, {
                                           mnemonic: '',
                                           nostr_sk: '',
