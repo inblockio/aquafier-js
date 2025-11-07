@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, useSidebar } from '@/components/ui/sidebar'
 import CustomNavLink from './ui/CustomNavLink'
-import { Contact, FileText, LayoutTemplate, Link, Plus, Settings, Share2, Star, User, Workflow } from 'lucide-react'
+import { Contact, FileText, LayoutDashboard, LayoutTemplate, Link, Plus, Settings, Share2, Star, User, Workflow } from 'lucide-react'
 import { maxUserFileSizeForUpload } from '@/utils/constants'
 import { formatBytes } from '@/utils/functions'
 import { useStore } from 'zustand'
@@ -54,8 +54,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       // }, [files])
 
       React.useEffect(() => {
-            if(webConfig.BACKEND_URL){
-                  setWebConfigData(webConfig)   
+            if (webConfig.BACKEND_URL) {
+                  setWebConfigData(webConfig)
             }
       }, [webConfig.BACKEND_URL])
 
@@ -74,7 +74,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       const applicationsItems = [
             // { label: 'Create AquaSign', icon: Signature, id: "/form-instance/aqua_sign" },
-            { label: 'Aquasign Workflows', icon: Workflow, id: '/workflows' },
+            {
+                  label: 'Aquasign Workflows',
+                  icon: Workflow,
+                  id: '/workflows'
+            },
             {
                   label: 'Claim & Attestation',
                   icon: Link,
@@ -84,6 +88,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   label: 'Contact List',
                   icon: Contact,
                   id: '/contact_list',
+            },
+            {
+                  label: 'Dashboard',
+                  icon: LayoutDashboard,
+                  id: '/dashboard',
             },
       ]
 

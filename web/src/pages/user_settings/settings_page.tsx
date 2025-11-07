@@ -8,7 +8,6 @@ import { toast } from 'sonner'
 import axios from 'axios'
 import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
-import UserStats from './UserStats'
 import { ContactsService } from '@/storage/databases/contactsDb'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 
@@ -183,8 +182,6 @@ export default function SettingsPage() {
 
       return (
             <div className="container mx-auto py-3 xs:px-6">
-                  <UserStats />
-                  <div className="mb-4"></div>
                   <div className="flex flex-col gap-6">
                         <div className="flex items-center gap-3 mb-2">
                               <div className="bg-primary/10 p-2 rounded-lg">
