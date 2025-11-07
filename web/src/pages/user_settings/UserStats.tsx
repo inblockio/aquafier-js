@@ -11,6 +11,7 @@ import { API_ENDPOINTS, getClaimIcon } from '@/utils/constants';
 import { emptyUserStats, IUserStats } from '@/types/types';
 import { useReloadWatcher } from '@/hooks/useReloadWatcher';
 import { RELOAD_KEYS } from '@/utils/reloadDatabase';
+import { Link, useNavigate } from 'react-router-dom';
 
 const formatClaimName = (claimType: string) => {
     return claimType
@@ -23,6 +24,7 @@ const UserStats = () => {
 
     const { session, backend_url } = useStore(appStore)
     const [stats, setStats] = React.useState<IUserStats>(emptyUserStats)
+    const navigate = useNavigate();
 
     const getUserStats = async () => {
         if (session) {
@@ -67,7 +69,11 @@ const UserStats = () => {
 
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
+                    <div className="bg-white rounded-xl shadow-sm p-6 border-2 cursor-pointer border-blue-200"
+                    onClick={() => {
+                        navigate(`/app?tab=all`)
+                    }}
+                    >
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-slate-600 text-sm font-medium mb-1">Total Files</p>
@@ -115,32 +121,36 @@ const UserStats = () => {
                             const isActive = count > 0;
 
                             return (
-                                <div
+                                <Link
                                     key={claimType}
-                                    className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all ${isActive
-                                        ? 'bg-blue-50 border-blue-200 hover:border-blue-300'
-                                        : 'bg-slate-50 border-slate-200 opacity-60'
-                                        }`}
-                                    dir="ltr"
+                                    to={`/app?tab=${claimType}`}
                                 >
-                                    <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg ${isActive ? 'bg-blue-100' : 'bg-slate-200'
-                                            }`}>
-                                            <Icon className={`w-5 h-5 ${isActive ? 'text-blue-600' : 'text-slate-500'
-                                                }`} />
-                                        </div>
-                                        <div>
-                                            <p className={`font-medium text-sm ${isActive ? 'text-slate-800' : 'text-slate-600'
+                                    <div
+                                        className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all cursor-pointer ${isActive
+                                            ? 'bg-blue-50 border-blue-200 hover:border-blue-300'
+                                            : 'bg-slate-50 border-slate-200 opacity-60'
+                                            }`}
+                                        dir="ltr"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`p-2 rounded-lg ${isActive ? 'bg-blue-100' : 'bg-slate-200'
                                                 }`}>
-                                                {formatClaimName(claimType)}
-                                            </p>
+                                                <Icon className={`w-5 h-5 ${isActive ? 'text-blue-600' : 'text-slate-500'
+                                                    }`} />
+                                            </div>
+                                            <div>
+                                                <p className={`font-medium text-sm ${isActive ? 'text-slate-800' : 'text-slate-600'
+                                                    }`}>
+                                                    {formatClaimName(claimType)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className={`text-xl font-bold ${isActive ? 'text-blue-600' : 'text-slate-400'
+                                            }`}>
+                                            {count}
                                         </div>
                                     </div>
-                                    <div className={`text-xl font-bold ${isActive ? 'text-blue-600' : 'text-slate-400'
-                                        }`}>
-                                        {count}
-                                    </div>
-                                </div>
+                                </Link>
                             );
                         })}
                     </div>

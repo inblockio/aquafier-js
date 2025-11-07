@@ -34,6 +34,7 @@ import { APMConfig } from "@/types/apm.ts";
 import ContactsPageV2 from './pages/contacts/contactsV2'
 import ContactsLoader from './pages/contacts/ContactsLoader'
 import { NotificationWebSocketProvider } from './contexts/NotificationWebSocketContext'
+import UserStats from './pages/user_settings/UserStats'
 
 
 function startApm(config: APMConfig) {
@@ -145,6 +146,7 @@ function App() {
                             <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage />} />
                             <Route path="contact_list" element={<ContactsPageV2 />} />
                             <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2 />} />
+                            <Route path="dashboard" element={<UserStats />} />
 
                             <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
                             <Route path="pdf-signer" element={<PdfSigner fileData={null} setActiveStep={_one => {

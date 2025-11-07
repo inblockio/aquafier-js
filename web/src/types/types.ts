@@ -194,6 +194,7 @@ export interface WorkFlowTimeLine {
       completed: boolean
       content: React.JSX.Element
       revisionHash: string
+      description: string
 }
 
 export interface RevisionVerificationStatus {

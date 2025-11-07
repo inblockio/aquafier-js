@@ -12,6 +12,7 @@ import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocketContext'
+import { useSearchParams } from 'react-router-dom'
 
 export default function FilesList(filesListProps: FilesListProps) {
       const [view, setView] = useState<'table' | 'card'>('table')
@@ -21,6 +22,10 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [stats, setStats] = useState<IUserStats>(emptyUserStats)
 
       const [systemAquaFileNames, setSystemAquaFileNames] = useState<string[]>([])
+      const [searchParams] = useSearchParams();
+      
+      // Read the tab parameter from URL
+      const tabFromUrl = searchParams.get('tab');
 
       // Filter states
       const [showFilterModal, setShowFilterModal] = useState(false)
@@ -87,11 +92,20 @@ export default function FilesList(filesListProps: FilesListProps) {
             }
       }, [session?.address, session?.nonce])
 
+      useEffect(() => {
+            if(tabFromUrl){
+                  if(stats?.claimTypeCounts?.[tabFromUrl as keyof typeof stats.claimTypeCounts] > 0){
+                        setSelectedWorkflow(tabFromUrl)
+                  }else {
+                        setSelectedWorkflow('all')
+                  }
+            }
+      }, [tabFromUrl])
+
       // Watch for stats reload triggers
       useReloadWatcher({
             key: RELOAD_KEYS.user_stats,
             onReload: () => {
-                  console.log('Reloading user stats...');
                   getUserStats();
             }
       });
