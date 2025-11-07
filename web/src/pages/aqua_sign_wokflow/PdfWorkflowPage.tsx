@@ -1,23 +1,23 @@
-import React, {useEffect, useState} from 'react'
-import {FaCheck, FaQuestionCircle} from 'react-icons/fa'
-import {Alert, AlertDescription} from '../../components/ui/alert'
+import { useEffect, useState } from 'react'
+import { Alert, AlertDescription } from '../../components/ui/alert'
 import appStore from '../../store'
-import {useStore} from 'zustand'
-import {SummaryDetailsDisplayData, WorkFlowTimeLine} from '../../types/types'
+import { useStore } from 'zustand'
+import { SummaryDetailsDisplayData, WorkFlowTimeLine } from '../../types/types'
 import {
       convertTemplateNameToTitle,
       getFileName,
       getHighestFormIndex,
-      isAquaTree} from '../../utils/functions'
-import {ContractDocumentView} from './ContractDocument/ContractDocument'
-import {ContractSummaryView} from './ContractSummary/ContractSummary'
-import {AquaTree, OrderRevisionInAquaTree, Revision} from 'aqua-js-sdk/web'
-import {Button} from '../../components/ui/button'
-import {LuArrowLeft} from 'react-icons/lu'
-import {useNavigate} from 'react-router-dom'
-import {HiDocumentText} from 'react-icons/hi'
-import {FaCircleInfo} from 'react-icons/fa6'
-import {cn} from '../../lib/utils'
+      isAquaTree
+} from '../../utils/functions'
+import { ContractDocumentView } from './ContractDocument/ContractDocument'
+import { ContractSummaryView } from './ContractSummary/ContractSummary'
+import { AquaTree, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk/web'
+import { Button } from '../../components/ui/button'
+import { LuArrowLeft } from 'react-icons/lu'
+import { useNavigate } from 'react-router-dom'
+import { HiDocumentText } from 'react-icons/hi'
+import { FaCircleInfo } from 'react-icons/fa6'
+import { Check } from 'lucide-react'
 
 export default function PdfWorkflowPage() {
       const [activeStep, setActiveStep] = useState(1)
@@ -96,10 +96,10 @@ export default function PdfWorkflowPage() {
                   if (revisionHashes.length > 4) {
                         // remove the first 4 elements from the revision list
                         fourthItmeHashOnwards = revisionHashes.slice(4)
-                      // (`revisionHashes  ${revisionHashes} --  ${typeof revisionHashes}`)
-                      // (`fourthItmeHashOnwards  ${fourthItmeHashOnwards}`)
+                        // (`revisionHashes  ${revisionHashes} --  ${typeof revisionHashes}`)
+                        // (`fourthItmeHashOnwards  ${fourthItmeHashOnwards}`)
                         signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
-                      // (`signatureRevionHashes  ${JSON.stringify(signatureRevionHashes, null, 4)}`)
+                        // (`signatureRevionHashes  ${JSON.stringify(signatureRevionHashes, null, 4)}`)
 
                         signatureRevionHashesData = signatureRevionHashes
                   }
@@ -133,6 +133,7 @@ export default function PdfWorkflowPage() {
                   icon: FaCircleInfo,
                   revisionHash: '',
                   title: 'Contract Information',
+                  description: 'View and edit contract information'
             })
 
             items.push({
@@ -148,6 +149,7 @@ export default function PdfWorkflowPage() {
                   icon: HiDocumentText,
                   revisionHash: '',
                   title: 'Contract Document',
+                  description: 'View and edit contract document'
             })
 
             setTimeLineItems(items)
@@ -212,55 +214,80 @@ export default function PdfWorkflowPage() {
                                     </div>
                               </div>
 
-                              {/* Horizontal Timeline */}
-                              <div className="container w-full overflow-x-auto">
-                                    <div className="flex min-w-max">
-                                          {timeLineItems.map((item, index) => (
-                                                <React.Fragment key={item.id}>
-                                                      {/* Timeline Item */}
-                                                      <div className="flex flex-col items-center mx-4 cursor-pointer" onClick={() => setActiveStep(item.id)}>
-                                                            <div
-                                                                  className={cn(
-                                                                        'flex h-10 w-10 items-center justify-center rounded-full',
-                                                                        activeStep === item.id ? 'bg-blue-500 text-white' : item.completed ? 'bg-green-100 text-green-500' : 'bg-gray-100 text-gray-400'
-                                                                  )}
-                                                            >
-                                                                  <item.icon className="h-4 w-4" />
-                                                            </div>
 
-                                                            {/* Status indicator */}
-                                                            <div
-                                                                  className={cn(
-                                                                        'flex h-5 w-5 items-center justify-center rounded-full mt-2',
-                                                                        item.completed ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'
-                                                                  )}
-                                                            >
-                                                                  {item.completed ? <FaCheck className="h-3 w-3" /> : <FaQuestionCircle className="h-3 w-3" />}
-                                                            </div>
+                              {/* <div className="grid grid-cols-2 gap-6 mb-8"> */}
+                              <div className="flex gap-6">
+                                    {timeLineItems.map((tab, index) => {
+                                          const isActive = activeStep === tab.id;
+                                          const isCompleted = index === 0 && activeStep === 2;
+                                          const Icon = tab.icon;
 
-                                                            <span className={cn('mt-2 text-sm', activeStep === item.id ? 'text-blue-500 font-medium' : 'text-gray-600 font-normal')}>{item.title}</span>
-                                                      </div>
-
-                                                      {/* Connector line between timeline items */}
-                                                      {index < timeLineItems.length - 1 && (
-                                                            <div className="flex items-center flex-1">
-                                                                  <div
-                                                                        className={cn(
-                                                                              'h-0.5 w-full',
-                                                                              index < activeStep - 1 || (index === activeStep - 1 && timeLineItems[activeStep - 1].completed)
-                                                                                    ? 'bg-green-500'
-                                                                                    : 'bg-gray-200'
-                                                                        )}
-                                                                  />
+                                          return (
+                                                <button
+                                                      key={tab.id}
+                                                      onClick={() => setActiveStep(tab.id)}
+                                                      className={`relative p-6 rounded-xl transition-all duration-200 text-left cursor-pointer ${isActive
+                                                                  ? 'bg-blue-500 shadow-lg shadow-blue-500/30'
+                                                                  : false
+                                                                        ? 'bg-white shadow-md hover:shadow-lg border-2 border-green-500'
+                                                                        : 'bg-white shadow-md hover:shadow-lg'
+                                                            }`}
+                                                >
+                                                      {/* Completion Badge */}
+                                                      {isCompleted && (
+                                                            <div className="absolute -top-3 -right-3 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+                                                                  <Check className="w-6 h-6 text-white" />
                                                             </div>
                                                       )}
-                                                </React.Fragment>
-                                          ))}
-                                    </div>
+
+                                                      <div className="flex items-start gap-4">
+                                                            {/* Icon */}
+                                                            <div
+                                                                  className={`w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0 ${isActive
+                                                                              ? 'bg-blue-600'
+                                                                              : isCompleted
+                                                                                    ? 'bg-green-50'
+                                                                                    : 'bg-gray-100'
+                                                                        }`}
+                                                            >
+                                                                  <Icon
+                                                                        className={`w-7 h-7 ${isActive
+                                                                                    ? 'text-white'
+                                                                                    : isCompleted
+                                                                                          ? 'text-green-600'
+                                                                                          : 'text-gray-600'
+                                                                              }`}
+                                                                  />
+                                                            </div>
+
+                                                            {/* Content */}
+                                                            <div className="flex-1">
+                                                                  <h3
+                                                                        className={`text-lg font-semibold mb-1 ${isActive ? 'text-white' : 'text-gray-900'
+                                                                              }`}
+                                                                  >
+                                                                        {tab.title}
+                                                                  </h3>
+                                                                  <p
+                                                                        className={`text-sm ${isActive ? 'text-blue-100' : 'text-gray-500'
+                                                                              }`}
+                                                                  >
+                                                                        {tab.description}
+                                                                  </p>
+                                                            </div>
+
+                                                            {/* Active Indicator */}
+                                                            {isActive && (
+                                                                  <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
+                                                            )}
+                                                      </div>
+                                                </button>
+                                          );
+                                    })}
                               </div>
 
                               {/* Content Area */}
-                              <div className="p-0 md:p-4">{activeContent()}</div>
+                              <div className="p-0">{activeContent()}</div>
                         </div>
                   </div>
             )
