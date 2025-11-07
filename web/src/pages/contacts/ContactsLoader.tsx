@@ -10,6 +10,7 @@ import { OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
 import { ContactsService } from '@/storage/databases/contactsDb';
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames';
 import { useReloadWatcher } from '@/hooks/useReloadWatcher';
+import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocketContext';
 
 interface ContactsLoaderProps {
   onContactsLoaded?: (contacts: ContactProfile[]) => void;
@@ -25,6 +26,8 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
   const [systemAquaFileNames, setSystemAquaFileNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const { subscribe } = useNotificationWebSocketContext();
 
   const contactsService = ContactsService.getInstance();
   const aquaSystemNamesService = AquaSystemNamesService.getInstance();
@@ -284,6 +287,25 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
     key: "contacts",
     onReload: loadContactTrees,
   })
+
+  useEffect(() => {
+    const unsubscribe = subscribe((message) => {
+        // Handle message
+        console.log('WebSocket message received in CONTACTS TABLE:', message);
+
+        // Handle notification reload specifically
+        if (message.type === 'notification_reload' && message.data && message.data.target === "workflows") {
+          loadContactTrees()
+        }
+
+        // Handle other message types
+        // if (message.type === 'wallet_update' || message.type === 'contract_update') {
+        //     // Optionally reload notifications for these events too
+        //     loadFiles();
+        // }
+    });
+    return unsubscribe;
+}, []);
 
   // Effects
   useEffect(() => {

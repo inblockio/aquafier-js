@@ -33,6 +33,7 @@ import { init as initApm } from '@elastic/apm-rum'
 import { APMConfig } from "@/types/apm.ts";
 import ContactsPageV2 from './pages/contacts/contactsV2'
 import ContactsLoader from './pages/contacts/ContactsLoader'
+import { NotificationWebSocketProvider } from './contexts/NotificationWebSocketContext'
 
 
 function startApm(config: APMConfig) {
@@ -117,51 +118,53 @@ function App() {
 
 
     return (
-        <BrowserRouter>
-            <LoadConfiguration />
-             {/* Background ContactsLoader component */}
-             <ContactsLoader 
-                onContactsLoaded={() => {}}
-                onLoadingChange={() => {}}
-            />
-            <ErrorBoundary>
-                <Routes>
-                    <Route path="/" element={<TailwindMainLayout />}>
-                        <Route index element={<Home />} />
-                        <Route path="terms-and-conditions" element={<TermsAndConditions />} />
-                        <Route path="privacy-policy" element={<PrivacyPolicy />} />
-                    </Route>
+        <NotificationWebSocketProvider>
+            <BrowserRouter>
+                <LoadConfiguration />
+                {/* Background ContactsLoader component */}
+                <ContactsLoader
+                    onContactsLoaded={() => { }}
+                    onLoadingChange={() => { }}
+                />
+                <ErrorBoundary>
+                    <Routes>
+                        <Route path="/" element={<TailwindMainLayout />}>
+                            <Route index element={<Home />} />
+                            <Route path="terms-and-conditions" element={<TermsAndConditions />} />
+                            <Route path="privacy-policy" element={<PrivacyPolicy />} />
+                        </Route>
 
-                    <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
+                        <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
 
-                        <Route index element={<FilesPage />} />
-                        <Route path="templates" element={<TemplatesPage />} />
-                        <Route path="shared-contracts" element={<FilesSharedContracts />} />
-                        <Route path="shared-contracts/:identifier" element={<SharePage />} />
+                            <Route index element={<FilesPage />} />
+                            <Route path="templates" element={<TemplatesPage />} />
+                            <Route path="shared-contracts" element={<FilesSharedContracts />} />
+                            <Route path="shared-contracts/:identifier" element={<SharePage />} />
 
-                        <Route path="workflows" element={<WorkflowsTablePage />} />
-                        <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage />} />
-                        <Route path="contact_list" element={<ContactsPageV2 />} />
-                        <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2 />} />
+                            <Route path="workflows" element={<WorkflowsTablePage />} />
+                            <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage />} />
+                            <Route path="contact_list" element={<ContactsPageV2 />} />
+                            <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2 />} />
 
-                        <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
-                        <Route path="pdf-signer" element={<PdfSigner fileData={null} setActiveStep={_one => {
-                        }} />} />
-                        <Route path="files_workflows" element={<FilesPage />} />
+                            <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
+                            <Route path="pdf-signer" element={<PdfSigner fileData={null} setActiveStep={_one => {
+                            }} />} />
+                            <Route path="files_workflows" element={<FilesPage />} />
 
 
 
-                        <Route path="info" element={<InfoPage />} />
-                        <Route path="settings" element={<SettingsPage />} />
+                            <Route path="info" element={<InfoPage />} />
+                            <Route path="settings" element={<SettingsPage />} />
 
-                        <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
-                        <Route path="loading" element={<Loading />} />
-                    </Route>
+                            <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
+                            <Route path="loading" element={<Loading />} />
+                        </Route>
 
-                    <Route path="*" element={<PageNotFound />} />
-                </Routes>
-            </ErrorBoundary>
-        </BrowserRouter>
+                        <Route path="*" element={<PageNotFound />} />
+                    </Routes>
+                </ErrorBoundary>
+            </BrowserRouter>
+        </NotificationWebSocketProvider>
     )
 }
 

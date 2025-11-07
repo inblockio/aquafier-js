@@ -24,10 +24,12 @@ export const NotificationWebSocketProvider: React.FC<{ children: React.ReactNode
     userId: session?.address,
     onMessage: (message) => {
       // Broadcast to all subscribers
+      console.log('WebSocket message received in mmmmmmms:', message);
       subscribers.forEach(callback => callback(message));
     },
     onNotificationReload: () => {
       // Broadcast reload event
+      console.log('WebSocket reload event received in NotificationWebSocketProvider');
       subscribers.forEach(callback => callback({ type: 'notification_reload' }));
     }
   });

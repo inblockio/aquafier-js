@@ -17,7 +17,6 @@ import { AppSidebar } from '../components/app_sidebar'
 import WebsocketFragment from '@/components/navbar/WebsocketFragment'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import ShareComponent from '@/components/aqua_chain_actions/Share_component'
-import { NotificationWebSocketProvider } from '@/contexts/NotificationWebSocketContext'
 
 export default function NewShadcnLayoutWithSidebar() {
       const {
@@ -32,7 +31,7 @@ export default function NewShadcnLayoutWithSidebar() {
 
 
       return (
-            <NotificationWebSocketProvider>
+            <>
                   {session == null ? (
                         <>
                               <ConnectWalletPage />
@@ -41,7 +40,7 @@ export default function NewShadcnLayoutWithSidebar() {
                         <SidebarProvider className='overflow-x-hidden'>
                               <WebsocketFragment />
                               <AppSidebar className="hidden md:block" />
-                              <SidebarInset>
+                              <SidebarInset className='relative h-screen overflow-y-auto'>
                                     <header className="flex h-16 shrink-0 items-center gap-2 border-b sticky top-0 z-50 bg-accent w-full">
                                           <div className="flex items-center gap-2 px-3 w-full">
                                                 <SidebarTrigger />
@@ -78,7 +77,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                                 </div>
                                           </div>
                                     </header>
-                                    <div className="flex- w-full min-w-0 overflow-x-hidden px-1">
+                                    <div className="flex-1 w-full min-w-0 overflow-x-hidden px-1">
                                           <Toaster position="top-center" richColors />
                                           <Outlet />
                                     </div>
@@ -295,6 +294,6 @@ export default function NewShadcnLayoutWithSidebar() {
                               </div>
                         </DialogContent>
                   </Dialog>
-            </NotificationWebSocketProvider>
+            </>
       )
 }

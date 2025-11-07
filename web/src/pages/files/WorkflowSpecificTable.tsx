@@ -11,7 +11,8 @@ import CustomPagination from "@/components/common/CustomPagination"
 import { getAquaTreeFileName } from "@/utils/functions"
 import FilesListItem from "./files_list_item"
 import { useReloadWatcher } from "@/hooks/useReloadWatcher"
-import { RELOAD_KEYS } from "@/utils/reloadDatabase"
+import { RELOAD_KEYS, triggerWorkflowReload } from "@/utils/reloadDatabase"
+import { useNotificationWebSocketContext } from "@/contexts/NotificationWebSocketContext"
 
 interface IWorkflowSpecificTable {
     workflowName: string
@@ -29,6 +30,8 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
     const [currentPage, setCurrentPage] = useState(1)
     const [pagination, setPagination] = useState<GlobalPagination | null>(null)
     const [loading, setLoading] = useState(true)
+
+    const { subscribe } = useNotificationWebSocketContext();
     // const [isProcessingClaims, setIsProcessingClaims] = useState(true)
 
     const loadFiles = async () => {
@@ -84,13 +87,13 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
         if (workflowName === 'aqua_files') {
             return RELOAD_KEYS.aqua_files;
         }
-        
+
         // For specific workflow types, use the workflow name as key if it exists in RELOAD_KEYS
         const reloadKey = (RELOAD_KEYS as any)[workflowName];
         if (reloadKey) {
             return reloadKey;
         }
-        
+
         // Fallback to the workflow name itself
         return workflowName;
     };
@@ -99,15 +102,36 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
     useReloadWatcher({
         key: getReloadKey(workflowName),
         onReload: () => {
-            console.log(`Reloading ${workflowName} files...`);
+            // console.log(`Reloading ${workflowName} files...`);
             loadFiles();
         }
     });
 
+    useEffect(() => {
+        const unsubscribe = subscribe((message) => {
+            // Handle message
+            console.log('WebSocket message received in WorkflowSpecificTable:', message);
+
+            // Handle notification reload specifically
+            if (message.type === 'notification_reload' && message.data && message.data.target === "workflows") {
+                loadFiles()
+                triggerWorkflowReload("contacts")
+            }
+
+            // Handle other message types
+            // if (message.type === 'wallet_update' || message.type === 'contract_update') {
+            //     // Optionally reload notifications for these events too
+            //     loadFiles();
+            // }
+        });
+        return unsubscribe;
+    }, []);
+
+
     return (
-        <div className="flex flex-col gap-4 pb-4">
+        <div className="flex flex-col gap-4">
             {!filesListProps.showFileActions ? (
-                <div className="overflow-x-auto md:h-[calc(100vh-350px)] overflow-y-auto">
+                <div className="overflow-x-auto md:h-[calc(100vh-330px)] overflow-y-auto">
                     <RenderFilesList
                         filteredFiles={files}
                         filesListProps={filesListProps}
@@ -116,7 +140,6 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
                         loading={loading}
                     />
                 </div>
-
             ) : (
                 <>
                     {
@@ -160,7 +183,7 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
                                 ) : null}
                             </div>
                         ) : (
-                            <div className="overflow-x-auto md:h-[calc(100vh-350px)] overflow-y-auto">
+                            <div className="overflow-x-auto md:h-[calc(100vh-330px)] overflow-y-auto">
                                 {view === 'table' ? (
                                     <RenderFilesList
                                         filteredFiles={files}

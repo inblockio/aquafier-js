@@ -109,7 +109,7 @@ export const useNotificationWebSocket = ({
       wsRef.current.onmessage = (event) => {
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
-          console.log('WebSocket message received:', message);
+          // console.log('WebSocket message received:', message);
 
           // Call the general message handler if provided
           if (onMessageRef.current) {
@@ -119,7 +119,7 @@ export const useNotificationWebSocket = ({
           // Handle notification reload specifically
           if (message.type === 'notification_reload' || 
               (message.data && message.data.target === 'notifications')) {
-            console.log('Notification reload requested');
+            // console.log('Notification reload requested');
             if (onNotificationReloadRef.current) {
               onNotificationReloadRef.current();
             }
@@ -128,19 +128,19 @@ export const useNotificationWebSocket = ({
           // Handle other message types
           switch (message.type) {
             case 'wallet_update':
-              console.log('Wallet update received:', message.data);
+              // console.log('Wallet update received:', message.data);
               break;
             case 'contract_update':
-              console.log('Contract update received:', message.data);
+              // console.log('Contract update received:', message.data);
               break;
             case 'system_message':
-              console.log('System message received:', message.data);
+              // console.log('System message received:', message.data);
               break;
             case 'subscription_confirm':
-              console.log('Subscription confirmed:', message.data);
+              // console.log('Subscription confirmed:', message.data);
               break;
             case 'error':
-              console.error('WebSocket error message:', message.data);
+              // console.error('WebSocket error message:', message.data);
               setConnectionError(message.data?.error || 'Unknown error');
               break;
           }

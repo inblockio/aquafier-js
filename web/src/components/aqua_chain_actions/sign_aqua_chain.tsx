@@ -5,7 +5,7 @@ import appStore from '../../store'
 import axios from 'axios'
 import { ApiFileInfo } from '../../models/FileInfo'
 import { useState } from 'react'
-import Aquafier, { AquaTreeWrapper } from 'aqua-js-sdk'
+import Aquafier, { AquaTreeWrapper, OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import { RevionOperation } from '../../models/RevisionOperation'
 import { toast } from 'sonner'
 import { useAppKit } from '@reown/appkit/react'
@@ -36,6 +36,18 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
 
                               const xCredentials = dummyCredential()
                               xCredentials.witness_eth_network = user_profile?.witness_network ?? 'sepolia'
+
+                              let orderedAquaTree = OrderRevisionInAquaTree(apiFileInfo.aquaTree!)
+                              let revisionsHashes = Object.keys(orderedAquaTree.revisions)
+                              let lastRevisionHash = revisionsHashes[revisionsHashes.length - 1]
+                              let lastRevision = orderedAquaTree.revisions[lastRevisionHash]
+
+
+                              if (lastRevision.revision_type === "signature") {
+                                    toast.error(`File already signed`)
+                                    setSigning(false)
+                                    return
+                              }
 
                               const result = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', xCredentials)
                               if (result.isErr()) {
@@ -69,26 +81,10 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                                     if (response.status === 200 || response.status === 201) {
                                           if (response.data.data) {
                                                 const newFiles: ApiFileInfo[] = response.data.data
-
-                                                // let data = {
-                                                //     ...selectedFileInfo!!,
-                                                //     aquaTree: result.data.aquaTree!!
-                                                // }
-                                                // if (data) {
-                                                //     setSelectedFileInfo(data)
-                                                // }
-                                                // setFiles(newFiles)
-
                                                 try {
                                                       const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
-                                                      // const files = await fetchFiles(session!.address!, url, session!.nonce)
-                                                      // setFiles({
-                                                      //       fileData: files, status: 'loaded'
-                                                      // })
-
-                                                      
-                              const filesApi = await fetchFiles(session!.address, url, session!.nonce)
-                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+                                                      const filesApi = await fetchFiles(session!.address, url, session!.nonce)
+                                                      setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
 
                                                       if (selectedFileInfo) {
@@ -160,6 +156,18 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
 
                         const targetRevisionHash = getLastRevisionVerificationHash(apiFileInfo.aquaTree!)
 
+                        // let orderedAquaTree = OrderRevisionInAquaTree(apiFileInfo.aquaTree!)
+                        // let revisionsHashes = Object.keys(orderedAquaTree.revisions)
+                        // let lastRevisionHash = revisionsHashes[revisionsHashes.length - 1]
+                        let lastRevision = apiFileInfo.aquaTree!.revisions[targetRevisionHash]
+
+
+                        if (lastRevision.revision_type === "signature") {
+                              toast.error(`File already signed`)
+                              setSigning(false)
+                              return
+                        }
+
                         // Sign using WalletConnect via ethers adapter
                         const messageToSign = `I sign this revision: [${targetRevisionHash}]`
                         const provider = await getAppKitProvider()
@@ -225,9 +233,9 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                                                 // setFiles({
                                                 //       fileData: files, status: 'loaded'
                                                 // })
-                                                
-                              const filesApi = await fetchFiles(session!.address, url, session!.nonce)
-                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+
+                                                const filesApi = await fetchFiles(session!.address, url, session!.nonce)
+                                                setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
 
                                                 if (selectedFileInfo) {

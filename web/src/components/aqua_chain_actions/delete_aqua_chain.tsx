@@ -46,17 +46,18 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                         setOpen(false)
                         setIsloading(false)
                         toast.success('File deleted successfully')
-                        await refetchAllUserFiles()
+                        refetchAllUserFiles()
                   }
             } catch (e) {
                   toast.error('File deletion error')
+                  refetchAllUserFiles()
                   setIsloading(false) // Add this to ensure loading state is cleared on error
             }
 
             setDeleting(false)
       }
 
-      const refetchAllUserFiles = async () => {
+      const refetchAllUserFiles = () => {
             // triggerWorkflowReload(RELOAD_KEYS.user_stats)
             triggerWorkflowReload(RELOAD_KEYS.all_files, true)
             triggerWorkflowReload(RELOAD_KEYS.aqua_files, true)

@@ -78,7 +78,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             backend_url,
             systemFileInfo,
             setSystemFileInfo,
-            setFiles,
             selectedFileInfo,
             workflows,
             setWorkflows,
@@ -129,9 +128,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
                   } catch (error) {
                         console.error('Error fetching workflows:', error)
-                        
-                              toast.error('Failed to load workflows')
-                        
+
+                        toast.error('Failed to load workflows')
+
                   }
             })()
 
@@ -334,8 +333,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                               // const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
                               // setFiles({ fileData: files, status: 'loaded' })
 
-                              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                              setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+                              // const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                              // setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
 
 
@@ -953,11 +952,11 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
             // Trigger reload for the specific workflow type and stats
             await triggerWorkflowReload(selectedTemplate.name, true);
-            if(selectedTemplate.name === 'identity_attestation'){
+            if (selectedTemplate.name === 'identity_attestation') {
                   await triggerWorkflowReload(RELOAD_KEYS.user_profile);
             }
             // Trigger reload for contacts if not aqua_sign
-            if(!["aqua_sign", "access_agreement", "cheque", "dba_claim"].includes(selectedTemplate.name)){
+            if (!["aqua_sign", "access_agreement", "cheque", "dba_claim"].includes(selectedTemplate.name)) {
                   await triggerWorkflowReload(RELOAD_KEYS.contacts);
             }
       }
@@ -1035,21 +1034,21 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
 
                   console.log(`4.`)
-                   console.log(`B4 getSystemFiles ${JSON.stringify(systemFileInfo, null, 4)}`)
+                  console.log(`B4 getSystemFiles ${JSON.stringify(systemFileInfo, null, 4)}`)
                   // Step 3: Get system files
                   const allSystemFiles = await getSystemFiles(systemFileInfo, backend_url, session?.address || '')
                   setSystemFileInfo(allSystemFiles)
 
-                   console.log(`5.`)
+                  console.log(`5.`)
                   // Step 4: Find template API file info
                   const templateApiFileInfo = findTemplateApiFileInfo(allSystemFiles, selectedTemplate)
 
-                      console.log(`6.`)
+                  console.log(`6.`)
                   // Step 5: Initialize aquafier and prepare data
                   const aquafier = new Aquafier()
                   const fileName = generateFileName(selectedTemplate, completeFormData)
 
-                      console.log(`7.`)
+                  console.log(`7.`)
                   //  console.log(`see me ...3`)
                   // Step 6: Handle identity attestation specific logic
                   if (selectedTemplate?.name === 'identity_attestation') {
@@ -1087,7 +1086,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   }
 
                   //  console.log('Complete form data: ', completeFormData)
-    console.log(`8.`)
+                  console.log(`8.`)
                   // Step 7: Prepare final form data
                   const finalFormDataRes = await prepareFinalFormData(completeFormData, selectedTemplate)
 
@@ -1099,7 +1098,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   const finalFormDataFiltered = finalFormDataRes.filteredData
                   // Step 8: Create genesis aqua tree
                   const { genesisAquaTree, fileObject } = await createGenesisAquaTree(finalFormDataFiltered, fileName, aquafier)
-    console.log(`10.`)
+                  console.log(`10.`)
                   // Step 9: Link to system aqua tree
                   let aquaTreeData = await linkToSystemAquaTree(genesisAquaTree, fileObject, templateApiFileInfo, aquafier)
 

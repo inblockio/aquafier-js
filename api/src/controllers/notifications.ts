@@ -4,6 +4,7 @@ import { FastifyInstance, FastifyRequest } from "fastify";
 import { authenticate, AuthenticatedRequest } from "../middleware/auth_middleware";
 import { PrismaClient } from "@prisma/client";
 import { sendNotificationReloadToWallet } from "./websocketController2";
+import { createNotificationAndSendWebSocketNotification } from "../utils/notification_utils";
 
 const prisma = new PrismaClient();
 
@@ -65,17 +66,18 @@ export default async function notificationsController(fastify: FastifyInstance) 
                 nav=""
             }
             
-            const notification = await prisma.notifications.create({
-                data: {
-                    sender,
-                    receiver,
-                    content,
-                    navigate_to : nav ,
-                    is_read: false
-                }
-            });
+            // const notification = await prisma.notifications.create({
+            //     data: {
+            //         sender,
+            //         receiver,
+            //         content,
+            //         navigate_to : nav ,
+            //         is_read: false
+            //     }
+            // });
 
-            sendNotificationReloadToWallet(receiver);
+            // sendNotificationReloadToWallet(receiver);
+            const notification = await createNotificationAndSendWebSocketNotification(sender, receiver, content, nav);
             
             return reply.code(201).send(notification);
         } catch (error : any) {
