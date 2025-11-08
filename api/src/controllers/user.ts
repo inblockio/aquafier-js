@@ -108,13 +108,10 @@ export default async function userController(fastify: FastifyInstance) {
         const infuraProjectId = process.env.ALCHEMY_API_KEY;
 
         let ensName = null
-        console.log(cliRedify("We are here"), infuraProjectId)
         if (infuraProjectId) {
-            console.log("Fetching")
             ensName = await fetchEnsName(address, infuraProjectId)
-            console.log("Fetched", ensName)
         }
-        console.log(cliRedify("We are here"), ensName)
+
         if (ensName) {
             if (useEns === 'true') {
                 await prisma.eNSName.create({
@@ -122,6 +119,14 @@ export default async function userController(fastify: FastifyInstance) {
                         wallet_address: address,
                         ens_name: ensName,
                         // id: undefined
+                    }
+                })
+                await prisma.users.update({
+                    where: {
+                        address: address,
+                    },
+                    data: {
+                        ens_name: ensName
                     }
                 })
             }

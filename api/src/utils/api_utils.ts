@@ -32,11 +32,9 @@ const fetchEnsName = async (walletAddress: string, infuraKey: string): Promise<s
 
         // Look up ENS name for the address
         ensName = await provider.lookupAddress(walletAddress) ?? "";
-        console.log("ENS name", ensName)
 
     } catch (error: any) {
         Logger.error('Error fetching ENS name:', error);
-        console.log("Error fetching ENS name", error)
         // Continue with creation without ENS name
     }
 
