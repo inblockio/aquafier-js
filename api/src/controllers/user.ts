@@ -114,21 +114,45 @@ export default async function userController(fastify: FastifyInstance) {
 
         if (ensName) {
             if (useEns === 'true') {
-                await prisma.eNSName.create({
-                    data: {
-                        wallet_address: address,
-                        ens_name: ensName,
-                        // id: undefined
-                    }
-                })
-                await prisma.users.update({
+                
+                let ensNameData = await prisma.eNSName.findFirst({
                     where: {
-                        address: address,
+                        wallet_address: {
+                            equals: address,
+                            mode: 'insensitive'
+                        }
                     },
-                    data: {
-                        ens_name: ensName
+                })
+                if (ensNameData) {
+                    await prisma.eNSName.update({
+                        where: {
+                            id: ensNameData.id,
+                        },
+                        data: {
+                            ens_name: ensName
+                        }
+                    })
+                }
+
+                let userSettings = await prisma.users.findFirst({
+                    where: {
+                        address: {
+                            equals: address,
+                            mode: 'insensitive'
+                        }
                     }
                 })
+                
+                if (userSettings) {
+                    await prisma.users.update({
+                        where: {
+                            address: address,
+                        },
+                        data: {
+                            ens_name: ensName
+                        }
+                    })
+                }
             }
             else{
                 await prisma.users.upsert({
@@ -136,7 +160,7 @@ export default async function userController(fastify: FastifyInstance) {
                         address: address,
                     },
                     update: {
-    
+                        ens_name: ensName
                     },
                     create: {
                         ens_name: ensName,
