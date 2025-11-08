@@ -25,17 +25,16 @@ const fetchEnsName = async (walletAddress: string, infuraKey: string): Promise<s
     let ensName = "";
     try {
         // Create an Ethereum provider
-        const provider = new ethers.JsonRpcProvider(
-            `https://mainnet.infura.io/v3/${infuraKey}`
-        );
+        // const provider = new ethers.JsonRpcProvider(
+        //     `https://mainnet.infura.io/v3/${infuraKey}`
+        // );
+        const provider = new ethers.JsonRpcProvider(`https://eth-mainnet.g.alchemy.com/v2/${infuraKey}`);
 
         // Look up ENS name for the address
         ensName = await provider.lookupAddress(walletAddress) ?? "";
 
-
     } catch (error: any) {
         Logger.error('Error fetching ENS name:', error);
-
         // Continue with creation without ENS name
     }
 

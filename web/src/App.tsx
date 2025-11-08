@@ -35,6 +35,7 @@ import ContactsPageV2 from './pages/contacts/contactsV2'
 import ContactsLoader from './pages/contacts/ContactsLoader'
 import { NotificationWebSocketProvider } from './contexts/NotificationWebSocketContext'
 import UserStats from './pages/user_settings/UserStats'
+import EnsResolverPage from './pages/ens_resolver.page'
 
 
 function startApm(config: APMConfig) {
@@ -154,7 +155,7 @@ function App() {
                             <Route path="files_workflows" element={<FilesPage />} />
 
 
-
+                            <Route path="ens_resolver" element={<EnsResolverPage />} />
                             <Route path="info" element={<InfoPage />} />
                             <Route path="settings" element={<SettingsPage />} />
 
