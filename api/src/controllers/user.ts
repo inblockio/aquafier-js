@@ -46,9 +46,11 @@ export default async function userController(fastify: FastifyInstance) {
 
 
     })
+
     // fetch ens name if it exist 
     fastify.get('/user_ens/:address', async (request, reply) => {
         const { address } = request.params as { address: string };
+        const { useEns } = request.query as { useEns?: string };
 
         // Add authorization
         const nonce = request.headers['nonce'];
@@ -62,48 +64,82 @@ export default async function userController(fastify: FastifyInstance) {
             return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
         }
 
-        // check in out db first 
-        // check if user exist in users
-        const userData = await prisma.users.findFirst({
-            where: {
-                address: {
-                    equals: address,
-                    mode: 'insensitive'
+        // check in our db first 
+        if (useEns === 'true') {
+            // Query ENSName table when useEns is true
+            const ensData = await prisma.eNSName.findFirst({
+                where: {
+                    wallet_address: {
+                        equals: address,
+                        mode: 'insensitive'
+                    }
                 }
-            }
-        });
+            });
 
-        Logger.info(`=> address ${address} \n Data ${JSON.stringify(userData)}`)
-        if (userData) {
-            if (userData.ens_name) {
+            if (ensData && ensData.ens_name) {
                 return reply.code(200).send({
                     success: true,
-                    ens: userData.ens_name
+                    ens: ensData.ens_name
                 });
+            }
+        } else {
+            // Original flow: check if user exist in users table
+            const userData = await prisma.users.findFirst({
+                where: {
+                    address: {
+                        equals: address,
+                        mode: 'insensitive'
+                    }
+                }
+            });
+
+            // Logger.info(`=> address ${address} \n Data ${JSON.stringify(userData)}`)
+            if (userData) {
+                if (userData.ens_name) {
+                    return reply.code(200).send({
+                        success: true,
+                        ens: userData.ens_name
+                    });
+                }
             }
         }
 
         // Check if we should attempt ENS lookup
-        const infuraProjectId = process.env.VITE_INFURA_PROJECT_ID;
+        const infuraProjectId = process.env.ALCHEMY_API_KEY;
 
         let ensName = null
+        console.log(cliRedify("We are here"), infuraProjectId)
         if (infuraProjectId) {
+            console.log("Fetching")
             ensName = await fetchEnsName(address, infuraProjectId)
+            console.log("Fetched", ensName)
         }
+        console.log(cliRedify("We are here"), ensName)
         if (ensName) {
-            await prisma.users.upsert({
-                where: {
-                    address: address,
-                },
-                update: {
-
-                },
-                create: {
-                    ens_name: ensName,
-                    address: address,
-                    email: ''
-                }
-            });
+            if (useEns === 'true') {
+                await prisma.eNSName.create({
+                    data: {
+                        wallet_address: address,
+                        ens_name: ensName,
+                        // id: undefined
+                    }
+                })
+            }
+            else{
+                await prisma.users.upsert({
+                    where: {
+                        address: address,
+                    },
+                    update: {
+    
+                    },
+                    create: {
+                        ens_name: ensName,
+                        address: address,
+                        email: ''
+                    }
+                });
+            }
 
             return reply.code(200).send({
                 success: true,
@@ -118,6 +154,19 @@ export default async function userController(fastify: FastifyInstance) {
             ens: address
         });
     });
+
+    fastify.get('/ens', async (request, reply) => {
+        // const { address } = request.query as { address: string };
+
+        try {
+            let data = await prisma.eNSName.findMany()
+            return reply.code(200).send({ success: true, message: "ok", data });
+
+        } catch (e: any) {
+            return reply.code(500).send({ success: false, message: `error : ${e}`, });
+
+        }
+    })
 
     fastify.get('/attestation_address', {
         preHandler: authenticate

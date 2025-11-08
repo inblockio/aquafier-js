@@ -8,7 +8,6 @@ import { Crown, X } from 'lucide-react'
 import { Outlet } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { useStore } from 'zustand'
-
 import { Dialog, DialogContent } from '../components/ui/dialog'
 import { Button } from '../components/ui/button'
 import CreateFormFromTemplate from '../components/aqua_forms/CreateFormFromTemplate'
@@ -27,8 +26,6 @@ export default function NewShadcnLayoutWithSidebar() {
             setOpenDialog,
             formTemplates
       } = useStore(appStore)
-
-
 
       return (
             <>
@@ -268,7 +265,6 @@ export default function NewShadcnLayoutWithSidebar() {
                               </ScrollArea>
                         </DialogContent>
                   </Dialog>
-
 
                   <Dialog
                         open={openDialog !== null && openDialog.isOpen && openDialog.dialogType == 'share_dialog'}
