@@ -286,3 +286,36 @@ export function ensureDomainViewForCors(domain?: string): string[] {
 
     return domains
 }
+
+export function isEnsNameOrAddrss(str: string): string {
+    if(str.startsWith("0x")){
+        return "address"
+    }
+    if(str.includes(".")){
+        return "ens"
+    }
+    return ""
+}
+
+export async function getAddressGivenEnsName(ensName: string): Promise<string | null> {
+    try {
+        // Get the Alchemy API key from environment variables
+        const infuraKey = process.env.ALCHEMY_API_KEY;
+        if (!infuraKey) {
+            Logger.error('ALCHEMY_API_KEY not found in environment variables');
+            return null;
+        }
+
+        // Create an Ethereum provider
+        const provider = new ethers.JsonRpcProvider(`https://eth-mainnet.g.alchemy.com/v2/${infuraKey}`);
+
+        // Resolve ENS name to address
+        const address = await provider.resolveName(ensName);
+        
+        return address;
+
+    } catch (error: any) {
+        Logger.error('Error resolving ENS name to address:', error);
+        return null;
+    }
+}
