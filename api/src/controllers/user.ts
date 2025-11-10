@@ -5,6 +5,7 @@ import { prisma } from '../database/db';
 import { SettingsRequest, UserAttestationAddressesRequest } from '../models/request_models';
 // import { verifySiweMessage } from '../utils/auth_utils';
 import { fetchEnsName } from '../utils/api_utils';
+import { getAddressGivenEnsName, isEnsNameOrAddrss } from '../utils/server_utils';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
 import { Prisma, PrismaClient, UserAttestationAddresses } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
@@ -43,13 +44,11 @@ export default async function userController(fastify: FastifyInstance) {
         });
 
         return reply.code(200).send({ success: true, message: "ok" });
+    });
 
-
-    })
-
-    // fetch ens name if it exist 
-    fastify.get('/user_ens/:address', async (request, reply) => {
-        const { address } = request.params as { address: string };
+    // Unified ENS/Address resolver - handles both ENS->Address and Address->ENS
+    fastify.get('/resolve/:identifier', async (request, reply) => {
+        const { identifier } = request.params as { identifier: string };
         const { useEns } = request.query as { useEns?: string };
 
         // Add authorization
@@ -61,13 +60,141 @@ export default async function userController(fastify: FastifyInstance) {
             where: { nonce: nonce }
         });
         if (session == null) {
-            return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+            return reply.code(403).send({ success: false, message: "Nonce is invalid" });
         }
 
-        // check in our db first 
+        try {
+            // Determine if identifier is an ENS name or address
+            const identifierType = isEnsNameOrAddrss(identifier);
+
+            if (identifierType === "address") {
+                // Input is an address, resolve to ENS name
+                return await resolveAddressToEns(identifier, useEns, reply);
+            } else if (identifierType === "ens") {
+                // Input is an ENS name, resolve to address
+                return await resolveEnsToAddress(identifier, reply);
+            } else {
+                return reply.code(400).send({
+                    success: false,
+                    message: "Invalid identifier format. Must be a valid Ethereum address or ENS name."
+                });
+            }
+        } catch (error: any) {
+            Logger.error('Error in resolve endpoint:', error);
+            return reply.code(500).send({
+                success: false,
+                message: "Internal server error during resolution"
+            });
+        }
+    });
+
+    // Helper function to resolve address to ENS name
+    async function resolveAddressToEns(address: string, useEns: string | undefined, reply: FastifyReply) {
+        // Check database first
+        const dbResult = useEns === 'true'
+            ? await prisma.eNSName.findFirst({
+                where: { wallet_address: { equals: address, mode: 'insensitive' } }
+            })
+            : await prisma.users.findFirst({
+                where: { address: { equals: address, mode: 'insensitive' } }
+            });
+
+        if (dbResult && dbResult.ens_name) {
+            return reply.code(200).send({
+                success: true,
+                type: 'ens_name',
+                result: dbResult.ens_name,
+                source: 'database'
+            });
+        }
+
+        // Fetch from blockchain
+        const infuraProjectId = process.env.ALCHEMY_API_KEY;
+        if (!infuraProjectId) {
+            return reply.code(404).send({
+                success: false,
+                message: "ENS resolution unavailable: API key not configured"
+            });
+        }
+
+        const ensName = await fetchEnsName(address, infuraProjectId);
+        if (ensName) {
+            // Save to database
+            await saveEnsToDatabase(address, ensName, useEns);
+
+            return reply.code(200).send({
+                success: true,
+                type: 'ens_name',
+                result: ensName,
+                source: 'blockchain'
+            });
+        }
+
+        return reply.code(404).send({
+            success: false,
+            message: "No ENS name found for this address"
+        });
+    }
+
+    // Helper function to resolve ENS name to address
+    async function resolveEnsToAddress(ensName: string, reply: FastifyReply) {
+        // Check database first
+        const dbResult = await prisma.eNSName.findFirst({
+            where: { ens_name: { equals: ensName, mode: 'insensitive' } }
+        });
+
+        if (dbResult && dbResult.wallet_address) {
+            return reply.code(200).send({
+                success: true,
+                type: 'address',
+                result: dbResult.wallet_address,
+                source: 'database'
+            });
+        }
+
+        // Fetch from blockchain
+        const address = await getAddressGivenEnsName(ensName);
+        if (address) {
+            // Save to database - handle case-insensitive ENS names
+            const existingEnsRecord = await prisma.eNSName.findFirst({
+                where: {
+                    ens_name: {
+                        equals: ensName,
+                        mode: 'insensitive'
+                    }
+                }
+            });
+
+            if (existingEnsRecord) {
+                await prisma.eNSName.update({
+                    where: { id: existingEnsRecord.id },
+                    data: { wallet_address: address, ens_name: ensName }
+                });
+            } else {
+                await prisma.eNSName.create({
+                    data: { ens_name: ensName, wallet_address: address }
+                });
+            }
+
+            return reply.code(200).send({
+                success: true,
+                type: 'address',
+                result: address,
+                source: 'blockchain'
+            });
+        }
+
+        return reply.code(404).send({
+            success: false,
+            message: "No address found for this ENS name"
+        });
+    }
+
+    // Helper function to save ENS data to database
+    async function saveEnsToDatabase(address: string, ensName: string, useEns: string | undefined) {
         if (useEns === 'true') {
-            // Query ENSName table when useEns is true
-            const ensData = await prisma.eNSName.findFirst({
+            // First, try to find existing record with case-insensitive search
+            const existingEnsRecord = await prisma.eNSName.findFirst({
                 where: {
                     wallet_address: {
                         equals: address,
@@ -76,113 +203,26 @@ export default async function userController(fastify: FastifyInstance) {
                 }
             });
 
-            if (ensData && ensData.ens_name) {
-                return reply.code(200).send({
-                    success: true,
-                    ens: ensData.ens_name
+            if (existingEnsRecord) {
+                // Update existing record using its ID
+                await prisma.eNSName.update({
+                    where: { id: existingEnsRecord.id },
+                    data: { ens_name: ensName, wallet_address: address }
+                });
+            } else {
+                // Create new record
+                await prisma.eNSName.create({
+                    data: { wallet_address: address, ens_name: ensName }
                 });
             }
-        } else {
-            // Original flow: check if user exist in users table
-            const userData = await prisma.users.findFirst({
-                where: {
-                    address: {
-                        equals: address,
-                        mode: 'insensitive'
-                    }
-                }
-            });
-
-            // Logger.info(`=> address ${address} \n Data ${JSON.stringify(userData)}`)
-            if (userData) {
-                if (userData.ens_name) {
-                    return reply.code(200).send({
-                        success: true,
-                        ens: userData.ens_name
-                    });
-                }
-            }
         }
 
-        // Check if we should attempt ENS lookup
-        const infuraProjectId = process.env.ALCHEMY_API_KEY;
-
-        let ensName = null
-        if (infuraProjectId) {
-            ensName = await fetchEnsName(address, infuraProjectId)
-        }
-
-        if (ensName) {
-            if (useEns === 'true') {
-                
-                let ensNameData = await prisma.eNSName.findFirst({
-                    where: {
-                        wallet_address: {
-                            equals: address,
-                            mode: 'insensitive'
-                        }
-                    },
-                })
-                if (ensNameData) {
-                    await prisma.eNSName.update({
-                        where: {
-                            id: ensNameData.id,
-                        },
-                        data: {
-                            ens_name: ensName
-                        }
-                    })
-                }
-
-                let userSettings = await prisma.users.findFirst({
-                    where: {
-                        address: {
-                            equals: address,
-                            mode: 'insensitive'
-                        }
-                    }
-                })
-                
-                if (userSettings) {
-                    await prisma.users.update({
-                        where: {
-                            address: address,
-                        },
-                        data: {
-                            ens_name: ensName
-                        }
-                    })
-                }
-            }
-            else{
-                await prisma.users.upsert({
-                    where: {
-                        address: address,
-                    },
-                    update: {
-                        ens_name: ensName
-                    },
-                    create: {
-                        ens_name: ensName,
-                        address: address,
-                        email: ''
-                    }
-                });
-            }
-
-            return reply.code(200).send({
-                success: true,
-                ens: ensName
-            });
-        }
-
-
-        return reply.code(200).send({
-            message: `ens not in system and ${infuraProjectId ? 'fetch ens failed ' : 'infura key not found in system'}`,
-            success: false,
-            ens: address
+        await prisma.users.upsert({
+            where: { address: address },
+            update: { ens_name: ensName },
+            create: { address: address, ens_name: ensName, email: '' }
         });
-    });
+    }
 
     fastify.get('/ens', async (request, reply) => {
         // const { address } = request.query as { address: string };
@@ -266,7 +306,7 @@ export default async function userController(fastify: FastifyInstance) {
 
     fastify.put('/attestation_address', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
 
-        const user =request.user;
+        const user = request.user;
 
         const userAttestationAddresses = request.body as UserAttestationAddresses;
 
@@ -290,7 +330,7 @@ export default async function userController(fastify: FastifyInstance) {
 
     fastify.delete('/attestation_address', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
 
-        const user =request.user;
+        const user = request.user;
 
         const userAttestationAddresses = request.body as UserAttestationAddresses;
 
@@ -756,7 +796,7 @@ export default async function userController(fastify: FastifyInstance) {
                 pubkey_hash: {
                     startsWith: userAddress
                 },
-                previous:{
+                previous: {
                     equals: ""
                 }
             }
@@ -774,7 +814,7 @@ export default async function userController(fastify: FastifyInstance) {
         })
 
         const allRevisionHashes = allUserRevisions.map(revision => revision.pubkey_hash)
-        
+
         // const linkQueryStart = performance.now()
         const linkRevisions = await prisma.revision.findMany({
             select: {
@@ -804,7 +844,7 @@ export default async function userController(fastify: FastifyInstance) {
 
         // We create an object of the items we want to track differently and or separately
         const formTypesToTrack: Record<string, number> = {}
-        for(let i = 0; i < Object.keys(TEMPLATE_HASHES).length; i++){
+        for (let i = 0; i < Object.keys(TEMPLATE_HASHES).length; i++) {
             const formType = Object.keys(TEMPLATE_HASHES)[i]
             formTypesToTrack[formType] = 0
         }
@@ -812,23 +852,23 @@ export default async function userController(fastify: FastifyInstance) {
         const formTypesToTrackKeys = Object.keys(formTypesToTrack)
 
         // Loop through each link revision
-        for(let j = 0; j < linkRevisions.length; j++){
+        for (let j = 0; j < linkRevisions.length; j++) {
             const linkRevision = linkRevisions[j]
-            
+
             // Loop through each Link in the revision (it's an array)
-            for(let k = 0; k < linkRevision.Link.length; k++){
+            for (let k = 0; k < linkRevision.Link.length; k++) {
                 const link = linkRevision.Link[k]
-                
+
                 // Loop through each verification hash in the link
-                for(let l = 0; l < link.link_verification_hashes.length; l++){
+                for (let l = 0; l < link.link_verification_hashes.length; l++) {
                     const verificationHash = link.link_verification_hashes[l]
-                    
+
                     // Check which template this hash matches
-                    for(let i = 0; i < formTypesToTrackKeys.length; i++){
+                    for (let i = 0; i < formTypesToTrackKeys.length; i++) {
                         const formType = formTypesToTrackKeys[i]
                         const templateHash = TEMPLATE_HASHES[formType as keyof typeof TEMPLATE_HASHES]
-                        
-                        if(verificationHash === templateHash){
+
+                        if (verificationHash === templateHash) {
                             formTypesToTrack[formType]++
                             break; // Found match, no need to check other templates
                         }
