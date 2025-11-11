@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import { ExtendedAquaTreeData } from '../models/types';
 import { deleteFile } from "./file_utils";
 import Logger from './logger';
-import { AquaTree, cliGreenify, cliRedify, cliYellowfy } from 'aqua-js-sdk';
+import { AquaTree } from 'aqua-js-sdk';
 import { fetchCompleteRevisionChain } from './quick_utils';
 import { getLastRevisionVerificationHash } from './aqua_tree_utils';
 
@@ -746,7 +746,6 @@ export async function mergeRevisionChain(
     try {
         // First, order the incoming chain to understand its structure
         const orderedIncomingChain = orderRevisionsInChain(entireChain);
-        // console.log(cliRedify(`Ordered incoming chain revisions ${JSON.stringify(orderedIncomingChain)}`))
         if (!orderedIncomingChain || orderedIncomingChain.length === 0) {
             return {
                 success: false,
@@ -797,7 +796,6 @@ export async function mergeRevisionChain(
         // const targetUserChain = await orderUserChain(targetGenesisHash);
         const _targetUserChain = await orderUserChainByLatest(`${targetUserAddress}_${currentUserLatestRevisionHash}`);
         if (!_targetUserChain || _targetUserChain.length === 0 || !currentUserLatestRevisionHash) {
-            // console.log(cliRedify("Failed to order target user's chain, fallback to transfer"))
             Logger.error("Failed to order target user's chain, fallback to transfer");
             // Something went wrong with ordering, fallback to transfer
             const transferResult = await transferRevisionChain(
@@ -924,7 +922,6 @@ export async function mergeRevisionChain(
                     // You might want to mark these as obsolete rather than deleting
                     Logger.info(`Marking ${obsoleteHash} as obsolete due to replace strategy`);
                     // Delete the revision
-                    // console.log(cliRedify(`Delete ${obsoleteHash} due to replace strategy`))
                     // Enabled delete from latest to force delete any revisions appearing in latest to avoid double entry till forking is implemented
                     await deleteRevisionAndChildren(obsoleteHash, targetUserAddress, true)
                 }

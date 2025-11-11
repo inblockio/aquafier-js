@@ -102,27 +102,16 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
     useReloadWatcher({
         key: getReloadKey(workflowName),
         onReload: () => {
-            // console.log(`Reloading ${workflowName} files...`);
             loadFiles();
         }
     });
 
     useEffect(() => {
         const unsubscribe = subscribe((message) => {
-            // Handle message
-            console.log('WebSocket message received in WorkflowSpecificTable:', message);
-
-            // Handle notification reload specifically
             if (message.type === 'notification_reload' && message.data && message.data.target === "workflows") {
                 loadFiles()
                 triggerWorkflowReload("contacts")
             }
-
-            // Handle other message types
-            // if (message.type === 'wallet_update' || message.type === 'contract_update') {
-            //     // Optionally reload notifications for these events too
-            //     loadFiles();
-            // }
         });
         return unsubscribe;
     }, []);

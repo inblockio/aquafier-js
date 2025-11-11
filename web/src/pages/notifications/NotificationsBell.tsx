@@ -75,27 +75,6 @@ const NotificationsBell = () => {
             }
       }, [isOpen, session?.address])
 
-      // WebSocket connection for real-time notifications
-      // const { isConnected, connectionError } = useNotificationWebSocket({
-      //       walletAddress: session?.address,
-      //       userId: session?.address, // Using wallet address as userId for now
-      //       onNotificationReload: () => {
-      //             // console.log('WebSocket notification reload triggered');
-      //             fetchNotifications();
-      //       },
-      //       onMessage: (message) => {
-      //             // console.log('WebSocket message received in NotificationsBell:', message);
-      //             // Handle other message types if needed
-      //             if (message.type === 'wallet_update' || message.type === 'contract_update') {
-      //                   // Optionally reload notifications for these events too
-      //                   fetchNotifications();
-      //             }
-      //             // if(message.data && message.data.target === 'notifications') {
-      //             //       fetchNotifications();
-      //             // }
-      //       }
-      // });
-
       // Initial fetch
       useEffect(() => {
             if (session?.address) {
@@ -105,18 +84,11 @@ const NotificationsBell = () => {
 
       useEffect(() => {
             const unsubscribe = subscribe((message) => {
-                  // Handle message
-                  console.log('WebSocket message received in NotificationsBell:', message);
-                  
-                  // Handle notification reload specifically
                   if (message.type === 'notification_reload' || 
                       (message.data && message.data.target === 'notifications')) {
                         fetchNotifications();
                   }
-                  
-                  // Handle other message types
                   if (message.type === 'wallet_update' || message.type === 'contract_update') {
-                        // Optionally reload notifications for these events too
                         fetchNotifications();
                   }
             });

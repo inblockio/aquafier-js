@@ -53,6 +53,16 @@ const isBinaryFile = (filename: string): boolean => {
       return binaryExtensions.includes(extension)
 }
 
+const safelyAddNameWithHash = (filename: string, hash: string, nameWithHashes: Array<AquaNameWithHash>) => {
+      if(nameWithHashes.find((nameWithHash) => nameWithHash.name == filename)){
+            return
+      }
+      nameWithHashes.push({
+            name: filename,
+            hash: hash,
+      })
+}
+
 export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo; index: number; children?: React.ReactNode }) => {
       const { session } = useStore(appStore)
       const [downloading, setDownloading] = useState(false)
@@ -81,7 +91,27 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
             let mainAquaFileNameWithAquaDotJson = `${mainAquaFileName}.aqua.json`
             zip.file(mainAquaFileNameWithAquaDotJson, JSON.stringify(file.aquaTree))
 
+            let genesisRevision: Revision | undefined = file.aquaTree!.revisions[genesisHash]
+            if (!genesisRevision) {
+                  toast.error(`an error occured creating zip file : genesis revision`)
+                  return
+            }
+
+            let fileHash = genesisRevision.file_hash
+            if (!fileHash) {
+                  toast.error(`an error occured creating zip file:  file hash`)
+                  return
+            }
+
+            //add main aqua file
             const nameWithHashes: Array<AquaNameWithHash> = []
+
+            // nameWithHashes.push({
+            //       name: mainAquaFileNameWithAquaDotJson,
+            //       hash: fileHash,
+            // })
+            safelyAddNameWithHash(mainAquaFileNameWithAquaDotJson, fileHash, nameWithHashes)
+
             for (const fileObj of file.fileObject) {
 
                   const isAquaTreeData = isAquaTree(fileObj.fileContent)
@@ -112,10 +142,11 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                                     }
                               }
 
-                              nameWithHashes.push({
-                                    name: fileObj.fileName,
-                                    hash: hashData,
-                              })
+                              // nameWithHashes.push({
+                              //       name: fileObj.fileName,
+                              //       hash: hashData,
+                              // })
+                              safelyAddNameWithHash(fileObj.fileName, hashData, nameWithHashes)
 
                               // Use the original filename, not with .json extension
                               zip.file(fileObj.fileName, blob, { binary: true })
@@ -159,30 +190,13 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                               hashData = aquafier.getFileHash(jsonContent)
                         }
 
-                        nameWithHashes.push({
-                              name: fileObj.fileName, // Use original filename in the hash record
-                              hash: hashData,
-                        })
+                        // nameWithHashes.push({
+                        //       name: fileObj.fileName, // Use original filename in the hash record
+                        //       hash: hashData,
+                        // })
+                        safelyAddNameWithHash(fileObj.fileName, hashData, nameWithHashes)
                   }
             }
-
-
-            let genesisRevision: Revision | undefined = file.aquaTree!.revisions[genesisHash]
-            if (!genesisRevision) {
-                  toast.error(`an error occured creating zip file : genesis revision`)
-                  return
-            }
-
-            let fileHash = genesisRevision.file_hash
-            if (!fileHash) {
-                  toast.error(`an error occured creating zip file:  file hash`)
-                  return
-            }
-            //add main aqua file
-            nameWithHashes.push({
-                  name: mainAquaFileNameWithAquaDotJson,
-                  hash: fileHash,
-            })
 
 
 

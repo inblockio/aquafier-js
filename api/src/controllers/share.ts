@@ -1,8 +1,7 @@
 import {FastifyInstance} from 'fastify';
 import {prisma} from '../database/db';
 import {ShareRequest} from '../models/request_models';
-// import { verifySiweMessage } from '../utils/auth_utils';
-import {AquaTree, cliRedify, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties} from 'aqua-js-sdk';
+import {AquaTree, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties} from 'aqua-js-sdk';
 import {getHost, getPort} from '../utils/api_utils';
 import {fetchAquaTreeWithForwardRevisions} from '../utils/revisions_utils';
 import {SYSTEM_WALLET_ADDRESS} from '../models/constants';
@@ -209,7 +208,6 @@ export default async function shareController(fastify: FastifyInstance) {
             let res = sendNotificationReloadToWallet(ethers.getAddress(recipients[i]))
             responses.push(res)
         }
-        console.log(cliRedify(`Responses: ${JSON.stringify(responses, null, 4)}`))
 
         return reply.code(200).send({ success: true, message: "share contract created successfully." });
 

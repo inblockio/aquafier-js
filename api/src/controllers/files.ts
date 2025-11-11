@@ -1,6 +1,6 @@
 import {prisma} from '../database/db';
 import {getFile, streamToBuffer} from '../utils/file_utils.js';
-import Aquafier, {AquaTree, cliRedify, FileObject, LogType} from 'aqua-js-sdk';
+import Aquafier, {AquaTree, FileObject, LogType} from 'aqua-js-sdk';
 import {FastifyInstance} from 'fastify';
 import path from 'path';
 import Logger from "../utils/logger";
@@ -74,8 +74,6 @@ export default async function filesController(fastify: FastifyInstance) {
         try {
             // Read the file
             let fileContent = await getFile(file.file_location!!);
-            console.log(cliRedify(file.file_hash), fileIndex?.file_hash)
-            console.log("File content here: ", fileContent)
 
             // Set appropriate headers based on file type
             const fileExt = path.extname(file.file_location ?? "").toLowerCase();
