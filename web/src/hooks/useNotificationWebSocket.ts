@@ -18,6 +18,14 @@ interface UseNotificationWebSocketProps {
   onMessage?: (message: WebSocketMessage) => void;
 }
 
+const getDomainName = (hostname: string) => {
+  if(hostname.includes("localhost")){
+    return "localhost"
+  }
+  let domainParts = hostname.split(".");
+  return domainParts[domainParts.length - 1];
+}
+
 export const useNotificationWebSocket = ({
   walletAddress,
   userId,
@@ -45,7 +53,9 @@ export const useNotificationWebSocket = ({
   useEffect(() => {
     if (backend_url && !backend_url.includes("0.0.0.0") && !backend_url.includes("BACKEND_URL_PLACEHOLDER")) {
       const location = window.location;
-      if (backend_url.includes(location.hostname)) {
+      const hostname = location.hostname;
+      const actualDomain = getDomainName(hostname);
+      if (backend_url.includes(actualDomain)) {
         setLocalBackendUrl(backend_url);
       } else {
         console.error("Backend URL does not match location hostname");
