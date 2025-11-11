@@ -3,13 +3,12 @@ import { useState } from 'react'
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, useSidebar } from '@/components/ui/sidebar'
 import CustomNavLink from './ui/CustomNavLink'
-import { Contact, FileText, LayoutDashboard, LayoutTemplate, Link, Settings, Share2, Star, User, Workflow } from 'lucide-react'
+import { Contact, FileText, LayoutDashboard, LayoutTemplate, Link, Link2, Settings, Share2, Star, User, Workflow } from 'lucide-react'
 import { maxUserFileSizeForUpload } from '@/utils/constants'
 import { formatBytes } from '@/utils/functions'
 import { useStore } from 'zustand'
 import appStore from '@/store'
 import { WebConfig } from '@/types/types'
-import { FaAddressBook } from 'react-icons/fa'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const { files, setOpenDialog, webConfig, session } = useStore(appStore)
@@ -92,7 +91,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             },
             {
                   label: 'ENS Resolver',
-                  icon: FaAddressBook,
+                  icon: Link2,
                   id: '/ens_resolver',
             },
             {
