@@ -1,31 +1,10 @@
-import Aquafier, { AquaTree, AquaTreeWrapper, cliGreenify, cliRedify, FileObject, LogData, LogType, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
+import { AquaTree, FileObject } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
-import { getFileUploadDirectory, persistFile, streamToBuffer } from '../utils/file_utils';
-import path from 'path';
-import JSZip from "jszip";
-import { randomUUID } from 'crypto';
-import * as fs from "fs"
 import {
-    deleteAquaTree,
-    deleteAquaTreeFromSystem,
-    fetchAquatreeFoUser,
-    getUserApiFileInfo,
     getUserApiWorkflowFileInfo,
-    isWorkFlowData,
-    processAquaFiles,
-    processAquaMetadata,
-    saveAquaTree,
-    transferRevisionChainData
-} from '../utils/revisions_utils';
+    isWorkFlowData} from '../utils/revisions_utils';
 import { getHost, getPort } from '../utils/api_utils';
-import { DeleteRevision } from '../models/request_models';
-import { fetchCompleteRevisionChain } from '../utils/quick_utils';
-import { mergeRevisionChain } from '../utils/quick_revision_utils';
-import { getGenesisHash, removeFilePathFromFileIndex, validateAquaTree } from '../utils/aqua_tree_utils';
-import WebSocketActions from '../constants/constants';
-import { sendToUserWebsockerAMessage } from './websocketController';
-import { saveAttestationFileAndAquaTree } from '../utils/server_utils';
 import Logger from "../utils/logger";
 import { systemTemplateHashes } from '../models/constants';
 
@@ -86,12 +65,6 @@ export default async function workflowsController(fastify: FastifyInstance) {
 
             // Construct the full URL
             const url = `${protocol}://${host}`;
-
-
-
-
-            // this can be optimized by getting all from revisions with prefix of user wallet address.
-            Logger.info(`URL: ${cliRedify(url)}, Address: ${cliGreenify(session.address)}`);
 
             const paginatedData = await getUserApiWorkflowFileInfo(url, session.address)
             const data: Array<{

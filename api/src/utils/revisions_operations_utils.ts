@@ -3,10 +3,7 @@ import {
     FileObject,
     OrderRevisionInAquaTree,
     reorderRevisionsProperties,
-    Revision as AquaRevision,
-    cliRedify,
-    cliGreenify
-} from 'aqua-js-sdk';
+    Revision as AquaRevision} from 'aqua-js-sdk';
 
 import {prisma} from '../database/db';
 // For specific model types

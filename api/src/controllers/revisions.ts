@@ -4,12 +4,11 @@ import { DeleteRevision, FetchAquaTreeRequest, SaveRevisionForUser } from '../mo
 import { getHost, getPort } from '../utils/api_utils';
 import {
     deleteAquaTree,
-    fetchAquatreeFoUser,
     getSignatureAquaTrees,
     getUserApiFileInfo,
     saveARevisionInAquaTree
 } from '../utils/revisions_utils';
-import { AquaTree, cliGreenify, cliRedify, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
+import { AquaTree, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import { sendToUserWebsockerAMessage } from './websocketController';
 import WebSocketActions from '../constants/constants';

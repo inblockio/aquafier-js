@@ -58,7 +58,7 @@ export const initializeBackendUrl = async (): Promise<{
       config: WebConfig,
       apmConfig: APMConfig
 }> => {
-      let BACKEND_URL = 'http://127.0.0.1:3000'
+      let BACKEND_URL = 'http://localhost:3000'
       let configObj: WebConfig = {}
       let apmConfig: APMConfig = new APMConfig();
       try {
@@ -82,9 +82,9 @@ export const initializeBackendUrl = async (): Promise<{
             configObj = configData
 
             // Update the BACKEND_URL
-            BACKEND_URL = configData.BACKEND_URL || 'http://127.0.0.1:3000'
+            BACKEND_URL = configData.BACKEND_URL || 'http://localhost:3000'
             if (BACKEND_URL == 'BACKEND_URL_PLACEHOLDER') {
-                  BACKEND_URL = 'http://127.0.0.1:3000'
+                  BACKEND_URL = 'http://localhost:3000'
             }
 
             // Check if URL doesn't start with http:// or https:// and prepend http://

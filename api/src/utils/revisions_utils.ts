@@ -3,10 +3,7 @@ import {
     FileObject,
     OrderRevisionInAquaTree,
     reorderAquaTreeRevisionsProperties,
-    Revision as AquaTreeRevision,
-    cliYellowfy,
-    cliRedify,
-    cliGreenify
+    Revision as AquaTreeRevision
 } from 'aqua-js-sdk';
 import { prisma } from '../database/db';
 // For specific model types
@@ -587,7 +584,7 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevisionForUser,
             }
         })
     } catch (error) {
-        console.log(cliRedify(`Error updating previous revision children ${error}`))
+        Logger.error(`Error updating previous revision children ${error}`)
     }
 
     if (revisionData.revision.revision_type == "form") {

@@ -42,7 +42,6 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
       if (hasCached) {
         const cachedNames = await aquaSystemNamesService.getSystemNames();
         setSystemAquaFileNames(cachedNames);
-        console.log("Loaded system names from cache:", cachedNames.length);
       }
 
       // Always fetch fresh data from backend and update cache
@@ -60,17 +59,13 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
       
       // Save to database for future use
       await aquaSystemNamesService.saveSystemNames(freshNames);
-      
-      // console.log("Updated system names from backend:", freshNames.length);
     } catch (error) {
-      console.log("Error getting system aqua file names", error);
       
       // If backend fails but we have cached data, use that
       const hasCached = await aquaSystemNamesService.hasCachedNames();
       if (hasCached) {
         const cachedNames = await aquaSystemNamesService.getSystemNames();
         setSystemAquaFileNames(cachedNames);
-        console.log("Using cached system names due to backend error:", cachedNames.length);
       }
     }
   };
@@ -290,19 +285,10 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
 
   useEffect(() => {
     const unsubscribe = subscribe((message) => {
-        // Handle message
-        console.log('WebSocket message received in CONTACTS TABLE:', message);
-
         // Handle notification reload specifically
         if (message.type === 'notification_reload' && message.data && message.data.target === "workflows") {
           loadContactTrees()
         }
-
-        // Handle other message types
-        // if (message.type === 'wallet_update' || message.type === 'contract_update') {
-        //     // Optionally reload notifications for these events too
-        //     loadFiles();
-        // }
     });
     return unsubscribe;
 }, []);

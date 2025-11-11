@@ -112,19 +112,11 @@ export default function FilesList(filesListProps: FilesListProps) {
 
       useEffect(() => {
             const unsubscribe = subscribe((message) => {
-                  // Handle message
-                  console.log('WebSocket message received in WorkflowSpecificTable:', message);
-
                   // Handle notification reload specifically
                   if (message.type === 'notification_reload' && message.data && message.data.target === "workflows") {
                         getUserStats()
                   }
 
-                  // Handle other message types
-                  // if (message.type === 'wallet_update' || message.type === 'contract_update') {
-                  //     // Optionally reload notifications for these events too
-                  //     loadFiles();
-                  // }
             });
             return unsubscribe;
       }, []);
