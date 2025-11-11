@@ -906,18 +906,12 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                         <div className="flex flex-col space-y-3">
                               <h4 className="text-md font-medium">Signers</h4>
                               <div className="space-y-2">
-                                    {signers.map((e, index) => {
+                                    {signers.map((e) => {
                                           return (
-                                                <div key={e} className="bg-background shadow-sm p-2 rounded-sm">
-                                                      <div className="flex items-center space-x-1">
-                                                            <span className="text-xs">{index + 1}.</span>
-                                                            <span className="text-xs"> {e}</span>
-                                                      </div>
+                                                <div key={`address_${e}`} className="bg-background shadow-sm p-2 rounded-sm">
+                                                      <WalletAddressClaim walletAddress={e} />
                                                 </div>
                                           )
-                                          // return <HStack key={e} p={2} justify="space-between">
-                                          //         <Text fontSize="xs">{index+1}.&nbsp;{e.replace("\"","")}</Text>
-                                          // </HStack>
                                     })}
                               </div>
                         </div>
