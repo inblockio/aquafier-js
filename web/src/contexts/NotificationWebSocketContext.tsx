@@ -16,20 +16,16 @@ export const NotificationWebSocketProvider: React.FC<{ children: React.ReactNode
   const [subscribers, setSubscribers] = useState<Set<(message: any) => void>>(new Set());
   const { session } = useStore(appStore);
 
-  console.log('NotificationWebSocketProvider session:', session?.address);
-
   // Single WebSocket connection
   const wsHook = useNotificationWebSocket({
     walletAddress: session?.address,
     userId: session?.address,
     onMessage: (message) => {
       // Broadcast to all subscribers
-      console.log('WebSocket message received in mmmmmmms:', message);
       subscribers.forEach(callback => callback(message));
     },
     onNotificationReload: () => {
       // Broadcast reload event
-      console.log('WebSocket reload event received in NotificationWebSocketProvider');
       subscribers.forEach(callback => callback({ type: 'notification_reload' }));
     }
   });

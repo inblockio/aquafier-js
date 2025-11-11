@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import appStore from '../store';
 import { API_ENDPOINTS } from '../utils/constants';
+import { useStore } from 'zustand';
 
 interface WebSocketMessage {
   type: string;
@@ -25,18 +26,27 @@ export const useNotificationWebSocket = ({
 }: UseNotificationWebSocketProps) => {
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [localBackendUrl, setLocalBackendUrl] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 10; // Increased attempts
   const reconnectDelay = 2000; // Fixed 2-second delay
 
+  const { backend_url } = useStore(appStore);
+
   // Memoize backend_url to prevent unnecessary reconnections
-  const backend_url = useMemo(() => appStore.getState().backend_url, []);
+  // const backend_url = useMemo(() => appStore.getState().backend_url, []);
 
   // Stable references for callbacks to prevent reconnection loops
   const onNotificationReloadRef = useRef(onNotificationReload);
   const onMessageRef = useRef(onMessage);
+
+  useEffect(() => {
+    if(backend_url && backend_url !== "0.0.0.0"){
+      setLocalBackendUrl(backend_url);
+    }
+  }, [backend_url]);
   
   // Update refs when callbacks change
   useEffect(() => {
@@ -48,6 +58,10 @@ export const useNotificationWebSocket = ({
   }, [onMessage]);
 
   const connect = useCallback(() => {
+    if (!localBackendUrl) {
+      console.warn('WebSocket connection requires backend_url');
+      return;
+    }
     if (!walletAddress || !userId) {
       console.warn('WebSocket connection requires walletAddress and userId');
       return;
@@ -66,7 +80,8 @@ export const useNotificationWebSocket = ({
     }
 
     // Convert HTTP URL to WebSocket URL properly
-    let wsUrl = backend_url;
+    let wsUrl = localBackendUrl;
+    console.log('WebSocket URL:', wsUrl);
     
     // Fix 0.0.0.0 to localhost for browser compatibility
     wsUrl = wsUrl.replace('0.0.0.0', 'localhost');
@@ -214,7 +229,7 @@ export const useNotificationWebSocket = ({
       console.log(`Reconnection attempt ${reconnectAttempts.current} starting...`);
       connect();
     }, reconnectDelay);
-  }, []); // Removed connect dependency to prevent recreation loops
+  }, [localBackendUrl]); // Removed connect dependency to prevent recreation loops
 
   const disconnect = useCallback(() => {
     // Clear any pending reconnection attempts
