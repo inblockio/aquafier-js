@@ -65,18 +65,6 @@ export default async function notificationsController(fastify: FastifyInstance) 
             if(navigate_to==undefined){
                 nav=""
             }
-            
-            // const notification = await prisma.notifications.create({
-            //     data: {
-            //         sender,
-            //         receiver,
-            //         content,
-            //         navigate_to : nav ,
-            //         is_read: false
-            //     }
-            // });
-
-            // sendNotificationReloadToWallet(receiver);
             const notification = await createNotificationAndSendWebSocketNotification(sender, receiver, content, nav);
             
             return reply.code(201).send(notification);
@@ -85,6 +73,27 @@ export default async function notificationsController(fastify: FastifyInstance) 
             return reply.code(500).send({ error: 'Failed to create notification' });
         }
     });
+
+
+    fastify.post<{
+        Body: {
+            receiver: string;
+            content: string;
+        }
+    }>('/trigger/websocket', { 
+        preHandler: authenticate 
+    }, async (request: FastifyRequest & AuthenticatedRequest, reply) => {
+
+        const { receiver, content } = request.body as { receiver: string, content: any };
+
+        if(typeof content === 'string'){
+            return reply.code(400).send({ error: 'Content must be an object' });
+        }
+        // const sender = request.user?.address;
+
+        sendNotificationReloadToWallet(receiver, content);
+        return reply.code(200).send({ message: 'Notification reload triggered' });
+    })
 
     // Mark a notification as read
     fastify.patch<{

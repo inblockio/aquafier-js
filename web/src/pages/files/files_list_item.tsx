@@ -185,7 +185,6 @@ export default function FilesListItem({
                                     )
                               }
 
-
                               <div className="w-[100px]">
                                     <OpenSelectedFileDetailsButton file={file} index={index} />
                               </div>

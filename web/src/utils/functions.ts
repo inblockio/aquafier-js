@@ -57,36 +57,7 @@ export const convertTemplateNameToTitle = (str: string) => {
             .split('_')
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ')
-      // const words = str.split('_');
-      // const firstWord = words[0].charAt(0).toUpperCase() + words[0].slice(1);
-      // const remainingWords = words.slice(1).join(' ');
-      // return firstWord + ' ' + remainingWords;
 }
-
-// Default expiration period in days
-// const DEFAULT_EXPIRATION_DAYS = 90;
-
-// export async function generateProof(domain: string, walletAddress: string, expirationDays: number = DEFAULT_EXPIRATION_DAYS, signature : string): Promise<DNSProof> {
-//   const timestamp = Math.floor(Date.now() / 1000).toString();
-//   const expiration = Math.floor(Date.now() / 1000 + (expirationDays * 24 * 60 * 60)).toString();
-
-// Message format: unix_timestamp|domain_name|expiration_timestamp
-//   const message = `${timestamp}|${domain}|${expiration}`;
-
-// Sign with EIP-191 compliant personal_sign format
-// ethers.js automatically applies: "\x19Ethereum Signed Message:\n" + len(message) + message
-// This matches MetaMask's personal_sign behavior (EIP-191 version 0x45)
-//   const wallet = new ethers.Wallet(privateKey);
-//   const signature = await wallet.signMessage(message);
-
-//   return {
-//     walletAddress: walletAddress,
-//     domainName: domain,
-//     timestamp,
-//     expiration,
-//     signature
-//   };
-// }
 
 export function generateProofFromSignature(domain: string, walletAddress: string, timestamp: string, expiration: string, signature: string): DNSProof {
       return {
@@ -2877,14 +2848,71 @@ export async function loadSignatureImage(aquaTree: AquaTree, fileObject: FileObj
 
 
 export const cleanEthAddress = (address?: string) => {
+      // console.log('cleanEthAddress', address)
       if (!address) {
             return false
       }
-      let isGood = true
       try {
             ethers.getAddress(address)
+            return true
       } catch (e) {
-            isGood = false
+            return false
       }
-      return isGood
+}
+
+
+export const reorderRevisionsInAquaTree = (aquaTree: AquaTree): string[] => {
+      if (!aquaTree.revisions || Object.keys(aquaTree.revisions).length === 0) {
+            return []
+      }
+
+      const revisions = aquaTree.revisions
+      const orderedHashes: string[] = []
+      
+      // Find genesis revision (one with empty previous_hash)
+      let genesisHash: string | null = null
+      for (const [hash, revision] of Object.entries(revisions)) {
+            if (!revision.previous_hash || revision.previous_hash === '') {
+                  genesisHash = hash
+                  break
+            }
+      }
+
+      if (!genesisHash) {
+            // If no genesis found, return all hashes in original order
+            return Object.keys(revisions)
+      }
+
+      // Build ordered chain starting from genesis
+      let currentHash: string | null = genesisHash
+      const processedHashes = new Set<string>()
+
+      while (currentHash && !processedHashes.has(currentHash)) {
+            const currentRevision = revisions[currentHash]
+            if (!currentRevision) break
+
+            // Add current hash to ordered list
+            orderedHashes.push(currentHash)
+            processedHashes.add(currentHash)
+
+            // Find next revision that has this hash as previous_hash
+            let nextHash: string | null = null
+            for (const [hash, revision] of Object.entries(revisions)) {
+                  if (revision.previous_hash === currentHash && !processedHashes.has(hash)) {
+                        nextHash = hash
+                        break
+                  }
+            }
+            currentHash = nextHash
+      }
+
+      // Add any remaining hashes that weren't part of the main chain
+      for (const hash of Object.keys(revisions)) {
+            if (!processedHashes.has(hash)) {
+                  orderedHashes.push(hash)
+            }
+      }
+
+      // Return array of ordered hashes
+      return orderedHashes
 }

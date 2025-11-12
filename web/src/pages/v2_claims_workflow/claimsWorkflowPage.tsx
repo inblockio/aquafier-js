@@ -3,7 +3,7 @@ import { useLocation, useParams } from 'react-router-dom'
 import appStore from '../../store'
 import { useStore } from 'zustand'
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
-import { cleanEthAddress, getGenesisHash, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
+import { getGenesisHash, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
 import { ClipLoader } from 'react-spinners'
 import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileInfo'
 import axios from 'axios'
@@ -240,13 +240,13 @@ export default function ClaimsWorkflowPage() {
       async function loadClaimsFileData() {
             setFiles([])
             setClaims([])
-            let isGood = cleanEthAddress(walletAddress)
-            if (!isGood) {
-                  toast.warning("Invalid wallet address", {
-                        position: "top-center"
-                  })
-                  return
-            }
+            // let isGood = cleanEthAddress(walletAddress)
+            // if (!isGood) {
+            //       toast.warning("Invalid wallet address", {
+            //             position: "top-center"
+            //       })
+            //       return
+            // }
             setIsLoading(true);
             try {
                   const params = {

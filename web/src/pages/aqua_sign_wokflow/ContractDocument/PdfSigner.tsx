@@ -11,11 +11,11 @@ import {
       dummyCredential,
       ensureDomainUrlHasSSL,
       estimateFileSize,
-      fetchFiles,
       fetchImage,
       getGenesisHash,
       getLastRevisionVerificationHash,
       getRandomNumber,
+      reorderRevisionsInAquaTree,
       stringToHex,
       timeStampToDateObject,
 } from '../../../utils/functions'
@@ -30,6 +30,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
 import WalletAddressClaim from '../../v2_claims_workflow/WalletAdrressClaim'
 import { getAppKitProvider } from '@/utils/appkit-wallet-utils'
+import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocketContext'
 
 interface PdfSignerProps {
       fileData: File | null
@@ -37,8 +38,8 @@ interface PdfSignerProps {
       documentSignatures?: SignatureData[]
 }
 
-const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, documentSignatures }) => {
-      const { selectedFileInfo, setSelectedFileInfo, setFiles, setOpenDialog, openDialog } = useStore(appStore)
+const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures }) => {
+      const { selectedFileInfo, setSelectedFileInfo, setOpenDialog, openDialog } = useStore(appStore)
       // State for PDF document
       const [pdfFile, setPdfFile] = useState<File | null>(null)
       const [_pdfUrl, setPdfUrl] = useState<string | null>(null)
@@ -53,6 +54,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
       const [canPlaceSignature, setCanPlaceSignature] = useState(false)
       const [selectedTool, setSelectedTool] = useState<'text' | 'image' | 'profile' | 'signature' | null>(null)
       const [submittingSignatureData, setSubmittingSignatureData] = useState(false)
+
+      const { subscribe, triggerWebsockets } = useNotificationWebSocketContext();
 
       // Get wallet address from store
       const { session, backend_url, webConfig } = useStore(appStore)
@@ -328,6 +331,12 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                   if (sender != signers) {
                         //send the signatures to workflow creator
                         await saveRevisionsToServerForUser(aquaTrees, sender)
+
+                        // send notification to workflow creator
+                        triggerWebsockets(sender, {
+                              target: "aqua_sign_workflow",
+                              genesisHash: genesisHash,
+                        })
                   }
             }
       }
@@ -365,7 +374,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
       // Helper function to save multiple revisions to server
       const saveRevisionsToServer = async (aquaTrees: AquaTree[]) => {
-            console.log("saveRevisionsToServer AquaTrees: ", aquaTrees)
+            // console.log("saveRevisionsToServer AquaTrees: ", aquaTrees)
 
             for (let index = 0; index < aquaTrees.length; index++) {
                   const aquaTree = aquaTrees[index]
@@ -399,6 +408,41 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
             }
       }
 
+      const updateSelectedFileInfo = async () => {
+            try {
+                  // Get ordered revision hashes from genesis to latest
+                  const orderedRevisionHashes = reorderRevisionsInAquaTree(selectedFileInfo!.aquaTree!)
+
+                  const url = `${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`
+                  const res = await axios.post(url, {
+                        revisionHashes: orderedRevisionHashes
+                  }, {
+                        headers: {
+                              'Content-Type': 'application/json',
+                              nonce: session?.nonce,
+                        },
+                  })
+                  if (res.status === 200) {
+                        // setExistingChainFile(res.data.data)
+                        // setHasFetchedanyExistingChain(true)
+                        const incomingAquaTree = res.data.data
+                        const incomingGenesisHash = getGenesisHash(incomingAquaTree)
+                        const selectedFileGenesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
+
+                        if (incomingGenesisHash === selectedFileGenesisHash) {
+                              setSelectedFileInfo(incomingAquaTree)
+                        }
+
+
+                  }
+            } catch (error) {
+                  console.error('Failed to load existing chain file:', error)
+                  // setHasFetchedanyExistingChain(true)
+            } finally {
+                  // setUploading(false)
+            }
+      }
+
       // Helper function to update UI after success
       const updateUIAfterSuccess = async () => {
             try {
@@ -410,22 +454,22 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                   //       status: 'loaded',
                   // })
 
-                  const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                  setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+                  // const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                  // setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
-
+                  updateSelectedFileInfo()
 
                   // Find and update selected file
-                  const selectedFileGenesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
-                  const selectedFile = filesApi.files.find(data => getGenesisHash(data.aquaTree!) === selectedFileGenesisHash)
+                  // const selectedFileGenesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
+                  // const selectedFile = filesApi.files.find(data => getGenesisHash(data.aquaTree!) === selectedFileGenesisHash)
 
-                  if (selectedFile) {
-                        setSelectedFileInfo(selectedFile)
-                        toast.success(`Document signed successfully`)
-                        setActiveStep(1)
-                  } else {
-                        throw new Error('Updated file not found')
-                  }
+                  // if (selectedFile) {
+                  //       setSelectedFileInfo(selectedFile)
+                  //       toast.success(`Document signed successfully`)
+                  //       setActiveStep(1)
+                  // } else {
+                  //       throw new Error('Updated file not found')
+                  // }
             } catch (error) {
                   toast.error(`An error occurred, redirecting to home`)
 
@@ -487,10 +531,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
                         for (const wallet of signers) {
 
-                              if (wallet == sender || wallet == session?.address) {
-                                    //ignore senting notification to self
-                                    // ignore sending notification to  sender already sent above
-                              } else {
+                              if (wallet.toLowerCase() !== sender.toLowerCase() || wallet.toLowerCase() !== session?.address.toLowerCase()) {
                                     await createSigningNotification(session!.address, wallet)
                               }
                         }
@@ -1126,6 +1167,17 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
             },
             [selectedSignatureId]
       )
+
+      useEffect(() => {
+            const unsubscribe = subscribe((message) => {
+                  console.log("Notification received: ", message)
+                  // Handle notification reload specifically
+                    if (message.type === 'notification_reload' && message.data && message.data.target === "aqua_sign_workflow") {
+                      updateSelectedFileInfo()
+                    }
+            });
+            return unsubscribe;
+      }, []);
 
       // Add event listeners for drag operations
       useEffect(() => {

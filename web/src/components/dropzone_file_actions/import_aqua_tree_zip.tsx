@@ -14,6 +14,7 @@ import { FileText, Loader2, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
 import { ScrollArea } from '../ui/scroll-area'
 import Logger from '@/utils/Logger'
+import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload }: IDropzoneAction) => {
       const [uploading, setUploading] = useState(false)
       const [conflictFiles, setConflictFiles] = useState<Array<ImportZipAquaTreeConflictResolutionDialogProps>>([])
@@ -48,15 +49,20 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                   // })
 
                   const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+                  setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
-                              
+
                   // setUploaded(true)
                   setUploading(false)
                   toast.success('File uploaded successfuly')
                   // updateUploadedIndex(fileIndex)
 
                   removeFilesListForUpload(filesWrapper)
+
+                  // Trigger reload for all files and stats
+                  await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                  await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
+
                   return
             } catch (error) {
                   setUploading(false)
@@ -111,15 +117,15 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
 
             // Loop through name_with_hash array
             if (aquaData.name_with_hash && Array.isArray(aquaData.name_with_hash)) {
-                  Logger.info('Genesis file:' +  aquaData.genesis)
-                  Logger.info('Processing' +  aquaData.name_with_hash.length+  '--files:')
+                  Logger.info('Genesis file:' + aquaData.genesis)
+                  Logger.info('Processing' + aquaData.name_with_hash.length + '--files:')
 
 
                   let allAquaTrees = aquaData.name_with_hash.filter((item: { name: string; hash: string }) => item.name.endsWith('.aqua.json'));
-                  Logger.info('All aqua trees in zip:'+ allAquaTrees.length)
+                  Logger.info('All aqua trees in zip:' + allAquaTrees.length)
 
                   for (const item of allAquaTrees) {
-                        Logger.info('Processing: '+ item.name + '  with hash: '+ item.hash)
+                        Logger.info('Processing: ' + item.name + '  with hash: ' + item.hash)
 
                         //read the file in the aqua file
                         const fileData = zipData.files[item.name] || Object.entries(zipData.files).find(([fileName, _fileData]) => {
@@ -144,7 +150,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                         }
 
                         const jsonContent = await fileData.async('string')
-                        Logger.info(item.name + ' JSON Content--:'+ jsonContent)
+                        Logger.info(item.name + ' JSON Content--:' + jsonContent)
 
                         // Split the string into numbers, convert to chars, join back
                         const decodedJson = jsonContent
@@ -152,7 +158,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                               .map(code => String.fromCharCode(parseInt(code)))
                               .join('')
 
-                        Logger.info('Decoded ' + item.name + ' JSON:'+ decodedJson)
+                        Logger.info('Decoded ' + item.name + ' JSON:' + decodedJson)
 
                         let aquaTree = JSON.parse(decodedJson)
                         let genesisHash = getGenesisHash(aquaTree)
@@ -223,10 +229,8 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                         const zip = new JSZip()
                         const zipData = await zip.loadAsync(file)
 
-
-
                         const aquaJsonFileName = Object.keys(zipData.files).find(fileName => {
-                              Logger.info('Processing file in zip: '+ fileName)
+                              Logger.info('Processing file in zip: ' + fileName)
 
                               // Convert ASCII codes to string
                               const actualFileName = fileName
@@ -238,14 +242,14 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                         })
 
                         if (aquaJsonFileName) {
-                              Logger.info('Found aqua.json file:'+ aquaJsonFileName)
+                              Logger.info('Found aqua.json file:' + aquaJsonFileName)
                               let allFilesWithissues = await checkForConflicts(zipData)
 
                               if (allFilesWithissues.length > 0) {
                                     setConflictFiles(allFilesWithissues)
                                     return
 
-                              }else{
+                              } else {
                                     //proceed to upload
                                     await uploadFileData()
                               }
@@ -320,10 +324,10 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                                           {conflictFiles.map((conflict, index) => (
                                                 <div key={index} className="p-4 mt-4 border rounded bg-yellow-50">
                                                       <h3 className="font-semibold">Incoming File: {getFileName(conflict.incomingFileAquaTree!)} revisions ({Object.keys(conflict.incomingFileAquaTree.revisions).length})</h3>
-                  
+
                                                       <p className="mt-2">Local File: {getFileName(conflict.localFile.aquaTree!)}  revisions ({Object.keys(conflict.localFile.aquaTree!.revisions).length})</p>
 
-                                                      </div>
+                                                </div>
                                           ))}
                                     </DialogHeader>
                               </ScrollArea>

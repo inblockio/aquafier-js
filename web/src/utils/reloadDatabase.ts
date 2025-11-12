@@ -1,4 +1,5 @@
 import Dexie, { Table } from 'dexie';
+import { IDENTITY_CLAIMS } from './constants';
 
 export interface ReloadConfig {
     id?: number;
@@ -97,6 +98,7 @@ export const triggerWorkflowReload = async (workflowType: string, watchAll?: boo
         // Handle special cases
         if (workflowType === 'all') {
             await triggerReload(RELOAD_KEYS.all_files);
+            await triggerReload(RELOAD_KEYS.contacts);
             return;
         }
         
@@ -106,6 +108,12 @@ export const triggerWorkflowReload = async (workflowType: string, watchAll?: boo
         }
 
         if (workflowType === 'contacts') {
+            await triggerReload(RELOAD_KEYS.contacts);
+            return;
+        }
+
+        if(IDENTITY_CLAIMS.includes(workflowType)) {
+            // await triggerReload(RELOAD_KEYS.claims_and_attestations);
             await triggerReload(RELOAD_KEYS.contacts);
             return;
         }

@@ -121,6 +121,10 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }:
                 return
             }
         }
+        
+        // Trigger reload for all files and stats
+        await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+        await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
     }
 
     const findFileRevision = (aquaTree: AquaTree): string => {

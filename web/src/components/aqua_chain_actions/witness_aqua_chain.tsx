@@ -10,6 +10,7 @@ import { RevionOperation } from '../../models/RevisionOperation'
 import { toast } from 'sonner'
 import { ETH_CHAINID_MAP } from '@/utils/constants'
 import { getAppKitProvider, switchNetworkWalletConnect } from '@/utils/appkit-wallet-utils'
+import { triggerWorkflowReload, RELOAD_KEYS } from '@/utils/reloadDatabase'
 
 export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
       const { setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo, user_profile, backend_url, session, webConfig } = useStore(appStore)
@@ -76,9 +77,9 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                                           //       fileData: files, status: 'loaded'
                                           // })
 
-                                          
-                              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+
+                                          const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                                          setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
 
 
@@ -189,9 +190,9 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                                     //       fileData: files, status: 'loaded'
                                     // })
 
-                                    
-                              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+
+                                    const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                                    setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
 
                                     const newFiles: ApiFileInfo[] = filesApi.files
@@ -217,6 +218,10 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                         toast.error(`Error during witnessing`)
                   }
             }
+
+            // Trigger actions
+            await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true)
+            await triggerWorkflowReload(RELOAD_KEYS.all_files, true)
       }
 
       return (

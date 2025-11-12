@@ -1,7 +1,7 @@
 import { forwardRef, lazy, Suspense, useEffect, useState } from 'react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { cleanEthAddress, generateAvatar, getWalletClaims } from '@/utils/functions'
+import { generateAvatar, getWalletClaims } from '@/utils/functions'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import CopyButton from '@/components/CopyButton'
 import appStore from '@/store'
@@ -52,14 +52,6 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
 
             async function loadClaimsFileData() {
                   setFiles([])
-                  let isGood = cleanEthAddress(walletAddress)
-                  if (!isGood) {
-                        toast.warning("Invalid wallet address", {
-                              position: "top-center"
-                        })
-                        return
-                  }
-
                   setIsLoading(true);
                   try {
                         let aquaTrees: ApiFileInfo[] = [];

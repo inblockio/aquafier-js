@@ -148,7 +148,7 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
           "identity_claim": "forms_name",
           "email_claim": "forms_email",
           "phone_number_claim": "forms_phone_number",
-          "user_signature": "forms_wallet_address",
+          "user_signature": "forms_name",
           "domain_claim": "forms_domain"
         };
 
@@ -203,7 +203,7 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
           existingProfile.files.push(element);
 
           // Update profile fields
-          if (existingProfile.name === "" && claimType === "identity_claim") {
+          if (existingProfile.name === "" && (claimType === "identity_claim" || claimType === "user_signature")) {
             existingProfile.name = claimValue;
           }
           if (existingProfile.phone === "" && claimType === "phone_number_claim") {
@@ -230,7 +230,7 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
             contactProfileMap.set(walletAddress, {
               walletAddress,
               files: [element],
-              name: claimType === "identity_claim" ? claimValue : "",
+              name: (claimType === "identity_claim" || claimType === "user_signature") ? claimValue : "",
               phone: claimType === "phone_number_claim" ? claimValue : "",
               email: claimType === "email_claim" ? claimValue : "",
               searchString: searchText,
@@ -285,13 +285,13 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
 
   useEffect(() => {
     const unsubscribe = subscribe((message) => {
-        // Handle notification reload specifically
-        if (message.type === 'notification_reload' && message.data && message.data.target === "workflows") {
-          loadContactTrees()
-        }
+      // Handle notification reload specifically
+      if (message.type === 'notification_reload' && message.data && message.data.target === "workflows") {
+        loadContactTrees()
+      }
     });
     return unsubscribe;
-}, []);
+  }, []);
 
   // Effects
   useEffect(() => {
