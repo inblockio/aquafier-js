@@ -101,13 +101,16 @@ const NotificationItem = ({ notification, onRead }: NotificationItemProps) => {
                                                       System
                                                 </Badge>
                                           ) : (
-                                                <Badge
+                                                <>
+                                                {/* <Badge
                                                       className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 hover:bg-gray-100"
                                                       variant="outline"
                                                       onClick={e => e.stopPropagation()}
                                                 >
                                                       Sender: <WalletAdrressClaim walletAddress={notification.sender} />
-                                                </Badge>
+                                                      </Badge> */}
+                                                      <WalletAdrressClaim walletAddress={notification.sender} />
+                                                </>
                                           )
                                     }
                               </div>

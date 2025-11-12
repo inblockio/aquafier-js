@@ -177,8 +177,22 @@ export function allLinkRevisionHashes(aquaTree: AquaTree): Array<string> {
       return hashesWithLinkRevisions
 }
 export function isAquaTree(content: any): boolean {
+      let json = null
+      let isJsonAlready = true
+      if (typeof content === 'string') {
+            isJsonAlready = false
+      }
+      if (isJsonAlready) {
+            json = content
+      }else {
+            try {
+                  json = JSON.parse(content)
+            } catch (e) {
+                  return false
+            }
+      }
       // Check if content has the properties of an AquaTree
-      return content && typeof content === 'object' && 'revisions' in content && 'file_index' in content
+      return json && typeof json === 'object' && 'revisions' in json && 'file_index' in json
 }
 export function formatCryptoAddress(address?: string, start: number = 10, end: number = 4, message?: string): string {
       if (!address) return message ?? 'NO ADDRESS'
@@ -232,6 +246,15 @@ export function getAquaTreeFileName(aquaTree: AquaTree): string {
 
       return aquaTree!.file_index[mainAquaHash] ?? ''
 }
+
+
+export function getAquatreeObject(content: any): AquaTree {
+      if (typeof content === 'string') {
+            return JSON.parse(content)
+      }
+      return content
+  }
+  
 
 export function getAquaTreeFileObject(fileInfo: ApiFileInfo): FileObject | undefined {
       let mainAquaFileName = ''
