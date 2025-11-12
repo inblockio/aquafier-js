@@ -315,7 +315,7 @@ export async function sendNotification(
 
     // Replace :wallet_address placeholder with actual wallet address
     const endpoint = API_ENDPOINTS.SEND_NOTIFICATION.replace(':wallet_address', walletAddress);
-    const url = `${backend_url}${endpoint}`;
+    const url = `${backend_url}/${endpoint}`;
 
     const body = {
       type,

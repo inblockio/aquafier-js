@@ -10,6 +10,7 @@ import { RevionOperation } from '../../models/RevisionOperation'
 import { toast } from 'sonner'
 import { useAppKit } from '@reown/appkit/react'
 import { getAppKitProvider } from '@/utils/appkit-wallet-utils'
+import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 
 
 
@@ -284,7 +285,12 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
 
             }
 
+            // Trigger actions
+            await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true)
+            await triggerWorkflowReload(RELOAD_KEYS.all_files, true)
+
       }
+
       return (
             <>
                   {/* Sign Button */}

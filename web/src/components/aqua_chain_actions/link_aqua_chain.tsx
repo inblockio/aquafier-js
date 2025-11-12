@@ -19,6 +19,7 @@ import { AlertCircle, Link as LinkIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import FilesList from '@/pages/files/files_list'
+import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 
 export const LinkButton = ({ item, nonce, index }: IShareButton) => {
       const { backend_url, setFiles, files, session } = useStore(appStore)
@@ -110,13 +111,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
 
 
                   }
-
-
-
-
-
                   await refetchAllUserFiles()
-
 
                   toast.success(`Linking successful`)
                   setLinkItems([])
@@ -125,12 +120,15 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                   toast.error(`An error occurred`)
             }
             setLinking(false)
+
+            // Trigger actions
+            await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true)
+            await triggerWorkflowReload(RELOAD_KEYS.all_files, true)
       }
 
       const refetchAllUserFiles = async () => {
             // refetch all the files to ensure the front end state is the same as the backend
             try {
-
                   const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
                   setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
@@ -139,8 +137,6 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                   document.location.reload()
             }
       }
-
-
 
 
       return (

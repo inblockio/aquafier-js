@@ -6,10 +6,9 @@ import {
     AquaTree,
     getGenesisHash,
     OrderRevisionInAquaTree,
-    reorderAquaTreeRevisionsProperties,
     Revision
 } from 'aqua-js-sdk/web'
-import {ensureDomainUrlHasSSL, getHighestFormIndex, isAquaTree} from '../../../utils/functions'
+import {ensureDomainUrlHasSSL, getAquatreeObject, getHighestFormIndex, isAquaTree, reorderRevisionsInAquaTree} from '../../../utils/functions'
 
 import {PDFDisplayWithJustSimpleOverlay} from './components/signature_overlay'
 import {toast} from 'sonner'
@@ -130,10 +129,10 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
       }
       const loadSignatures = async (): Promise<SignatureData[]> => {
             const sigData: SignatureData[] = []
-            const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
-            console.log("Aquatree: ", orderedTree)
-            const revisions = orderedTree.revisions
-            const revisionHashes = Object.keys(revisions)
+            const orderedHashes = reorderRevisionsInAquaTree(selectedFileInfo!.aquaTree!)
+
+            // const revisions = orderedTree.revisions
+            const revisionHashes = orderedHashes // Object.keys(revisions)
             let fourthItmeHashOnwards: string[] = []
             let signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
 
@@ -142,8 +141,6 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                   fourthItmeHashOnwards = revisionHashes.slice(4)
                   signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
             }
-            console.log("File Object: ", selectedFileInfo?.fileObject)
-            console.log("selectedFileInfo: ", selectedFileInfo?.aquaTree)
 
             for (const sigHash of signatureRevionHashes) {
 
@@ -157,9 +154,10 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                   for (const item of selectedFileInfo?.fileObject ?? []) {
                         const isAquaTreeItem = isAquaTree(item.fileContent)
                         if (isAquaTreeItem) {
-                              const aquaTreeGeneral = item.fileContent as AquaTree
-                              const aquaTree = reorderAquaTreeRevisionsProperties(aquaTreeGeneral)
-                              const allHashes = Object.keys(aquaTree.revisions)
+                              const aquaTreeGeneral = getAquatreeObject(item.fileContent)
+                              const orderedHashes = reorderRevisionsInAquaTree(aquaTreeGeneral)
+                              const aquaTree = aquaTreeGeneral// reorderAquaTreeRevisionsProperties(aquaTreeGeneral)
+                              const allHashes = orderedHashes // Object.keys(aquaTree.revisions)
                               if (allHashes.includes(referenceRevisin)) {
                                     const genesisHash = getGenesisHash(aquaTree)!
                                     const genRevision = aquaTree.revisions[genesisHash]
@@ -208,17 +206,16 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                   for (const item of selectedFileInfo?.fileObject ?? []) {
                         const isAquaTreeItem = isAquaTree(item.fileContent)
                         if (isAquaTreeItem) {
-                              const aquaTreeGeneral = item.fileContent as AquaTree
-                              const aquaTree = reorderAquaTreeRevisionsProperties(aquaTreeGeneral)
+                              const aquaTreeGeneral = getAquatreeObject(item.fileContent)
+
+                              const aquaTree = OrderRevisionInAquaTree(aquaTreeGeneral)
                               const allHashes = Object.keys(aquaTree.revisions)
-                              console.log("All hashes: ", allHashes, revisionHashWithPositions)
+                              
                               if (allHashes.includes(revisionHashWithPositions)) {
                                     revisionSigPosition = aquaTree.revisions[revisionHashWithPositions]
                               }
                         }
                   }
-
-                  console.log("Signature position: ", revisionSigPosition)
 
                   if (revisionSigPosition != null) {
                         if (sigHash.revisionHashWithSignaturePositionCount == 0) {
@@ -415,7 +412,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
             if (!selectedFileInfo?.aquaTree?.revisions) return false
 
             const revisionHashes = Object.keys(selectedFileInfo.aquaTree.revisions)
-            return revisionHashes.length >= 5 // Document has signatures
+            return revisionHashes.length >= 4 // Document has signatures
       }
 
       // Error boundary for the component

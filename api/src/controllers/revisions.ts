@@ -821,6 +821,65 @@ export default async function revisionsController(fastify: FastifyInstance) {
         })
     });
 
+    // This method should help fetch an aqua tree from ordered revision hashes
+    fastify.post('/tree/revision_hash', {
+        preHandler: authenticate
+    }, async (request: AuthenticatedRequest, reply) => {
+        const userAddress = request.user?.address;
+
+        const { revisionHashes } = request.body as { revisionHashes: string[] };
+
+        if (!userAddress) {
+            return reply.code(401).send({ error: 'Unauthorized' });
+        }
+
+        if (!revisionHashes || !Array.isArray(revisionHashes) || revisionHashes.length === 0) {
+            return reply.code(400).send({ error: 'revisionHashes array is required' });
+        }
+
+        const url = getBaseUrl(request)
+
+        // Loop through revision hashes in reverse order (latest to genesis)
+        // to find the latest revision that exists for this user
+        let foundRevisionHash: string | null = null;
+        const hashestoIterate = revisionHashes.reverse()
+        for (let i = hashestoIterate.length - 1; i >= 0; i--) {
+            const revisionHash = hashestoIterate[i];
+            const completeRevisionHash = `${userAddress}_${revisionHash}`;
+            
+            // Check if the user owns this revision
+            const revision = await prisma.revision.findUnique({
+                select: {
+                    pubkey_hash: true
+                },
+                where: {
+                    pubkey_hash: completeRevisionHash
+                }
+            });
+
+            if (revision) {
+                foundRevisionHash = completeRevisionHash;
+                break; // Found the latest revision that exists for this user
+            }
+        }
+
+        if (!foundRevisionHash) {
+            return reply.code(404).send({ error: 'No matching tree found for user' });
+        }
+
+        const aquaTreeJustRevisions = await buildEntireTreeFromGivenRevisionHash(foundRevisionHash);
+        const latestRevisionHash = aquaTreeJustRevisions[aquaTreeJustRevisions.length - 1].revisionHash;
+        const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(latestRevisionHash, url);
+        const sortedAquaTree = OrderRevisionInAquaTree(anAquaTree);
+
+        return reply.code(200).send({
+            data: {
+                aquaTree: sortedAquaTree,
+                fileObject: fileObject
+            }
+        });
+    });
+
     // Get all user files
     fastify.get('/tree/all_files', {
         preHandler: authenticate

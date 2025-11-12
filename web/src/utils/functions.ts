@@ -2848,14 +2848,71 @@ export async function loadSignatureImage(aquaTree: AquaTree, fileObject: FileObj
 
 
 export const cleanEthAddress = (address?: string) => {
+      // console.log('cleanEthAddress', address)
       if (!address) {
             return false
       }
-      let isGood = true
       try {
             ethers.getAddress(address)
+            return true
       } catch (e) {
-            isGood = false
+            return false
       }
-      return isGood
+}
+
+
+export const reorderRevisionsInAquaTree = (aquaTree: AquaTree): string[] => {
+      if (!aquaTree.revisions || Object.keys(aquaTree.revisions).length === 0) {
+            return []
+      }
+
+      const revisions = aquaTree.revisions
+      const orderedHashes: string[] = []
+      
+      // Find genesis revision (one with empty previous_hash)
+      let genesisHash: string | null = null
+      for (const [hash, revision] of Object.entries(revisions)) {
+            if (!revision.previous_hash || revision.previous_hash === '') {
+                  genesisHash = hash
+                  break
+            }
+      }
+
+      if (!genesisHash) {
+            // If no genesis found, return all hashes in original order
+            return Object.keys(revisions)
+      }
+
+      // Build ordered chain starting from genesis
+      let currentHash: string | null = genesisHash
+      const processedHashes = new Set<string>()
+
+      while (currentHash && !processedHashes.has(currentHash)) {
+            const currentRevision = revisions[currentHash]
+            if (!currentRevision) break
+
+            // Add current hash to ordered list
+            orderedHashes.push(currentHash)
+            processedHashes.add(currentHash)
+
+            // Find next revision that has this hash as previous_hash
+            let nextHash: string | null = null
+            for (const [hash, revision] of Object.entries(revisions)) {
+                  if (revision.previous_hash === currentHash && !processedHashes.has(hash)) {
+                        nextHash = hash
+                        break
+                  }
+            }
+            currentHash = nextHash
+      }
+
+      // Add any remaining hashes that weren't part of the main chain
+      for (const hash of Object.keys(revisions)) {
+            if (!processedHashes.has(hash)) {
+                  orderedHashes.push(hash)
+            }
+      }
+
+      // Return array of ordered hashes
+      return orderedHashes
 }

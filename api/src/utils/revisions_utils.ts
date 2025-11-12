@@ -294,6 +294,7 @@ export async function transferRevisionChainData(
     chainData: {
         aquaTree: AquaTree; fileObject: FileObject[]
     },
+    
     templateId: string | null = null, isWorkFlow: boolean = false): Promise<{ success: boolean, message: string }> {
 
     try {
@@ -332,7 +333,7 @@ export async function transferRevisionChainData(
             let fileObject = chainData.fileObject[i]
             let isAquaTreeData = isAquaTree(fileObject.fileContent);
             if (isAquaTreeData) {
-                let aquaTree = fileObject.fileContent as AquaTree
+                let aquaTree = getAquatreeObject(fileObject.fileContent)
 
                 let shouldAquaTreeBeSavedAsPartOfWorkflow = workFlowData.isWorkFlow
 
@@ -348,7 +349,6 @@ export async function transferRevisionChainData(
                 let genhash = getGenesisHash(aquaTree);
                 if (genhash) {
                     shouldAquaTreeBeSavedAsPartOfWorkflow = systemTemplateHashes.includes(genhash.trim())
-
                 }
 
                 //    await deletLatestIfExistsForAquaTree(aquaTree, userAddress)
@@ -429,6 +429,7 @@ export async function transferRevisionChainData(
         return { success: true, message: "This function is not implemented yet" };
     } catch (error: any) {
         Logger.error("Error in function transfer:", error);
+        console.log(cliRedify(error))
         return { success: false, message: `Error transferring data: ${error.message}` };
     }
 

@@ -145,7 +145,9 @@ export const API_ENDPOINTS = {
       USER_AQUA_FILES: 'tree/aqua_files',
       SYSTEM_AQUA_FILES: 'system/aqua_tree',
       SYSTEM_AQUA_FILES_NAMES: 'system/aqua_tree/names',
-      SEND_NOTIFICATION: '/api/notifications/:wallet_address',
+      SEND_NOTIFICATION: 'api/notifications/:wallet_address',
+      GET_AQUA_TREE: 'tree/revision_hash',
+      TRIGGER_WEBSOCKET: 'trigger/websocket'
 }
 
 
