@@ -57,36 +57,7 @@ export const convertTemplateNameToTitle = (str: string) => {
             .split('_')
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ')
-      // const words = str.split('_');
-      // const firstWord = words[0].charAt(0).toUpperCase() + words[0].slice(1);
-      // const remainingWords = words.slice(1).join(' ');
-      // return firstWord + ' ' + remainingWords;
 }
-
-// Default expiration period in days
-// const DEFAULT_EXPIRATION_DAYS = 90;
-
-// export async function generateProof(domain: string, walletAddress: string, expirationDays: number = DEFAULT_EXPIRATION_DAYS, signature : string): Promise<DNSProof> {
-//   const timestamp = Math.floor(Date.now() / 1000).toString();
-//   const expiration = Math.floor(Date.now() / 1000 + (expirationDays * 24 * 60 * 60)).toString();
-
-// Message format: unix_timestamp|domain_name|expiration_timestamp
-//   const message = `${timestamp}|${domain}|${expiration}`;
-
-// Sign with EIP-191 compliant personal_sign format
-// ethers.js automatically applies: "\x19Ethereum Signed Message:\n" + len(message) + message
-// This matches MetaMask's personal_sign behavior (EIP-191 version 0x45)
-//   const wallet = new ethers.Wallet(privateKey);
-//   const signature = await wallet.signMessage(message);
-
-//   return {
-//     walletAddress: walletAddress,
-//     domainName: domain,
-//     timestamp,
-//     expiration,
-//     signature
-//   };
-// }
 
 export function generateProofFromSignature(domain: string, walletAddress: string, timestamp: string, expiration: string, signature: string): DNSProof {
       return {

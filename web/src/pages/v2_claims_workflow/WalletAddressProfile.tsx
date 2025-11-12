@@ -184,7 +184,10 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                   }
                   const verificationBadge = getDNSStatusBadge(dnsVerificationResult?.dnsStatus!, dnsVerificationResult?.message!)
                   return (
-                        <div className="flex gap-2 items-center">
+                        <div className="flex gap-2 items-center" onClick={() => {
+                              verifyDomainClaim(true)
+                        }}>
+
                               {verificationBadge}
                         </div>
                   )
@@ -207,7 +210,7 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
             }
       }
 
-      const verifyDomainClaim = async () => {
+      const verifyDomainClaim = async (triggerReload: boolean) => {
             try {
 
                   const aquaTree = claim.apiFileInfo.aquaTree!
@@ -215,7 +218,7 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                   const hashes = Object.keys(reorderedAquaTree.revisions)
                   const genesisHash = hashes[0]
                   const genesisRevision = reorderedAquaTree.revisions[genesisHash]
-                  const result = await verifyDNS(backend_url, claim.claimName!, genesisRevision["forms_wallet_address"])
+                  const result = await verifyDNS(backend_url, claim.claimName!, genesisRevision["forms_wallet_address"], triggerReload)
 
                   setDnsVerificationResult(result)
             } catch (error) {
@@ -234,7 +237,7 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                   if (claim.claimType === 'user_signature') {
                         loadImage()
                   } else if (claim.claimType === 'domain_claim') {
-                        verifyDomainClaim()
+                        verifyDomainClaim(false)
                   }
             }, 0)
 

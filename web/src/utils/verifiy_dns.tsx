@@ -1,12 +1,13 @@
 import { ReactNode } from "react"
 import { ensureDomainUrlHasSSL } from "./functions"
+import { CheckCircle, Loader, X } from "lucide-react"
 
 
 interface LogEntry {
     level: 'info' | 'success' | 'warning' | 'error'
     message: string
     details?: any
-  }
+}
 
 
 export interface VerificationResult {
@@ -29,7 +30,7 @@ export interface IDnsVerificationResult {
     verificationResult: VerificationResult | null
 }
 
-export const verifyDNS = async (backend_url: string, domain: string, walletAddress: string): Promise<IDnsVerificationResult> => {
+export const verifyDNS = async (backend_url: string, domain: string, walletAddress: string, triggerReload: boolean): Promise<IDnsVerificationResult> => {
     // Hardcoded values as requested
     //     const domain = 'inblock.io'
     //     const walletAddress = '0x677e5E9a3badb280d7393464C09490F813d6d6ef'
@@ -46,7 +47,7 @@ export const verifyDNS = async (backend_url: string, domain: string, walletAddre
         dnsVerificationResult.message = "Verifying..."
         dnsVerificationResult.dnsStatus = "loading"
         dnsVerificationResult.verificationResult = null
-        
+
         const url = `${backend_url}/verify/dns_claim`
         const actualUrlToFetch = ensureDomainUrlHasSSL(url)
 
@@ -57,7 +58,8 @@ export const verifyDNS = async (backend_url: string, domain: string, walletAddre
             },
             body: JSON.stringify({
                 domain: domain ?? "inblock.io",
-                wallet: walletAddress
+                wallet: walletAddress,
+                refresh: triggerReload
             }),
         })
 
@@ -96,32 +98,58 @@ export const verifyDNS = async (backend_url: string, domain: string, walletAddre
 }
 
 export const getDNSStatusBadge = (dnsStatus: IDNSStatus, dnsMessage: string): ReactNode => {
+    const ICON_SIZE = 18
+
     switch (dnsStatus) {
         case 'loading':
             return (
-                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full w-fit flex items-center gap-1" >
+                <>
+                    {/* <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full w-fit flex items-center gap-1" >
                     <div className="animate-spin h-2 w-2 border border-blue-500 border-t-transparent rounded-full" > </div>
                     {dnsMessage}
-                </span>
+                </span> */}
+                    <div className="flex gap-2 items-center flex-wrap">
+                        <Loader size={ICON_SIZE - 2} className="text-blue-500" />
+                        <p className="text-xs font-medium text-gray-900">{dnsMessage}</p>
+                    </div>
+                </>
             )
         case 'verified':
             return (
-                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full w-fit" >
+                <>
+                {/* <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full w-fit" >
                     ✓ {dnsMessage}
-                </span>
+                </span> */}
+                <div className="flex gap-2 items-center flex-wrap">
+                        <CheckCircle size={ICON_SIZE - 2} className="text-green-500" />
+                        <p className="text-xs font-medium text-gray-900">{dnsMessage}</p>
+                    </div>
+                </>
             )
         case 'not_found':
             return (
-                <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full w-fit" >
+                <>
+                {/* <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full w-fit" >
                     ⚠ {dnsMessage}
-                </span>
+                </span> */}
+                <div className="flex gap-2 items-center flex-wrap">
+                        <X size={ICON_SIZE - 2} className="text-red-500" />
+                        <p className="text-xs font-medium text-gray-900">{dnsMessage}</p>
+                    </div>
+                </>
             )
         case 'failed':
         default:
             return (
-                <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full w-fit" >
+                <>
+                {/* <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full w-fit" >
                     ✗ {dnsMessage}
-                </span>
+                </span> */}
+                <div className="flex gap-2 items-center flex-wrap">
+                        <X size={ICON_SIZE - 2} className="text-red-500" />
+                        <p className="text-xs font-medium text-gray-900">{dnsMessage}</p>
+                    </div>
+                </>
             )
     }
 }

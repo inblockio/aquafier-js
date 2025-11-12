@@ -128,6 +128,7 @@ export const triggerWorkflowReload = async (workflowType: string, watchAll?: boo
         // If watchAll is true, always trigger stats reload since any workflow change affects stats
         if (watchAll) {
             await triggerReload(RELOAD_KEYS.user_stats);
+            await triggerReload(RELOAD_KEYS.contacts);
         }
     } catch (error) {
         console.error(`Error triggering reload for ${workflowType}:`, error);
