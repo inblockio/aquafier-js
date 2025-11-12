@@ -3,7 +3,8 @@ import {
     FileObject,
     OrderRevisionInAquaTree,
     reorderAquaTreeRevisionsProperties,
-    Revision as AquaTreeRevision
+    Revision as AquaTreeRevision,
+    cliRedify
 } from 'aqua-js-sdk';
 import { prisma } from '../database/db';
 // For specific model types
@@ -280,13 +281,13 @@ export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string
     return falseResponse
 }
 
-export function isAquaTree(content: any): boolean {
-    // Check if content has the properties of an AquaTree
-    return content &&
-        typeof content === 'object' &&
-        'revisions' in content &&
-        'file_index' in content;
-}
+// export function isAquaTree(content: any): boolean {
+//     // Check if content has the properties of an AquaTree
+//     return content &&
+//         typeof content === 'object' &&
+//         'revisions' in content &&
+//         'file_index' in content;
+// }
 
 export async function transferRevisionChainData(
     userAddress: string,
@@ -1715,6 +1716,35 @@ export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
     }
 }
 
+export function isAquaTree(content: any): boolean {
+    let json = null
+    let isJsonAlready = true
+    if (typeof content === 'string') {
+          isJsonAlready = false
+    }
+    if (isJsonAlready) {
+          json = content
+    }else {
+          try {
+                json = JSON.parse(content)
+          } catch (e) {
+                return false
+          }
+    }
+    // Check if content has the properties of an AquaTree
+    return json && typeof json === 'object' && 'revisions' in json && 'file_index' in json
+}
+
+
+export function getAquatreeObject(content: any): AquaTree {
+    let isJsonAlready = true
+    if (typeof content === 'string') {
+          isJsonAlready = false
+          return JSON.parse(content)
+    }
+    return content
+}
+
 export async function processAquaMetadataOperation(nameHash: AquaNameWithHash, fileMap: Map<string, string>, zipData: JSZip, userAddress: string) {
     let aquaFileName = "";
     if (nameHash.name.endsWith('.aqua.json')) {
@@ -1728,8 +1758,8 @@ export async function processAquaMetadataOperation(nameHash: AquaNameWithHash, f
 
         const aquaFile = zipData.files[aquaFileOriginalKey];
         const aquaFileDataText = await aquaFile.async('text');
-        const aquaTreeData: AquaTree = JSON.parse(aquaFileDataText);
-
+        const aquaTreeData: AquaTree = getAquatreeObject(aquaFileDataText);
+        console.log(cliRedify(JSON.stringify(aquaTreeData, null, 4)))
         const genesisHash = getGenesisHash(aquaTreeData);
         if (!genesisHash) {
             throw new Error(`Genesis hash cannot be null`);
@@ -1837,7 +1867,7 @@ async function deletLatestIfExistsForAquaTree(aquaTree: AquaTree, userAddress: s
     }
 
     const allHashPubKeyHash = allHash.map(hash => `${userAddress}_${hash}`);
-    Logger.info(`Before Extended allHashPubKeyHash to be deleted ${allHashPubKeyHash}`)
+    // Logger.info(`Before Extended allHashPubKeyHash to be deleted ${allHashPubKeyHash}`)
     /// assuiming forking does not happen
     /// use the genesis hash to fetch the aqua tree 
     /// if its not null then delete the aqua tree
@@ -1858,7 +1888,7 @@ async function deletLatestIfExistsForAquaTree(aquaTree: AquaTree, userAddress: s
 
     }
 
-    Logger.info(`Extended allHashPubKeyHash to be deleted ${allHashPubKeyHash}`)
+    // Logger.info(`Extended allHashPubKeyHash to be deleted ${allHashPubKeyHash}`)
 
 
     try {

@@ -347,7 +347,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                         actualUrlToFetch,
                         {
                               receiver: receiverAddress,
-                              content: `${senderAddress} has signed the shared contract`,
+                              content: `Has signed the shared contract`,
                         },
                         {
                               headers: {
