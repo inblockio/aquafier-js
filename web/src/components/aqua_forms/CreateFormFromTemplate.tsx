@@ -144,7 +144,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             }
 
             (async () => {
-                  console.log(`running fetch api info`)
+                  // console.log(`running fetch api info`)
                   await fetchInfoDetails()
             })()
 
@@ -758,7 +758,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   fileObject: fileObject,
             }
 
-            console.log(`linking to system aqua tree ${JSON.stringify(templateApiFileInfo.aquaTree!, null, 4)}`)
+            // console.log(`linking to system aqua tree ${JSON.stringify(templateApiFileInfo.aquaTree!, null, 4)}`)
 
             const linkedAquaTreeFileObj = getAquaTreeFileObject(templateApiFileInfo)
             if (!linkedAquaTreeFileObj) {
@@ -1033,22 +1033,22 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   }
 
 
-                  console.log(`4.`)
-                  console.log(`B4 getSystemFiles ${JSON.stringify(systemFileInfo, null, 4)}`)
+                  // console.log(`4.`)
+                  // console.log(`B4 getSystemFiles ${JSON.stringify(systemFileInfo, null, 4)}`)
                   // Step 3: Get system files
                   const allSystemFiles = await getSystemFiles(systemFileInfo, backend_url, session?.address || '')
                   setSystemFileInfo(allSystemFiles)
 
-                  console.log(`5.`)
+                  // console.log(`5.`)
                   // Step 4: Find template API file info
                   const templateApiFileInfo = findTemplateApiFileInfo(allSystemFiles, selectedTemplate)
 
-                  console.log(`6.`)
+                  // console.log(`6.`)
                   // Step 5: Initialize aquafier and prepare data
                   const aquafier = new Aquafier()
                   const fileName = generateFileName(selectedTemplate, completeFormData)
 
-                  console.log(`7.`)
+                  // console.log(`7.`)
                   //  console.log(`see me ...3`)
                   // Step 6: Handle identity attestation specific logic
                   if (selectedTemplate?.name === 'identity_attestation') {
@@ -1390,20 +1390,20 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                                                                                   disabled={(verfyingFormFieldEnabled == null || verfyingFormFieldEnabled?.isTwilioEnabled) == false ? true : false}
                                                                                                                   onClick={async () => {
 
-                                                                                                                        console.log(`test 1`)
+                                                                                                                        // console.log(`test 1`)
                                                                                                                         if (!verfyingFormFieldEnabled) {
-                                                                                                                              console.log(`test 1.1`)
+                                                                                                                              // console.log(`test 1.1`)
                                                                                                                               toast.error(`Unable to fetch code verification details`)
                                                                                                                               return
                                                                                                                         }
 
-                                                                                                                        console.log(`test 1.2`)
+                                                                                                                        // console.log(`test 1.2`)
                                                                                                                         if (verfyingFormFieldEnabled?.isTwilioEnabled == false) {
-                                                                                                                              console.log(`test 1.3`)
+                                                                                                                              // console.log(`test 1.3`)
                                                                                                                               toast.error(`Twilio is not enables, set the .env and restart the docker container`)
                                                                                                                               return
                                                                                                                         }
-                                                                                                                        console.log(`test 1.4`)
+                                                                                                                        // console.log(`test 1.4`)
 
                                                                                                                         setVerifyingFormField(`field-${field.name}`)
 

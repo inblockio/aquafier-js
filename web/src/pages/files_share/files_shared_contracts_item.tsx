@@ -367,7 +367,7 @@ export function CheckIfAquaTreeIsImported({ loadingSharedFileData, exactMatchFou
                         onClick={(e) => {
                               e.stopPropagation();
                               // Add your click handler here
-                              console.log('Green button clicked');
+                              // console.log('Green button clicked');
                         }}
                   >
                         File has been Imported  <CircleCheckBigIcon />

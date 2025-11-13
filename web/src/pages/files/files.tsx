@@ -6,7 +6,6 @@ import { AlertCircle, CheckCircle, FileText, FolderPlus, Loader2, Minimize2, Plu
 import { emptyUserStats, FileItemWrapper, IUserStats, UploadStatus } from '@/types/types'
 import {
       checkIfFileExistInUserFiles,
-      getAquaTreeFileName,
       isAquaTree,
       isJSONFile,
       isJSONKeyValueStringContent,
@@ -17,15 +16,12 @@ import { API_ENDPOINTS, maxFileSizeForUpload } from '@/utils/constants'
 import axios from 'axios'
 
 
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 
-// import { CompleteChainView } from './components/files_chain_details';
-import { IDrawerStatus } from '@/models/AquaTreeDetails'
-import { CompleteChainView } from '@/components/files_chain_details'
 import FileDropZone from '@/components/dropzone_file_actions'
 import { LuTrash2, LuUpload } from 'react-icons/lu'
 import { toast } from 'sonner'
@@ -42,10 +38,7 @@ const FilesPage = () => {
             files,
             session,
             backend_url,
-            selectedFileInfo,
-            setSelectedFileInfo,
             setOpenDialog,
-            openDialog,
       } = useStore(appStore)
       const fileInputRef = React.useRef<HTMLInputElement>(null)
       const [filesListForUpload, setFilesListForUpload] = useState<FileItemWrapper[]>([])
@@ -54,8 +47,6 @@ const FilesPage = () => {
       const [uploadQueue, setUploadQueue] = useState<UploadStatus[]>([])
       const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
       const [isMinimized, setIsMinimized] = useState(false)
-
-      const [_drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
       const [stats, setStats] = useState<IUserStats>(emptyUserStats)
       const [loading, setLoading] = useState(false)
       // const [isSelectedFileDialogOpen, setIsSelectedFileDialogOpen] = useState(false)
@@ -628,74 +619,6 @@ const FilesPage = () => {
                   <div className="w-full max-w-full box-border overflow-x-hidden bg-white p-0 md:p-6">
                         {displayFileListItems()}
                   </div>
-
-                  {/* chain details dialog */}
-                  <Dialog
-                        open={openDialog !== null && openDialog.isOpen && openDialog.dialogType == 'aqua_file_details'}
-                        onOpenChange={openState => {
-                              // setIsSelectedFileDialogOpen(openState)
-                              if (!openState) {
-                                    setSelectedFileInfo(null)
-                                    setOpenDialog(null)
-                              }
-                        }}
-                  >
-                        <DialogContent showCloseButton={false} className="!max-w-[96vw] !w-[96vw] !h-[96vh] md:!h-[96vh] max-h-[96vh] !p-0 gap-0 flex flex-col">
-                              {/* Close Button */}
-                              <div className="absolute top-4 right-4 z-10">
-                                    <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-6 w-6 bg-red-500 text-white hover:bg-red-500"
-                                          onClick={() => {
-                                                // setIsSelectedFileDialogOpen(false)
-                                                setSelectedFileInfo(null)
-                                                setOpenDialog(null)
-                                          }}
-                                    >
-                                          <X className="h-4 w-4" />
-                                    </Button>
-                              </div>
-                              {selectedFileInfo ? (
-                                    <div className="flex flex-col flex-1 h-[calc(100%-60px)]">
-                                          {/* Header - fixed height */}
-                                          <DialogHeader className="!h-[60px] !min-h-[60px] !max-h-[60px] flex justify-center px-6">
-                                                <DialogTitle style={{
-                                                      textAlign: 'start',
-                                                      maxWidth: '90%',
-                                                      overflow: 'hidden',
-                                                      textOverflow: 'ellipsis',
-                                                      whiteSpace: 'nowrap'
-                                                }}>
-                                                      {getAquaTreeFileName(selectedFileInfo.aquaTree!)}
-                                                </DialogTitle>
-                                          </DialogHeader>
-                                          {/* Content - takes all available space */}
-                                          <div className="h-[calc(100%-60px)] overflow-y-auto">
-                                                <CompleteChainView
-                                                      callBack={function (_drawerStatus: IDrawerStatus): void {
-                                                            setDrawerStatus(_drawerStatus)
-                                                      }}
-                                                      selectedFileInfo={selectedFileInfo}
-                                                />
-                                          </div>
-                                    </div>
-                              ) : null}
-                              {/* Footer - fixed height */}
-                              <DialogFooter className="!h-[60px] !min-h-[60px] !max-h-[60px] !p-0 flex items-center justify-center !px-6 ">
-                                    <Button
-                                          variant="outline"
-                                          className="bg-black text-white-500 hover:bg-black-700 text-white cursor-pointer"
-                                          onClick={() => {
-                                                setSelectedFileInfo(null)
-                                                setOpenDialog(null)
-                                          }}
-                                    >
-                                          Cancel
-                                    </Button>
-                              </DialogFooter>
-                        </DialogContent>
-                  </Dialog>
 
                   {/* Upload Progress Dialog */}
                   <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>

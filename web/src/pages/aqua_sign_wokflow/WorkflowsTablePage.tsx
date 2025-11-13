@@ -49,6 +49,7 @@ import { GlobalPagination } from '@/types'
 import CustomPagination from '@/components/common/CustomPagination'
 import { useNavigate } from 'react-router-dom'
 import { useReloadWatcher } from '@/hooks/useReloadWatcher'
+import { OpenSelectedFileDetailsButton } from '@/components/aqua_chain_actions/details_button'
 
 const getStatusIcon = (status: string) => {
       switch (status) {
@@ -86,7 +87,7 @@ const getProgressPercentage = (total: number, remaining: number) => {
 }
 
 const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowItem) => {
-      const {setSelectedFileInfo} = useStore(appStore)
+      const { setSelectedFileInfo } = useStore(appStore)
       const navigate = useNavigate()
       const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined)
       const [contractInformation, setContractInformation] = useState<IContractInformation | undefined>(undefined)
@@ -191,124 +192,130 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
       return (
             <>
                   <TableRow key={`${workflowName}-${index}`} className="hover:bg-muted/50 h-fit cursor-pointer" onClick={e => {
-                  e.preventDefault()
-                  setSelectedFileInfo(apiFileInfo)
-                  navigate('/app/pdf/workflow')
-            }}>
-                  <TableCell className="font-medium w-[300px] max-w-[300px] min-w-[300px]">
-                        <div className="w-full flex items-center gap-3">
-                              <div className="flex-shrink-0">
-                                    <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                                          <FileText className="h-5 w-5 text-blue-600" />
+                        e.preventDefault()
+                        setSelectedFileInfo(apiFileInfo)
+                        navigate('/app/pdf/workflow')
+                  }}>
+                        <TableCell className="font-medium w-[300px] max-w-[300px] min-w-[300px]">
+                              <div className="w-full flex items-center gap-3">
+                                    <div className="flex-shrink-0">
+                                          <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                                                <FileText className="h-5 w-5 text-blue-600" />
+                                          </div>
+                                    </div>
+                                    <div className="flex-grow min-w-0">
+                                          <div className="font-medium text-sm break-words whitespace-normal">{currentFileObject?.fileName}</div>
+                                          <div className="text-xs text-muted-foreground">Created at {getTimeInfo()}</div>
                                     </div>
                               </div>
-                              <div className="flex-grow min-w-0">
-                                    <div className="font-medium text-sm break-words whitespace-normal">{currentFileObject?.fileName}</div>
-                                    <div className="text-xs text-muted-foreground">Created at {getTimeInfo()}</div>
+                        </TableCell>
+                        <TableCell className="w-[200px]">
+                              <div className="flex items-center gap-2 w-fit" onClick={e => {
+                                    e.stopPropagation()
+                              }}>
+                                    <div className="flex -space-x-2">
+                                          {signers?.slice(0, 3).map((signer: string, index: number) => (
+                                                <WalletAdrressClaim key={index} avatarOnly={true} walletAddress={signer} />
+                                          ))}
+                                          {signers?.length > 3 && (
+                                                <Avatar className="h-8 w-8 border-2 border-background" onClick={e => {
+                                                      e.preventDefault()
+                                                }}>
+                                                      <AvatarFallback className="text-xs">+{signers?.length - 3}</AvatarFallback>
+                                                </Avatar>
+                                          )}
+                                    </div>
+                                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                          <Users className="h-3 w-3" />
+                                          {signers?.length}
+                                    </div>
                               </div>
-                        </div>
-                  </TableCell>
-                  <TableCell className="w-[200px]">
-                        <div className="flex items-center gap-2 w-fit" onClick={e => {
-                        e.stopPropagation()
-                  }}>
-                              <div className="flex -space-x-2">
-                                    {signers?.slice(0, 3).map((signer: string, index: number) => (
-                                          <WalletAdrressClaim key={index} avatarOnly={true} walletAddress={signer} />
-                                    ))}
-                                    {signers?.length > 3 && (
-                                          <Avatar className="h-8 w-8 border-2 border-background" onClick={e => {
-                                                e.preventDefault()
-                                          }}>
-                                                <AvatarFallback className="text-xs">+{signers?.length - 3}</AvatarFallback>
-                                          </Avatar>
+                        </TableCell>
+                        <TableCell className="w-[150px]">
+                              <div className="space-y-1">
+                                    <div className="flex items-center justify-between text-sm">
+                                          <span>
+                                                {signersStatus.filter(e => e.status == 'signed').length}/{signers?.length}
+                                          </span>
+                                          <span className="text-muted-foreground">
+                                                {Math.round(getProgressPercentage(signersStatus.length, signersStatus.filter(e => e.status == 'pending').length))}%
+                                          </span>
+                                    </div>
+                                    <Progress
+                                          value={getProgressPercentage(signersStatus.length, signersStatus.filter(e => e.status == 'pending').length)}
+                                          className="h-2"
+                                    />
+                                    {signersStatus.filter(e => e.status == 'pending').length > 0 && (
+                                          <div className="text-xs text-muted-foreground">{signersStatus.filter(e => e.status == 'pending').length} remaining</div>
                                     )}
                               </div>
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                    <Users className="h-3 w-3" />
-                                    {signers?.length}
-                              </div>
-                        </div>
-                  </TableCell>
-                  <TableCell className="w-[150px]">
-                        <div className="space-y-1">
-                              <div className="flex items-center justify-between text-sm">
-                                    <span>
-                                          {signersStatus.filter(e => e.status == 'signed').length}/{signers?.length}
-                                    </span>
-                                    <span className="text-muted-foreground">
-                                          {Math.round(getProgressPercentage(signersStatus.length, signersStatus.filter(e => e.status == 'pending').length))}%
-                                    </span>
-                              </div>
-                              <Progress
-                                    value={getProgressPercentage(signersStatus.length, signersStatus.filter(e => e.status == 'pending').length)}
-                                    className="h-2"
-                              />
-                              {signersStatus.filter(e => e.status == 'pending').length > 0 && (
-                                    <div className="text-xs text-muted-foreground">{signersStatus.filter(e => e.status == 'pending').length} remaining</div>
-                              )}
-                        </div>
-                  </TableCell>
-                  <TableCell className="w-[100px]">
-                        <Badge variant="outline" className={`${getStatusColor(signersStatus.filter(e => e.status == 'pending').length > 0 ? 'pending' : 'completed')} capitalize`}>
-                              {getStatusIcon(signersStatus.filter(e => e.status == 'pending').length > 0 ? 'pending' : 'completed')}
-                              <span className="ml-1">{signersStatus.filter(e => e.status == 'pending').length > 0 ? 'pending' : 'completed'}</span>
-                        </Badge>
-                  </TableCell>
-                  <TableCell className="text-right w-[100px]">
-                        <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                    <Button 
-                                          ref={dropdownTriggerRef}
-                                          variant="outline" 
-                                          className="h-8 w-8 p-0 cursor-pointer"
-                                    >
-                                          <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    <OpenAquaSignWorkFlowButton item={apiFileInfo} nonce={session?.nonce ?? ''}>
-                                          <DropdownMenuItem>
-                                                <Eye className="mr-2 h-4 w-4" />
-                                                View Document
-                                          </DropdownMenuItem>
-                                    </OpenAquaSignWorkFlowButton>
-                                    {/* <DropdownMenuItem disabled>
+                        </TableCell>
+                        <TableCell className="w-[100px]">
+                              <Badge variant="outline" className={`${getStatusColor(signersStatus.filter(e => e.status == 'pending').length > 0 ? 'pending' : 'completed')} capitalize`}>
+                                    {getStatusIcon(signersStatus.filter(e => e.status == 'pending').length > 0 ? 'pending' : 'completed')}
+                                    <span className="ml-1">{signersStatus.filter(e => e.status == 'pending').length > 0 ? 'pending' : 'completed'}</span>
+                              </Badge>
+                        </TableCell>
+                        <TableCell className="text-right w-[100px]">
+                              <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                          <Button
+                                                ref={dropdownTriggerRef}
+                                                variant="outline"
+                                                className="h-8 w-8 p-0 cursor-pointer"
+                                          >
+                                                <MoreHorizontal className="h-4 w-4" />
+                                          </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                          <DropdownMenuSeparator />
+                                          <OpenAquaSignWorkFlowButton item={apiFileInfo} nonce={session?.nonce ?? ''}>
+                                                <DropdownMenuItem className='cursor-pointer'>
+                                                      <FileText className="mr-2 h-4 w-4" />
+                                                      View Document
+                                                </DropdownMenuItem>
+                                          </OpenAquaSignWorkFlowButton>
+                                          {/* <DropdownMenuItem disabled>
                                           <Send className="mr-2 h-4 w-4" />
                                           Send Reminder
                                     </DropdownMenuItem> */}
-                                    <DownloadAquaChain file={apiFileInfo} index={index}>
-                                          <DropdownMenuItem>
-                                                <Download className="mr-2 h-4 w-4" />
-                                                Download
-                                          </DropdownMenuItem>
-                                    </DownloadAquaChain>
-                                    <DropdownMenuSeparator />
-                                    <DeleteAquaChain 
-                                          apiFileInfo={apiFileInfo} 
-                                          backendUrl={backend_url} 
-                                          nonce={session?.nonce ?? ''} 
-                                          revision="" 
-                                          index={index}
-                                          onDeleteClick={() => {
-                                                // Remove focus from dropdown button before opening dialog
-                                                dropdownTriggerRef.current?.blur()
-                                                // Small delay to ensure focus is properly removed before dialog opens
-                                                setTimeout(() => setDeleteDialogOpen(true), 10)
-                                          }}
-                                    >
-                                          <DropdownMenuItem className="text-red-600">
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                Delete
-                                          </DropdownMenuItem>
-                                    </DeleteAquaChain>
-                              </DropdownMenuContent>
-                        </DropdownMenu>
-                  </TableCell>
-            </TableRow>
-            
+                                          <OpenSelectedFileDetailsButton file={apiFileInfo} index={index}>
+                                                <DropdownMenuItem className='cursor-pointer'>
+                                                      <Eye className="mr-2 h-4 w-4" />
+                                                      Details
+                                                </DropdownMenuItem>
+                                          </OpenSelectedFileDetailsButton>
+                                          <DownloadAquaChain file={apiFileInfo} index={index}>
+                                                <DropdownMenuItem className='cursor-pointer'>
+                                                      <Download className="mr-2 h-4 w-4" />
+                                                      Download
+                                                </DropdownMenuItem>
+                                          </DownloadAquaChain>
+                                          <DropdownMenuSeparator />
+                                          <DeleteAquaChain
+                                                apiFileInfo={apiFileInfo}
+                                                backendUrl={backend_url}
+                                                nonce={session?.nonce ?? ''}
+                                                revision=""
+                                                index={index}
+                                                onDeleteClick={() => {
+                                                      // Remove focus from dropdown button before opening dialog
+                                                      dropdownTriggerRef.current?.blur()
+                                                      // Small delay to ensure focus is properly removed before dialog opens
+                                                      setTimeout(() => setDeleteDialogOpen(true), 10)
+                                                }}
+                                          >
+                                                <DropdownMenuItem variant='destructive' className="cursor-pointer">
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            Delete
+                                                </DropdownMenuItem>
+                                          </DeleteAquaChain>
+                                    </DropdownMenuContent>
+                              </DropdownMenu>
+                        </TableCell>
+                  </TableRow>
+
                   {/* Delete Dialog - Outside the dropdown to prevent DOM detachment */}
                   <DeleteAquaChainDialog
                         open={deleteDialogOpen}
@@ -340,7 +347,7 @@ export default function WorkflowsTablePage() {
       // Extract data loading logic into a separate function
       const loadWorkflowsData = async (page: number = currentPage) => {
             if (!session || !backend_url) return;
-            
+
             setIsLoading(true);
             try {
                   const params = {
@@ -380,7 +387,7 @@ export default function WorkflowsTablePage() {
             loadWorkflowsData(currentPage);
       }, [currentPage])
 
-    
+
       return (
             <>
                   {/* Action Bar */}
