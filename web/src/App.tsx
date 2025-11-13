@@ -6,7 +6,6 @@ import { useStore } from 'zustand'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import ErrorBoundary from './components/error_boundary'
 import Loading from './pages/loading'
-import PdfSigner from './pages/aqua_sign_wokflow/ContractDocument/PdfSigner'
 import FilesPage from './pages/files/files'
 import Home from './pages/home'
 import TailwindMainLayout from './layouts/TailwindMainLayout'
@@ -150,8 +149,6 @@ function App() {
                             <Route path="dashboard" element={<UserStats />} />
 
                             <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
-                            <Route path="pdf-signer" element={<PdfSigner fileData={null} setActiveStep={_one => {
-                            }} />} />
                             <Route path="files_workflows" element={<FilesPage />} />
 
 

@@ -1,23 +1,23 @@
-import {useCallback, useEffect, useState} from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import appStore from '../../../store'
-import {useStore} from 'zustand'
-import {ContractDocumentViewProps, SummaryDetailsDisplayData} from '../../../types/types'
-import Aquafier, {AquaTree, OrderRevisionInAquaTree, Revision} from 'aqua-js-sdk/web'
+import { useStore } from 'zustand'
+import { ContractDocumentViewProps, SummaryDetailsDisplayData } from '../../../types/types'
+import Aquafier, { AquaTree, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk/web'
 import {
-    fetchFileData,
-    getFileHashFromUrl,
-    getFileName,
-    getHighestFormIndex,
-    isAquaTree,
-    isArrayBufferText,
-    timeToHumanFriendly
+      fetchFileData,
+      getFileHashFromUrl,
+      getFileName,
+      getHighestFormIndex,
+      isAquaTree,
+      isArrayBufferText,
+      timeToHumanFriendly
 } from '../../../utils/functions'
 
-import {ApiFileInfo} from '../../../models/FileInfo'
-import {IDrawerStatus, VerificationHashAndResult} from '../../../models/AquaTreeDetails'
+import { ApiFileInfo } from '../../../models/FileInfo'
+import { IDrawerStatus, VerificationHashAndResult } from '../../../models/AquaTreeDetails'
 import ContractSummaryDetails from './ContractSummaryDetails'
 
-export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setActiveStep }) => {
+export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setActiveStep, selectedFileInfo }) => {
       const [isLoading, setIsLoading] = useState(true)
       const [signatureRevionHashesData, setSignatureRevionHashes] = useState<SummaryDetailsDisplayData[]>([])
       const [isWorkFlowComplete, setIsWorkFlowComplete] = useState<string[]>([])
@@ -29,7 +29,7 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
       const [verificationResults, setVerificationResults] = useState<VerificationHashAndResult[]>([])
 
       // let firstRevisionHash = selectedFileInfo
-      const { selectedFileInfo, apiFileData, setApiFileData, session } = useStore(appStore)
+      const { apiFileData, setApiFileData, session } = useStore(appStore)
 
       const getSignatureRevionHashes = (hashesToLoopPar: Array<string>): Array<SummaryDetailsDisplayData> => {
             const signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
@@ -347,13 +347,14 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                   verifyAquaTreeRevisions(selectedFileInfo)
             }
       }
-      useEffect(() => {
-            intializeContractInformation()
-      }, [])
+
+      // useEffect(() => {
+      //       intializeContractInformation()
+      // }, [])
 
       useEffect(() => {
             intializeContractInformation()
-      }, [JSON.stringify(selectedFileInfo), selectedFileInfo])
+      }, [selectedFileInfo])
 
       // const isWorkflowComplete = () => {
       //     let signers: string[] = firstRevisionData?.forms_signers.split(",")
@@ -452,11 +453,11 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                                           }),
                                           ...(isWorkFlowComplete.length === 0
                                                 ? [
-                                                        {
-                                                              type: 'completed' as const,
-                                                              timestamp: 'N/A',
-                                                        },
-                                                  ]
+                                                      {
+                                                            type: 'completed' as const,
+                                                            timestamp: 'N/A',
+                                                      },
+                                                ]
                                                 : []),
                                     ],
                                     footerMsg:

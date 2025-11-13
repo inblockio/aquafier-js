@@ -85,7 +85,7 @@ export const AddressView: React.FC<AddressViewProps> = ({
               address={multipleAddresses[0]}
               multipleAddresses={multipleAddresses}
               setMultipleAddresses={(addrs: string[]) => {
-                console.log('Setting multiple addresses:', addrs)
+                // console.log('Setting multiple addresses:', addrs)
                 setMultipleAddresses(addrs)
 
               }}

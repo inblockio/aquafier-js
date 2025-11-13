@@ -291,7 +291,7 @@ const ClaimsAndAttestationPage = () => {
       useReloadWatcher({
             key: RELOAD_KEYS.claims_and_attestations,
             onReload: () => {
-                  console.log('Reloading claims and attestations...');
+                  // console.log('Reloading claims and attestations...');
                   loadWorkflowsData();
             }
       });
