@@ -237,15 +237,8 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                         //       hash: hashData,
                         // })
                         safelyAddNameWithHash(fileName, hashData, nameWithHashes)
-                        console.log(`${i}. Pushed: ${fileName} - ${hashData}`)
                   }
             }
-
-            console.log("nameWithHashes", nameWithHashes)
-
-            // return
-
-
 
             //create aqua.json
             const aquaObject: AquaJsonInZip = {
@@ -326,11 +319,9 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
 
                                     // Handle different types of fileContent based on file extension
                                     if (fileObj.fileContent instanceof Blob || fileObj.fileContent instanceof File) {
-                                          console.log("blobs")
                                           // Already a Blob or File object
                                           blob = fileObj.fileContent
                                     } else if (fileObj.fileContent instanceof Uint8Array || fileObj.fileContent instanceof ArrayBuffer) {
-                                          console.log("binary arrays")
                                           // Binary data - determine MIME type based on extension
                                           const mimeType = getMimeType(fileObj.fileName)
                                           blob = new Blob([fileObj.fileContent as BlobPart], {
@@ -338,7 +329,6 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                                           })
                                           fileName = fileObj.fileName
                                     } else if (typeof fileObj.fileContent === 'string' && !_isAquaTree) {
-                                          console.log("normal text strings")
                                           // Handle plain string content
                                           if (isBinaryFile(fileObj.fileName)) {
                                                 // If it's supposed to be a binary file but we have a string,
@@ -350,16 +340,13 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                                           })
                                           fileName = fileObj.fileName
                                     } else if (_isAquaTree) {
-                                          console.log("aqua strings")
                                           const aquatree = fileObj.fileContent
-                                          console.log(aquatree)
                                           // Handle AquaTree object
                                           blob = new Blob([JSON.stringify(JSON.parse(aquatree as string))], {
                                                 type: 'application/json',
                                           })
                                           fileName = `${fileObj.fileName}.aqua.json`
                                     } else if (typeof fileObj.fileContent === 'object') {
-                                          console.log("objects")
                                           // Handle other objects - check if it looks like corrupted binary data
                                           if (isBinaryFile(fileObj.fileName) && isCorruptedBinaryData(fileObj.fileContent)) {
                                                 // Try to reconstruct binary data from object
@@ -449,7 +436,9 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                   {/* Sign Button */}
                   {children ? (
                         <div
-                              onClick={() => {
+                              onClick={(e) => {
+                                    e.stopPropagation()
+                                    e.preventDefault()
                                     if (!downloading) {
                                           downloadAquaJson()
                                     } else {
@@ -464,7 +453,9 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                   ) : (
                         <button
                               data-testid={'download-aqua-tree-button-' + index}
-                              onClick={() => {
+                              onClick={(e) => {
+                                    e.stopPropagation()
+                                    e.preventDefault()
                                     if (!downloading) {
                                           downloadAquaJson()
                                     } else {

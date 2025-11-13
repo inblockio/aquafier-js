@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -22,7 +22,6 @@ import {
       FileText,
       MoreHorizontal,
       Plus,
-      Send,
       Trash2,
       Users
 } from 'lucide-react'
@@ -39,7 +38,7 @@ import { FileObject } from 'aqua-js-sdk'
 import { IContractInformation } from '@/types/contract_workflow'
 import { DownloadAquaChain } from '../../components/aqua_chain_actions/download_aqua_chain'
 import { OpenAquaSignWorkFlowButton } from '../../components/aqua_chain_actions/open_aqua_sign_workflow'
-import { DeleteAquaChain } from '../../components/aqua_chain_actions/delete_aqua_chain'
+import { DeleteAquaChain, DeleteAquaChainDialog } from '../../components/aqua_chain_actions/delete_aqua_chain'
 import { IWorkflowItem } from '@/types/types'
 import WalletAdrressClaim from '../v2_claims_workflow/WalletAdrressClaim'
 import { ApiFileInfo } from '@/models/FileInfo'
@@ -92,6 +91,9 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
       const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined)
       const [contractInformation, setContractInformation] = useState<IContractInformation | undefined>(undefined)
       const { session, backend_url } = useStore(appStore)
+      const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+      const [isDeleting, setIsDeleting] = useState(false)
+      const dropdownTriggerRef = useRef<HTMLButtonElement>(null)
 
       const getCurrentFileObject = () => {
             const fileObject = getAquaTreeFileObject(apiFileInfo)
@@ -155,6 +157,31 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
       const signers = getSigners()
       const signersStatus = getSignersStatus()
 
+      const handleDeleteFile = async () => {
+            setIsDeleting(true)
+            try {
+                  const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!)
+                  const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
+                  const url = `${backend_url}/explorer_delete_file`
+                  const response = await axios.post(
+                        url,
+                        { revisionHash: lastRevisionHash },
+                        { headers: { nonce: session?.nonce } }
+                  )
+
+                  if (response.status === 200) {
+                        setDeleteDialogOpen(false)
+                        toast.success('File deleted successfully')
+                        // Trigger reload - you may need to add this reload logic
+                        window.location.reload()
+                  }
+            } catch (e) {
+                  toast.error('File deletion error')
+                  setDeleteDialogOpen(false)
+            }
+            setIsDeleting(false)
+      }
+
       useEffect(() => {
             getCurrentFileObject()
             const contractInformation = processContractInformation(apiFileInfo)
@@ -162,7 +189,8 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
       }, [apiFileInfo])
 
       return (
-            <TableRow key={`${workflowName}-${index}`} className="hover:bg-muted/50 h-fit cursor-pointer" onClick={e => {
+            <>
+                  <TableRow key={`${workflowName}-${index}`} className="hover:bg-muted/50 h-fit cursor-pointer" onClick={e => {
                   e.preventDefault()
                   setSelectedFileInfo(apiFileInfo)
                   navigate('/app/pdf/workflow')
@@ -230,7 +258,11 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                   <TableCell className="text-right w-[100px]">
                         <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="h-8 w-8 p-0 cursor-pointer">
+                                    <Button 
+                                          ref={dropdownTriggerRef}
+                                          variant="outline" 
+                                          className="h-8 w-8 p-0 cursor-pointer"
+                                    >
                                           <MoreHorizontal className="h-4 w-4" />
                                     </Button>
                               </DropdownMenuTrigger>
@@ -243,10 +275,10 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                                                 View Document
                                           </DropdownMenuItem>
                                     </OpenAquaSignWorkFlowButton>
-                                    <DropdownMenuItem disabled>
+                                    {/* <DropdownMenuItem disabled>
                                           <Send className="mr-2 h-4 w-4" />
                                           Send Reminder
-                                    </DropdownMenuItem>
+                                    </DropdownMenuItem> */}
                                     <DownloadAquaChain file={apiFileInfo} index={index}>
                                           <DropdownMenuItem>
                                                 <Download className="mr-2 h-4 w-4" />
@@ -254,7 +286,19 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                                           </DropdownMenuItem>
                                     </DownloadAquaChain>
                                     <DropdownMenuSeparator />
-                                    <DeleteAquaChain apiFileInfo={apiFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ''} revision="" index={index}>
+                                    <DeleteAquaChain 
+                                          apiFileInfo={apiFileInfo} 
+                                          backendUrl={backend_url} 
+                                          nonce={session?.nonce ?? ''} 
+                                          revision="" 
+                                          index={index}
+                                          onDeleteClick={() => {
+                                                // Remove focus from dropdown button before opening dialog
+                                                dropdownTriggerRef.current?.blur()
+                                                // Small delay to ensure focus is properly removed before dialog opens
+                                                setTimeout(() => setDeleteDialogOpen(true), 10)
+                                          }}
+                                    >
                                           <DropdownMenuItem className="text-red-600">
                                                 <Trash2 className="mr-2 h-4 w-4" />
                                                 Delete
@@ -264,6 +308,15 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                         </DropdownMenu>
                   </TableCell>
             </TableRow>
+            
+                  {/* Delete Dialog - Outside the dropdown to prevent DOM detachment */}
+                  <DeleteAquaChainDialog
+                        open={deleteDialogOpen}
+                        onOpenChange={setDeleteDialogOpen}
+                        onConfirm={handleDeleteFile}
+                        isLoading={isDeleting}
+                  />
+            </>
       )
 }
 

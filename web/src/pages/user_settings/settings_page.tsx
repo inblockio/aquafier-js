@@ -34,7 +34,9 @@ export function ConfirmDeleteDialog({ children, deleteFunc, title, description, 
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={deleteFunc} color='red' disabled={loading ? loading : false}>Delete</AlertDialogAction>
+                              <AlertDialogAction onClick={() => {
+                                    deleteFunc()
+                              }} color='red' disabled={loading ? loading : false}>Delete</AlertDialogAction>
                         </AlertDialogFooter>
                   </AlertDialogContent>
             </AlertDialog>
