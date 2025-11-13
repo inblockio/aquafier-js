@@ -1,8 +1,8 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 # Start PostgreSQL command line interface
 echo "Starting PostgreSQL command line interface..."
-sudo -u postgres psql <<EOF
+psql -U $USER -d postgres <<EOF
 
 CREATE DATABASE aquafier_js;
 CREATE USER aquafier_js WITH ENCRYPTED PASSWORD 'aquafier_js' CREATEDB;
@@ -24,4 +24,3 @@ EOF
 
 # Exit PostgreSQL command line interface
 echo "Exiting PostgreSQL command line interface..."
-
