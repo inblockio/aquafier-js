@@ -1,0 +1,17 @@
+{
+  "name": "aqua-aquafier-js",
+  "private": true,
+  "workspaces": [
+    "api",
+    "web"
+  ],
+  "scripts": {
+    "dev": "bun run --filter '*' dev",
+    "build": "bun run --filter '*' build"
+  },
+  "trustedDependencies": [
+    "@reown/appkit",
+    "@sentry-internal/node-cpu-profiler",
+    "protobufjs"
+  ]
+}
