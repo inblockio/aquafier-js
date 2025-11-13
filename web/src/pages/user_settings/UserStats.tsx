@@ -53,7 +53,7 @@ const UserStats = () => {
     useReloadWatcher({
         key: RELOAD_KEYS.user_stats,
         onReload: () => {
-            console.log('Reloading user stats...');
+            // console.log('Reloading user stats...');
             getUserStats();
         }
     });

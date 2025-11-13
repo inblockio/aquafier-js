@@ -11,7 +11,9 @@ export const OpenSelectedFileDetailsButton = ({ file, children, index }: { file:
             <>
                   {children ? (
                         <div
-                              onClick={() => {
+                              onClick={(e) => {
+                                    e.stopPropagation()
+                                    e.preventDefault()
                                     setSelectedFileInfo(file)
                                     setOpenDialog({ dialogType: 'aqua_file_details', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => {}})
                               }}
@@ -22,7 +24,9 @@ export const OpenSelectedFileDetailsButton = ({ file, children, index }: { file:
                         <Button
                               data-testid={'open-aqua-claim-workflow-button-' + index}
                               className="w-full flex items-center justify-center space-x-1 bg-green-100 text-green-700 px-2 py-2 rounded hover:bg-green-200 transition-colors text-xs"
-                              onClick={() => {
+                              onClick={(e) => {
+                                    e.stopPropagation()
+                                    e.preventDefault()
                                     setSelectedFileInfo(file)
                                     setOpenDialog({ dialogType: 'aqua_file_details', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => {}})
                               }}

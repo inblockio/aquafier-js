@@ -111,25 +111,19 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
 
     // Small delay to ensure modal is closed
     await new Promise(resolve => setTimeout(resolve, 100))
-    console.log(`55555`)
 
     // Find and click the disconnect button
     const disconnectButton = document.querySelector('[data-testid="disconnect-button"]') as HTMLElement
 
     if (disconnectButton) {
-      console.log(`8888`)
       // Click the button element inside the web component
       const button = disconnectButton.shadowRoot?.querySelector('button')
       if (button) {
-        console.log(`00`)
         button.click()
       } else {
-        console.log(`111`)
         // Fallback: click the component itself
         disconnectButton.click()
       }
-    } else {
-      console.log(`33333`)
     }
     try {
       await disconnect() // This calls siweConfig.signOut automatically

@@ -8,7 +8,7 @@ import { Crown, X } from 'lucide-react'
 import { Outlet } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { useStore } from 'zustand'
-import { Dialog, DialogContent } from '../components/ui/dialog'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Button } from '../components/ui/button'
 import CreateFormFromTemplate from '../components/aqua_forms/CreateFormFromTemplate'
 import FormTemplateEditorShadcn from '../components/aqua_forms/FormTemplateEditorShadcn'
@@ -16,8 +16,13 @@ import { AppSidebar } from '../components/app_sidebar'
 import WebsocketFragment from '@/components/navbar/WebsocketFragment'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import ShareComponent from '@/components/aqua_chain_actions/Share_component'
+import { CompleteChainView } from '@/components/files_chain_details'
+import { getAquaTreeFileName } from '@/utils/functions'
+import { IDrawerStatus } from '@/models/AquaTreeDetails'
+import { useState } from 'react'
 
 export default function NewShadcnLayoutWithSidebar() {
+
       const {
             session,
             setSelectedFileInfo,
@@ -26,6 +31,8 @@ export default function NewShadcnLayoutWithSidebar() {
             setOpenDialog,
             formTemplates
       } = useStore(appStore)
+
+       const [_drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
 
       return (
             <>
@@ -288,6 +295,75 @@ export default function NewShadcnLayoutWithSidebar() {
                                           )
                                     }
                               </div>
+                        </DialogContent>
+                  </Dialog>
+
+
+                  {/* chain details dialog */}
+                  <Dialog
+                        open={openDialog !== null && openDialog.isOpen && openDialog.dialogType == 'aqua_file_details'}
+                        onOpenChange={openState => {
+                              // setIsSelectedFileDialogOpen(openState)
+                              if (!openState) {
+                                    setSelectedFileInfo(null)
+                                    setOpenDialog(null)
+                              }
+                        }}
+                  >
+                        <DialogContent showCloseButton={false} className="!max-w-[96vw] !w-[96vw] !h-[96vh] md:!h-[96vh] max-h-[96vh] !p-0 gap-0 flex flex-col">
+                              {/* Close Button */}
+                              <div className="absolute top-4 right-4 z-10">
+                                    <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-6 w-6 bg-red-500 text-white hover:bg-red-500"
+                                          onClick={() => {
+                                                // setIsSelectedFileDialogOpen(false)
+                                                setSelectedFileInfo(null)
+                                                setOpenDialog(null)
+                                          }}
+                                    >
+                                          <X className="h-4 w-4" />
+                                    </Button>
+                              </div>
+                              {selectedFileInfo ? (
+                                    <div className="flex flex-col flex-1 h-[calc(100%-60px)]">
+                                          {/* Header - fixed height */}
+                                          <DialogHeader className="!h-[60px] !min-h-[60px] !max-h-[60px] flex justify-center px-6">
+                                                <DialogTitle style={{
+                                                      textAlign: 'start',
+                                                      maxWidth: '90%',
+                                                      overflow: 'hidden',
+                                                      textOverflow: 'ellipsis',
+                                                      whiteSpace: 'nowrap'
+                                                }}>
+                                                      {getAquaTreeFileName(selectedFileInfo.aquaTree!)}
+                                                </DialogTitle>
+                                          </DialogHeader>
+                                          {/* Content - takes all available space */}
+                                          <div className="h-[calc(100%-60px)] overflow-y-auto">
+                                                <CompleteChainView
+                                                      callBack={function (_drawerStatus: IDrawerStatus): void {
+                                                            setDrawerStatus(_drawerStatus)
+                                                      }}
+                                                      selectedFileInfo={selectedFileInfo}
+                                                />
+                                          </div>
+                                    </div>
+                              ) : null}
+                              {/* Footer - fixed height */}
+                              <DialogFooter className="!h-[60px] !min-h-[60px] !max-h-[60px] !p-0 flex items-center justify-center !px-6 ">
+                                    <Button
+                                          variant="outline"
+                                          className="bg-black text-white-500 hover:bg-black-700 text-white cursor-pointer"
+                                          onClick={() => {
+                                                setSelectedFileInfo(null)
+                                                setOpenDialog(null)
+                                          }}
+                                    >
+                                          Cancel
+                                    </Button>
+                              </DialogFooter>
                         </DialogContent>
                   </Dialog>
             </>
