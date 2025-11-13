@@ -15,19 +15,17 @@ import {toast} from 'sonner'
 import PdfSigner from './PdfSigner'
 import SignatureItem from '../../../components/pdf/SignatureItem'
 
-export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setActiveStep }) => {
+export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setActiveStep, selectedFileInfo }) => {
       const [pdfLoadingFile, setLoadingPdfFile] = useState<boolean>(true)
       const [pdfFile, setPdfFile] = useState<File | null>(null)
       const [pdfURLObject, setPdfURLObject] = useState<string | null>(null)
       const [signatures, setSignatures] = useState<SignatureData[]>([])
       const [signaturesLoading, setSignaturesLoading] = useState<boolean>(false)
-      const { selectedFileInfo, session, backend_url } = useStore(appStore)
-
-      console.log("Signatures: ", signatures)
+      const { session, backend_url } = useStore(appStore)
 
       useEffect(() => {
             initializeComponent()
-      }, [])
+      }, [selectedFileInfo])
 
       const getSignatureRevionHashes = (hashesToLoopPar: Array<string>): Array<SummaryDetailsDisplayData> => {
             const signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
@@ -474,5 +472,5 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
       } 
 
       // Default case - show signing interface
-      return <PdfSigner documentSignatures={signatures} fileData={pdfFile} setActiveStep={setActiveStep} />
+      return <PdfSigner selectedFileInfo={selectedFileInfo} documentSignatures={signatures} fileData={pdfFile} setActiveStep={setActiveStep} />
 }

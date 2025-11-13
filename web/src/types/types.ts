@@ -267,6 +267,7 @@ export interface SignatureData {
 
 export interface ContractDocumentViewProps {
       setActiveStep: (step: number) => void
+      selectedFileInfo: ApiFileInfo
 }
 
 export interface IWorkflowItem {

@@ -40,11 +40,9 @@ const ContactsPage = () => {
         }
     });
 
-    console.log("Contact profiles: ", contactProfiles)
+    // console.log("Contact profiles: ", contactProfiles)
 
     useEffect(() => {
-      
-
         const loadWorkflows = async () => {
             setIsLoading(true);
             try {

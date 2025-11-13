@@ -18,12 +18,14 @@ import { useNavigate } from 'react-router-dom'
 import { HiDocumentText } from 'react-icons/hi'
 import { FaCircleInfo } from 'react-icons/fa6'
 import { Check } from 'lucide-react'
+import { ApiFileInfo } from '@/models/FileInfo'
 
 export default function PdfWorkflowPage() {
       const [activeStep, setActiveStep] = useState(1)
       const [timeLineTitle, setTimeLineTitle] = useState('')
       const [error, _setError] = useState('')
       const [timeLineItems, setTimeLineItems] = useState<Array<WorkFlowTimeLine>>([])
+      const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
       const { selectedFileInfo, setSelectedFileInfo } = useStore(appStore)
 
       const navigate = useNavigate()
@@ -120,11 +122,16 @@ export default function PdfWorkflowPage() {
       function loadTimeline() {
             const items: Array<WorkFlowTimeLine> = []
 
+            if(!fileInfo){
+                  return items
+            }
+
             items.push({
                   id: 1,
                   completed: true,
                   content: (
                         <ContractSummaryView
+                              selectedFileInfo={fileInfo}
                               setActiveStep={(index: number) => {
                                     setActiveStep(index)
                               }}
@@ -141,6 +148,7 @@ export default function PdfWorkflowPage() {
                   completed: computeIsWorkflowCOmplete(),
                   content: (
                         <ContractDocumentView
+                              selectedFileInfo={fileInfo}
                               setActiveStep={(index: number) => {
                                     setActiveStep(index)
                               }}
@@ -156,23 +164,8 @@ export default function PdfWorkflowPage() {
       }
 
       const loadData = () => {
-            if (selectedFileInfo) {
-                  // const someData = systemFileInfo.map(e => {
-                  //       try {
-                  //             return getAquaTreeFileName(e.aquaTree!)
-                  //       } catch (e) {
-                  //           ('Error processing system file')
-                  //             return ''
-                  //       }
-                  // })
-                  // const templateNames = formTemplates.map((e) => e.name)
-                  // const { isWorkFlow, workFlow } = isWorkFlowData(selectedFileInfo.aquaTree!, someData)
-
-                  // if (!isWorkFlow) {
-                  //       setError('The selected Aqua - Tree is not workflow')
-                  //       return
-                  // }
-                  const workflowName = getFileName(selectedFileInfo.aquaTree!)
+            if (fileInfo) {
+                  const workflowName = getFileName(fileInfo.aquaTree!)
 
                   setTimeLineTitle(convertTemplateNameToTitle(workflowName))
 
@@ -183,12 +176,15 @@ export default function PdfWorkflowPage() {
       }
 
       useEffect(() => {
-            loadData()
-      }, [])
+            if(selectedFileInfo){
+                  setFileInfo(selectedFileInfo)
+            }
+
+      }, [selectedFileInfo])
 
       useEffect(() => {
             loadData()
-      }, [JSON.stringify(selectedFileInfo), selectedFileInfo])
+      }, [JSON.stringify(fileInfo)])
 
       // Find the currently active content
       const activeContent = () => timeLineItems.find(item => item.id === activeStep)?.content

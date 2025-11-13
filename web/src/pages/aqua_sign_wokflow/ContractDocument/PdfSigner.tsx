@@ -36,10 +36,11 @@ interface PdfSignerProps {
       fileData: File | null
       setActiveStep: (page: number) => void
       documentSignatures?: SignatureData[]
+      selectedFileInfo: ApiFileInfo
 }
 
-const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures }) => {
-      const { selectedFileInfo, setSelectedFileInfo, setOpenDialog, openDialog } = useStore(appStore)
+const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, selectedFileInfo, setActiveStep }) => {
+      const { setSelectedFileInfo, setOpenDialog, openDialog } = useStore(appStore)
       // State for PDF document
       const [pdfFile, setPdfFile] = useState<File | null>(null)
       const [_pdfUrl, setPdfUrl] = useState<string | null>(null)
@@ -143,7 +144,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures }) =
                   showError('Signature data creation failed')
                   return null
             }
-            console.log("--User signature aqua tree: ", JSON.stringify(userSignatureDataAquaTree.data.aquaTree, null, 4))
+            // console.log("--User signature aqua tree: ", JSON.stringify(userSignatureDataAquaTree.data.aquaTree, null, 4))
             // console.log("User signature file object: ", JSON.stringify(fileObjectUserSignature, null, 4))
 
             // Save to server
@@ -426,11 +427,13 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures }) =
                         // setExistingChainFile(res.data.data)
                         // setHasFetchedanyExistingChain(true)
                         const incomingAquaTree = res.data.data
-                        const incomingGenesisHash = getGenesisHash(incomingAquaTree)
+                        const incomingGenesisHash = getGenesisHash(incomingAquaTree.aquaTree)
                         const selectedFileGenesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
 
                         if (incomingGenesisHash === selectedFileGenesisHash) {
                               setSelectedFileInfo(incomingAquaTree)
+                              setActiveStep(1)
+                              toast.success("Document signed successfully")
                         }
 
 
@@ -1170,7 +1173,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures }) =
 
       useEffect(() => {
             const unsubscribe = subscribe((message) => {
-                  console.log("Notification received: ", message)
+                  // console.log("Notification received: ", message)
                   // Handle notification reload specifically
                     if (message.type === 'notification_reload' && message.data && message.data.target === "aqua_sign_workflow") {
                       updateSelectedFileInfo()
@@ -1280,7 +1283,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures }) =
 
             window.addEventListener('resize', handleResize)
             return () => window.removeEventListener('resize', handleResize)
-      }, [])
+      }, [selectedFileInfo])
 
 
       useEffect(() => {
@@ -1294,7 +1297,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures }) =
 
             }
 
-      }, [openDialog])
+      }, [openDialog, selectedFileInfo])
 
       return (
             <div className="h-[calc(100vh-70px)] overflow-y-scroll md:overflow-hidden">
