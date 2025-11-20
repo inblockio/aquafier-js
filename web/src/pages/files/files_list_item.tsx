@@ -89,12 +89,12 @@ export default function FilesListItem({
                   return 'Not available'
             }
       }
-      const getTheWalletAddressFromWorkflow = () : string => {
+      const getTheWalletAddressFromWorkflow = (): string => {
             if (!workflowInfo || !workflowInfo.isWorkFlow) {
                   return ""
             }
-            
-            
+
+
             return file.aquaTree?.revisions[getGenesisHash(file.aquaTree!) || ""]?.forms_wallet_address || ""
       }
 
@@ -186,7 +186,7 @@ export default function FilesListItem({
                               </div>
 
                               {
-                                    workflowInfo && ['identity_claim', 'phone_number_claim', 'email_claim', 'user_signature'].includes(workflowInfo.workFlow)  &&  session?.address != getTheWalletAddressFromWorkflow()    ? (
+                                    workflowInfo && ['identity_claim', 'phone_number_claim', 'email_claim', 'user_signature'].includes(workflowInfo.workFlow) && session?.address != getTheWalletAddressFromWorkflow() ? (
                                           <div className="w-[100px]">
                                                 <AttestAquaClaim file={file} index={index} />
                                           </div>
@@ -456,9 +456,25 @@ export default function FilesListItem({
 
                   let creatorWallet = genRevision[`forms_wallet_address`]
                   let claimWallet = genRevision[`forms_claim_wallet_address`]
+                  let claimType = genRevision[`forms_claim_type`]
+                  let attestationType = genRevision[`forms_attestion_type`]
 
                   if (creatorWallet) {
                         return <>
+
+                              <div className="flex flex-nowrap  text-xs text-gray-500">
+                                    {
+                                          attestationType == "user" ? <>
+                                                <p className="text-xs">Attestation Of : &nbsp;</p>
+                                                <p className="text-xs ">{capitalizeWords(claimType.replace(/_/g, ' '))}</p>
+                                          </> : <>
+                                                <p className="text-xs">Attestation Type : &nbsp;</p>
+                                                <p className="text-xs ">Server Attestation</p>
+                                          </>
+                                    }
+
+                              </div>
+
                               <div className="flex flex-nowrap  text-xs text-gray-500">
                                     <p className="text-xs">Claim  Owner: &nbsp;</p>
                                     <p className="text-xs ">{formatCryptoAddress(claimWallet)}</p>

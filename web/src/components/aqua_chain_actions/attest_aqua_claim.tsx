@@ -57,8 +57,10 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
                         const genRevision: Revision | undefined = anAquaTree.aquaTree!.revisions[genHashOfCurrentAquatree || '']
                         if (genRevision) {
                               const identityClaimId: string | undefined = genRevision[`forms_identity_claim_id`]
+                              const attestorWalletAddress : string | undefined = genRevision[`forms_wallet_address`]
                               //  console.log(`identityClaimId  ${identityClaimId} genHash ${genHash} fileName ${getFileName(file.aquaTree!)}`)
-                              if (identityClaimId == genHashOfFile) {
+                              if (identityClaimId == genHashOfFile && attestorWalletAddress == session?.address) {
+                                    toast.dismiss(toastId); 
                                     toast.error('This file is already attested')
                                     return
                               }
