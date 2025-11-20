@@ -22,6 +22,8 @@ const extractEthereumAddress = (addressOrDid: string): string => {
 }
 
 export const siweConfig = createSIWEConfig({
+
+  
   createMessage: ({ address }: SIWECreateMessageArgs) => {
     // Extract the actual Ethereum address from DID format if necessary
     const ethAddress = extractEthereumAddress(address)
@@ -46,10 +48,10 @@ export const siweConfig = createSIWEConfig({
 
   getSession: async () => {
     const nonce = getCookie(SESSION_COOKIE_NAME)
-    // console.log("Nonce: ", nonce)
+    console.log("getSession : Nonce: ", nonce)
     if (!nonce) return null
 
-    // console.log("Here after nonce")
+    console.log("getSession : Here after nonce")
 
     try {
       const backend_url = appStore.getState().backend_url
@@ -67,19 +69,31 @@ export const siweConfig = createSIWEConfig({
         const userSettings = response.data.user_settings
         const network = userSettings.witness_network
         const chainId = ETH_CHAINID_MAP_NUMBERS[network]
-        return {
+        let data = {
           address: ethers.getAddress(response.data.session.address),
           // TODO: fix this. Find a way to return the connected chain id from the backend to avoid issues in which it asks the user to reconnect
           // For now, I read the user settings to get chainID
           chainId: response.data.session.chain_id || chainId, 
         } as SIWESession
+
+        console.log("getSession : Retrieved session data:", JSON.stringify(data))
+        return data
       }
     } catch (error) {
-      console.error('Failed to get session:', error)
+      console.error('getSession : Failed to get session:', error)
     }
 
     return null
   },
+
+  enabled:true,
+  required: true,
+  
+
+  signOutOnDisconnect: false,        // ADD
+    signOutOnAccountChange: false,     // ADD
+    signOutOnNetworkChange: false,     // ADD
+  
 
   verifyMessage: async ({ message, signature }: SIWEVerifyMessageArgs) => {
     // console.log("Message: ", message)
@@ -156,10 +170,10 @@ export const siweConfig = createSIWEConfig({
     }
   },
 
-  onSignIn: (_session) => {
-    // console.log('User signed in:', session)
+  onSignIn: (session) => {
+    console.log('onSignIn : User signed in:', session)
   },
   onSignOut: () => {
-    // console.log('User signed out')
+    console.log('onSignOut : User signed out')
   },
 })

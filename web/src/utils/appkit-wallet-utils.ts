@@ -11,7 +11,7 @@ export async function getAppKitProvider() {
     return null
   }
   return walletProvider as any
-}
+} 
 
 // Get the current signer from AppKit
 export async function getAppKitSigner() {

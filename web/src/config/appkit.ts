@@ -11,7 +11,7 @@ export const projectId = "9ed78593f9e1f84e3151ea58cfeea38b"
 export const networks = [
   mainnet,
   sepolia,
-  polygon,
+  polygon, 
   arbitrum
 ]
 
