@@ -89,6 +89,14 @@ export default function FilesListItem({
                   return 'Not available'
             }
       }
+      const getTheWalletAddressFromWorkflow = () : string => {
+            if (!workflowInfo || !workflowInfo.isWorkFlow) {
+                  return ""
+            }
+            
+            
+            return file.aquaTree?.revisions[getGenesisHash(file.aquaTree!) || ""]?.forms_wallet_address || ""
+      }
 
       const workFlowAquaSignActions = () => {
             return (
@@ -178,7 +186,7 @@ export default function FilesListItem({
                               </div>
 
                               {
-                                    workflowInfo && ['identity_claim', 'phone_number_claim', 'email_claim', 'user_signature'].includes(workflowInfo.workFlow) ? (
+                                    workflowInfo && ['identity_claim', 'phone_number_claim', 'email_claim', 'user_signature'].includes(workflowInfo.workFlow)  &&  session?.address != getTheWalletAddressFromWorkflow()    ? (
                                           <div className="w-[100px]">
                                                 <AttestAquaClaim file={file} index={index} />
                                           </div>
@@ -219,7 +227,7 @@ export default function FilesListItem({
             if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'aqua_sign') {
                   return workFlowAquaSignActions()
             }
-            if (workflowInfo?.isWorkFlow == true && (["domain_claim", "identity_claim", "user_signature"].includes(workflowInfo.workFlow))) {
+            if (workflowInfo?.isWorkFlow == true && (["domain_claim", "identity_claim", "user_signature", "email_claim"].includes(workflowInfo.workFlow))) {
                   return workFlowIdentityClaimActions(workflowInfo)
             }
 

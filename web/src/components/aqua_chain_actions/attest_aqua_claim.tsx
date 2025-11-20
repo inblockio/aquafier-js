@@ -1,14 +1,16 @@
-import {getAquaTreeFileName, getGenesisHash, isWorkFlowData} from '../../utils/functions'
+import {ensureDomainUrlHasSSL, getAquaTreeFileName, getGenesisHash, isWorkFlowData} from '../../utils/functions'
 import {useStore} from 'zustand'
 import appStore from '../../store'
 import {ApiFileInfo} from '../../models/FileInfo'
 import {toast} from 'sonner'
 import {Album} from 'lucide-react'
-import {Revision} from 'aqua-js-sdk'
+import {OrderRevisionInAquaTree, Revision} from 'aqua-js-sdk'
 import {Button} from '../ui/button'
+import axios from 'axios'
+import { API_ENDPOINTS } from '@/utils/constants'
 
 export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; index: number; children?: React.ReactNode }) => {
-      const { files, session, openDialog, setOpenDialog, setSelectedFileInfo, systemFileInfo } = useStore(appStore)
+      const { files, session, openDialog, setOpenDialog, setSelectedFileInfo, systemFileInfo , backend_url} = useStore(appStore)
       // const [isAttesting, setIsAttesting] = useState(false)
       // const [open, setOpen] = useState(false)
       // const [isLoading, setIsloading] = useState(false)
@@ -21,25 +23,42 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
       }
 
       const attestAquaClaimAction = async () => {
+
+          const toastId =   toast.info('Checking for existing attestations...')
+
+
+            let endpoint  = API_ENDPOINTS.GET_PER_TYPE
+            const params = {
+                page: 1,
+                limit:  10_000,//Number.MIN_SAFE_INTEGER,
+                claim_types: JSON.stringify(['identity_attestation']),
+                // wallet_address: session?.address
+            }
+            const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${endpoint}`), {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'nonce': `${session!.nonce}`
+                },
+                params
+            })
+            const response = filesDataQuery.data
+            const aquaTrees = response.aquaTrees as ApiFileInfo[]
+
+
             // check if already attested
-            for (const anAquaTree of files.fileData) {
-                  const isWorkFlow = isWorkFlowData(
-                        anAquaTree.aquaTree!,
-                        systemFileInfo.map(e => {
-                              try {
-                                    return getAquaTreeFileName(e.aquaTree!)
-                              } catch (e) {
-                                    return ''
-                              }
-                        })
-                  )
-                  if (isWorkFlow && isWorkFlow.workFlow == 'identity_attestation') {
-                        const genHash = getGenesisHash(file.aquaTree!)
-                        const genRevision: Revision = Object.values(anAquaTree.aquaTree?.revisions!)[0]
+            // get all aqua trees in the system
+            for (const anAquaTree of aquaTrees ) {
+                  
+                      
+                        const genHashOfFile = getGenesisHash(file.aquaTree!)
+                        const genHashOfCurrentAquatree = getGenesisHash(anAquaTree!.aquaTree!)
+                        // let orderdRevisionInAquaTree = OrderRevisionInAquaTree(anAquaTree.aquaTree!)
+                        // const genRevision: Revision = Object.values(orderdRevisionInAquaTree.revisions!)[0]
+                        const genRevision: Revision | undefined = anAquaTree.aquaTree!.revisions[genHashOfCurrentAquatree || '']
                         if (genRevision) {
                               const identityClaimId: string | undefined = genRevision[`forms_identity_claim_id`]
                               //  console.log(`identityClaimId  ${identityClaimId} genHash ${genHash} fileName ${getFileName(file.aquaTree!)}`)
-                              if (identityClaimId == genHash) {
+                              if (identityClaimId == genHashOfFile) {
                                     toast.error('This file is already attested')
                                     return
                               }
@@ -52,10 +71,12 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
                                     }
                               }
                         }
-                  }
+
             }
 
             setSelectedFileInfo(file)
+            // Later, to dismiss this specific toast:
+toast.dismiss(toastId); 
             // setOpenCreateClaimAttestationPopUp(true)
             setOpenDialog({
                   dialogType: 'identity_attestation',

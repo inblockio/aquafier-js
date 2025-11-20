@@ -343,12 +343,16 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                               //       setFiles({ fileData: [...files.fileData, response.data.files], status: 'loaded' })
                               // }
 
-                              toast.success('Aqua tree created successfully')
-                              callBack && callBack()
-                              // navigate('/app')
-                              setModalFormErorMessae('')
-                              setFormData({})
-                              setSubmittingTemplateData(false)
+                              if (account == session?.address) {
+                                    // show success toast only if saving to own account
+                                    toast.success('Aqua tree created successfully')
+                                    callBack && callBack()
+                                    // navigate('/app')
+                                    setModalFormErorMessae('')
+                                    setFormData({})
+                                    setSubmittingTemplateData(false)
+                              }
+
                         }
                   }
             } catch (error) {
@@ -936,6 +940,11 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
             // Handle identity_attestation specific logic
             if (selectedTemplate && selectedTemplate.name === 'identity_attestation') {
+                  console.log(`handling identity attestation post signing`)
+
+                  let walletAddress = "";
+
+
                   const allHashes = Object.keys(selectedFileInfo!.aquaTree!.revisions!)
                   let secondRevision: Revision | null = null
 
@@ -943,11 +952,44 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         secondRevision = selectedFileInfo!.aquaTree!.revisions![allHashes[2]]
                   }
 
-                  if (secondRevision == null) {
-                        throw new Error('No second revision found in claim, unable to share with claim creator')
+                  if (secondRevision == null || !secondRevision.signature_wallet_address) {
+                        // throw new Error('No second revision found in claim, unable to share with claim creator')
+
+                        console.warn('No second revision found in claim, attempting to get wallet from genesis revision')
+
+                        let genHash = getGenesisHash(signedAquaTree)
+                        if (!genHash) {
+                              throw new Error('Genesis hash not found in signed aqua tree')
+                        }
+                        let revision = signedAquaTree.revisions![genHash]
+                        if (!revision) {
+                              throw new Error('Revision not found for genesis hash in signed aqua tree')
+                        }
+                        if (!revision["forms_claim_wallet_address"]) {
+                              throw new Error('forms_claim_wallet_address not found in revision of signed aqua tree')
+                        }
+
+                        console.log(`found genesis revision wallet address: ${revision["forms_claim_wallet_address"]}`)
+                        walletAddress = revision["forms_claim_wallet_address"] as string
+
+
+                  } else {
+                        walletAddress = secondRevision.signature_wallet_address!
                   }
 
-                  await saveAquaTree(signedAquaTree, fileObject, true, false, secondRevision.signature_wallet_address!)
+
+                  console.log(`sharing identity attestation with claim creator at wallet address: ${walletAddress}`)
+
+
+
+
+                  if (walletAddress && walletAddress.length > 0) {
+
+                        await saveAquaTree(signedAquaTree, fileObject, true, false, walletAddress)// secondRevision.signature_wallet_address!)
+                  } else {
+                        console.warn('No wallet address found to share identity attestation with claim creator')
+                  }
+
             }
 
             // Trigger reload for the specific workflow type and stats
