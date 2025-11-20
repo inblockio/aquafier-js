@@ -178,11 +178,11 @@ export default function FilesListItem({
                               </div>
 
                               {
-                                    workflowInfo && workflowInfo.workFlow == 'identity_claim' && (
+                                    workflowInfo && ['identity_claim', 'phone_number_claim', 'email_claim', 'user_signature'].includes(workflowInfo.workFlow) ? (
                                           <div className="w-[100px]">
                                                 <AttestAquaClaim file={file} index={index} />
                                           </div>
-                                    )
+                                    ) : null
                               }
 
                               <div className="w-[100px]">
@@ -219,7 +219,7 @@ export default function FilesListItem({
             if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'aqua_sign') {
                   return workFlowAquaSignActions()
             }
-            if (workflowInfo?.isWorkFlow == true && (workflowInfo.workFlow == 'domain_claim' || workflowInfo.workFlow == 'identity_claim')) {
+            if (workflowInfo?.isWorkFlow == true && (["domain_claim", "identity_claim", "user_signature"].includes(workflowInfo.workFlow))) {
                   return workFlowIdentityClaimActions(workflowInfo)
             }
 

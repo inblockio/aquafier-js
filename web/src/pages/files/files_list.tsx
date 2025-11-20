@@ -18,7 +18,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [view, setView] = useState<'table' | 'card'>('table')
       const [isSmallScreen, setIsSmallScreen] = useState(false)
       const [uniqueWorkflows, setUniqueWorkflows] = useState<{ name: string, count: number }[]>([])
-      const [selectedWorkflow, setSelectedWorkflow] = useState<string>('all') //aqua_files
+      const [selectedWorkflow, setSelectedWorkflow] = useState<string>('aqua_files') //aqua_files
       const [stats, setStats] = useState<IUserStats>(emptyUserStats)
 
       const [systemAquaFileNames, setSystemAquaFileNames] = useState<string[]>([])

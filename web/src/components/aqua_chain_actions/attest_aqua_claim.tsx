@@ -67,8 +67,10 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
             })
       }
 
+      // console.log("Second revision: ", secondRevision)
+
       if (secondRevision) {
-            if (secondRevision.revision_type == 'signature') {
+            if (secondRevision.revision_type == 'signature' || secondRevision.revision_type === "link") {
                   if (secondRevision.signature_wallet_address == session?.address) {
                         return (
                               <Button
