@@ -1,16 +1,16 @@
-import {ensureDomainUrlHasSSL, getAquaTreeFileName, getGenesisHash, isWorkFlowData} from '../../utils/functions'
+import {ensureDomainUrlHasSSL, getGenesisHash} from '../../utils/functions'
 import {useStore} from 'zustand'
 import appStore from '../../store'
 import {ApiFileInfo} from '../../models/FileInfo'
 import {toast} from 'sonner'
 import {Album} from 'lucide-react'
-import {OrderRevisionInAquaTree, Revision} from 'aqua-js-sdk'
+import {Revision} from 'aqua-js-sdk'
 import {Button} from '../ui/button'
 import axios from 'axios'
 import { API_ENDPOINTS } from '@/utils/constants'
 
 export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; index: number; children?: React.ReactNode }) => {
-      const { files, session, openDialog, setOpenDialog, setSelectedFileInfo, systemFileInfo , backend_url} = useStore(appStore)
+      const { session, openDialog, setOpenDialog, setSelectedFileInfo , backend_url} = useStore(appStore)
       // const [isAttesting, setIsAttesting] = useState(false)
       // const [open, setOpen] = useState(false)
       // const [isLoading, setIsloading] = useState(false)
