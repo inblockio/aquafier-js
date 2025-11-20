@@ -77,7 +77,7 @@ export const ConnectWalletPageAppKit = () => {
   const handleSignOut = useCallback(async () => {
     try {
       await disconnect()
-      toast.success('Signed out successfully')
+      toast.success('Signed out successfully.')
 
     } catch (error: any) {
       // Check if it's the permission revocation error

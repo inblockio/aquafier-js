@@ -2,12 +2,14 @@ import { useEffect, lazy, Suspense, useState } from 'react'
 import { useAppKit, useAppKitAccount, useDisconnect } from '@reown/appkit/react'
 import { Button } from './ui/button'
 import { LuWallet, LuLogOut, LuLoaderCircle } from 'react-icons/lu'
-import { formatCryptoAddress, generateAvatar, fetchFiles } from '../utils/functions'
+import { formatCryptoAddress, generateAvatar, fetchFiles, getCookie, ensureDomainUrlHasSSL, setCookie } from '../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../store'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog'
 import { ethers } from 'ethers'
 import { toast } from 'sonner'
+import { SESSION_COOKIE_NAME } from '../utils/constants'
+import axios from 'axios'
 
 // Lazy load the WalletAddressProfile component
 const WalletAddressProfile = lazy(() => import('@/pages/v2_claims_workflow/WalletAddressProfile'))
@@ -83,12 +85,15 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
 
   const handleSignOut = async () => {
   setIsSigningOut(true)
-  toast.info('Signing out...')
+ let id= toast.info('Signing out...')
   
   try {
     await disconnect()
-    toast.success('Signed out successfully')
+    toast.dismiss(id)
+    toast.success('Signed out successfully,,')
     setIsProfileOpen(false)
+
+    
   } catch (error: any) {
     // Check if it's the permission revocation error
     const isPermissionError = error?.message?.includes('revoke permissions') || 
@@ -97,7 +102,7 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
     if (isPermissionError) {
       // Still consider it a success since wallet disconnects anyway
       console.warn('Permission revocation failed, but wallet disconnected:', error)
-      toast.success('Signed out successfully')
+      toast.success('Signed out successfully...')
       setIsProfileOpen(false)
     } else {
       // Only show error for other types of failures
@@ -105,6 +110,34 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
       toast.error('Error signing out')
     }
   } finally {
+    try {
+        const nonce = getCookie(SESSION_COOKIE_NAME)
+      
+     if (nonce) {
+        const backend_url = appStore.getState().backend_url
+        const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
+        await axios.delete(url, {
+          params: { nonce },
+        })
+      }
+
+      // Clear cookie
+      setCookie(SESSION_COOKIE_NAME, '', new Date('1970-01-01T00:00:00Z'))
+
+      // Clear store
+      const store = appStore.getState()
+      store.setMetamaskAddress(null)
+      store.setAvatar(undefined)
+      store.setSession(null)
+      store.setFiles({
+        fileData: [],
+        status: 'idle',
+      })
+    } catch (error) {
+      console.error('Failed to sign out:', error)
+      // Clear local state even if backend fails
+      setCookie(SESSION_COOKIE_NAME, '', new Date('1970-01-01T00:00:00Z'))
+    }
     setIsSigningOut(false)
   }
 }
