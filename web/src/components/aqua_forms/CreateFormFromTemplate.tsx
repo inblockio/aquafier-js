@@ -63,7 +63,7 @@ import SignatureCanvas from 'react-signature-canvas'
 import { Session } from '@/types'
 import { ApiInfoData } from '@/types/types'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
-
+ 
 // const CreateFormF romTemplate  = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       selectedTemplate: FormTemplate;

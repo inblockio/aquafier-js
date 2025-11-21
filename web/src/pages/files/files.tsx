@@ -50,7 +50,7 @@ const FilesPage = () => {
       const [stats, setStats] = useState<IUserStats>(emptyUserStats)
       const [loading, setLoading] = useState(false)
       // const [isSelectedFileDialogOpen, setIsSelectedFileDialogOpen] = useState(false)
-
+ 
       // Helper function to clear file input
       const clearFileInput = () => {
             if (fileInputRef.current) {

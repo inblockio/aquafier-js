@@ -20,7 +20,7 @@ import { CompleteChainView } from '@/components/files_chain_details'
 import { getAquaTreeFileName } from '@/utils/functions'
 import { IDrawerStatus } from '@/models/AquaTreeDetails'
 import { useState } from 'react'
-
+import { RELOAD_KEYS, triggerWorkflowReload } from '../utils/reloadDatabase';
 export default function NewShadcnLayoutWithSidebar() {
 
       const {
@@ -32,7 +32,7 @@ export default function NewShadcnLayoutWithSidebar() {
             formTemplates
       } = useStore(appStore)
 
-       const [_drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
+      const [_drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
 
       return (
             <>
@@ -191,7 +191,10 @@ export default function NewShadcnLayoutWithSidebar() {
                                     {openDialog?.dialogType === 'aqua_sign' && (
                                           <CreateFormFromTemplate
                                                 selectedTemplate={formTemplates.find(template => template.name === 'aqua_sign')!}
-                                                callBack={function (): void {
+                                                callBack={async function (): Promise<void> {
+                                                      await triggerWorkflowReload(RELOAD_KEYS.aqua_sign, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
                                                       setOpenDialog(null)
                                                 }}
                                                 openCreateTemplatePopUp={false}
@@ -201,7 +204,10 @@ export default function NewShadcnLayoutWithSidebar() {
                                     {openDialog?.dialogType === 'user_signature' && (
                                           <CreateFormFromTemplate
                                                 selectedTemplate={formTemplates.find(template => template.name === 'user_signature')!}
-                                                callBack={function (): void {
+                                                callBack={async function (): Promise<void> {
+                                                      await triggerWorkflowReload(RELOAD_KEYS.user_signature, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
                                                       setOpenDialog(null)
                                                 }}
                                                 openCreateTemplatePopUp={false}
@@ -211,7 +217,10 @@ export default function NewShadcnLayoutWithSidebar() {
                                     {openDialog?.dialogType === 'identity_claim' && (
                                           <CreateFormFromTemplate
                                                 selectedTemplate={formTemplates.find(template => template.name === 'identity_claim')!}
-                                                callBack={function (): void {
+                                                callBack={async function (): Promise<void> {
+                                                      await triggerWorkflowReload(RELOAD_KEYS.identity_claim, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
                                                       setOpenDialog(null)
                                                 }}
                                                 openCreateTemplatePopUp={false}
@@ -222,7 +231,12 @@ export default function NewShadcnLayoutWithSidebar() {
                                     {openDialog?.dialogType === 'dba_claim' && (
                                           <CreateFormFromTemplate
                                                 selectedTemplate={formTemplates.find(template => template.name === 'dba_claim')!}
-                                                callBack={function (): void {
+                                                callBack={async function (): Promise<void> {
+
+                                                      await triggerWorkflowReload(RELOAD_KEYS.dba_claim, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+
                                                       setOpenDialog(null)
                                                 }}
                                                 openCreateTemplatePopUp={false}
@@ -233,7 +247,11 @@ export default function NewShadcnLayoutWithSidebar() {
                                     {openDialog?.dialogType === 'dns_claim' && (
                                           <CreateFormFromTemplate
                                                 selectedTemplate={formTemplates.find(template => template.name === 'domain_claim')!}
-                                                callBack={function (): void {
+                                                callBack={async function (): Promise<void> {
+                                                      await triggerWorkflowReload(RELOAD_KEYS.domain_claim, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+
                                                       setOpenDialog(null)
                                                 }}
                                                 openCreateTemplatePopUp={false}
@@ -243,7 +261,10 @@ export default function NewShadcnLayoutWithSidebar() {
                                     {openDialog?.dialogType === 'identity_attestation' && (
                                           <CreateFormFromTemplate
                                                 selectedTemplate={formTemplates.find(template => template.name === 'identity_attestation')!}
-                                                callBack={function (): void {
+                                                callBack={async function (): Promise<void> {
+                                                      await triggerWorkflowReload(RELOAD_KEYS.identity_attestation, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
                                                       setOpenDialog(null)
                                                 }}
                                                 openCreateTemplatePopUp={false}
@@ -253,7 +274,12 @@ export default function NewShadcnLayoutWithSidebar() {
                                     {openDialog?.dialogType === 'email_claim' && (
                                           <CreateFormFromTemplate
                                                 selectedTemplate={formTemplates.find(template => template.name === 'email_claim')!}
-                                                callBack={function (): void {
+                                                callBack={async function (): Promise<void> {
+
+                                                      await triggerWorkflowReload(RELOAD_KEYS.email_claim, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+
                                                       setOpenDialog(null)
                                                 }}
                                                 openCreateTemplatePopUp={false}
@@ -263,7 +289,11 @@ export default function NewShadcnLayoutWithSidebar() {
                                     {openDialog?.dialogType === 'phone_number_claim' && (
                                           <CreateFormFromTemplate
                                                 selectedTemplate={formTemplates.find(template => template.name === 'phone_number_claim')!}
-                                                callBack={function (): void {
+                                                callBack={async function (): Promise<void> {
+                                                      await triggerWorkflowReload(RELOAD_KEYS.phone_number_claim, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+
                                                       setOpenDialog(null)
                                                 }}
                                                 openCreateTemplatePopUp={false}
