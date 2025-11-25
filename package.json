@@ -6,8 +6,8 @@
     "web"
   ],
   "scripts": {
-    "dev": "bun run --filter '*' dev",
-    "build": "bun run --filter '*' build"
+    "dev": "npm run --workspaces dev",
+    "build": "npm run --workspaces build"
   },
   "trustedDependencies": [
     "@reown/appkit",
