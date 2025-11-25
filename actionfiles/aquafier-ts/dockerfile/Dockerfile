@@ -1,4 +1,4 @@
-FROM node:22-slim AS builder_npm_web
+FROM node:24-slim AS builder_npm_web
 
 WORKDIR /build/web
 COPY web .
@@ -6,7 +6,7 @@ RUN npm ci
 
 RUN npm run build
 
-FROM node:22-slim as builder_npm_api
+FROM node:24-slim as builder_npm_api
 
 # Copy and prepare backend
 WORKDIR /build/api
@@ -16,7 +16,7 @@ RUN npm ci
 # Compile TypeScript to JavaScript
 RUN npm run build
 
-FROM node:22-slim
+FROM node:24-slim
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
