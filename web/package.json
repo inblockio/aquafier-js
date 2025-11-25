@@ -61,7 +61,7 @@
     "mammoth": "^1.11.0",
     "next-themes": "^0.4.6",
     "pdf-lib": "^1.17.1",
-    "pino": "^9.14.0",
+    "pino": "^10.0.0",
     "prismjs": "^1.30.0",
     "random-avatar-generator": "^2.0.0",
     "react": "^19.2.0",
