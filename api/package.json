@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@types/estree": "^1.0.8",
-    "@types/node": "^22.19.1",
+    "@types/node": "^24.0.0",
     "@types/tap": "^18.0.0",
     "@types/ws": "^8.18.1",
     "ts-node": "^10.9.2",
