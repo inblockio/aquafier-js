@@ -192,7 +192,7 @@ jobs:
 
       - name: Publish Test Report
         if: always()
-        uses: mikepenz/action-junit-report@v5
+        uses: mikepenz/action-junit-report@v6
         with:
           report_paths: 'e2e/test-results/*.xml'
           check_name: Playwright Test Report
