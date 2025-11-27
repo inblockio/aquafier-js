@@ -1,5 +1,5 @@
 import path from "path";
-import { BrowserContext, chromium, Page } from "playwright";
+import { BrowserContext, chromium, Page, BrowserType } from "playwright";
 import { ethers } from 'ethers';
 import fs from "fs";
 import os from "os";
@@ -899,14 +899,30 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
     console.log(`metamaskPath: ${metamaskPath}`)
 
     const isCI = process.env.CI === 'true';
+    console.log(`CI environment: ${isCI}`);
+    console.log(`PLAYWRIGHT_BROWSERS_PATH: ${process.env.PLAYWRIGHT_BROWSERS_PATH}`);
+    
     // Create a temporary directory for user data
     const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'metamask-'));
     console.log(`userDataDir: ${userDataDir}`)
     
+    // Get the executable path for chromium
+    let executablePath = chromium.executablePath();
+    console.log(`Chromium executable path: ${executablePath}`);
+    
+    // Verify the executable exists, if not, warn
+    if (!fs.existsSync(executablePath)) {
+        console.error(`❌ Chromium executable not found at ${executablePath}`);
+        console.error(`This is a critical error. Playwright browsers may not be properly installed.`);
+        throw new Error(`Chromium executable not found at ${executablePath}. Make sure 'npx playwright install --with-deps chromium' was run.`);
+    }
+    console.log(`✓ Chromium executable found`);
+
     // Launch persistent context with proper settings for extensions
     // Extensions don't work well in headless mode, so we use headed mode
     const context = await chromium.launchPersistentContext(userDataDir, {
         headless: false,  // Extensions require headed mode
+        executablePath: executablePath, // Explicitly set the executable path
         args: [
             `--disable-extensions-except=${metamaskPath}`,
             `--load-extension=${metamaskPath}`,
@@ -917,11 +933,11 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
     });
 
     try {
-        console.log(`context created`)
+        console.log(`✓ Browser context created`)
 
         // Wait for MetaMask page to open
         await context.waitForEvent("page")
-        console.log(`context.waitForEvent("page")`)
+        console.log(`✓ MetaMask page appeared`)
 
         // Get the MetaMask page - it should be the second page opened
         const pages = context.pages();
