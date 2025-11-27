@@ -2,6 +2,7 @@ import path from "path";
 import { BrowserContext, chromium, Page } from "playwright";
 import { ethers } from 'ethers';
 import fs from "fs";
+import os from "os";
 
 
 
@@ -898,10 +899,12 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
     console.log(`metamaskPath: ${metamaskPath}`)
 
     const isCI = process.env.CI === 'true';
-    const userDataDir = '';
+    // Create a temporary directory for user data
+    const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'metamask-'));
+    console.log(`userDataDir: ${userDataDir}`)
+    
     const context = await chromium.launchPersistentContext(userDataDir, {
         headless: true,// isCI,
-        channel: 'chromium',
         args: [
             `--disable-extensions-except=${metamaskPath}`,
             `--load-extension=${metamaskPath}`,
