@@ -900,7 +900,7 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
     const isCI = process.env.CI === 'true';
     const userDataDir = '';
     const context = await chromium.launchPersistentContext(userDataDir, {
-        headless: isCI,
+        headless: true,// isCI,
         channel: 'chromium',
         args: [
             `--disable-extensions-except=${metamaskPath}`,
