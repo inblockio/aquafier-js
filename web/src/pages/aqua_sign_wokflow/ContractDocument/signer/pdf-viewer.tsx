@@ -75,16 +75,33 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
       } | null>(null)
       const [resizeState, setResizeState] = useState<ResizeState | null>(null)
 
+      // useEffect(() => {
+      //       if (typeof window !== 'undefined' && window.pdfjsLib) {
+      //             // window.pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`
+      //             window.pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.149/pdf.min.js`
+      //             setIsPdfjsLibLoaded(true)
+      //       } else if (typeof window !== 'undefined') {
+      //             console.warn('PDF.js library (window.pdfjsLib) not found on component mount.')
+      //             setPdfLoadingError('PDF viewer library failed to load. Please try refreshing the page.')
+      //       }
+      // }, [])
+
       useEffect(() => {
-            if (typeof window !== 'undefined' && window.pdfjsLib) {
-                  // window.pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`
-                  window.pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.149/pdf.min.mjs`
-                  setIsPdfjsLibLoaded(true)
-            } else if (typeof window !== 'undefined') {
-                  console.warn('PDF.js library (window.pdfjsLib) not found on component mount.')
-                  setPdfLoadingError('PDF viewer library failed to load. Please try refreshing the page.')
-            }
-      }, [])
+    if (typeof window !== 'undefined' && window.pdfjsLib) {
+        // window.pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`
+        
+        // PDF.js 5.x requires the module worker (NOT pdf.min.js)
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+            "https://unpkg.com/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs";
+
+        setIsPdfjsLibLoaded(true);
+    } else if (typeof window !== 'undefined') {
+        console.warn("PDF.js library (window.pdfjsLib) not found on component mount.");
+        setPdfLoadingError("PDF viewer library failed to load. Please try refreshing the page.");
+    }
+}, []);
+
+
 
       useEffect(() => {
             if (!file || !isPdfjsLibLoaded) {

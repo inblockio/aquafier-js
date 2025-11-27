@@ -10,11 +10,24 @@
   <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" async></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js" async></script> -->
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.149/pdf.min.mjs" async></script>
-  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs" async></script>
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.149/pdf.min.js" async></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.js" async></script> -->
   <!-- or -->
   <!-- <script src="https://unpkg.com/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs" async></script> -->
 
+   <!-- Correct way to load PDF.js 5.4.149 using ES modules -->
+  <script type="module">
+    import * as pdfjsLib from "https://unpkg.com/pdfjs-dist@5.4.149/build/pdf.min.mjs";
+
+    // Set worker source (must be module-based worker for 5.x)
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://unpkg.com/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs";
+
+    // Make PDF.js available globally if needed by your app
+    window.pdfjsLib = pdfjsLib;
+  </script>
+
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
