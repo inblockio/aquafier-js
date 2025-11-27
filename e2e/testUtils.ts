@@ -903,17 +903,21 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
     const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'metamask-'));
     console.log(`userDataDir: ${userDataDir}`)
     
+    // Launch persistent context with proper settings for extensions
+    // Extensions don't work well in headless mode, so we use headed mode
     const context = await chromium.launchPersistentContext(userDataDir, {
-        headless: true,// isCI,
+        headless: false,  // Extensions require headed mode
         args: [
             `--disable-extensions-except=${metamaskPath}`,
             `--load-extension=${metamaskPath}`,
+            '--no-sandbox',  // Required for CI environments
+            '--disable-setuid-sandbox',  // Required for CI environments
+            '--disable-gpu',  // Optional: can improve performance
         ],
     });
 
     try {
-        console.log(`context: ${JSON.stringify(context, null, 4)}`)
-
+        console.log(`context created`)
 
         // Wait for MetaMask page to open
         await context.waitForEvent("page")
