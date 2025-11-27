@@ -1,7 +1,7 @@
 import type React from 'react'
-import {useCallback, useEffect, useRef, useState} from 'react'
-import type {Annotation, ImageAnnotation, ProfileAnnotation, TextAnnotation} from './types'
-import {SignatureData} from '../../../../types/types'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { Annotation, ImageAnnotation, ProfileAnnotation, TextAnnotation } from './types'
+import { SignatureData } from '../../../../types/types'
 
 interface PdfViewerProps {
       file: File | null
@@ -77,7 +77,8 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
 
       useEffect(() => {
             if (typeof window !== 'undefined' && window.pdfjsLib) {
-                  window.pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`
+                  // window.pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`
+                  window.pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.149/pdf.min.mjs`
                   setIsPdfjsLibLoaded(true)
             } else if (typeof window !== 'undefined') {
                   console.warn('PDF.js library (window.pdfjsLib) not found on component mount.')
@@ -108,9 +109,19 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                   }
                   const typedArray = new Uint8Array(e.target.result as ArrayBuffer)
                   try {
-                        const loadingTask = window.pdfjsLib.getDocument({
-                              data: typedArray,
-                        })
+                        // const loadingTask = window.pdfjsLib.getDocument({
+                        //       data: typedArray,
+                        // })
+
+                        // NEW - Add recommended options for v5:
+const loadingTask = window.pdfjsLib.getDocument({
+      data: typedArray,
+      useSystemFonts: true, // Better font rendering
+      standardFontDataUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/standard_fonts/`
+      // this also works `https://unpkg.com/pdfjs-dist@5.4.149/standard_fonts/`,
+      //this fails  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.149/standard_fonts/`,
+})
+ 
                         const pdf = await loadingTask.promise
 
                         if (pdf.numPages === 0) {
@@ -162,8 +173,17 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                   setPdfLoadingError(null)
 
                   // Cancel any existing render task
+                  // if (renderTaskRef.current) {
+                  //       renderTaskRef.current.cancel()
+                  //       renderTaskRef.current = null
+                  // }
                   if (renderTaskRef.current) {
-                        renderTaskRef.current.cancel()
+                        try {
+                              renderTaskRef.current.cancel()
+                        } catch (e) {
+                              // Cancellation may throw in v5
+                              console.warn('PDF-VIEWER Error cancelling previous render task:', e)
+                        }
                         renderTaskRef.current = null
                   }
 
@@ -202,9 +222,14 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                         renderTaskRef.current = null // Clear reference after successful render
                   } catch (error: any) {
                         // Only handle non-cancellation errors
-                        if (error.name !== 'RenderingCancelledException') {
+                        // if (error.name !== 'RenderingCancelledException') {
+                        //       throw error
+                        // }
+
+                        if (error.name !== 'RenderingCancelledException' && error.message !== 'Rendering cancelled' && !error.message.includes('cancelled')) {
                               throw error
                         }
+
                         // If cancelled, don't update dimensions or throw error
                         renderTaskRef.current = null
                   }
@@ -638,7 +663,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
       }
 
       return (
-            <div className="py-4 px-2 h-auto md:h-full" ref={viewerRef} onClick={handleViewerClick}  data-testid="pdf-canvas-wrapper">
+            <div className="py-4 px-2 h-auto md:h-full" ref={viewerRef} onClick={handleViewerClick} data-testid="pdf-canvas-wrapper">
                   {!file && <p className="text-gray-700 dark:text-gray-400">Upload a PDF to start annotating.</p>}
                   {file && !isPdfjsLibLoaded && !pdfLoadingError && <p className="text-gray-700 dark:text-gray-400">Initializing PDF viewer...</p>}
                   {pdfLoadingError && <p className="text-center px-4">{pdfLoadingError}</p>}
@@ -649,19 +674,19 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                               {pdfDoc && (
                                     <div className="relative flex flex-col justify-start overflow-x-auto">
                                           <div
-                                           data-testid="pdf-canvas-container"
+                                                data-testid="pdf-canvas-container"
                                                 className="relative h-auto md:h-full shadow-lg bg-white"
                                                 style={
                                                       pageDimensions.width > 0 && pageDimensions.height > 0
                                                             ? {
-                                                                    width: pageDimensions.width,
-                                                                    height: pageDimensions.height,
-                                                              }
+                                                                  width: pageDimensions.width,
+                                                                  height: pageDimensions.height,
+                                                            }
                                                             : {
-                                                                    width: 1,
-                                                                    height: 1,
-                                                                    visibility: 'hidden',
-                                                              }
+                                                                  width: 1,
+                                                                  height: 1,
+                                                                  visibility: 'hidden',
+                                                            }
                                                 }
                                           >
                                                 {/* <ScrollArea className="w-full h-full"> */}
