@@ -36,7 +36,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const { subscribe } = useNotificationWebSocketContext();
 
       const loadSystemAquaFileNames = async () => {
-            if (!session?.nonce) return
+            // if (!session?.nonce) return
             const aquaSystemNamesService = AquaSystemNamesService.getInstance();
             const systemNames = await aquaSystemNamesService.getSystemNames();
             // return systemNames;
@@ -86,11 +86,11 @@ export default function FilesList(filesListProps: FilesListProps) {
 
       // Upgraded way of identifying different workflows based on user stats endpoint
       useEffect(() => {
-            if (session?.nonce) {
+            if (session?.nonce && backend_url) {
                   getUserStats()
                   loadSystemAquaFileNames()
             }
-      }, [session?.address, session?.nonce])
+      }, [session?.address, session?.nonce, backend_url])
 
       useEffect(() => {
             if(tabFromUrl){

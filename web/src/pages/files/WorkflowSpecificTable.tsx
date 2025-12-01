@@ -23,7 +23,7 @@ interface IWorkflowSpecificTable {
 }
 
 const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScreen, systemAquaFileNames }: IWorkflowSpecificTable) => {
-
+ 
     const { session, backend_url } = useStore(appStore)
 
     const [files, setFiles] = useState<ApiFileInfo[]>([])
@@ -32,7 +32,6 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
     const [loading, setLoading] = useState(true)
 
     const { subscribe } = useNotificationWebSocketContext();
-    // const [isProcessingClaims, setIsProcessingClaims] = useState(true)
 
     const loadFiles = async () => {
         if (!session?.address || !backend_url) return;
@@ -101,8 +100,8 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
     // Watch for reload triggers with dynamic key
     useReloadWatcher({
         key: getReloadKey(workflowName),
-        onReload: () => {
-            loadFiles();
+        onReload: async () => {
+            await loadFiles();
         }
     });
 
@@ -110,7 +109,7 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
         const unsubscribe = subscribe((message) => {
             if (message.type === 'notification_reload' && message.data && message.data.target === "workflows") {
                 loadFiles()
-                triggerWorkflowReload("contacts")
+                triggerWorkflowReload(RELOAD_KEYS.contacts);
             }
         });
         return unsubscribe;

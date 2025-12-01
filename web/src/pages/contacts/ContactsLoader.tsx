@@ -22,6 +22,10 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
   onLoadingChange
 }) => {
   const { session, backend_url } = useStore(appStore);
+
+  const [localSession, setLocalSession] = useState(session);
+  const [localBackendUrl, setLocalBackendUrl] = useState(backend_url);
+
   const [files, setFiles] = useState<ApiFileInfo[]>([]);
   const [systemAquaFileNames, setSystemAquaFileNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -34,7 +38,7 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
 
   // Load system aqua file names
   const loadSystemAquaFileNames = async () => {
-    if (!session?.nonce) return;
+    if (!localBackendUrl || !localSession?.nonce) return;
     
     try {
       // First try to load from cache
@@ -45,10 +49,10 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
       }
 
       // Always fetch fresh data from backend and update cache
-      const response = await axios.get(`${backend_url}/${API_ENDPOINTS.SYSTEM_AQUA_FILES_NAMES}`, {
+      const response = await axios.get(`${localBackendUrl}/${API_ENDPOINTS.SYSTEM_AQUA_FILES_NAMES}`, {
         headers: {
-          'nonce': session.nonce,
-          'metamask_address': session.address
+          'nonce': localSession.nonce,
+          'metamask_address': localSession.address
         }
       });
       
@@ -72,7 +76,7 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
 
   // Load contact trees from backend
   const loadContactTrees = async () => {
-    if (!session?.address || !backend_url) return;
+    if (!localSession?.address || !localBackendUrl) return;
     setLoading(true);
     onLoadingChange?.(true);
 
@@ -83,10 +87,10 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
         claim_types: JSON.stringify(IDENTITY_CLAIMS),
       };
 
-      const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
+      const filesDataQuery = await axios.get(`${localBackendUrl}/${API_ENDPOINTS.GET_PER_TYPE}`, {
         headers: {
           'Content-Type': 'application/json',
-          'nonce': `${session!.nonce}`
+          'nonce': `${localSession!.nonce}`
         },
         params
       });
@@ -295,16 +299,25 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
 
   // Effects
   useEffect(() => {
-    loadSystemAquaFileNames();
-  }, [session?.nonce]);
+    if(backend_url && session?.nonce){
+      loadSystemAquaFileNames();
+    }
+  }, [session?.nonce, backend_url]);
 
   useEffect(() => {
     loadContactTrees();
-  }, [backend_url, session?.address]);
+  }, [localBackendUrl, localSession?.address]);
 
   useEffect(() => {
     generateContacts();
   }, [watchFilesChange, systemAquaFileNames]);
+
+  useEffect(() => {
+    if (session && backend_url){
+      setLocalBackendUrl(backend_url);
+      setLocalSession(session);
+    }
+  }, [session, backend_url]);
 
   return (
     <div className="hidden">

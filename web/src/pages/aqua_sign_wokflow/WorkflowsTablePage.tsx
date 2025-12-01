@@ -378,7 +378,6 @@ export default function WorkflowsTablePage() {
       useReloadWatcher({
             key: 'aqua_sign',
             onReload: () => {
-                  console.log('Reloading Aqua Sign workflows...');
                   loadWorkflowsData();
             }
       });

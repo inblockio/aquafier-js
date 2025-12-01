@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { reloadDB, clearReload } from '@/utils/reloadDatabase';
 
@@ -20,8 +20,10 @@ export const useReloadWatcher = ({
     [key]
   );
 
-  const handleReload = useCallback(async () => {
+  const handleReload = async () => {
+    console.log("reloading")
     try {
+      console.log("Here reloading", key, typeof onReload, onReload);
       await onReload();
       
       if (autoReset) {
@@ -35,7 +37,7 @@ export const useReloadWatcher = ({
         await clearReload(key);
       }
     }
-  }, [key, onReload, autoReset]);
+  };
 
   useEffect(() => {
     if (reloadConfig?.value === true) {

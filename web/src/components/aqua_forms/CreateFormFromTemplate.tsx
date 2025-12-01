@@ -994,6 +994,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
             // Trigger reload for the specific workflow type and stats
             await triggerWorkflowReload(selectedTemplate.name, true);
+            
             if (selectedTemplate.name === 'identity_attestation') {
                   await triggerWorkflowReload(RELOAD_KEYS.user_profile);
             }

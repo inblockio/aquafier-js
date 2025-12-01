@@ -253,7 +253,7 @@ export const ConnectWalletPageMetamask = () => {
   const checkForMultipleWallets = (): boolean => {
     const walletInfo = detectInstalledWallets()
 
-    console.log(`waallet info ${JSON.stringify(walletInfo)}`)
+    // console.log(`waallet info ${JSON.stringify(walletInfo)}`)
     setDetectedWallets(walletInfo.wallets)
     setHasMultipleWallets(walletInfo.hasMultiple)
 
