@@ -4,7 +4,6 @@ import ecsFormat from "@elastic/ecs-winston-format";
 
 const CustomLogger = winston.createLogger({
     level: 'info',
-    defaultMeta: {service: process.env.SERVICE_NAME || 'api'},
     format: ecsFormat(),
     transports: [
         new winston.transports.Console({
