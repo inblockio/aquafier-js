@@ -227,7 +227,7 @@ export default function FilesListItem({
             if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'aqua_sign') {
                   return workFlowAquaSignActions()
             }
-            if (workflowInfo?.isWorkFlow == true && (["domain_claim", "identity_claim", "user_signature", "email_claim"].includes(workflowInfo.workFlow))) {
+            if (workflowInfo?.isWorkFlow == true && (["domain_claim", "identity_claim", "user_signature", "email_claim", "phone_number_claim"].includes(workflowInfo.workFlow))) {
                   return workFlowIdentityClaimActions(workflowInfo)
             }
 

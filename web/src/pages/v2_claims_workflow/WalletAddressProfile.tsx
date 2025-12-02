@@ -154,7 +154,7 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
             if (claim.claimType === "user_signature") {
                   return (
                         <div className="flex gap-2 items-center">
-                              <div className="p-1 rounded-md w-[120px]">
+                              <div className="p-1 rounded-md w-[120px] relative">
                                     {
                                           signatureImage ? (
                                                 typeof signatureImage === 'string' ? (
@@ -168,6 +168,15 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                                           ) : (
                                                 <img src={`${window.location.origin}/images/placeholder-img.png`} alt={claim.claimName} />
                                           )
+                                    }
+                                    {
+                                          claim.attestationsCount > 0 ? (
+                                                <div className="absolute bottom-0 right-0 w-[34px] h-[34px]">
+                                                      <div className="h-[34px] w-[34px] flex items-center justify-center">
+                                                            <LucideCheckCircle size={ICON_SIZE} className='text-green-500' />
+                                                      </div>
+                                                </div>
+                                          ) : null
                                     }
                               </div>
                         </div>
@@ -804,7 +813,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                                 signatureHash ? (
                                                       <div className="flex gap-2 ">
                                                             <div className='h-10 w-10 min-h-10 min-w-10 bg-primary/10 rounded-md flex items-center justify-center'>
-                                                            <SignatureIcon size={20} />
+                                                                  <SignatureIcon size={20} />
                                                             </div>
                                                             <p className="text-xs break-all">{signatureHash}</p>
                                                       </div>

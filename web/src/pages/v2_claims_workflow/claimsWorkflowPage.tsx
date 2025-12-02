@@ -148,7 +148,7 @@ export default function ClaimsWorkflowPage() {
                         if (_walletAddress === walletAddress) {
                               const processedClaimInfo = processSimpleWorkflowClaim(file)
                               let processedAttestations: Array<IAttestationEntry> = []
-                              if (["simple_claim", "identity_claim", "dns_claim", "domain_claim", "phone_number_claim", "email_claim"].includes(processedClaimInfo.claimInformation.forms_type)) {
+                              if (["simple_claim", "identity_claim", "dns_claim", "domain_claim", "phone_number_claim", "email_claim", "user_signature"].includes(processedClaimInfo.claimInformation.forms_type)) {
                                     processedAttestations = await loadAttestationData(processedClaimInfo.genesisHash!, _attestations)
                               }
                               const sharedContracts = await loadSharedContractsData(lastRevisionHash)
@@ -182,7 +182,45 @@ export default function ClaimsWorkflowPage() {
             // }
             else if (claimInfo.forms_type === 'user_signature') {
                   return (
-                        <UserSignatureClaim claim={claim} />
+                        <div className="grid lg:grid-cols-12 gap-4 relative" id={`${genesisRevisionHash}`}>
+                              <div className='col-span-7 bg-gray-50 p-2'>
+                                    <div className="flex flex-col gap-2">
+                                          <UserSignatureClaim claim={claim} />
+                                          {claim.processedInfo?.walletAddress?.trim().toLowerCase() === session?.address?.trim().toLowerCase() && (
+                                                <ShareButton item={claim.file} nonce={session!.nonce} />
+                                          )}
+                                    </div>
+                              </div>
+                              <div className='col-span-5 p-2'>
+                                    <div className="flex flex-col gap-2 h-full">
+                                          {claim.attestations.length > 0 ? (
+                                                <div className="flex flex-col gap-2">
+                                                      <h3 className="text-lg font-bold text-center">Claim Attestations</h3>
+                                                      <div className="flex flex-col gap-0 max-h-[300px] overflow-y-auto">
+                                                            {claim.attestations.map((attestation, index) => (
+                                                                  <AttestationEntry
+                                                                        key={`attestation-${index}_${genesisRevisionHash}`}
+                                                                        walletAddress={attestation.walletAddress}
+                                                                        context={attestation.context}
+                                                                        createdAt={timeToHumanFriendly(attestation.createdAt, true) ?? ''}
+                                                                        nonce={session!.nonce}
+                                                                        file={attestation.file}
+                                                                  />
+                                                            ))}
+                                                      </div>
+                                                </div>
+                                          ) : (
+                                                <div className="text-center py-8 flex flex-col gap-2 items-center justify-center h-full bg-gray-50">
+                                                      <h3 className="text-lg font-bold text-center">Claim Attestations</h3>
+                                                      <p className="text-gray-600">No attestations found for this claim.</p>
+                                                      {claim.processedInfo?.walletAddress?.trim().toLowerCase() !== session?.address?.trim().toLowerCase() && (
+                                                            <AttestAquaClaim file={claim.file!!} index={1} />
+                                                      )}
+                                                </div>
+                                          )}
+                                    </div>
+                              </div>
+                        </div>
                   )
             }
             else {
@@ -211,7 +249,7 @@ export default function ClaimsWorkflowPage() {
                                                       <div className="flex flex-col gap-0 max-h-[300px] overflow-y-auto">
                                                             {claim.attestations.map((attestation, index) => (
                                                                   <AttestationEntry
-                                                                        key={`attestation-${index}`}
+                                                                        key={`attestation-${index}_${genesisRevisionHash}`}
                                                                         walletAddress={attestation.walletAddress}
                                                                         context={attestation.context}
                                                                         createdAt={timeToHumanFriendly(attestation.createdAt, true) ?? ''}
