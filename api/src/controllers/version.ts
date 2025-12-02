@@ -1,5 +1,6 @@
 import { FastifyInstance } from "fastify";
 import logger from "../utils/logger";
+import CustomLogger from "../utils/logger_test";
 // import logger from "../utils/logger";
 
 export default async function versionController(fastify: FastifyInstance) {
@@ -12,7 +13,7 @@ export default async function versionController(fastify: FastifyInstance) {
         const aquifier = process.env.AQUIFIER_VERSION || "3.2.0";
         const protocol = process.env.PROTOCOL_VERSION || "3.2.0";
 
-        logger.info("Received request", {
+        CustomLogger.info("Received request", {
             "labels": {
                 "nonce": request.headers['nonce'],
                 "url": request.url,
