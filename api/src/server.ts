@@ -34,6 +34,8 @@ import DNSClaimVerificationController from './controllers/dns_claim_verification
 import metricsController from './controllers/metrics';
 import workflowsController from './controllers/workflow';
 import enhancedWebSocketController from './controllers/websocketController2';
+import { prisma } from './database/db';
+import logger from './utils/logger';
 
 
 function buildServer() {
@@ -162,16 +164,55 @@ function buildServer() {
     fastify.register(metricsController);
     fastify.register(workflowsController);
 
-
-
-    // fastify.addHook("onRequest", async function (request, reply, done) {
-    //     const nonce = request.headers['nonce'];
-    //     const activeSpan = getCurrentActiveSpan();
-    //     if (activeSpan && typeof nonce == 'string') {
-    //         activeSpan.setAttribute("nonce", nonce);
-    //     }
-    //     done()
-    // })
+    // Hook to add wallet address to labels when user is authenticated
+    fastify.addHook("onRequest", async function (request, reply) {
+        const nonce = request.headers['nonce'];
+        
+        if (typeof nonce === 'string' && nonce.trim() !== '') {
+            try {
+                const session = await prisma.siweSession.findUnique({
+                    where: { nonce }
+                });
+                
+                if (session && session.address) {
+                    // Add wallet address to request for logging purposes
+                    (request as any).walletAddress = session.address;
+                    
+                    // Log the authenticated request with wallet address
+                    logger.info('Request received', {
+                        labels: {
+                            wallet_address: session.address,
+                            url: request.url,
+                            method: request.method
+                        }
+                    });
+                } else {
+                    logger.info('Unauthenticated request received', {
+                        labels: {
+                            url: request.url,
+                            method: request.method
+                        }
+                    });
+                }
+            } catch (error: any) {
+                logger.debug('Failed to look up session for nonce', { error: error.message });
+                logger.info('Unauthenticated request received', {
+                    labels: {
+                        url: request.url,
+                        method: request.method
+                    }
+                });
+            }
+        } else {
+            // No nonce provided - log as unauthenticated
+            logger.info('Unauthenticated request received', {
+                labels: {
+                    url: request.url,
+                    method: request.method
+                }
+            });
+        }
+    });
 
     return fastify
 
