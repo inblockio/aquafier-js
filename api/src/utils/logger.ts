@@ -4,15 +4,22 @@ import ecsFormat from "@elastic/ecs-winston-format";
 
 const Logger = winston.createLogger({
   level: process.env.NODE_ENV === 'production' ? 'warn' : 'info',
-  format: winston.format.combine(
-    ecsFormat({ convertReqRes: true })
-  ),
+  // format: winston.format.combine(
+  //   ecsFormat({ convertReqRes: true })
+  // ),
+  // transports: [
+  //   new winston.transports.File({
+  //     filename: 'aquafier.log',
+  //     handleExceptions: true,
+  //     handleRejections: true,
+  //   }),
+  // ],
+  format: ecsFormat(),
   transports: [
-    new winston.transports.File({
-      filename: 'aquafier.log',
-      handleExceptions: true,
-      handleRejections: true,
-    }),
+      new winston.transports.Console({
+          handleExceptions: true,
+          handleRejections: true,
+      }),
   ],
   exitOnError: false,
 });
