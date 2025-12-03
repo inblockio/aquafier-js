@@ -51,7 +51,6 @@ services:
       - .env
     volumes:
       - app_data:/app/backend/media
-
     # Enable log collection for this container
     labels:
       co.elastic.logs/enabled: "true"
@@ -59,7 +58,6 @@ services:
       co.elastic.logs/json.overwrite_keys: "true"
       co.elastic.logs/json.add_error_key: "true"
       co.elastic.logs/json.expand_keys: "true"
-      co.elastic.logs/json.message_key: "message"
 
   proxy:
     image: ghcr.io/inblockio/ngnix-proxy:master

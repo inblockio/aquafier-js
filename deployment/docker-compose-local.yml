@@ -13,8 +13,6 @@ services:
       - "co.elastic.logs/enabled=true"
     ports:
       - 5432:5432
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U aquafier -d aquafier" ]
       interval: 5s
@@ -49,10 +47,10 @@ services:
     command: [ "-e", "--strict.perms=false" ]  # config is root-owned on many hosts
 
   aqua-container:
-    #    build:
-    #      context: ./..
-    #      dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
-    image: ghcr.io/inblockio/aquafier-js:dev
+    build:
+      context: ./..
+      dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
+    #    image: ghcr.io/inblockio/aquafier-js:dev
     restart: always
     labels:
       co.elastic.logs/enabled: true
