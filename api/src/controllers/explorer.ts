@@ -351,7 +351,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             Logger.info(` ${isWorkFlow + "--"} `)
             await saveAquaTree(aquaTree, walletAddress, templateId.length == 0 ? null : templateId, isWorkFlow);
 
-            Logger.info(`Aquatree to db ${JSON.stringify(aquaTree, null, 4)}`)
+            // Logger.info(`Aquatree to db ${JSON.stringify(aquaTree, null, 4)}`)
             // Get the host from the request headers
             const host = request.headers.host || `${getHost()}:${getPort()}`;
 
@@ -396,8 +396,6 @@ export default async function explorerController(fastify: FastifyInstance) {
             return reply.code(500).send({ error: `Error ${error}` });
         }
     });
-
-
 
     // get file using file hash with pagination
     fastify.get('/explorer_files', async (request, reply) => {

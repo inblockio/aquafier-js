@@ -16,6 +16,7 @@ import {
       getLastRevisionVerificationHash,
       getRandomNumber,
       isValidEthereumAddress,
+      reorderRevisionsInAquaTree,
       stringToHex
 } from '@/utils/functions'
 import { getAppKitProvider } from '@/utils/appkit-wallet-utils'
@@ -83,6 +84,8 @@ import {
       verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { useNavigate } from 'react-router-dom'
+import { API_ENDPOINTS } from '@/utils/constants'
 
 /** Props for the SortableSignerItem component */
 interface SortableSignerItemProps {
@@ -192,6 +195,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             setSystemFileInfo,
             selectedFileInfo,
             // setWorkflows,
+            setSelectedFileInfo,
             webConfig
       } = useStore(appStore)
       const [formData, setFormData] = useState<Record<string, string | File | number>>({})
@@ -209,6 +213,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       const [verifyingFormField, setVerifyingFormField] = useState('')
       const [canvasSize, setCanvasSize] = useState({ width: 800, height: 200 });
       const containerRef = useRef<HTMLDivElement | null>(null);
+
+      const navigate = useNavigate()
 
       const fetchInfoDetails = async () => {
             try {
@@ -1036,11 +1042,35 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             }
       }
 
+      const loadThisTreeFromSystem = async (aquaTree: AquaTree): Promise<ApiFileInfo | null> => {
+            try {
+                  // Get ordered revision hashes from genesis to latest
+                  const orderedRevisionHashes = reorderRevisionsInAquaTree(aquaTree!)
+
+                  const url = `${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`
+                  const res = await axios.post(url, {
+                        revisionHashes: orderedRevisionHashes
+                  }, {
+                        headers: {
+                              'Content-Type': 'application/json',
+                              nonce: session?.nonce,
+                        },
+                  })
+                  if (res.status === 200) {
+                        return res.data.data
+                  }
+            } catch (error) {
+                  return null
+            }
+            return null
+      }
+
       // Function to handle post-signing actions
       const handlePostSigning = async (signedAquaTree: AquaTree, fileObject: FileObject, completeFormData: Record<string, string | File | number>, selectedTemplate: FormTemplate, session: Session | null, selectedFileInfo: ApiFileInfo | null) => {
             fileObject.fileContent = completeFormData
 
-            await saveAquaTree(signedAquaTree, fileObject, true)
+            const savedResult = await saveAquaTree(signedAquaTree, fileObject, true)
+            console.log("Saved result: ", savedResult)
 
             // Handle aqua_sign specific logic
             if (selectedTemplate && selectedTemplate.name === 'aqua_sign' && session?.address) {
@@ -1102,7 +1132,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   }
 
             }
-            
+
             await triggerWorkflowReload(selectedTemplate.name, true);
 
             if (selectedTemplate.name === 'identity_attestation') {
@@ -1111,6 +1141,15 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             // Trigger reload for contacts if not aqua_sign
             if (!["aqua_sign", "access_agreement", "cheque", "dba_claim"].includes(selectedTemplate.name)) {
                   await triggerWorkflowReload(RELOAD_KEYS.contacts);
+            }
+
+            // Do navigation here
+            if (selectedTemplate.name === "aqua_sign") {
+                  let apiFileInfoFromSystem = await loadThisTreeFromSystem(signedAquaTree)
+                  if(apiFileInfoFromSystem){
+                        setSelectedFileInfo(apiFileInfoFromSystem)
+                        navigate('/app/pdf/workflow')
+                  }
             }
       }
 
@@ -1700,7 +1739,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   Selected template not found, check db migrations.
             </div>
       }
-      
+
       return (
             <>
                   {/* <div className="min-h-[100%] bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-4"> */}
