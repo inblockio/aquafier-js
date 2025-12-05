@@ -7,9 +7,7 @@ import {
       dummyCredential,
       ensureDomainUrlHasSSL,
       estimateFileSize,
-      fetchFiles,
       fetchSystemFiles,
-      fetchWalletAddressesAndNamesForInputRecommendation,
       formatDate,
       formatTxtRecord,
       generateProofFromSignature,
@@ -42,6 +40,7 @@ import {
       AlertCircle,
       BookCheck,
       FileText,
+      GripVertical,
       Image,
       Link,
       Loader2,
@@ -66,7 +65,117 @@ import SignatureCanvas from 'react-signature-canvas'
 import { Session } from '@/types'
 import { ApiInfoData } from '@/types/types'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
- 
+// Drag and drop
+import {
+      DndContext,
+      closestCenter,
+      KeyboardSensor,
+      PointerSensor,
+      useSensor,
+      useSensors,
+      DragEndEvent
+} from '@dnd-kit/core'
+import {
+      arrayMove,
+      SortableContext,
+      sortableKeyboardCoordinates,
+      useSortable,
+      verticalListSortingStrategy
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+
+/** Props for the SortableSignerItem component */
+interface SortableSignerItemProps {
+      id: string
+      index: number
+      address: string
+      field: FormField
+      multipleAddresses: string[]
+      setMultipleAddresses: React.Dispatch<React.SetStateAction<string[]>>
+      // walletAddresses: { address: string; name?: string }[]
+      onRemove: (index: number) => void
+      canRemove: boolean
+}
+
+/** Sortable signer item component for drag-and-drop reordering */
+const SortableSignerItem = ({
+      id,
+      index,
+      address,
+      field,
+      multipleAddresses,
+      setMultipleAddresses,
+      // walletAddresses,
+      onRemove,
+      canRemove
+}: SortableSignerItemProps) => {
+      const {
+            attributes,
+            listeners,
+            setNodeRef,
+            transform,
+            transition,
+            isDragging
+      } = useSortable({ id })
+
+      const style = {
+            transform: CSS.Transform.toString(transform),
+            transition,
+            opacity: isDragging ? 0.5 : 1,
+            zIndex: isDragging ? 1000 : 'auto'
+      }
+
+      return (
+            <div
+                  ref={setNodeRef}
+                  style={style}
+                  className={`flex items-center space-x-2 sm:space-x-3 p-2 sm:p-4 bg-gray-50 rounded-lg border ${isDragging ? 'shadow-lg border-blue-300 bg-blue-50' : ''}`}
+            >
+                  {/* Drag handle */}
+                  <div
+                        {...attributes}
+                        {...listeners}
+                        className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded touch-none"
+                        title="Drag to reorder"
+                  >
+                        <GripVertical className="h-4 w-4 text-gray-400" />
+                  </div>
+
+                  {/* Index badge */}
+                  <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full text-blue-600 font-medium text-sm">
+                        {index + 1}
+                  </div>
+
+                  {/* Wallet input */}
+                  <div className="flex-1">
+                        <WalletAutosuggest
+                              // walletAddresses={walletAddresses}
+                              field={field}
+                              index={index}
+                              address={address}
+                              multipleAddresses={multipleAddresses}
+                              setMultipleAddresses={setMultipleAddresses}
+                              placeholder="Enter signer wallet address"
+                              className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        />
+                  </div>
+
+                  {/* Remove button */}
+                  {canRemove && (
+                        <Button
+                              variant="outline"
+                              size="sm"
+                              type="button"
+                              className="rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 hover:border-red-300"
+                              onClick={() => onRemove(index)}
+                        >
+                              <Trash2 className="h-4 w-4" />
+                        </Button>
+                  )}
+            </div>
+      )
+}
+
 // const CreateFormF romTemplate  = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       selectedTemplate: FormTemplate;
@@ -82,8 +191,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             systemFileInfo,
             setSystemFileInfo,
             selectedFileInfo,
-            workflows,
-            setWorkflows,
+            // setWorkflows,
             webConfig
       } = useStore(appStore)
       const [formData, setFormData] = useState<Record<string, string | File | number>>({})
@@ -119,23 +227,23 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       }
 
       useEffect(() => {
-            (async () => {
-                  if (!session?.address || !session?.nonce) {
-                        console.warn('Session not available for fetching workflows')
-                        return
-                  }
+            // (async () => {
+            //       if (!session?.address || !session?.nonce) {
+            //             console.warn('Session not available for fetching workflows')
+            //             return
+            //       }
 
-                  try {
-                        const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
-                        setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+            //       try {
+            //             // const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
+            //             // setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
-                  } catch (error) {
-                        console.error('Error fetching workflows:', error)
+            //       } catch (error) {
+            //             console.error('Error fetching workflows:', error)
 
-                        toast.error('Failed to load workflows')
+            //             toast.error('Failed to load workflows')
 
-                  }
-            })()
+            //       }
+            // })()
 
 
             if (containerRef.current) {
@@ -997,7 +1105,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
             // Trigger reload for the specific workflow type and stats
             await triggerWorkflowReload(selectedTemplate.name, true);
-            
+
             if (selectedTemplate.name === 'identity_attestation') {
                   await triggerWorkflowReload(RELOAD_KEYS.user_profile);
             }
@@ -1017,7 +1125,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       // Generate signature from text (name or initials)
       const generateSignatureFromText = useCallback((text: string, isInitials: boolean = false) => {
             if (!signatureRef.current || !text.trim()) return
-            
+
             const canvas = signatureRef.current.getCanvas()
             const ctx = canvas.getContext('2d')
             if (!ctx) return
@@ -1042,7 +1150,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             // Try to get name from form data first
             const nameField = formData['name'] || formData['full_name'] || formData['signer_name']
             if (nameField && typeof nameField === 'string') return nameField
-            
+
             // Fallback to session address (shortened)
             if (session?.address) {
                   return `${session.address.slice(0, 6)}...${session.address.slice(-4)}`
@@ -1285,74 +1393,98 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             )
       }
 
-      /** Renders the array field (multiple signers) */
-      const renderArrayField = (field: FormField, fieldIndex: number) => (
-            <div key={`field-${fieldIndex}`} className="space-y-4">
-                  <div className="flex items-center justify-between">
-                        <div>
-                              <Label className="text-base sm:text-lg font-medium text-gray-900">
-                                    {field.label}
-                                    {field.required && <span className="text-red-500 ml-1">*</span>}
-                              </Label>
-                              {field.description && (
-                                    <p className="text-sm text-gray-500 mt-1">{field.description}</p>
-                              )}
-                        </div>
-                        <Button
-                              variant="outline"
-                              size="sm"
-                              type="button"
-                              className="rounded-lg hover:bg-blue-50 hover:border-blue-300"
-                              onClick={addAddress}
-                              data-testid={`multiple_values_${field.name}`}
-                        >
-                              <Plus className="h-4 w-4 mr-1" />
-                              Add Signer
-                        </Button>
-                  </div>
-
-                  <div className="space-y-3">
-                        {multipleAddresses.map((address, index) => (
-                              <div
-                                    key={`address-${index}`}
-                                    className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-4 bg-gray-50 rounded-lg border"
-                              >
-                                    <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full text-blue-600 font-medium text-sm">
-                                          {index + 1}
-                                    </div>
-                                    <div className="flex-1">
-                                          <WalletAutosuggest
-                                                walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, workflows)}
-                                                field={field}
-                                                index={index}
-                                                address={address}
-                                                multipleAddresses={multipleAddresses}
-                                                setMultipleAddresses={setMultipleAddresses}
-                                                placeholder="Enter signer wallet address"
-                                                className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                          />
-                                    </div>
-                                    {multipleAddresses.length > 1 && (
-                                          <Button
-                                                variant="outline"
-                                                size="sm"
-                                                type="button"
-                                                className="rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 hover:border-red-300"
-                                                onClick={() => removeAddress(index)}
-                                          >
-                                                <Trash2 className="h-4 w-4" />
-                                          </Button>
-                                    )}
-                              </div>
-                        ))}
-                  </div>
-            </div>
+      // Drag and drop sensors for signer reordering
+      const sensors = useSensors(
+            useSensor(PointerSensor, {
+                  activationConstraint: {
+                        distance: 8, // Require 8px movement before starting drag
+                  },
+            }),
+            useSensor(KeyboardSensor, {
+                  coordinateGetter: sortableKeyboardCoordinates,
+            })
       )
+
+      // Generate unique IDs for each signer (using index + address hash for stability)
+      const getSignerIds = () => multipleAddresses.map((_, index) => `signer-${index}`)
+
+      /** Handles drag end event for reordering signers */
+      const handleDragEnd = (event: DragEndEvent) => {
+            const { active, over } = event
+
+            if (over && active.id !== over.id) {
+                  const oldIndex = parseInt(String(active.id).split('-')[1])
+                  const newIndex = parseInt(String(over.id).split('-')[1])
+
+                  setMultipleAddresses((items) => arrayMove(items, oldIndex, newIndex))
+            }
+      }
+
+      /** Renders the array field (multiple signers) with drag-and-drop reordering */
+      const renderArrayField = (field: FormField, fieldIndex: number) => {
+            const signerIds = getSignerIds()
+
+            return (
+                  <div key={`field-${fieldIndex}`} className="space-y-4">
+                        <div className="flex items-center justify-between">
+                              <div>
+                                    <Label className="text-base sm:text-lg font-medium text-gray-900">
+                                          {field.label}
+                                          {field.required && <span className="text-red-500 ml-1">*</span>}
+                                    </Label>
+                                    {field.description && (
+                                          <p className="text-sm text-gray-500 mt-1">{field.description}</p>
+                                    )}
+                                    <p className="text-xs text-gray-400 mt-1">
+                                          <GripVertical className="h-3 w-3 inline-block mr-1" />
+                                          Drag to reorder signers
+                                    </p>
+                              </div>
+                              <Button
+                                    variant="outline"
+                                    size="sm"
+                                    type="button"
+                                    className="rounded-lg hover:bg-blue-50 hover:border-blue-300"
+                                    onClick={addAddress}
+                                    data-testid={`multiple_values_${field.name}`}
+                              >
+                                    <Plus className="h-4 w-4 mr-1" />
+                                    Add Signer
+                              </Button>
+                        </div>
+
+                        <DndContext
+                              sensors={sensors}
+                              collisionDetection={closestCenter}
+                              onDragEnd={handleDragEnd}
+                        >
+                              <SortableContext items={signerIds} strategy={verticalListSortingStrategy}>
+                                    <div className="space-y-3">
+                                          {multipleAddresses.map((address, index) => (
+                                                <SortableSignerItem
+                                                      key={signerIds[index]}
+                                                      id={signerIds[index]}
+                                                      index={index}
+                                                      address={address}
+                                                      field={field}
+                                                      multipleAddresses={multipleAddresses}
+                                                      setMultipleAddresses={setMultipleAddresses}
+                                                      // walletAddresses={walletAddresses}
+                                                      onRemove={removeAddress}
+                                                      canRemove={multipleAddresses.length > 1}
+                                                />
+                                          ))}
+                                    </div>
+                              </SortableContext>
+                        </DndContext>
+                  </div>
+            )
+      }
 
       /** Renders the signature/scratchpad field with Reset, Generate from Name, and Initials buttons */
       const renderScratchpadField = () => (
             <div className="space-y-3">
-                  <div 
+                  <div
                         ref={containerRef}
                         className="border border-gray-200 rounded-lg w-full h-[200px] bg-white relative"
                   >
@@ -1371,7 +1503,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                               Draw your signature here
                         </div>
                   </div>
-                  
+
                   <div className="flex flex-wrap gap-2">
                         <Button
                               type="button"
@@ -1383,7 +1515,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                               <RotateCcw className="h-3.5 w-3.5" />
                               Reset
                         </Button>
-                        
+
                         <Button
                               type="button"
                               variant="outline"
@@ -1394,7 +1526,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                               <Type className="h-3.5 w-3.5" />
                               Generate from Name
                         </Button>
-                        
+
                         <Button
                               type="button"
                               variant="outline"
@@ -1406,7 +1538,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                               Initials
                         </Button>
                   </div>
-                  
+
                   <p className="text-xs text-gray-500">
                         Draw your signature above, or use the buttons to generate one automatically.
                   </p>
@@ -1470,12 +1602,12 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
             const isFileInput = field.type === 'file' || field.type === 'image' || field.type === 'document'
             const value = isFileInput && e.target.files ? e.target.files[0] : e.target.value
-            
+
             if (field.default_value !== undefined && field.default_value !== null && field.default_value !== '') {
                   e.target.value = field.default_value
                   toast.error(`${field.label} cannot be changed`)
             }
-            
+
             setFormData({
                   ...formData,
                   [field.name]: value,
@@ -1490,11 +1622,86 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             return `Enter ${field.label.toLowerCase()}`
       }
 
+      /** Handles sending verification code for verifiable fields (email/phone) */
+      const handleSendVerificationCode = async (field: FormField) => {
+            if (!verfyingFormFieldEnabled) {
+                  toast.error('Unable to fetch code verification details')
+                  return
+            }
+
+            if (verfyingFormFieldEnabled?.isTwilioEnabled === false) {
+                  toast.error('Twilio is not enabled, set the .env and restart the docker container')
+                  return
+            }
+
+            setVerifyingFormField(`field-${field.name}`)
+
+            const filledValue = formData[field.name]
+
+            if (!filledValue || (filledValue as string).length === 0) {
+                  toast.error(`${field.label} is empty`)
+                  setVerifyingFormField('')
+                  return
+            }
+
+            // Allow test values in dev environments
+            if (filledValue === '000-000-0000' || filledValue === 'test@inblock.io.com') {
+                  if (window.location.hostname === 'localhost' || window.location.hostname === 'dev.inblock.io') {
+                        toast.info('Using test value, no code will be sent')
+                  } else {
+                        setVerifyingFormField('')
+                        return toast.error(`Please provide a valid ${field.label} to receive verification code`)
+                  }
+            }
+
+            try {
+                  const url = `${backend_url}/send_code`
+                  const response = await axios.post(
+                        url,
+                        {
+                              email_or_phone_number: filledValue,
+                              name: field.name
+                        },
+                        {
+                              headers: { nonce: session?.nonce }
+                        }
+                  )
+
+                  if (response.status === 200) {
+                        toast.success('Verification code sent successfully')
+                  }
+            } catch (e: any) {
+                  toast.error(`Verification code not sent ${e?.response?.data?.message ?? ''}`)
+            } finally {
+                  setVerifyingFormField('')
+            }
+      }
+
+      /** Handles verification code input change */
+      const handleVerificationCodeChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+            setFormData({
+                  ...formData,
+                  [`${fieldName}_verification`]: e.target.value,
+            })
+      }
+
+      /** Handles wallet address selection from autosuggest */
+      const handleWalletAddressSelect = (data: string[], fieldName: string) => {
+            const selectedAddress = data[0]
+            if (selectedAddress) {
+                  setFormData({
+                        ...formData,
+                        [fieldName]: selectedAddress,
+                  })
+            }
+      }
+
       if (!selectedTemplate) {
             return <div className="min-h-[100%] px-2 sm:px-4">
                   Selected template not found, check db migrations.
             </div>
       }
+      
       return (
             <>
                   {/* <div className="min-h-[100%] bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-4"> */}
@@ -1564,180 +1771,80 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                                                     {field.support_text && (
                                                                                           <p className="text-xs text-gray-500">{field.support_text}</p>
                                                                                     )}
-                                                                                    <>
-                                                                                          {
-                                                                                                field.is_verifiable && (
-                                                                                                      <>
-                                                                                                            <Button
-                                                                                                                  type='button'
-                                                                                                                  data-testid={'send-verifcation-ciode-'}
-                                                                                                                  disabled={(verfyingFormFieldEnabled == null || verfyingFormFieldEnabled?.isTwilioEnabled) == false ? true : false}
-                                                                                                                  onClick={async () => {
+                                                                                    {/* Verification code section for verifiable fields */}
+                                                                                    {field.is_verifiable && (
+                                                                                          <>
+                                                                                                <Button
+                                                                                                      type="button"
+                                                                                                      data-testid={`send-verification-code-${field.name}`}
+                                                                                                      disabled={!verfyingFormFieldEnabled || !verfyingFormFieldEnabled?.isTwilioEnabled}
+                                                                                                      onClick={() => handleSendVerificationCode(field)}
+                                                                                                      className={`w-full flex items-center justify-center space-x-1 bg-blue-100 text-blue-700 px-3 py-2 rounded transition-colors text-xs ${verifyingFormField === `field-${field.name}` ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-200'
+                                                                                                            }`}
+                                                                                                >
+                                                                                                      {verifyingFormField === `field-${field.name}` ? (
+                                                                                                            <>
+                                                                                                                  <Loader2 className="animate-spin h-3 w-3 mr-1" />
+                                                                                                                  <span>Sending code...</span>
+                                                                                                            </>
+                                                                                                      ) : (
+                                                                                                            <>
+                                                                                                                  <Send className="w-4 h-4" />
+                                                                                                                  <span>Send Code</span>
+                                                                                                            </>
+                                                                                                      )}
+                                                                                                </Button>
 
-                                                                                                                        // console.log(`test 1`)
-                                                                                                                        if (!verfyingFormFieldEnabled) {
-                                                                                                                              // console.log(`test 1.1`)
-                                                                                                                              toast.error(`Unable to fetch code verification details`)
-                                                                                                                              return
-                                                                                                                        }
+                                                                                                <div className="flex items-center gap-2">
+                                                                                                      <BookCheck className="h-4 w-4" />
+                                                                                                      <Label
+                                                                                                            htmlFor={`input-verification-${field.name}`}
+                                                                                                            className="text-base font-medium text-gray-900"
+                                                                                                      >
+                                                                                                            Verification code for {field.label}
+                                                                                                            <span className="text-red-500">*</span>
+                                                                                                      </Label>
+                                                                                                </div>
 
-                                                                                                                        // console.log(`test 1.2`)
-                                                                                                                        if (verfyingFormFieldEnabled?.isTwilioEnabled == false) {
-                                                                                                                              // console.log(`test 1.3`)
-                                                                                                                              toast.error(`Twilio is not enables, set the .env and restart the docker container`)
-                                                                                                                              return
-                                                                                                                        }
-                                                                                                                        // console.log(`test 1.4`)
-
-                                                                                                                        setVerifyingFormField(`field-${field.name}`)
-
-
-                                                                                                                        let filledValue = formData[field.name]
-
-                                                                                                                        if (!filledValue || (filledValue as string).length == 0) {
-                                                                                                                              toast.error(`${field.label} is empty`)
-                                                                                                                              setVerifyingFormField("")
-                                                                                                                              return
-                                                                                                                        }
-
-                                                                                                                        if (filledValue == "000-000-0000" || filledValue == "test@inblock.io.com") {
-                                                                                                                              if (window.location.hostname === "localhost" || window.location.hostname === "dev.inblock.io") {
-                                                                                                                                    toast.info(`Using test value, no code will be sent`)
-                                                                                                                              } else {
-                                                                                                                                    return toast.error(`Please provide a valid ${field.label} to receive verification code`)
-                                                                                                                              }
-                                                                                                                        }
-                                                                                                                        try {
-                                                                                                                              const url = `${backend_url}/send_code`
-                                                                                                                              const response = await axios.post(
-                                                                                                                                    url,
-                                                                                                                                    {
-                                                                                                                                          email_or_phone_number: filledValue,
-                                                                                                                                          name: field.name
-                                                                                                                                    },
-                                                                                                                                    {
-                                                                                                                                          headers: {
-                                                                                                                                                nonce: session?.nonce,
-                                                                                                                                          },
-                                                                                                                                    }
-                                                                                                                              )
-
-                                                                                                                              if (response.status === 200) {
-                                                                                                                                    toast.success(`verification code sent sucessfully`)
-                                                                                                                              }
-                                                                                                                        } catch (e: any) {
-                                                                                                                              toast.error(`verification code not sent ${e?.response?.data?.message ?? ""}`)
-                                                                                                                        } finally {
-                                                                                                                              setVerifyingFormField(``)
-
-                                                                                                                        }
-
-                                                                                                                  }}
-                                                                                                                  className={`w-full flex items-center justify-center space-x-1 bg-blue-100 text-blue-700 px-3 py-2 rounded transition-colors text-xs ${verifyingFormField == `field-${field.name}` ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-200'}`}
-                                                                                                            // disabled={signing}
-                                                                                                            >
-                                                                                                                  {verifyingFormField == `field-${field.name}` ? (
-                                                                                                                        <>
-                                                                                                                              <svg
-                                                                                                                                    className="animate-spin h-3 w-3 mr-1 text-blue-700"
-                                                                                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                                                                                    fill="none" viewBox="0 0 24 24">
-                                                                                                                                    <circle className="opacity-25"
-                                                                                                                                          cx="12" cy="12" r="10"
-                                                                                                                                          stroke="currentColor"
-                                                                                                                                          strokeWidth="4"></circle>
-                                                                                                                                    <path className="opacity-75"
-                                                                                                                                          fill="currentColor"
-                                                                                                                                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                                                                                                                              </svg>
-                                                                                                                              <span>Sending code...</span>
-                                                                                                                        </>
-                                                                                                                  ) : (
-                                                                                                                        <>
-                                                                                                                              <Send className="w-4 h-4" />
-                                                                                                                              <span>Send Code</span>
-                                                                                                                        </>
-                                                                                                                  )}
-                                                                                                            </Button>
-
-
-                                                                                                            <div className="flex items-center gap-2">
-                                                                                                                  <BookCheck className="h-4 w-4" />
-                                                                                                                  <Label
-                                                                                                                        htmlFor={`input-verification-${field.name}`}
-                                                                                                                        className="text-base font-medium text-gray-900">
-                                                                                                                        Verification code for {field.label}
-                                                                                                                        <span className="text-red-500">*</span>
-                                                                                                                  </Label>
-                                                                                                            </div>
-
-
-                                                                                                            <Input
-                                                                                                                  id={`input-verification-${field.name}`}
-                                                                                                                  data-testid={`input-verification-${field.name}`}
-                                                                                                                  className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
-                                                                                                                  placeholder="Type code here..."
-
-
-                                                                                                                  onChange={e => {
-
-
-                                                                                                                        setFormData({
-                                                                                                                              ...formData,
-                                                                                                                              [`${field.name}_verification`]: e.target.value,
-                                                                                                                        })
-                                                                                                                  }}
-                                                                                                            />
-
-                                                                                                      </>
-                                                                                                )
-                                                                                          }</>
+                                                                                                <Input
+                                                                                                      id={`input-verification-${field.name}`}
+                                                                                                      data-testid={`input-verification-${field.name}`}
+                                                                                                      className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
+                                                                                                      placeholder="Type code here..."
+                                                                                                      onChange={(e) => handleVerificationCodeChange(e, field.name)}
+                                                                                                />
+                                                                                          </>
+                                                                                    )}
                                                                               </>
-
                                                                         )}
 
                                                                         {/* Signature/Scratchpad field with Reset, Generate from Name, Initials */}
                                                                         {field.type === 'scratchpad' && renderScratchpadField()}
 
-                                                                        {field.type == 'wallet_address' && (
-                                                                              <>
-                                                                                    {
-                                                                                          field.is_editable == false ?
-                                                                                                <Input
-                                                                                                      id={`input-${field.name}`}
-                                                                                                      data-testid={`input-${field.name}`}
-                                                                                                      className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
-                                                                                                      disabled={field.is_editable === false}
-                                                                                                      defaultValue={
-                                                                                                            (() => {
-                                                                                                                  const val = getFieldDefaultValue(field, formData[field.name]);
-                                                                                                                  return val instanceof File ? undefined : val;
-                                                                                                            })()
-                                                                                                      } />
-
-                                                                                                :
-
-                                                                                                <WalletAutosuggest
-                                                                                                      walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, workflows)}
-                                                                                                      field={field}
-                                                                                                      index={1}
-                                                                                                      address={formData[field.name] ? formData[field.name] as string : ""}
-                                                                                                      multipleAddresses={[]}
-                                                                                                      setMultipleAddresses={(data) => {
-                                                                                                            // setMultipleAddresses
-                                                                                                            let d = data[0]
-                                                                                                            if (d) {
-                                                                                                                  setFormData({
-                                                                                                                        ...formData,
-                                                                                                                        [field.name]: d,
-                                                                                                                  })
-                                                                                                            }
-                                                                                                      }}
-                                                                                                      placeholder="Enter signer wallet address"
-                                                                                                      className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                                                                                />
-                                                                                    }
-                                                                              </>
+                                                                        {/* Wallet address field */}
+                                                                        {field.type === 'wallet_address' && (
+                                                                              field.is_editable === false ? (
+                                                                                    <Input
+                                                                                          id={`input-${field.name}`}
+                                                                                          data-testid={`input-${field.name}`}
+                                                                                          className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
+                                                                                          disabled
+                                                                                          defaultValue={(() => {
+                                                                                                const val = getFieldDefaultValue(field, formData[field.name])
+                                                                                                return val instanceof File ? undefined : val
+                                                                                          })()}
+                                                                                    />
+                                                                              ) : (
+                                                                                    <WalletAutosuggest
+                                                                                          field={field}
+                                                                                          index={1}
+                                                                                          address={formData[field.name] ? (formData[field.name] as string) : ''}
+                                                                                          multipleAddresses={[]}
+                                                                                          setMultipleAddresses={(data) => handleWalletAddressSelect(data, field.name)}
+                                                                                          placeholder="Enter signer wallet address"
+                                                                                          className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                                                                    />
+                                                                              )
                                                                         )}
 
 

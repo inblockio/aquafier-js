@@ -7,6 +7,7 @@ import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTre
 import jdenticon from 'jdenticon/standalone'
 import { IContractInformation } from '@/types/contract_workflow'
 import { ApiFileInfoState, ApiFilePaginationData, DNSProof, IIdentityClaimDetails, SummaryDetailsDisplayData } from '@/types/types'
+import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 
 export function formatDate(date: Date) {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -2724,22 +2725,24 @@ export const fetchImage = async (fileUrl: string, nonce: string) => {
 
 
 
-export const fetchWalletAddressesAndNamesForInputRecommendation = (systemFileInfo: ApiFileInfo[], files: ApiFileInfoState,): Map<string, string> => {
+export const fetchWalletAddressesAndNamesForInputRecommendation = async (_systemFileInfo: ApiFileInfo[], files: ApiFileInfoState,): Promise<Map<string, string>> => {
 
       const recommended = new Map<string, string>()
 
-      const someData = systemFileInfo.map(e => {
-            try {
-                  return getAquaTreeFileName(e.aquaTree!)
-            } catch (e) {
-                  //  console.log('Error processing system file') // More descriptive
-                  return ''
-            }
-      })
+      // const someData = systemFileInfo.map(e => {
+      //       try {
+      //             return getAquaTreeFileName(e.aquaTree!)
+      //       } catch (e) {
+      //             //  console.log('Error processing system file') // More descriptive
+      //             return ''
+      //       }
+      // })
+
+      const workflows = await AquaSystemNamesService.getInstance().getSystemNames()
 
       for (const file of files.fileData) {
 
-            const workFlow = isWorkFlowData(file.aquaTree!, someData)
+            const workFlow = isWorkFlowData(file.aquaTree!, workflows)
 
             if (workFlow && workFlow.isWorkFlow) {
                   // console.log('Workflow found: ', workFlow.workFlow)
