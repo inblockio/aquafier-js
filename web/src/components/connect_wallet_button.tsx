@@ -10,6 +10,7 @@ import { ethers } from 'ethers'
 import { toast } from 'sonner'
 import { SESSION_COOKIE_NAME } from '../utils/constants'
 import axios from 'axios'
+import { ContactsService } from '@/storage/databases/contactsDb'
 
 // Lazy load the WalletAddressProfile component
 const WalletAddressProfile = lazy(() => import('@/pages/v2_claims_workflow/WalletAddressProfile'))
@@ -90,7 +91,7 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
   try {
     await disconnect()
     toast.dismiss(id)
-    toast.success('Signed out successfully,,')
+    toast.success('Signed out successfully.')
     setIsProfileOpen(false)
 
     
@@ -102,7 +103,7 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
     if (isPermissionError) {
       // Still consider it a success since wallet disconnects anyway
       console.warn('Permission revocation failed, but wallet disconnected:', error)
-      toast.success('Signed out successfully...')
+      toast.success('Signed out successfully.')
       setIsProfileOpen(false)
     } else {
       // Only show error for other types of failures
@@ -133,6 +134,8 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
         fileData: [],
         status: 'idle',
       })
+
+      await ContactsService.getInstance().clear()
     } catch (error) {
       console.error('Failed to sign out:', error)
       // Clear local state even if backend fails
