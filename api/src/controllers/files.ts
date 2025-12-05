@@ -1,6 +1,6 @@
 import {prisma} from '../database/db';
 import {getFile, streamToBuffer} from '../utils/file_utils.js';
-import Aquafier, {AquaTree, FileObject, LogType} from 'aqua-js-sdk';
+import Aquafier, {AquaTree, cliRedify, FileObject, LogType} from 'aqua-js-sdk';
 import {FastifyInstance} from 'fastify';
 import path from 'path';
 import Logger from "../utils/logger";
@@ -35,6 +35,8 @@ export default async function filesController(fastify: FastifyInstance) {
                 file_hash: fileHash
             }
         })
+
+        console.log(cliRedify(JSON.stringify(file, null, 4)))
 
         if (file == null) {
             return reply.code(500).send({ success: false, message: `Error file  not found ` });

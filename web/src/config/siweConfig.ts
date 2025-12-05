@@ -48,10 +48,10 @@ export const siweConfig = createSIWEConfig({
 
   getSession: async () => {
     const nonce = getCookie(SESSION_COOKIE_NAME)
-    console.log("getSession : Nonce: ", nonce)
+    // console.log("getSession : Nonce: ", nonce)
     if (!nonce) return null
 
-    console.log("getSession : Here after nonce")
+    // console.log("getSession : Here after nonce")
 
     try {
       const backend_url = appStore.getState().backend_url
@@ -76,7 +76,7 @@ export const siweConfig = createSIWEConfig({
           chainId: response.data.session.chain_id || chainId, 
         } as SIWESession
 
-        console.log("getSession : Retrieved session data:", JSON.stringify(data))
+        // console.log("getSession : Retrieved session data:", JSON.stringify(data))
         return data
       }
     } catch (error) {
@@ -170,10 +170,10 @@ export const siweConfig = createSIWEConfig({
     }
   },
 
-  onSignIn: (session) => {
-    console.log('onSignIn : User signed in:', session)
+  onSignIn: (_session) => {
+    // console.log('onSignIn : User signed in:', session)
   },
   onSignOut: () => {
-    console.log('onSignOut : User signed out')
+    // console.log('onSignOut : User signed out')
   },
 })

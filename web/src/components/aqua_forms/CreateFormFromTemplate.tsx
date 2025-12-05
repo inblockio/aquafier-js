@@ -1,4 +1,4 @@
-import React, { JSX, useEffect, useRef, useState } from 'react'
+import React, { JSX, useCallback, useEffect, useRef, useState } from 'react'
 import { FormField, FormTemplate } from './types'
 import { useStore } from 'zustand'
 import appStore from '@/store'
@@ -47,9 +47,12 @@ import {
       Loader2,
       Pen,
       Plus,
+      RotateCcw,
       Send,
       Trash2,
+      Type,
       Upload,
+      User,
       Wallet,
       X
 } from 'lucide-react'
@@ -1008,9 +1011,44 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       const clearSignature = () => {
             if (signatureRef.current) {
                   signatureRef.current.clear()
-                  // Don't clear all signatures, just reset the canvas
             }
       }
+
+      // Generate signature from text (name or initials)
+      const generateSignatureFromText = useCallback((text: string, isInitials: boolean = false) => {
+            if (!signatureRef.current || !text.trim()) return
+            
+            const canvas = signatureRef.current.getCanvas()
+            const ctx = canvas.getContext('2d')
+            if (!ctx) return
+
+            // Clear the canvas first
+            signatureRef.current.clear()
+
+            // Configure text style
+            const fontSize = isInitials ? Math.min(canvas.height * 0.6, 80) : Math.min(canvas.height * 0.4, 50)
+            ctx.font = `italic ${fontSize}px "Brush Script MT", "Segoe Script", "Bradley Hand", cursive`
+            ctx.fillStyle = '#000000'
+            ctx.textAlign = 'center'
+            ctx.textBaseline = 'middle'
+
+            // Draw the text centered
+            const displayText = isInitials ? text.split(' ').map(n => n.charAt(0).toUpperCase()).join('') : text
+            ctx.fillText(displayText, canvas.width / 2, canvas.height / 2)
+      }, [])
+
+      // Get user's name from session or form data for signature generation
+      const getUserNameForSignature = useCallback((): string => {
+            // Try to get name from form data first
+            const nameField = formData['name'] || formData['full_name'] || formData['signer_name']
+            if (nameField && typeof nameField === 'string') return nameField
+            
+            // Fallback to session address (shortened)
+            if (session?.address) {
+                  return `${session.address.slice(0, 6)}...${session.address.slice(-4)}`
+            }
+            return 'User'
+      }, [formData, session?.address])
 
       // Main refactored function
       const createWorkflowFromTemplate = async (e: React.FormEvent) => {
@@ -1232,6 +1270,226 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       }
 
 
+      // ============================================
+      // RENDER HELPER FUNCTIONS
+      // ============================================
+
+      /** Renders the form error alert */
+      const renderFormError = () => {
+            if (modalFormErorMessae.length === 0) return null
+            return (
+                  <Alert variant="destructive" className="border-red-200 bg-red-50">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{modalFormErorMessae}</AlertDescription>
+                  </Alert>
+            )
+      }
+
+      /** Renders the array field (multiple signers) */
+      const renderArrayField = (field: FormField, fieldIndex: number) => (
+            <div key={`field-${fieldIndex}`} className="space-y-4">
+                  <div className="flex items-center justify-between">
+                        <div>
+                              <Label className="text-base sm:text-lg font-medium text-gray-900">
+                                    {field.label}
+                                    {field.required && <span className="text-red-500 ml-1">*</span>}
+                              </Label>
+                              {field.description && (
+                                    <p className="text-sm text-gray-500 mt-1">{field.description}</p>
+                              )}
+                        </div>
+                        <Button
+                              variant="outline"
+                              size="sm"
+                              type="button"
+                              className="rounded-lg hover:bg-blue-50 hover:border-blue-300"
+                              onClick={addAddress}
+                              data-testid={`multiple_values_${field.name}`}
+                        >
+                              <Plus className="h-4 w-4 mr-1" />
+                              Add Signer
+                        </Button>
+                  </div>
+
+                  <div className="space-y-3">
+                        {multipleAddresses.map((address, index) => (
+                              <div
+                                    key={`address-${index}`}
+                                    className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-4 bg-gray-50 rounded-lg border"
+                              >
+                                    <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full text-blue-600 font-medium text-sm">
+                                          {index + 1}
+                                    </div>
+                                    <div className="flex-1">
+                                          <WalletAutosuggest
+                                                walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, workflows)}
+                                                field={field}
+                                                index={index}
+                                                address={address}
+                                                multipleAddresses={multipleAddresses}
+                                                setMultipleAddresses={setMultipleAddresses}
+                                                placeholder="Enter signer wallet address"
+                                                className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                          />
+                                    </div>
+                                    {multipleAddresses.length > 1 && (
+                                          <Button
+                                                variant="outline"
+                                                size="sm"
+                                                type="button"
+                                                className="rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 hover:border-red-300"
+                                                onClick={() => removeAddress(index)}
+                                          >
+                                                <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                    )}
+                              </div>
+                        ))}
+                  </div>
+            </div>
+      )
+
+      /** Renders the signature/scratchpad field with Reset, Generate from Name, and Initials buttons */
+      const renderScratchpadField = () => (
+            <div className="space-y-3">
+                  <div 
+                        ref={containerRef}
+                        className="border border-gray-200 rounded-lg w-full h-[200px] bg-white relative"
+                  >
+                        <SignatureCanvas
+                              ref={signatureRef}
+                              canvasProps={{
+                                    id: 'signature-canvas-id',
+                                    width: canvasSize.width,
+                                    height: canvasSize.height,
+                                    style: { width: '100%', height: '100%' },
+                                    className: 'signature-canvas cursor-crosshair',
+                              }}
+                              backgroundColor="transparent"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-gray-300 text-sm">
+                              Draw your signature here
+                        </div>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                        <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={clearSignature}
+                              className="flex items-center gap-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                        >
+                              <RotateCcw className="h-3.5 w-3.5" />
+                              Reset
+                        </Button>
+                        
+                        <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => generateSignatureFromText(getUserNameForSignature(), false)}
+                              className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 hover:border-blue-300"
+                        >
+                              <Type className="h-3.5 w-3.5" />
+                              Generate from Name
+                        </Button>
+                        
+                        <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => generateSignatureFromText(getUserNameForSignature(), true)}
+                              className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 hover:border-indigo-300"
+                        >
+                              <User className="h-3.5 w-3.5" />
+                              Initials
+                        </Button>
+                  </div>
+                  
+                  <p className="text-xs text-gray-500">
+                        Draw your signature above, or use the buttons to generate one automatically.
+                  </p>
+            </div>
+      )
+
+      /** Handles text input change with validation */
+      const handleTextInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: FormField) => {
+            if (field.is_editable === false) {
+                  toast.error(`${field.label} cannot be changed`)
+                  return
+            }
+
+            if (field.default_value !== undefined && field.default_value !== null && field.default_value !== '') {
+                  e.target.value = field.default_value
+                  toast.error(`${field.label} cannot be changed`)
+            }
+
+            setFormData({
+                  ...formData,
+                  [field.name]: e.target.value,
+            })
+      }
+
+      /** Handles file input change with validation */
+      const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: FormField) => {
+            if (field.is_editable === false) {
+                  toast.error(`${field.label} cannot be changed`)
+                  return
+            }
+
+            if (selectedTemplate?.name === 'aqua_sign' && field.name.toLowerCase() === 'sender') {
+                  return
+            }
+
+            // Validate image files
+            if (field.type === 'image') {
+                  const files = e?.target?.files
+                  if (files && files.length > 0) {
+                        const file = files[0]
+                        if (!file.type.startsWith('image/')) {
+                              alert('Please select an image file')
+                              e.target.value = ''
+                              return
+                        }
+                  }
+            }
+
+            // Validate PDF files
+            if (field.type === 'document') {
+                  const files = e?.target?.files
+                  if (files && files.length > 0) {
+                        const file = files[0]
+                        if (file.type !== 'application/pdf') {
+                              alert('Please select a PDF file')
+                              e.target.value = ''
+                              return
+                        }
+                  }
+            }
+
+            const isFileInput = field.type === 'file' || field.type === 'image' || field.type === 'document'
+            const value = isFileInput && e.target.files ? e.target.files[0] : e.target.value
+            
+            if (field.default_value !== undefined && field.default_value !== null && field.default_value !== '') {
+                  e.target.value = field.default_value
+                  toast.error(`${field.label} cannot be changed`)
+            }
+            
+            setFormData({
+                  ...formData,
+                  [field.name]: value,
+            })
+      }
+
+      /** Gets the placeholder text for a field */
+      const getFieldPlaceholder = (field: FormField): string => {
+            if (field.type === 'domain') return 'Fill in the Domain Name (FQDN)'
+            if (field.type === 'date') return 'Select a date'
+            if (field.type === 'document') return 'Upload PDF document'
+            return `Enter ${field.label.toLowerCase()}`
+      }
+
       if (!selectedTemplate) {
             return <div className="min-h-[100%] px-2 sm:px-4">
                   Selected template not found, check db migrations.
@@ -1265,163 +1523,46 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                               </div>
                               <div className="pt-5">
                                     <form onSubmit={createWorkflowFromTemplate} id="create-aqua-tree-form" className="space-y-8">
-                                          {modalFormErorMessae.length > 0 && (
-                                                <Alert variant="destructive" className="border-red-200 bg-red-50">
-                                                      <AlertCircle className="h-4 w-4" />
-                                                      <AlertDescription>{modalFormErorMessae}</AlertDescription>
-                                                </Alert>
-                                          )}
+                                          {renderFormError()}
 
                                           <div className="space-y-4 sm:space-y-6">
                                                 {selectedTemplate
                                                       ? reorderInputFields(selectedTemplate.fields).map((field, fieldIndex) => {
-                                                            const isFileInput = field.type === 'file' || field.type === 'image' || field.type === 'document'
+                                                            if (field.is_hidden) return null
 
-                                                            if (field.is_hidden) {
-                                                                  return null // Skip hidden fields
-                                                            }
-
+                                                            // Use helper function for array fields (multiple signers)
                                                             if (field.is_array) {
-
-                                                                  return (
-                                                                        <div key={`field-${fieldIndex}`} className="space-y-4">
-                                                                              <div className="flex items-center justify-between">
-                                                                                    <div>
-                                                                                          <Label
-                                                                                                className="text-base sm:text-lg font-medium text-gray-900">
-                                                                                                {field.label}
-                                                                                                {field.required &&
-                                                                                                      <span className="text-red-500 ml-1">*</span>}
-                                                                                          </Label>
-                                                                                          {/* Add multiple wallet addresses for document signers */}
-                                                                                          {field.description ?
-                                                                                                <p className="text-sm text-gray-500 mt-1">{field.description}</p> : null}
-                                                                                    </div>
-                                                                                    <Button
-                                                                                          variant="outline"
-                                                                                          size="sm"
-                                                                                          type="button"
-                                                                                          className="rounded-lg hover:bg-blue-50 hover:border-blue-300"
-                                                                                          onClick={addAddress}
-                                                                                          data-testid={`multiple_values_${field.name}`}
-                                                                                    >
-                                                                                          <Plus className="h-4 w-4 mr-1" />
-                                                                                          Add Signer
-                                                                                    </Button>
-                                                                              </div>
-
-                                                                              <div className="space-y-3">
-                                                                                    {multipleAddresses.map((address, index) => (
-                                                                                          <div
-                                                                                                key={`address-${index}`}
-                                                                                                className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-4 bg-gray-50 rounded-lg border"
-                                                                                          >
-                                                                                                <div
-                                                                                                      className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full text-blue-600 font-medium text-sm">
-                                                                                                      {index + 1}
-                                                                                                </div>
-                                                                                                <div className="flex-1">
-                                                                                                      {/* <Input
-                                                                                                            data-testid={`input-${field.name}-${index}`}
-                                                                                                            className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                                                                                            placeholder="Enter signer wallet address"
-                                                                                                            type="text"
-                                                                                                            value={address}
-                                                                                                            onChange={ev => {
-                                                                                                                  const newData = multipleAddresses.map((e, i) => {
-                                                                                                                        if (i === index) {
-                                                                                                                              return ev.target.value
-                                                                                                                        }
-                                                                                                                        return e
-                                                                                                                  })
-                                                                                                                  setMultipleAddresses(newData)
-                                                                                                            }}
-                                                                                                      /> */}
-                                                                                                      <WalletAutosuggest
-
-                                                                                                            walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, workflows)}
-                                                                                                            field={field}
-                                                                                                            index={index}
-                                                                                                            address={address}
-                                                                                                            multipleAddresses={multipleAddresses}
-                                                                                                            setMultipleAddresses={setMultipleAddresses}
-                                                                                                            placeholder="Enter signer wallet address"
-                                                                                                            className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                                                                                      />
-                                                                                                </div>
-                                                                                                {multipleAddresses.length > 1 && (
-                                                                                                      <Button
-                                                                                                            variant="outline"
-                                                                                                            size="sm"
-                                                                                                            type="button"
-                                                                                                            className="rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 hover:border-red-300"
-                                                                                                            onClick={() => removeAddress(index)}
-                                                                                                      >
-                                                                                                            <Trash2 className="h-4 w-4" />
-                                                                                                      </Button>
-                                                                                                )}
-                                                                                          </div>
-                                                                                    ))}
-                                                                              </div>
-                                                                        </div>
-                                                                  )
+                                                                  return renderArrayField(field, fieldIndex)
                                                             }
 
                                                             return (
                                                                   <div key={`field-${fieldIndex}`} className="space-y-2 sm:space-y-3">
                                                                         <div className="flex items-center gap-2">
                                                                               {getFieldIcon(field.type)}
-                                                                              <Label htmlFor={`input-${field.name}`}
-                                                                                    className="text-base font-medium text-gray-900">
+                                                                              <Label htmlFor={`input-${field.name}`} className="text-base font-medium text-gray-900">
                                                                                     {field.label}
                                                                                     {field.required && <span className="text-red-500">*</span>}
                                                                               </Label>
                                                                         </div>
 
-                                                                        {(field.type == 'text' || field.type == 'number' || field.type == 'date' || field.type == 'domain' || field.type == 'email') && (
+                                                                        {/* Text, Number, Date, Domain, Email fields */}
+                                                                        {['text', 'number', 'date', 'domain', 'email'].includes(field.type) && (
                                                                               <>
                                                                                     <Input
                                                                                           id={`input-${field.name}`}
                                                                                           data-testid={`input-${field.name}`}
                                                                                           className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
-                                                                                          // placeholder="Type here..."
-                                                                                          placeholder={
-                                                                                                field.type === 'domain'
-                                                                                                      ? 'Fill in the Domain Name (FQDN)'
-                                                                                                      : field.type === 'date'
-                                                                                                            ? 'Select a date'
-                                                                                                            : `Enter ${field.label.toLowerCase()}`
-                                                                                          }
+                                                                                          placeholder={getFieldPlaceholder(field)}
                                                                                           disabled={field.is_editable === false}
-                                                                                          defaultValue={
-                                                                                                (() => {
-                                                                                                      const val = getFieldDefaultValue(field, formData[field.name]);
-                                                                                                      return val instanceof File ? undefined : val;
-                                                                                                })()
-                                                                                          }
-                                                                                          onChange={e => {
-                                                                                                if (field.is_editable === false) {
-                                                                                                      // Show toast notification (would need toast implementation)
-                                                                                                      toast.error(`${field.label} cannot be changed`)
-                                                                                                      return
-                                                                                                }
-
-                                                                                                if (field.default_value !== undefined && field.default_value !== null && field.default_value !== '') {
-                                                                                                      e.target.value = field.default_value
-                                                                                                      toast.error(`${field.label} cannot be changed`)
-                                                                                                }
-
-                                                                                                setFormData({
-                                                                                                      ...formData,
-                                                                                                      [field.name]: e.target.value,
-                                                                                                })
-                                                                                          }}
+                                                                                          defaultValue={(() => {
+                                                                                                const val = getFieldDefaultValue(field, formData[field.name])
+                                                                                                return val instanceof File ? undefined : val
+                                                                                          })()}
+                                                                                          onChange={(e) => handleTextInputChange(e, field)}
                                                                                     />
 
                                                                                     {field.support_text && (
-                                                                                          <p className="text-xs text-gray-500">
-                                                                                                {field.support_text}
-                                                                                          </p>
+                                                                                          <p className="text-xs text-gray-500">{field.support_text}</p>
                                                                                     )}
                                                                                     <>
                                                                                           {
@@ -1555,30 +1696,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
                                                                         )}
 
-                                                                        {
-                                                                              field.type == 'scratchpad' && (
-                                                                                    <div ref={containerRef}
-                                                                                          className="border border-gray-200 w-full h-[200px] bg-white">
-                                                                                          <SignatureCanvas
-
-
-                                                                                                ref={signatureRef}
-                                                                                                canvasProps={{
-
-                                                                                                      id: 'signature-canvas-id',
-                                                                                                      width: canvasSize.width,
-                                                                                                      height: canvasSize.height,
-                                                                                                      style: {
-                                                                                                            width: '100%',
-                                                                                                            height: '100%',
-                                                                                                      },
-                                                                                                      className: 'signature-canvas',
-                                                                                                }}
-                                                                                                backgroundColor="transparent"
-                                                                                          />
-                                                                                    </div>
-                                                                              )
-                                                                        }
+                                                                        {/* Signature/Scratchpad field with Reset, Generate from Name, Initials */}
+                                                                        {field.type === 'scratchpad' && renderScratchpadField()}
 
                                                                         {field.type == 'wallet_address' && (
                                                                               <>
@@ -1622,98 +1741,28 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                                         )}
 
 
-                                                                        {(field.type == 'document' || field.type == 'image' || field.type == 'file') && (
+                                                                        {/* Document, Image, File upload fields */}
+                                                                        {['document', 'image', 'file'].includes(field.type) && (
                                                                               <div className="relative">
                                                                                     <Input
                                                                                           id={`input-${field.name}`}
                                                                                           data-testid={`input-${field.name}`}
                                                                                           className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
-                                                                                          // {...(!isFileInput
-                                                                                          //       ? {
-                                                                                          //       defaultValue={
-                                                                                          // (() => {
-                                                                                          //       const val = getFieldDefaultValue(field, formData[field.name]);
-                                                                                          //       return val instanceof File ? undefined : val;
-                                                                                          // })()
-                                                                                          // },
-                                                                                          //       }
-                                                                                          //       : {})}
-
-                                                                                          defaultValue={
-                                                                                                (() => {
-                                                                                                      const val = getFieldDefaultValue(field, formData[field.name]);
-                                                                                                      return val instanceof File ? undefined : val;
-                                                                                                })()
-                                                                                          }
                                                                                           type={getInputType(field.type)}
                                                                                           required={field.required}
                                                                                           disabled={field.is_editable === false}
-                                                                                          accept={field.type == 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
-                                                                                          placeholder={
-                                                                                                field.type === 'document'
-                                                                                                      ? 'Upload PDF document'
-                                                                                                      : `Enter ${field.label.toLowerCase()}`
-                                                                                          }
-                                                                                          onChange={e => {
-                                                                                                if (field.is_editable === false) {
-                                                                                                      // Show toast notification (would need toast implementation)
-                                                                                                      toast.error(`${field.label} cannot be changed`)
-                                                                                                      return
-                                                                                                }
-
-                                                                                                if (selectedTemplate?.name === 'aqua_sign' && field.name.toLowerCase() === 'sender') {
-                                                                                                      // Show toast notification (would need toast implementation)
-                                                                                                      return
-                                                                                                }
-
-                                                                                                if (field.type === 'image') {
-                                                                                                      const files = e?.target?.files
-                                                                                                      if (files && files.length > 0) {
-                                                                                                            const file = files[0]
-                                                                                                            if (!file.type.startsWith('image/')) {
-                                                                                                                  alert('Please select an image file')
-                                                                                                                  e.target.value = ''
-                                                                                                                  return
-                                                                                                            }
-                                                                                                      }
-                                                                                                }
-
-                                                                                                if (field.type === 'document') {
-                                                                                                      const files = e?.target?.files
-                                                                                                      if (files && files.length > 0) {
-                                                                                                            const file = files[0]
-                                                                                                            if (file.type !== 'application/pdf') {
-                                                                                                                  alert('Please select a PDF file')
-                                                                                                                  e.target.value = ''
-                                                                                                                  return
-                                                                                                            }
-                                                                                                      }
-                                                                                                }
-
-                                                                                                let value = isFileInput && e.target.files ? e.target.files[0] : e.target.value
-                                                                                                if (field.default_value !== undefined && field.default_value !== null && field.default_value !== '') {
-                                                                                                      e.target.value = field.default_value
-                                                                                                      toast.error(`${field.label} cannot be changed`)
-                                                                                                }
-                                                                                                setFormData({
-                                                                                                      ...formData,
-                                                                                                      [field.name]: value,
-                                                                                                })
-                                                                                          }}
+                                                                                          accept={field.type === 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
+                                                                                          placeholder={getFieldPlaceholder(field)}
+                                                                                          onChange={(e) => handleFileInputChange(e, field)}
                                                                                     />
 
                                                                                     {field.support_text && (
-                                                                                          <p className="text-xs text-gray-500">
-                                                                                                {field.support_text}
-                                                                                          </p>
+                                                                                          <p className="text-xs text-gray-500">{field.support_text}</p>
                                                                                     )}
 
-                                                                                    {isFileInput && (
-                                                                                          <div
-                                                                                                className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                                                                                <Upload className="h-4 w-4 text-gray-400" />
-                                                                                          </div>
-                                                                                    )}
+                                                                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                                                                          <Upload className="h-4 w-4 text-gray-400" />
+                                                                                    </div>
                                                                               </div>
                                                                         )}
 

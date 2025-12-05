@@ -2,7 +2,7 @@
 
 # Start PostgreSQL command line interface
 echo "Starting PostgreSQL command line interface..."
-psql -U $USER -d postgres <<EOF
+sudo -u postgres psql -d postgres <<EOF
 
 CREATE DATABASE aquafier_js;
 CREATE USER aquafier_js WITH ENCRYPTED PASSWORD 'aquafier_js' CREATEDB;

@@ -1,5 +1,6 @@
 import * as React from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { XIcon } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -34,9 +35,11 @@ function DialogContent({
       className,
       children,
       showCloseButton = true,
+      hideTitle = true,
       ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
-      showCloseButton?: boolean
+      showCloseButton?: boolean,
+      hideTitle?: boolean
 }) {
       return (
             <DialogPortal data-slot="dialog-portal">
@@ -49,6 +52,11 @@ function DialogContent({
                         )}
                         {...props}
                   >
+                        {hideTitle && (
+                              <VisuallyHidden.Root asChild>
+                                    <DialogPrimitive.Title>Dialog</DialogPrimitive.Title>
+                              </VisuallyHidden.Root>
+                        )}
                         {children}
                         {showCloseButton && (
                               <DialogPrimitive.Close

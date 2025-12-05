@@ -21,9 +21,7 @@ export const useReloadWatcher = ({
   );
 
   const handleReload = async () => {
-    console.log("reloading")
     try {
-      console.log("Here reloading", key, typeof onReload, onReload);
       await onReload();
       
       if (autoReset) {
