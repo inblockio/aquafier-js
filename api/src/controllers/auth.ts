@@ -46,8 +46,8 @@ export default async function authController(fastify: FastifyInstance) {
           witness_network: process.env.DEFAULT_WITNESS_NETWORK ?? "sepolia",
           theme: "light",
           witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
-           createdAt: new Date(),
-    updatedAt: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
         }
 
         settingsData = defaultData
@@ -95,7 +95,7 @@ export default async function authController(fastify: FastifyInstance) {
   fastify.post('/session', async (request, reply) => {
 
     const { message, signature } = request.body as SiweRequest;
-const startTime = Date.now();
+    const startTime = Date.now();
     let logs: string[] = [];
     logs.push(`Received SIWE message: ${message}`);
     logs.push(`Received signature: ${signature}`);
@@ -136,8 +136,8 @@ const startTime = Date.now();
 
       // Check if we should attempt ENS lookup
       const infuraProjectId = process.env.VITE_INFURA_PROJECT_ID;
-const duration = Date.now() - startTime;
-    Logger.logAuthEvent('user-login', EventOutcome.SUCCESS, siweData.address!!);
+      const duration = Date.now() - startTime;
+      Logger.logAuthEvent('user-login', EventOutcome.SUCCESS, siweData.address!!);
 
       if (userData == null) {
         let ensName = null
@@ -154,16 +154,16 @@ const duration = Date.now() - startTime;
 
 
         Logger.logEvent('User created in database', {
-              category: EventCategory.DATABASE,
-              type: EventType.CREATION,
-              action: 'user-create',
-              outcome: EventOutcome.SUCCESS,
-              duration,
-              metadata: {
-                userId: siweData.address!!,
-                table: 'users',
-              }
-            });
+          category: EventCategory.DATABASE,
+          type: EventType.CREATION,
+          action: 'user-create',
+          outcome: EventOutcome.SUCCESS,
+          duration,
+          metadata: {
+            userId: siweData.address!!,
+            table: 'users',
+          }
+        });
 
       } else {
 
@@ -189,7 +189,7 @@ const duration = Date.now() - startTime;
           user_pub_key: siweData.address!!
         }
       })
-      
+
       if (settingsData == null) {
         let defaultData = {
           user_pub_key: siweData.address!!,
@@ -199,8 +199,8 @@ const duration = Date.now() - startTime;
           witness_network: process.env.DEFAULT_WITNESS_NETWORK ?? "sepolia",
           theme: "light",
           witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
-           createdAt: new Date(),
-    updatedAt: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
         }
 
         settingsData = defaultData
@@ -239,17 +239,17 @@ const duration = Date.now() - startTime;
 
 
 
-       Logger.logEvent('User login successful', {
-              category: EventCategory.DATABASE,
-              type: EventType.CREATION,
-              action: 'user-login',
-              outcome: EventOutcome.SUCCESS,
-              duration,
-              metadata: {
-                userId: siweData.address!!,
-                table: 'users-login',
-              }
-            });
+      Logger.logEvent('User login successful', {
+        category: EventCategory.DATABASE,
+        type: EventType.CREATION,
+        action: 'user-login',
+        outcome: EventOutcome.SUCCESS,
+        duration,
+        metadata: {
+          userId: siweData.address!!,
+          table: 'users-login',
+        }
+      });
 
       return reply.code(201).send({
         success: true,
