@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Copy, Check, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { fetchFiles, fetchWalletAddressesAndNamesForInputRecommendation } from '@/utils/functions';
+import { fetchFiles } from '@/utils/functions';
 import { WalletAutosuggest } from '@/components/wallet_auto_suggest';
 import { useStore } from 'zustand'
 import appStore from '@/store'
@@ -19,12 +19,9 @@ export const AddressView: React.FC<AddressViewProps> = ({
   // const [inputAddress, setInputAddress] = useState(address);
   const navigate = useNavigate();
   const {
-
-    systemFileInfo,
     session,
     backend_url,
-    setWorkflows,
-    workflows
+    setWorkflows
   } = useStore(appStore)
   const [multipleAddresses, setMultipleAddresses] = useState<string[]>([address])
 
@@ -76,7 +73,7 @@ export const AddressView: React.FC<AddressViewProps> = ({
               placeholder="Enter wallet address..."
             /> */}
             <WalletAutosuggest
-              walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, workflows)}
+              // walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, workflows)}
               field={{
                 name: 'address',
 
@@ -95,7 +92,7 @@ export const AddressView: React.FC<AddressViewProps> = ({
           </div>
           <button
             onClick={handleCopy}
-            className="flex-shrink-0 cursor-pointer p-2 text-gray-400 hover:text-blue-600 hover:bg-white rounded-lg transition-all duration-200 hover:shadow-md"
+            className="shrink-0 cursor-pointer p-2 text-gray-400 hover:text-blue-600 hover:bg-white rounded-lg transition-all duration-200 hover:shadow-md"
             title="Copy address"
           >
             {copied ? (
@@ -106,7 +103,7 @@ export const AddressView: React.FC<AddressViewProps> = ({
           </button>
           <button
             onClick={handleNavigate}
-            className="flex-shrink-0 cursor-pointer p-2 text-gray-400 hover:text-green-600 hover:bg-white rounded-lg transition-all duration-200 hover:shadow-md"
+            className="shrink-0 cursor-pointer p-2 text-gray-400 hover:text-green-600 hover:bg-white rounded-lg transition-all duration-200 hover:shadow-md"
             title="Navigate to profile"
           >
             <ArrowRight className="w-5 h-5" />

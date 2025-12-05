@@ -162,7 +162,7 @@ const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
 
                   <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
                         <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col">
-                              <DialogHeader className="flex-shrink-0">
+                              <DialogHeader className="shrink-0">
                                     <DialogTitle>{viewType === 'template_view' ? 'Template Details' : 'Create Form Instance'}</DialogTitle>
                               </DialogHeader>
 

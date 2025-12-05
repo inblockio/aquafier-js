@@ -11,7 +11,6 @@ interface WalletAutosuggestProps {
   address: string;
   multipleAddresses: string[];
   setMultipleAddresses: (addresses: string[]) => void;
-  walletAddresses?: Map<string, string>; // Optional legacy prop for backward compatibility
   placeholder?: string;
   className?: string;
   disabled?: boolean;

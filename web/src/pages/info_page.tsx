@@ -79,7 +79,7 @@ const InfoPage = () => {
                                                       <div className="flex flex-col space-y-1 md:col-span-2">
                                                             <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Commit Hash</span>
                                                             <div className="flex items-center gap-2 font-mono bg-gray-50 dark:bg-gray-800/80 p-2 rounded-lg border border-gray-200 dark:border-gray-700 overflow-x-auto text-xs sm:text-sm">
-                                                                  <LuCode className="h-4 w-4 text-purple-500 flex-shrink-0" />
+                                                                  <LuCode className="h-4 w-4 text-purple-500 shrink-0" />
                                                                   <span className="truncate text-xs sm:text-sm">{versionInfo?.commitHash || '8f7e9d6b3a1c5f2e0d4b8a7c6e9d2f1b5a3c8e7d'}</span>
                                                             </div>
                                                       </div>

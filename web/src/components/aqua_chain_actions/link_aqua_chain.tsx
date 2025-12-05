@@ -240,7 +240,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                                     )}
                               </div>
 
-                              <DialogFooter className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+                              <DialogFooter className="px-6 py-4 border-t border-gray-200 bg-gray-50 shrink-0">
                                     <div className="flex justify-between w-full">
                                           <Button
                                                 variant="outline"

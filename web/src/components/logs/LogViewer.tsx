@@ -67,7 +67,7 @@ const LogLine: React.FC<{ entry: LogData; index: number }> = ({ entry, index }) 
       return (
             <div key={index} className={styles} style={{ paddingLeft: `${paddingLeft}px` }}>
                   <div className="flex items-start gap-2">
-                        {emoji && <span className="text-md flex-shrink-0 mt-0.5">{emoji}</span>}
+                        {emoji && <span className="text-md shrink-0 mt-0.5">{emoji}</span>}
                         <span className="whitespace-pre-wrap break-words flex-1">
                               {log} {index}
                         </span>

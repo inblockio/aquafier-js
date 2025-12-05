@@ -603,7 +603,7 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                         <h3 className="mb-2 font-semibold text-lg">Signatures ({revisionsWithSignatures.length})</h3>
                         {revisionsWithSignatures.map((revision, index) => (
                               <div key={`hash_${index}`} className="flex items-start pb-2 mb-4 border-b border-gray-200 dark:border-gray-700">
-                                    <Button variant="outline" size="icon" className="h-6 w-6 mr-2 flex-shrink-0">
+                                    <Button variant="outline" size="icon" className="h-6 w-6 mr-2 shrink-0">
                                           {index + 1}
                                     </Button>
 
@@ -620,7 +620,7 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                         <h3 className="mb-2 font-semibold text-lg">Witnesses ({revisionsWithWitness.length})</h3>
                         {revisionsWithWitness.map((revision, index) => (
                               <div key={`witness_${index}`} className="flex items-start pb-2 mb-4 border-b border-gray-200 dark:border-gray-700">
-                                    <Button variant="outline" size="icon" className="h-6 w-6 mr-2 flex-shrink-0">
+                                    <Button variant="outline" size="icon" className="h-6 w-6 mr-2 shrink-0">
                                           {index + 1}
                                     </Button>
                                     <div>
@@ -669,7 +669,7 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                               const revision = fileInfo!.aquaTree?.revisions[revisionHash]
                               return (
                                     <div key={`link_${index}`} className="flex items-start pb-2 mb-4 border-b border-gray-200 dark:border-gray-700 w-full">
-                                          <Button variant="outline" size="icon" className="h-6 w-6 mr-2 flex-shrink-0">
+                                          <Button variant="outline" size="icon" className="h-6 w-6 mr-2 shrink-0">
                                                 {index + 1}
                                           </Button>
                                           <div className="flex-1 flex flex-col">

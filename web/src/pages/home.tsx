@@ -392,7 +392,7 @@ const VisionSection = () => (
                                     key={point.title}
                                     className="flex items-start space-x-4 p-6 rounded-lg bg-white/50 dark:bg-black/20 border border-orange-200/50 dark:border-orange-800/30 shadow-md hover:shadow-lg transition-all duration-300"
                               >
-                                    <Check className="h-6 w-6 text-orange-500 mt-1 flex-shrink-0" />
+                                    <Check className="h-6 w-6 text-orange-500 mt-1 shrink-0" />
                                     <div>
                                           <h3 className="text-xl font-headline font-semibold">{point.title}</h3>
                                           <p className="text-muted-foreground mt-1">{point.description}</p>
@@ -492,7 +492,7 @@ const PricingSection = () => (
                                           <ul className="space-y-3">
                                                 {plan.features.map((feature, i) => (
                                                       <li key={i} className="flex items-start">
-                                                            <Check className="h-5 w-5 text-orange-500 mr-2 flex-shrink-0 mt-0.5" />
+                                                            <Check className="h-5 w-5 text-orange-500 mr-2 shrink-0 mt-0.5" />
                                                             <span>{feature}</span>
                                                       </li>
                                                 ))}

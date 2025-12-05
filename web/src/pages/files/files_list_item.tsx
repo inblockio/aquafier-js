@@ -618,7 +618,7 @@ export default function FilesListItem({
                   <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
                         {/* Header with file icon and name */}
                         <div className="flex items-start space-x-3 mb-4">
-                              <div className="flex-shrink-0">
+                              <div className="shrink-0">
                                     <FileText className="w-8 h-8 text-blue-500" />
                               </div>
                               <div className="flex-1 min-w-0">

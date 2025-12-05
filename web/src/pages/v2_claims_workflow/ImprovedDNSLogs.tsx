@@ -127,7 +127,7 @@ const ImprovedDNSLogs: React.FC<ImprovedDNSLogsProps> = ({
               >
                 <div className="p-4">
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 mt-0.5">
+                    <div className="shrink-0 mt-0.5">
                       {getLogIcon(log.level)}
                     </div>
 
@@ -140,7 +140,7 @@ const ImprovedDNSLogs: React.FC<ImprovedDNSLogsProps> = ({
                         {log.details && (
                           <button
                             onClick={() => toggleLogExpansion(index)}
-                            className="flex-shrink-0 text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-white/50 transition-colors"
+                            className="shrink-0 text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-white/50 transition-colors"
                           >
                             {expandedLogs.has(index) ? (
                               <FaChevronUp className="text-xs" />

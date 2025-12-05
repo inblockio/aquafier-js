@@ -239,7 +239,7 @@ export default function PdfWorkflowPage() {
                                                       <div className="flex items-start gap-4">
                                                             {/* Icon */}
                                                             <div
-                                                                  className={`w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0 ${isActive
+                                                                  className={`w-14 h-14 rounded-lg flex items-center justify-center shrink-0 ${isActive
                                                                               ? 'bg-blue-600'
                                                                               : isCompleted
                                                                                     ? 'bg-green-50'

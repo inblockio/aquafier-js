@@ -167,7 +167,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                         className="font-medium w-[300px] max-w-[300px] min-w-[300px]"
                   >
                         <div className="w-full flex items-center gap-3">
-                              <div className="flex-shrink-0">
+                              <div className="shrink-0">
                                     <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
                                           <FileText className="h-5 w-5 text-blue-600" />
                                     </div>

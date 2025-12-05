@@ -1,7 +1,7 @@
 import appStore from '@/store'
 import { Contract } from '@/types/types'
 import { SYSTEM_WALLET_ADDRESS } from '@/utils/constants'
-import { fetchFiles, fetchWalletAddressesAndNamesForInputRecommendation, getGenesisHash, isValidEthereumAddress, timeToHumanFriendly } from '@/utils/functions'
+import { fetchFiles, getGenesisHash, isValidEthereumAddress, timeToHumanFriendly } from '@/utils/functions'
 import { getAquaTreeFileObject } from 'aqua-js-sdk'
 import axios from 'axios'
 import { Share2, X, Users, ExternalLink, Check, Copy, Lock, Trash2, Plus } from 'lucide-react'
@@ -21,7 +21,7 @@ import WalletAdrressClaim from '@/pages/v2_claims_workflow/WalletAdrressClaim'
 
 const ShareComponent = () => {
 
-      const { selectedFileInfo, setSelectedFileInfo, setOpenDialog, backend_url, session, setWorkflows, workflows, systemFileInfo } = useStore(appStore)
+      const { selectedFileInfo, setSelectedFileInfo, setOpenDialog, backend_url, session, setWorkflows } = useStore(appStore)
       const [loading, setLoading] = useState(true)
       const [recipientType, setRecipientType] = useState<'0xfabacc150f2a0000000000000000000000000000' | 'specific'>('0xfabacc150f2a0000000000000000000000000000')
       // const [walletAddress, setWalletAddress] = useState('')
@@ -266,7 +266,7 @@ const ShareComponent = () => {
                   }}>
                         {/* Warning */}
                         <div className="flex gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                              <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
                                     <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
                               </div>
                               <div>
@@ -367,7 +367,7 @@ const ShareComponent = () => {
                                                                   </div>
                                                                   <div className="flex-1">
                                                                         <WalletAutosuggest
-                                                                              walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, workflows)}
+                                                                              // walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, workflows)}
                                                                               field={{
                                                                                     name: `share_address_${index}`,
                                                                               }}
@@ -470,7 +470,7 @@ const ShareComponent = () => {
                                     <h3 className="text-base font-medium text-gray-900">Share Link Ready</h3>
                                     <div className="p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
                                           <div className="flex items-center gap-3">
-                                                <ExternalLink className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                                                <ExternalLink className="w-5 h-5 text-gray-400 shrink-0" />
                                                 <div className="flex-1 min-w-0">
                                                       <p className="text-sm font-mono text-gray-700 break-all">{shared}</p>
                                                 </div>
@@ -506,7 +506,7 @@ const ShareComponent = () => {
                                                             <div key={share.hash} className="p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
                                                                   <div className="flex items-center gap-3">
                                                                         <Link to={`/app/shared-contracts/${share.hash}`}>
-                                                                              <ExternalLink className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                                                                              <ExternalLink className="w-5 h-5 text-gray-400 shrink-0" />
                                                                         </Link>
                                                                         <div className="flex-1 min-w-0 flex items-center gap-2 justify-between">
                                                                               <div className="flex flex-col gap-1">

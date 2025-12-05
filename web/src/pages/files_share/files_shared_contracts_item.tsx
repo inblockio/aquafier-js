@@ -320,7 +320,7 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
                                     {
                                           type == 'incoming' ?
                                                 <CheckIfAquaTreeIsImported loadingSharedFileData={loadingSharedFileData} exactMatchFound={exactMatchFound} />
-                                                : <div className="flex-shrink-0 ml-4" />
+                                                : <div className="shrink-0 ml-4" />
                                     }
                               </div>
                         </div>
@@ -359,7 +359,7 @@ export function CheckIfAquaTreeIsImported({ loadingSharedFileData, exactMatchFou
       }
 
       if (exactMatchFound) {
-            return <div className="flex-shrink-0 ml-4">
+            return <div className="shrink-0 ml-4">
                   <Button
                         variant="default"
                         size="sm"

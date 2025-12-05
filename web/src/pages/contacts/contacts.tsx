@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import appStore from "@/store";
 import { useStore } from "zustand";
 import { ContactProfile } from "@/types/types";
-import { fetchFiles, fetchWalletAddressesAndNamesForInputRecommendation, getAquaTreeFileName, getGenesisHash, isWorkFlowData } from "@/utils/functions";
+import { fetchFiles, getAquaTreeFileName, getGenesisHash, isWorkFlowData } from "@/utils/functions";
 import { OrderRevisionInAquaTree, Revision } from "aqua-js-sdk";
 import { ApiFileInfo } from "@/models/FileInfo";
 import WalletAdrressClaim from "../v2_claims_workflow/WalletAdrressClaim";
@@ -23,7 +23,7 @@ const CLAIMS = new Set([
 ]);
 
 const ContactsPage = () => {
-    const { systemFileInfo, session, setWorkflows, workflows, backend_url } = useStore(appStore);
+    const { systemFileInfo, session, setWorkflows, backend_url } = useStore(appStore);
     const [contactProfiles, setContactProfiles] = useState<ContactProfile[]>([]);
     const [filterMultipleAddresses, setFilterMultipleAddresses] = useState<string[]>([''])
 
@@ -240,8 +240,7 @@ const ContactsPage = () => {
                 contactProfiles.length > 0 ? <div className="my-4 flex gap-4">
 
                     <WalletAutosuggest
-
-                        walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, workflows)}
+                        // walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, workflows)}
                         field={{
                             name: 'address',
 
