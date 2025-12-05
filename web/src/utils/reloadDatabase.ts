@@ -95,6 +95,7 @@ export const RELOAD_KEYS = {
  */
 export const triggerWorkflowReload = async (workflowType: string, watchAll?: boolean) => {
     try {
+        console.log("Workflow type: ", workflowType)
         if (workflowType === 'all') {
             await triggerReload(RELOAD_KEYS.all_files);
             await triggerReload(RELOAD_KEYS.contacts);
@@ -119,19 +120,19 @@ export const triggerWorkflowReload = async (workflowType: string, watchAll?: boo
         }
 
         // Check if it's a specific workflow type in RELOAD_KEYS
-        // const reloadKey = (RELOAD_KEYS as any)[workflowType];
-        // if (reloadKey) {
-        //     await triggerReload(reloadKey);
+        const reloadKey = (RELOAD_KEYS as any)[workflowType];
+        if (reloadKey) {
+            await triggerReload(reloadKey);
             
-        //     // Also trigger claims_and_attestations if it's an identity claim
-        //     const identityClaims = ['identity_claim', 'user_signature', 'email_claim', 'phone_number_claim', 'domain_claim', 'identity_attestation'];
-        //     if (identityClaims.includes(workflowType)) {
-        //         await triggerReload(RELOAD_KEYS.claims_and_attestations);
-        //     }
-        // } else {
-        //     // Fallback: use the workflow type as the key
-        //     await triggerReload(workflowType);
-        // }
+            // Also trigger claims_and_attestations if it's an identity claim
+            const identityClaims = ['identity_claim', 'user_signature', 'email_claim', 'phone_number_claim', 'domain_claim', 'identity_attestation'];
+            if (identityClaims.includes(workflowType)) {
+                await triggerReload(RELOAD_KEYS.claims_and_attestations);
+            }
+        } else {
+            // Fallback: use the workflow type as the key
+            await triggerReload(workflowType);
+        }
 
         // If watchAll is true, always trigger stats reload since any workflow change affects stats
         if (watchAll) {

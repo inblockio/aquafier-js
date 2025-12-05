@@ -50,6 +50,7 @@ import CustomPagination from '@/components/common/CustomPagination'
 import { useNavigate } from 'react-router-dom'
 import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 import { OpenSelectedFileDetailsButton } from '@/components/aqua_chain_actions/details_button'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 
 const getStatusIcon = (status: string) => {
       switch (status) {
@@ -376,7 +377,7 @@ export default function WorkflowsTablePage() {
 
       // Watch for reload triggers
       useReloadWatcher({
-            key: 'aqua_sign',
+            key: RELOAD_KEYS.aqua_sign,
             onReload: () => {
                   loadWorkflowsData();
             }
