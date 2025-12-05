@@ -96,42 +96,41 @@ export default async function systemController(fastify: FastifyInstance) {
         const url = `${protocol}://${host}`;
 
         const metamaskAddress = request.headers['metamask_address'];
-        if (!metamaskAddress || typeof metamaskAddress !== 'string' || metamaskAddress.trim() === '') {
+        const hasValidAddress = metamaskAddress && typeof metamaskAddress === 'string' && metamaskAddress.trim() !== '';
 
-            // throw Error(`Fetching AquaTree for user ${metamaskAddress} with url ${url}  -- ${JSON.stringify(trees, null, 4)}`)
-            let displayData = await fetchAquatreeFoUser(url, trees)
-            return reply.code(200).send({ data: displayData });
-
-        } else {
-
-            // throw Error(`Metamask address is not provided or is invalid ${metamaskAddress}`);
-            let data = await prisma.latest.findMany({
+        // If user provided a wallet address, also fetch their workflow trees (with template_id)
+        if (hasValidAddress) {
+            const userWorkflowTrees = await prisma.latest.findMany({
                 where: {
-                    AND: {
-                        user: {
-                            contains: metamaskAddress,
-                            mode: 'insensitive'
-                        },
-                        template_id: {
-                            not: null
-                        }
+                    user: {
+                        contains: metamaskAddress,
+                        mode: 'insensitive'
+                    },
+                    template_id: {
+                        not: null
                     }
                 }
             });
 
-            if (data.length > 0) {
-                trees.push(...data)
+            if (userWorkflowTrees.length > 0) {
+                trees.push(...userWorkflowTrees)
             }
         }
 
-        if (trees.length == 0) {
+        // Return empty if no trees found
+        if (trees.length === 0) {
             return reply.code(200).send({ data: [] });
         }
 
-        // throw Error(`Fetching AquaTree for user ${metamaskAddress} with url ${url}  -- ${JSON.stringify(trees, null, 4)}`)
-        let displayData = await fetchAquatreeFoUser(url, trees)
+        // Fetch and format the aqua trees
+        const displayData = await fetchAquatreeFoUser(url, trees)
 
-        return reply.code(200).send({ data: deleteChildrenFieldFromAquaTrees(displayData) })
+        // Only filter children field when user address is provided
+        if (hasValidAddress) {
+            return reply.code(200).send({ data: deleteChildrenFieldFromAquaTrees(displayData) })
+        }
+
+        return reply.code(200).send({ data: displayData })
     });
 
     fastify.get('/system/aqua_tree/names', async (request, reply) => {
