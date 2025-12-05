@@ -93,14 +93,14 @@ export default function FilesList(filesListProps: FilesListProps) {
       }, [session?.address, session?.nonce, backend_url])
 
       useEffect(() => {
-            if(tabFromUrl){
+            if(tabFromUrl && stats.filesCount > 0){
                   if(stats?.claimTypeCounts?.[tabFromUrl as keyof typeof stats.claimTypeCounts] > 0){
                         setSelectedWorkflow(tabFromUrl)
                   }else {
                         setSelectedWorkflow('all')
                   }
             }
-      }, [tabFromUrl])
+      }, [tabFromUrl, stats])
 
       // Watch for stats reload triggers
       useReloadWatcher({
