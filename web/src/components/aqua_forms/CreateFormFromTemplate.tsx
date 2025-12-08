@@ -214,6 +214,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       const [canvasSize, setCanvasSize] = useState({ width: 800, height: 200 });
       const containerRef = useRef<HTMLDivElement | null>(null);
 
+      // Multi-step form state for aqua_sign template
+      const [aquaSignStep, setAquaSignStep] = useState<1 | 2>(1)
+      const isAquaSignTemplate = selectedTemplate?.name === 'aqua_sign'
+
       const navigate = useNavigate()
 
       const fetchInfoDetails = async () => {
@@ -1583,6 +1587,267 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             </div>
       )
 
+      /** Renders a single form field - extracted for reuse in aqua_sign steps */
+      const renderSingleField = (field: FormField, fieldIndex: number) => {
+            if (field.is_hidden) return null
+
+            // Use helper function for array fields (multiple signers)
+            if (field.is_array) {
+                  return renderArrayField(field, fieldIndex)
+            }
+
+            return (
+                  <div key={`field-${fieldIndex}`} className="space-y-2 sm:space-y-3">
+                        <div className="flex items-center gap-2">
+                              {getFieldIcon(field.type)}
+                              <Label htmlFor={`input-${field.name}`} className="text-base font-medium text-gray-900">
+                                    {field.label}
+                                    {field.required && <span className="text-red-500">*</span>}
+                              </Label>
+                        </div>
+
+                        {/* Text, Number, Date, Domain, Email fields */}
+                        {['text', 'number', 'date', 'domain', 'email'].includes(field.type) && (
+                              <>
+                                    <Input
+                                          id={`input-${field.name}`}
+                                          data-testid={`input-${field.name}`}
+                                          className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
+                                          placeholder={getFieldPlaceholder(field)}
+                                          disabled={field.is_editable === false}
+                                          defaultValue={(() => {
+                                                const val = getFieldDefaultValue(field, formData[field.name])
+                                                return val instanceof File ? undefined : val
+                                          })()}
+                                          onChange={(e) => handleTextInputChange(e, field)}
+                                    />
+
+                                    {field.support_text && (
+                                          <p className="text-xs text-gray-500">{field.support_text}</p>
+                                    )}
+                                    {/* Verification code section for verifiable fields */}
+                                    {field.is_verifiable && (
+                                          <>
+                                                <Button
+                                                      type="button"
+                                                      data-testid={`send-verification-code-${field.name}`}
+                                                      disabled={!verfyingFormFieldEnabled || !verfyingFormFieldEnabled?.isTwilioEnabled}
+                                                      onClick={() => handleSendVerificationCode(field)}
+                                                      className={`w-full flex items-center justify-center space-x-1 bg-blue-100 text-blue-700 px-3 py-2 rounded transition-colors text-xs ${verifyingFormField === `field-${field.name}` ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-200'
+                                                            }`}
+                                                >
+                                                      {verifyingFormField === `field-${field.name}` ? (
+                                                            <>
+                                                                  <Loader2 className="animate-spin h-3 w-3 mr-1" />
+                                                                  <span>Sending code...</span>
+                                                            </>
+                                                      ) : (
+                                                            <>
+                                                                  <Send className="w-4 h-4" />
+                                                                  <span>Send Code</span>
+                                                            </>
+                                                      )}
+                                                </Button>
+
+                                                <div className="flex items-center gap-2">
+                                                      <BookCheck className="h-4 w-4" />
+                                                      <Label
+                                                            htmlFor={`input-verification-${field.name}`}
+                                                            className="text-base font-medium text-gray-900"
+                                                      >
+                                                            Verification code for {field.label}
+                                                            <span className="text-red-500">*</span>
+                                                      </Label>
+                                                </div>
+
+                                                <Input
+                                                      id={`input-verification-${field.name}`}
+                                                      data-testid={`input-verification-${field.name}`}
+                                                      className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
+                                                      placeholder="Type code here..."
+                                                      onChange={(e) => handleVerificationCodeChange(e, field.name)}
+                                                />
+                                          </>
+                                    )}
+                              </>
+                        )}
+
+                        {/* Signature/Scratchpad field with Reset, Generate from Name, Initials */}
+                        {field.type === 'scratchpad' && renderScratchpadField()}
+
+                        {/* Wallet address field */}
+                        {field.type === 'wallet_address' && (
+                              field.is_editable === false ? (
+                                    <Input
+                                          id={`input-${field.name}`}
+                                          data-testid={`input-${field.name}`}
+                                          className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
+                                          disabled
+                                          defaultValue={(() => {
+                                                const val = getFieldDefaultValue(field, formData[field.name])
+                                                return val instanceof File ? undefined : val
+                                          })()}
+                                    />
+                              ) : (
+                                    <WalletAutosuggest
+                                          field={field}
+                                          index={1}
+                                          address={formData[field.name] ? (formData[field.name] as string) : ''}
+                                          multipleAddresses={[]}
+                                          setMultipleAddresses={(data) => handleWalletAddressSelect(data, field.name)}
+                                          placeholder="Enter signer wallet address"
+                                          className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                    />
+                              )
+                        )}
+
+                        {/* Document, Image, File upload fields */}
+                        {['document', 'image', 'file'].includes(field.type) && (
+                              <div className="relative">
+                                    <Input
+                                          id={`input-${field.name}`}
+                                          data-testid={`input-${field.name}`}
+                                          className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
+                                          type={getInputType(field.type)}
+                                          required={field.required}
+                                          disabled={field.is_editable === false}
+                                          accept={field.type === 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
+                                          placeholder={getFieldPlaceholder(field)}
+                                          onChange={(e) => handleFileInputChange(e, field)}
+                                    />
+
+                                    {field.support_text && (
+                                          <p className="text-xs text-gray-500">{field.support_text}</p>
+                                    )}
+
+                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                          <Upload className="h-4 w-4 text-gray-400" />
+                                    </div>
+                              </div>
+                        )}
+
+                        {field.name === 'sender' && (
+                              <p className="text-xs text-gray-500">
+                                    {field.support_text
+                                          ? field.support_text
+                                          : 'The sender is the person who initiates the document signing process. This field is auto-filled with your wallet address.'}
+                              </p>
+                        )}
+                  </div>
+            )
+      }
+
+      /** Renders the aqua_sign form with multi-step UI */
+      const renderAquaSignForm = () => {
+            const fields = reorderInputFields(selectedTemplate!.fields)
+            const documentField = fields.find(f => f.type === 'document')
+            const otherFields = fields.filter(f => f.type !== 'document')
+            
+            // Check if user has added themselves to signers
+            const userInSigners = multipleAddresses.some(addr => 
+                  addr.toLowerCase() === session?.address?.toLowerCase()
+            )
+
+            return (
+                  <>
+                        {/* Step indicator */}
+                        <div className="flex items-center justify-center mb-6">
+                              <div className="flex items-center gap-2">
+                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+                                          aquaSignStep === 1 
+                                                ? 'bg-blue-600 text-white' 
+                                                : 'bg-green-500 text-white'
+                                    }`}>
+                                          {aquaSignStep === 1 ? '1' : '✓'}
+                                    </div>
+                                    <span className={`text-sm ${aquaSignStep === 1 ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
+                                          Select Document
+                                    </span>
+                                    <div className="w-12 h-0.5 bg-gray-300 mx-2" />
+                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+                                          aquaSignStep === 2 
+                                                ? 'bg-blue-600 text-white' 
+                                                : 'bg-gray-300 text-gray-600'
+                                    }`}>
+                                          2
+                                    </div>
+                                    <span className={`text-sm ${aquaSignStep === 2 ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
+                                          Add Signers
+                                    </span>
+                              </div>
+                        </div>
+
+                        {/* Step 1: Document Selection */}
+                        {aquaSignStep === 1 && documentField && (
+                              <div className="space-y-4">
+                                    <div className="text-center mb-4">
+                                          <h3 className="text-lg font-medium text-gray-900">Select the PDF document to be signed</h3>
+                                          <p className="text-sm text-gray-500 mt-1">Upload the document that requires signatures</p>
+                                    </div>
+                                    {renderSingleField(documentField, 0)}
+                                    
+                                    <div className="flex justify-end pt-4">
+                                          <Button
+                                                type="button"
+                                                onClick={() => {
+                                                      // Validate document is selected before proceeding
+                                                      if (!formData['document']) {
+                                                            toast.error('Please select a document first')
+                                                            return
+                                                      }
+                                                      setAquaSignStep(2)
+                                                }}
+                                                className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+                                          >
+                                                Next: Add Signers
+                                          </Button>
+                                    </div>
+                              </div>
+                        )}
+
+                        {/* Step 2: Sender and Signers */}
+                        {aquaSignStep === 2 && (
+                              <div className="space-y-4">
+                                    <div className="text-center mb-4">
+                                          <h3 className="text-lg font-medium text-gray-900">Add signers for this document</h3>
+                                          <p className="text-sm text-gray-500 mt-1">Specify who needs to sign this document</p>
+                                    </div>
+
+                                    {otherFields.map((field, idx) => renderSingleField(field, idx))}
+                                    {/* Warning if user hasn't added themselves */}
+                                    {multipleAddresses.length > 0 && !userInSigners && (
+                                          <Alert className="border-amber-200 bg-amber-50">
+                                                <AlertCircle className="h-4 w-4 text-amber-600" />
+                                                <AlertDescription className="text-amber-800">
+                                                      
+                                                      You haven't added yourself as a signer. If you need to sign this document, add your wallet address to the signers list.
+                                               <Button onClick={() => {
+                                                if(session){
+                                                      setMultipleAddresses( curr => [...curr, session?.address])
+                                                }
+                                               }}>
+                                                      Add Yourself
+                                                </Button>
+                                                </AlertDescription>
+                                          </Alert>
+                                    )}
+                                    
+                                    <div className="flex justify-between pt-4">
+                                          <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() => setAquaSignStep(1)}
+                                                className="px-6"
+                                          >
+                                                Back
+                                          </Button>
+                                    </div>
+                              </div>
+                        )}
+                  </>
+            )
+      }
+
       /** Handles text input change with validation */
       const handleTextInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: FormField) => {
             if (field.is_editable === false) {
@@ -1742,8 +2007,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
       return (
             <>
-                  {/* <div className="min-h-[100%] bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-4"> */}
-                  <div className="min-h-[100%] px-2 sm:px-4">
+                  {/* <div className="min-h-full bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-4"> */}
+                  <div className="min-h-full px-2 sm:px-4">
                         <div className="max-w-full sm:max-w-4xl mx-auto py-4 sm:py-6">
                               {/* Header */}
                               <div className="mb-8">
@@ -1771,162 +2036,19 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           {renderFormError()}
 
                                           <div className="space-y-4 sm:space-y-6">
-                                                {selectedTemplate
-                                                      ? reorderInputFields(selectedTemplate.fields).map((field, fieldIndex) => {
-                                                            if (field.is_hidden) return null
-
-                                                            // Use helper function for array fields (multiple signers)
-                                                            if (field.is_array) {
-                                                                  return renderArrayField(field, fieldIndex)
-                                                            }
-
-                                                            return (
-                                                                  <div key={`field-${fieldIndex}`} className="space-y-2 sm:space-y-3">
-                                                                        <div className="flex items-center gap-2">
-                                                                              {getFieldIcon(field.type)}
-                                                                              <Label htmlFor={`input-${field.name}`} className="text-base font-medium text-gray-900">
-                                                                                    {field.label}
-                                                                                    {field.required && <span className="text-red-500">*</span>}
-                                                                              </Label>
-                                                                        </div>
-
-                                                                        {/* Text, Number, Date, Domain, Email fields */}
-                                                                        {['text', 'number', 'date', 'domain', 'email'].includes(field.type) && (
-                                                                              <>
-                                                                                    <Input
-                                                                                          id={`input-${field.name}`}
-                                                                                          data-testid={`input-${field.name}`}
-                                                                                          className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
-                                                                                          placeholder={getFieldPlaceholder(field)}
-                                                                                          disabled={field.is_editable === false}
-                                                                                          defaultValue={(() => {
-                                                                                                const val = getFieldDefaultValue(field, formData[field.name])
-                                                                                                return val instanceof File ? undefined : val
-                                                                                          })()}
-                                                                                          onChange={(e) => handleTextInputChange(e, field)}
-                                                                                    />
-
-                                                                                    {field.support_text && (
-                                                                                          <p className="text-xs text-gray-500">{field.support_text}</p>
-                                                                                    )}
-                                                                                    {/* Verification code section for verifiable fields */}
-                                                                                    {field.is_verifiable && (
-                                                                                          <>
-                                                                                                <Button
-                                                                                                      type="button"
-                                                                                                      data-testid={`send-verification-code-${field.name}`}
-                                                                                                      disabled={!verfyingFormFieldEnabled || !verfyingFormFieldEnabled?.isTwilioEnabled}
-                                                                                                      onClick={() => handleSendVerificationCode(field)}
-                                                                                                      className={`w-full flex items-center justify-center space-x-1 bg-blue-100 text-blue-700 px-3 py-2 rounded transition-colors text-xs ${verifyingFormField === `field-${field.name}` ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-200'
-                                                                                                            }`}
-                                                                                                >
-                                                                                                      {verifyingFormField === `field-${field.name}` ? (
-                                                                                                            <>
-                                                                                                                  <Loader2 className="animate-spin h-3 w-3 mr-1" />
-                                                                                                                  <span>Sending code...</span>
-                                                                                                            </>
-                                                                                                      ) : (
-                                                                                                            <>
-                                                                                                                  <Send className="w-4 h-4" />
-                                                                                                                  <span>Send Code</span>
-                                                                                                            </>
-                                                                                                      )}
-                                                                                                </Button>
-
-                                                                                                <div className="flex items-center gap-2">
-                                                                                                      <BookCheck className="h-4 w-4" />
-                                                                                                      <Label
-                                                                                                            htmlFor={`input-verification-${field.name}`}
-                                                                                                            className="text-base font-medium text-gray-900"
-                                                                                                      >
-                                                                                                            Verification code for {field.label}
-                                                                                                            <span className="text-red-500">*</span>
-                                                                                                      </Label>
-                                                                                                </div>
-
-                                                                                                <Input
-                                                                                                      id={`input-verification-${field.name}`}
-                                                                                                      data-testid={`input-verification-${field.name}`}
-                                                                                                      className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
-                                                                                                      placeholder="Type code here..."
-                                                                                                      onChange={(e) => handleVerificationCodeChange(e, field.name)}
-                                                                                                />
-                                                                                          </>
-                                                                                    )}
-                                                                              </>
-                                                                        )}
-
-                                                                        {/* Signature/Scratchpad field with Reset, Generate from Name, Initials */}
-                                                                        {field.type === 'scratchpad' && renderScratchpadField()}
-
-                                                                        {/* Wallet address field */}
-                                                                        {field.type === 'wallet_address' && (
-                                                                              field.is_editable === false ? (
-                                                                                    <Input
-                                                                                          id={`input-${field.name}`}
-                                                                                          data-testid={`input-${field.name}`}
-                                                                                          className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
-                                                                                          disabled
-                                                                                          defaultValue={(() => {
-                                                                                                const val = getFieldDefaultValue(field, formData[field.name])
-                                                                                                return val instanceof File ? undefined : val
-                                                                                          })()}
-                                                                                    />
-                                                                              ) : (
-                                                                                    <WalletAutosuggest
-                                                                                          field={field}
-                                                                                          index={1}
-                                                                                          address={formData[field.name] ? (formData[field.name] as string) : ''}
-                                                                                          multipleAddresses={[]}
-                                                                                          setMultipleAddresses={(data) => handleWalletAddressSelect(data, field.name)}
-                                                                                          placeholder="Enter signer wallet address"
-                                                                                          className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                                                                    />
-                                                                              )
-                                                                        )}
-
-
-                                                                        {/* Document, Image, File upload fields */}
-                                                                        {['document', 'image', 'file'].includes(field.type) && (
-                                                                              <div className="relative">
-                                                                                    <Input
-                                                                                          id={`input-${field.name}`}
-                                                                                          data-testid={`input-${field.name}`}
-                                                                                          className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
-                                                                                          type={getInputType(field.type)}
-                                                                                          required={field.required}
-                                                                                          disabled={field.is_editable === false}
-                                                                                          accept={field.type === 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
-                                                                                          placeholder={getFieldPlaceholder(field)}
-                                                                                          onChange={(e) => handleFileInputChange(e, field)}
-                                                                                    />
-
-                                                                                    {field.support_text && (
-                                                                                          <p className="text-xs text-gray-500">{field.support_text}</p>
-                                                                                    )}
-
-                                                                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                                                                          <Upload className="h-4 w-4 text-gray-400" />
-                                                                                    </div>
-                                                                              </div>
-                                                                        )}
-
-
-                                                                        {field.name === 'sender' && (
-                                                                              <p className="text-xs text-gray-500">
-                                                                                    {field.support_text
-                                                                                          ? field.support_text
-                                                                                          : 'The sender is the person who initiates the document signing process. This field is auto-filled with your wallet address.'}
-                                                                              </p>
-                                                                        )}
-
-                                                                  </div>
+                                                {/* Use multi-step form for aqua_sign, default rendering for others */}
+                                                {isAquaSignTemplate 
+                                                      ? renderAquaSignForm()
+                                                      : selectedTemplate
+                                                            ? reorderInputFields(selectedTemplate.fields).map((field, fieldIndex) => 
+                                                                  renderSingleField(field, fieldIndex)
                                                             )
-                                                      })
-                                                      : null}
+                                                            : null
+                                                }
                                           </div>
 
-                                          <Separator className="my-8" />
+                                          {/* Hide separator for aqua_sign step 1 */}
+                                          {(!isAquaSignTemplate || aquaSignStep === 2) && <Separator className="my-8" />}
                                           {
                                                 selectedTemplate.name == 'domain_claim' && (
                                                       <div>
@@ -1946,7 +2068,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                 )
                                           }
 
-
                                           {
                                                 selectedTemplate.name == 'identity_attestation' && (
                                                       <div>
@@ -1959,32 +2080,34 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                 )
                                           }
 
-                                          {/* Action Buttons */}
-                                          <div className="flex justify-end space-x-2 sm:space-x-4 pt-4">
-                                                <Button type="button" variant="outline" onClick={onBack} className="px-6">
-                                                      Cancel
-                                                </Button>
-                                                {selectedTemplate && (
-                                                      <Button
-                                                            data-testid="action-loading-create-button"
-                                                            type="submit"
-                                                            className="bg-blue-600 hover:bg-blue-700 text-white px-8"
-                                                            disabled={submittingTemplateData}
-                                                      >
-                                                            {submittingTemplateData ? (
-                                                                  <>
-                                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                                        Creating Workflow...
-                                                                  </>
-                                                            ) : (
-                                                                  <>
-                                                                        <FileText className="mr-2 h-4 w-4" />
-                                                                        Create Workflow
-                                                                  </>
-                                                            )}
+                                          {/* Action Buttons - Hide for aqua_sign step 1 since it has its own navigation */}
+                                          {(!isAquaSignTemplate || aquaSignStep === 2) && (
+                                                <div className="flex justify-end space-x-2 sm:space-x-4 pt-4">
+                                                      <Button type="button" variant="outline" onClick={onBack} className="px-6">
+                                                            Cancel
                                                       </Button>
-                                                )}
-                                          </div>
+                                                      {selectedTemplate && (
+                                                            <Button
+                                                                  data-testid="action-loading-create-button"
+                                                                  type="submit"
+                                                                  className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+                                                                  disabled={submittingTemplateData}
+                                                            >
+                                                                  {submittingTemplateData ? (
+                                                                        <>
+                                                                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                                              Creating Workflow...
+                                                                        </>
+                                                                  ) : (
+                                                                        <>
+                                                                              <FileText className="mr-2 h-4 w-4" />
+                                                                              Create Workflow
+                                                                        </>
+                                                                  )}
+                                                            </Button>
+                                                      )}
+                                                </div>
+                                          )}
                                     </form>
                               </div>
                         </div>
@@ -1997,7 +2120,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         }}
                   >
                         <DialogContent
-                              className="[&>button]:hidden sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[65vh] sm:max-h-[65vh] !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-0 gap-0">
+                              className="[&>button]:hidden sm:max-w-[65vw]! sm:w-[65vw]! sm:h-[65vh]! sm:max-h-[65vh]! max-w-[95vw]! w-[95vw]! h-[95vh]! max-h-[95vh]! flex flex-col p-0 gap-0">
                               <div className="absolute top-4 right-4">
                                     <Button
                                           variant="ghost"
@@ -2011,7 +2134,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                     </Button>
                               </div>
                               <DialogHeader
-                                    className="!h-[60px] !min-h-[60px] !max-h-[60px] flex justify-center items-start px-6">
+                                    className="h-[60px] min-h-[60px] max-h-[60px] flex justify-center items-start px-6">
                                     <DialogTitle>{dialogData?.title}</DialogTitle>
                               </DialogHeader>
                               <div className=" h-[calc(100%-60px)] pb-1">

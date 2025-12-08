@@ -34,6 +34,16 @@ export default function NewShadcnLayoutWithSidebar() {
 
       const [_drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
 
+      const getClasses = () => {
+            if (openDialog?.dialogType === 'form_template_editor') {
+                  return "max-w-[95vw]! w-[95vw]! max-h-[98vh] sm:max-w-[95vw]! sm:w-[95vw]! sm:h-[98vh] sm:max-h-[98vh] flex flex-col"
+            }
+            if (openDialog?.dialogType === 'identity_attestation') {
+                  return "max-w-[65vw]! w-[65vw]! h-[90vh] max-h-[90vh] sm:max-w-[65vw]! sm:w-[65vw]! sm:h-[90vh] sm:max-h-[90vh] flex flex-col"
+            }
+            return "sm:!max-w-[65vw] sm:!w-[65vw] !max-w-[95vw] !w-[95vw] min-h-[10vh] max-h-[98vh] overflow-hidden overflow-y-auto flex flex-col p-0 gap-0"
+      }
+
       return (
             <>
                   {session == null ? (
@@ -157,13 +167,8 @@ export default function NewShadcnLayoutWithSidebar() {
                         }}
                   >
                         <DialogContent
-                              className={
-                                    openDialog?.dialogType === 'form_template_editor' ?
-                                          "[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[98vh] max-h-[98vh] sm:!max-w-[95vw] sm:!w-[95vw] sm:h-[98vh] sm:max-h-[98vh] flex flex-col" :
-                                          openDialog?.dialogType === 'identity_attestation' ?
-                                                "[&>button]:hidden !max-w-[65vw] !w-[65vw] h-[90vh] max-h-[90vh] sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[90vh] sm:max-h-[90vh] flex flex-col" :
-                                                "[&>button]:hidden sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[90vh] sm:max-h-[90vh] !max-w-[95vw] !w-[95vw] h-[98vh] max-h-[95vh] flex flex-col p-0 gap-0"
-                              }>
+                              showCloseButton={false}
+                              className={getClasses()}>
                               <div className="absolute top-4 right-4">
                                     <Button
                                           variant="ghost"
@@ -313,7 +318,7 @@ export default function NewShadcnLayoutWithSidebar() {
                               }
                         }}
                   >
-                        <DialogContent showCloseButton={false} className="!max-w-[96vw] !w-[96vw] md:!w-[65vw] !h-[98vh] md:!h-[75vh] max-h-[98vh] !p-0 gap-0 flex flex-col overflow-hidden">
+                        <DialogContent showCloseButton={false} className="max-w-[96vw]! w-[96vw]! md:w-[65vw]! h-[98vh]! md:h-[75vh]! max-h-[98vh] p-0! gap-0 flex flex-col overflow-hidden">
                               <div className="h-full">
                                     {
                                           selectedFileInfo ? (
