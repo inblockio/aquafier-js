@@ -299,10 +299,10 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
 
   // Effects
   useEffect(() => {
-    if(backend_url && session?.nonce){
+    if(localBackendUrl && localSession?.nonce){
       loadSystemAquaFileNames();
     }
-  }, [session?.nonce, backend_url]);
+  }, [localSession?.nonce, localBackendUrl]);
 
   useEffect(() => {
     loadContactTrees();

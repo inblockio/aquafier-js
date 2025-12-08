@@ -1,7 +1,7 @@
 import { canDeleteRevision, deleteRevisionAndChildren } from '../utils/quick_revision_utils';
 import { prisma } from '../database/db';
 import { DeleteRevision, FetchAquaTreeRequest, SaveRevisionForUser } from '../models/request_models';
-import { getHost, getPort } from '../utils/api_utils';
+import { getAquaTreeFileName, getHost, getPort } from '../utils/api_utils';
 import {
     deleteAquaTree,
     getSignatureAquaTrees,
@@ -789,7 +789,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             } catch (e) {
                 throw new Error(`Error processing revision ${revisionHash}: ${e}`);
             }
-        });
+        }); 
 
         try {
             displayData = await Promise.all(displayDataPromises);
@@ -820,6 +820,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
         })
     });
+
 
     // This method should help fetch an aqua tree from ordered revision hashes
     fastify.post('/tree/revision_hash', {
@@ -1083,5 +1084,92 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
         })
     })
+
+    // Get all link revisions that contain a specific genesis hash in their link_verification_hashes
+    fastify.get('/tree/by_genesis_hash', {
+        preHandler: authenticate
+    }, async (request: AuthenticatedRequest, reply) => {
+        const userAddress = request.user?.address;
+        const { genesis_hash } = request.query as { genesis_hash: string };
+
+        if (!genesis_hash) {
+            return reply.code(400).send({ error: 'genesis_hash query parameter is required' });
+        }
+
+        if (!userAddress) {
+            return reply.code(401).send({ error: 'Unauthorized' });
+        }
+
+        const url = getBaseUrl(request);
+
+        // Find all link revisions that have this genesis_hash in their link_verification_hashes
+        // Using Prisma relation to perform inner join between Revision and Link tables
+        const linkRevisions = await prisma.revision.findMany({
+            select: {
+                pubkey_hash: true,
+            },
+            where: {
+                pubkey_hash: {
+                    startsWith: userAddress
+                },
+                revision_type: 'link',
+                Link: {
+                    some: {
+                        link_verification_hashes: {
+                            has: genesis_hash
+                        }
+                    }
+                }
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        if (linkRevisions.length === 0) {
+            return reply.code(200).send({
+                fileNames: [],
+                linkRevisionHashes: []
+            });
+        }
+
+        const linkRevisionHashes = linkRevisions.map(rev => rev.pubkey_hash);
+
+        let displayData: Array<{
+            aquaTree: AquaTree,
+            fileObject: FileObject[]
+        }> = [];
+
+        // Build entire trees from each link revision
+        const displayDataPromises = linkRevisionHashes.map(async (revisionHash) => {
+            try {
+                const aquaTreeJustRevisions = await buildEntireTreeFromGivenRevisionHash(revisionHash);
+                const latestRevisionHash = aquaTreeJustRevisions[aquaTreeJustRevisions.length - 1].revisionHash;
+                const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(latestRevisionHash, url);
+                const sortedAquaTree = OrderRevisionInAquaTree(anAquaTree);
+                return {
+                    aquaTree: sortedAquaTree,
+                    fileObject: fileObject
+                };
+            } catch (e) {
+                throw new Error(`Error processing revision ${revisionHash}: ${e}`);
+            }
+        });
+
+        try {
+            displayData = await Promise.all(displayDataPromises);
+        } catch (e) {
+            return reply.code(500).send({ success: false, message: `Error ${e}` });
+        }
+
+        const apiFileInfos = deleteChildrenFieldFromAquaTrees(displayData)
+        const fileNames = apiFileInfos.map(apiFileInfo => getAquaTreeFileName(apiFileInfo.aquaTree))
+
+        return reply.code(200).send({
+            // apiFileInfos: apiFileInfos,
+            linkRevisionHashes: linkRevisionHashes,
+            fileNames: fileNames
+        });
+    });
 
 }

@@ -10,7 +10,7 @@ import { API_ENDPOINTS } from '@/utils/constants'
 import WorkflowSpecificTable from './WorkflowSpecificTable'
 import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 import { RELOAD_KEYS } from '@/utils/reloadDatabase'
-import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
+import { useAquaSystemNames } from '@/hooks/useAquaSystemNames'
 import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocketContext'
 import { useSearchParams } from 'react-router-dom'
 
@@ -21,7 +21,6 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [selectedWorkflow, setSelectedWorkflow] = useState<string>('aqua_files') //aqua_files
       const [stats, setStats] = useState<IUserStats>(emptyUserStats)
 
-      const [systemAquaFileNames, setSystemAquaFileNames] = useState<string[]>([])
       const [searchParams] = useSearchParams();
       
       // Read the tab parameter from URL
@@ -35,13 +34,8 @@ export default function FilesList(filesListProps: FilesListProps) {
       const { backend_url, session } = useStore(appStore)
       const { subscribe } = useNotificationWebSocketContext();
 
-      const loadSystemAquaFileNames = async () => {
-            // if (!session?.nonce) return
-            const aquaSystemNamesService = AquaSystemNamesService.getInstance();
-            const systemNames = await aquaSystemNamesService.getSystemNames();
-            // return systemNames;
-            setSystemAquaFileNames(systemNames);
-      }
+      // Use live query hook - automatically updates when DB changes
+      const { systemNames: systemAquaFileNames } = useAquaSystemNames()
 
       // Add screen size detector
       useEffect(() => {
@@ -88,7 +82,6 @@ export default function FilesList(filesListProps: FilesListProps) {
       useEffect(() => {
             if (session?.nonce && backend_url) {
                   getUserStats()
-                  loadSystemAquaFileNames()
             }
       }, [session?.address, session?.nonce, backend_url])
 

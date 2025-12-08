@@ -1,11 +1,17 @@
 import { LuDelete } from 'react-icons/lu'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { RevionOperation } from '../../models/RevisionOperation'
 import { toast } from 'sonner'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import axios from 'axios'
+import { AquaTree } from 'aqua-js-sdk'
+import { ApiFileInfo } from '@/models/FileInfo'
+import { getGenesisHash } from '@/utils/functions'
+import { useStore } from 'zustand'
+import appStore from '@/store'
+import { API_ENDPOINTS } from '@/utils/constants'
 
 // Separate dialog component for use at parent level
 export const DeleteAquaChainDialog = ({ 
@@ -54,6 +60,81 @@ export const DeleteAquaChainDialog = ({
                         </AlertDialogFooter>
                   </AlertDialogContent>
             </AlertDialog>
+      )
+}
+
+const LoadLinkedFiles = ({ genesisHash }: { genesisHash: string | null }) => {
+
+      const { backend_url, session } = useStore(appStore)
+
+      const [linkedFiles, setLinkedFiles] = useState<string[]>([])
+      const [isLoading, setIsLoading] = useState(false)
+
+      const loadLinkedFiles = () => {
+            // We hit the backend with the genesis hash, and query for files which include this in its link option.
+            if(!genesisHash || !backend_url || !session) return
+            setIsLoading(true)
+            const url = `${backend_url}${API_ENDPOINTS.LINKED_FILES}`
+            axios.get(url, {
+                  params: {
+                        genesis_hash: genesisHash,
+                  },
+                  headers: {
+                        nonce: session.nonce,
+                  },
+            })
+            .then(response => {
+                  // data.fileNames = ["file1.json", "file2.png", "file3.pdf"]
+                  setLinkedFiles(response.data.fileNames)
+            })
+            .catch(error => {
+                  console.error('Error fetching linked files:', error)
+            })
+            .finally(() => {
+                  setIsLoading(false)
+            })
+      }
+
+      useEffect(() => {
+            loadLinkedFiles()
+      }, [])
+
+      if (isLoading) {
+            return (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                        <span>Loading linked files...</span>
+                  </div>
+            )
+      }
+
+      console.log("Linked files:", linkedFiles)
+
+      if (linkedFiles.length === 0) {
+            return (
+                  <p className="text-sm text-muted-foreground py-2">
+                        No files are linked to this file.
+                  </p>
+            )
+      }
+
+      return (
+            <div className="space-y-2 py-2">
+                  <p className="text-sm font-medium text-destructive">
+                        The following files link to this file and will fail verification if deleted:
+                  </p>
+                  <ul className="space-y-1 max-h-32 overflow-y-auto">
+                        {linkedFiles.map((fileName, index) => (
+                              <li 
+                                    key={index} 
+                                    className="text-sm text-muted-foreground flex items-center gap-2 px-2 py-1 bg-muted/50 rounded"
+                              >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-destructive/60" />
+                                    {fileName}
+                              </li>
+                        ))}
+                  </ul>
+            </div>
       )
 }
 
@@ -172,6 +253,9 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                                           Are you sure you want to delete this file? Any linked files will fail in verification
                                     </AlertDialogDescription>
                               </AlertDialogHeader>
+                              <div>
+                                    <LoadLinkedFiles genesisHash={getGenesisHash(apiFileInfo.aquaTree!)} />
+                              </div>
                               <AlertDialogFooter>
                                     <Button
                                           variant="outline"
