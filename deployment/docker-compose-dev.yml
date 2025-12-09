@@ -112,3 +112,4 @@ volumes:
   proxy_data_html:
   proxy_data_certs:
   postgres_data:
+  filebeat_data:
