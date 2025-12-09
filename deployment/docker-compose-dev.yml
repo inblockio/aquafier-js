@@ -51,6 +51,8 @@ services:
       - .env
     volumes:
       - app_data:/app/backend/media
+      - app_backup:/backup
+      - app_restore:/restore
     # Enable log collection for this container
     labels:
       co.elastic.logs/enabled: "true"
@@ -104,6 +106,8 @@ services:
 volumes:
   s3_storage:
   app_data:
+  app_backup:
+  app_restore:
   proxy_data_acme:
   proxy_data_html:
   proxy_data_certs:
