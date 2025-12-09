@@ -12,8 +12,6 @@ import { ApiFileInfo } from '../../models/FileInfo'
 import Aquafier, { AquaTreeWrapper, FileObject } from 'aqua-js-sdk'
 import { IShareButton } from '../../types/types'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle, Link as LinkIcon, Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -180,16 +178,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                               </DialogHeader>
 
                               <div className="flex-1 px-6 py-4 space-y-6 overflow-auto">
-                                    {files?.fileData.length <= 1 ? (
-                                          <Alert className="border-orange-200 bg-orange-50">
-                                                <AlertCircle className="h-4 w-4 text-orange-600" />
-                                                <AlertTitle className="text-orange-800">Multiple files needed</AlertTitle>
-                                                <AlertDescription className="text-orange-700">
-                                                      For linking to work you need multiple files, currently you only have {files?.fileData.length}.
-                                                </AlertDescription>
-                                          </Alert>
-                                    ) : (
-                                          <div className="space-y-6 flex flex-col flex-1">
+                                    <div className="space-y-6 flex flex-col flex-1">
                                                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                                                       <div className="flex items-start space-x-3">
                                                             <div className="p-1 bg-blue-100 rounded">
@@ -237,7 +226,6 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                                                       </div>
                                                 )}
                                           </div>
-                                    )}
                               </div>
 
                               <DialogFooter className="px-6 py-4 border-t border-gray-200 bg-gray-50 shrink-0">
