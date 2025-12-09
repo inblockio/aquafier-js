@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: ${DB_USER:-aquafier}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U aquafier -d aquafier"]
       interval: 5s
