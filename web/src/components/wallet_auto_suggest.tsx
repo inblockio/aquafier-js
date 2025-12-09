@@ -169,7 +169,7 @@ export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
                   : 'text-gray-700 hover:bg-gray-50'
               }`}
               onClick={() => handleSuggestionClick(contact)}
-              onMouseEnter={() => setActiveSuggestion(suggestionIndex)}
+              // onMouseEnter={() => setActiveSuggestion(suggestionIndex)}
             >
               <div className="truncate">
                 <div className="font-medium">
