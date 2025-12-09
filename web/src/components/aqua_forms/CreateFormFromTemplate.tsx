@@ -1798,8 +1798,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                       setAquaSignStep(2)
                                                 }}
                                                 className="bg-blue-600 hover:bg-blue-700 text-white px-6"
-                                          >
-                                                Next: Add Signers
+                                                disabled={!formData['document']}
+                                         >
+                                                Go to Add signers
                                           </Button>
                                     </div>
                               </div>
@@ -1813,9 +1814,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           <p className="text-sm text-gray-500 mt-1">Specify who needs to sign this document</p>
                                     </div>
 
-                                    {otherFields.map((field, idx) => renderSingleField(field, idx))}
-                                    {/* Warning if user hasn't added themselves */}
-                                    {multipleAddresses.length > 0 && !userInSigners && (
+                                    {!userInSigners && (
                                           <Alert className="border-amber-200 bg-amber-50">
                                                 <AlertCircle className="h-4 w-4 text-amber-600" />
                                                 <AlertDescription className="text-amber-800">
@@ -1831,6 +1830,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                 </AlertDescription>
                                           </Alert>
                                     )}
+
+                                    {otherFields.map((field, idx) => renderSingleField(field, idx))}
+                                    {/* Warning if user hasn't added themselves */}
                                     
                                     <div className="flex justify-between pt-4">
                                           <Button
@@ -1999,6 +2001,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             }
       }
 
+      const getTemplateTitle = () => {
+            if (selectedTemplate?.name === "aqua_sign") {
+                  return "AquaSign"
+            }
+            return selectedTemplate.title
+      }
+
       if (!selectedTemplate) {
             return <div className="min-h-[100%] px-2 sm:px-4">
                   Selected template not found, check db migrations.
@@ -2017,7 +2026,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                 <FileText className="h-5 w-5 text-blue-600" />
                                           </div>
                                           <div>
-                                                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Create {selectedTemplate?.title} Workflow</h1>
+                                                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Create {getTemplateTitle()} Workflow</h1>
                                                 {selectedTemplate?.subtitle ?
                                                       <p className="text-gray-600 mt-1">{selectedTemplate.subtitle}</p>
 

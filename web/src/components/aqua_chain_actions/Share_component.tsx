@@ -341,21 +341,7 @@ const ShareComponent = () => {
                                     <div className="space-y-2">
 
                                           <div key={`field-share-1`} className="space-y-4">
-                                                <div className="flex items-center justify-end">
-
-                                                      <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            type="button"
-                                                            className="rounded-lg hover:bg-blue-50 hover:border-blue-300"
-                                                            onClick={addAddress}
-                                                            data-testid={`multiple_values_add_button`}
-                                                      >
-                                                            <Plus className="h-4 w-4 mr-1" />
-                                                            Add New Recepient
-                                                      </Button>
-                                                </div>
-
+                                               
                                                 <div className="space-y-3">
                                                       {multipleAddresses.map((address, index) => (
                                                             <div
@@ -397,6 +383,21 @@ const ShareComponent = () => {
                                                             </div>
                                                       ))}
                                                 </div>
+                                                <div className="flex items-center justify-end">
+
+                                                      <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            type="button"
+                                                            className="rounded-lg hover:bg-blue-50 hover:border-blue-300"
+                                                            onClick={addAddress}
+                                                            data-testid={`multiple_values_add_button`}
+                                                      >
+                                                            <Plus className="h-4 w-4 mr-1" />
+                                                            Add Additional Recipient
+                                                      </Button>
+                                                </div>
+
                                           </div>
                                     </div>
                               )}

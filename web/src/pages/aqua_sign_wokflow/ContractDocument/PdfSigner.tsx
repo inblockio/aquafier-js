@@ -1077,14 +1077,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                     </>
                               )}
 
-                              {canPlaceSignature ? (
-                                    // <Alert className='bg-blue-500 text-blue-600'>
-                                    <Alert className="">
-                                          <LuInfo />
-                                          <AlertDescription>Click on the document to place your signature.</AlertDescription>
-                                    </Alert>
-                              ) : null}
-
                               <Button
                                     data-testid="action-signature-to-document-button"
                                     onClick={() => {
@@ -1095,6 +1087,15 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                               >
                                     Add Signature to document
                               </Button>
+
+                              {canPlaceSignature ? (
+                                    // <Alert className='bg-blue-500 text-blue-600'>
+                                    <Alert className="" variant={"destructive"}>
+                                          <LuInfo />
+                                          <AlertDescription>Click on the document to place your signature.</AlertDescription>
+                                    </Alert>
+                              ) : null}
+
 
                               {annotationSidebar()}
 
