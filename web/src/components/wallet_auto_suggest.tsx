@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Input } from './ui/input';
+import { Popover, PopoverContent, PopoverAnchor } from './ui/popover';
 import { ContactsService } from '@/storage/databases/contactsDb';
 import { ContactProfile } from '@/types/types';
 
@@ -139,51 +140,55 @@ export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
   }, [address]);
 
   return (
-    <div className="relative w-full">
-      <Input
-        ref={inputRef}
-        data-testid={`input-${field.name}-${index}`}
-        className={className}
-        placeholder={placeholder}
-        type="text"
-        value={address}
-        onChange={handleInputChange}
-        onKeyDown={handleKeyDown}
-        onBlur={handleBlur}
-        onFocus={handleFocus}
-        autoComplete="off"
-        disabled={disabled}
-      />
+    <Popover open={showSuggestions && suggestions.length > 0} onOpenChange={setShowSuggestions}>
+      <PopoverAnchor asChild>
+        <Input
+          ref={inputRef}
+          data-testid={`input-${field.name}-${index}`}
+          className={className}
+          placeholder={placeholder}
+          type="text"
+          value={address}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          onFocus={handleFocus}
+          autoComplete="off"
+          disabled={disabled}
+        />
+      </PopoverAnchor>
       
-      {showSuggestions && suggestions.length > 0 && (
-        <div
-          ref={suggestionsRef}
-          className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto"
-        >
-          {suggestions.map((contact: ContactProfile, suggestionIndex: number) => (
-            <div
-              key={contact.walletAddress}
-              className={`px-4 py-2 cursor-pointer text-sm border-b border-gray-100 last:border-b-0 ${
-                suggestionIndex === activeSuggestion
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-              onClick={() => handleSuggestionClick(contact)}
-              // onMouseEnter={() => setActiveSuggestion(suggestionIndex)}
-            >
-              <div className="truncate">
-                <div className="font-medium">
-                  {contact.name || 'Unnamed Contact'}
-                  {contact.email && <span className="text-xs ml-2 text-gray-500">({contact.email})</span>}
-                </div>
-                <div className="text-xs text-gray-500 font-mono mt-1" title={contact.walletAddress}>
-                  {contact.walletAddress.slice(0, 10)}...{contact.walletAddress.slice(-6)}
-                </div>
+      <PopoverContent
+        ref={suggestionsRef}
+        className="w-[var(--radix-popover-trigger-width)] p-0 max-h-48 overflow-y-auto"
+        align="start"
+        sideOffset={4}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        {suggestions.map((contact: ContactProfile, suggestionIndex: number) => (
+          <div
+            key={contact.walletAddress}
+            className={`px-4 py-2 cursor-pointer text-sm border-b border-gray-100 last:border-b-0 ${
+              suggestionIndex === activeSuggestion
+                ? 'bg-blue-50 text-blue-700'
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+            onClick={() => {
+              handleSuggestionClick(contact);
+            }}
+          >
+            <div className="truncate">
+              <div className="font-medium">
+                {contact.name || 'Unnamed Contact'}
+                {contact.email && <span className="text-xs ml-2 text-gray-500">({contact.email})</span>}
+              </div>
+              <div className="text-xs text-gray-500 font-mono mt-1" title={contact.walletAddress}>
+                {contact.walletAddress.slice(0, 10)}...{contact.walletAddress.slice(-6)}
               </div>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
+          </div>
+        ))}
+      </PopoverContent>
+    </Popover>
   );
 };
