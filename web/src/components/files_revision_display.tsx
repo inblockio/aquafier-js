@@ -18,6 +18,7 @@ import {Card, CardContent, CardFooter} from '@/components/ui/card'
 import {ExternalLink} from 'lucide-react'
 import {WITNESS_NETWORK_MAP} from '@/utils/constants'
 import {WalletEnsView} from '@/components/ui/wallet_ens'
+import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 
 export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificationComplete, verificationResults, isDeletable, deleteRevision, index }: AquaTreeDetailsData) => {
       const { session, backend_url, files, setFiles, setSelectedFileInfo, selectedFileInfo } = useStore(appStore)
@@ -150,6 +151,9 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                               // Remove the revision from the list of revisions
                               deleteRevision(revisionHash)
                         }
+
+                         await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                                    await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
                  
             } catch (error) {
                   console.error('Error deleting revision:', error)
