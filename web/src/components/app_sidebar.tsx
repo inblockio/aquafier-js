@@ -14,9 +14,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const { files, setOpenDialog, webConfig, session , filesStats} = useStore(appStore)
 
       const [webConfigData, setWebConfigData] = useState<WebConfig>(webConfig)
-      const [usedStorage, _setUsedStorage] = useState<number>(0)
+      // const [usedStorage, _setUsedStorage] = useState<number>(0)
       const [totalStorage, _setTotalStorage] = useState<number>(maxUserFileSizeForUpload)
-      const [usagePercentage, _setUsagePercentage] = useState<number>(0)
+      const [usagePercentage, setUsagePercentage] = useState<number>(0)
       // let usedStorage =0; // GB
       // const totalStorage = maxUserFileSizeForUpload //5; // GB
       // const usagePercentage = (usedStorage / totalStorage) * 100;
@@ -58,10 +58,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   setWebConfigData(webConfig)
             }
 
-            const totalStorage = maxUserFileSizeForUpload //5; // GB
-      const usagePercentage = (usedStorage / totalStorage) * 100;
-
+         
       }, [webConfig.BACKEND_URL])
+
+
+         React.useEffect(() => {
+           
+            const totalStorage = maxUserFileSizeForUpload //5; // GB
+      const usagePercentage = (filesStats.storageUsed / totalStorage) * 100;
+
+      setUsagePercentage(usagePercentage)
+      }, [filesStats.filesCount, JSON.stringify(filesStats)])
 
       const sidebarItems = [
             // { icon: FaHome, label: 'Home', id: "/home" },
