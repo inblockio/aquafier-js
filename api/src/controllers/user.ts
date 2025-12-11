@@ -776,31 +776,88 @@ export default async function userController(fastify: FastifyInstance) {
          */
         // 1. All user revisions
         // const queryStart = performance.now()
-        const allUserRevisions = await prisma.revision.findMany({
-            select: {
-                pubkey_hash: true,
-                // revision_type: true,
-                previous: true,
-                // Link: {
-                //     select: {
-                //         link_verification_hashes: true
-                //     }
-                // }
-                AquaForms: {
-                    select: {
-                        key: true
+
+        // TODO do not delete
+        // const revisionsInDB = await prisma.revision.findMany({
+        //     select: {
+        //         pubkey_hash: true,
+        //         // revision_type: true,
+        //         previous: true,
+        //         // Link: {
+        //         //     select: {
+        //         //         link_verification_hashes: true
+        //         //     }
+        //         // }
+        //         AquaForms: {
+        //             select: {
+        //                 key: true
+        //             }
+        //         }
+        //     },
+        //     where: {
+        //         pubkey_hash: {
+        //             startsWith: userAddress
+        //         },
+        //         previous: {
+        //             equals: ""
+        //         },
+
+        //     }
+        // });
+
+
+        let allUserRevisions: {
+            pubkey_hash: string;
+            previous: string | null;
+            AquaForms: {
+                key: string | null;
+            }[] 
+        }[]= [];
+
+
+        
+         const latestRecords = await prisma.latest.findMany({
+                where: {
+                    AND: {
+                        user: userAddress,
+                        template_id: null,
+                        is_workflow: false
                     }
-                }
-            },
-            where: {
-                pubkey_hash: {
-                    startsWith: userAddress
                 },
-                previous: {
-                    equals: ""
+                select: {
+                    hash: true
+                },
+                
+                orderBy: {
+                    createdAt: 'desc'
                 }
+            });
+
+            for (let index = 0; index < latestRecords.length; index++) {
+                const element = latestRecords[index];
+                
+                let revision = await prisma.revision.findFirst({
+                    where: {
+                        pubkey_hash: element.hash
+                    },  
+                });
+                if(revision){
+                    let aquaForms = await prisma.aquaForms.findMany({
+                        where: {
+                            hash: revision.pubkey_hash
+                        },  
+                    });
+                    allUserRevisions.push({
+                        pubkey_hash: revision.pubkey_hash,
+                        previous: revision.previous,    
+                        AquaForms: aquaForms
+                    });
+                }  
+
             }
-        });
+
+
+
 
 
         let allFilesSizes = 0
