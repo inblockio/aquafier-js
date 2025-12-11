@@ -11,6 +11,7 @@ import { Prisma, PrismaClient, UserAttestationAddresses } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import Logger from '../utils/logger';
 import { TEMPLATE_HASHES } from '../models/constants';
+import fs from 'fs';
 
 export default async function userController(fastify: FastifyInstance) {
 
@@ -800,6 +801,43 @@ export default async function userController(fastify: FastifyInstance) {
                 }
             }
         });
+
+
+        let allFilesSizes = 0
+        // loop through all genesis revisions,
+        //  find the file hash from file index table
+        // use file has to find file path
+        // calculate the file size and sum it up
+        for (let i = 0; i < allUserRevisions.length; i++) {
+            const revision = allUserRevisions[i];
+            const fileIndex = await prisma.fileIndex.findFirst({
+                where: {
+                    pubkey_hash: {
+                        has: revision.pubkey_hash
+                    }
+                }
+            });
+            if (fileIndex) {
+                let fileResult = await prisma.file.findFirst({
+                    where: {
+                        file_hash: fileIndex.file_hash
+
+                    }
+                });
+                if (fileResult) {
+                    try {
+                        const stats = fs.statSync(fileResult.file_location!!);
+                        allFilesSizes += stats.size;
+                    } catch (err) {
+                        Logger.error(`Error getting file size for ${fileResult.file_location}: ${err}`);
+                    }
+
+
+                }
+
+
+            }
+        }
         // const queryEnd = performance.now()
         // console.log(cliGreenify(`Genesis revisions query took ${(queryEnd - queryStart).toFixed(2)}ms`))
 
@@ -879,6 +917,7 @@ export default async function userController(fastify: FastifyInstance) {
 
         return reply.code(200).send({
             filesCount: totalFiles,
+            storageUsed: allFilesSizes,
             // totalRevisions: allUserRevisions.length,
             // linkRevisionsCount: linkRevisions.length,
             claimTypeCounts: {

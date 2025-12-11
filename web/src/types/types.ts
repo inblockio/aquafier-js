@@ -290,6 +290,7 @@ export interface ICompleteClaimInformation {
 
 export interface IUserStats {
       filesCount: number,
+      storageUsed : number,
       claimTypeCounts: {
             aqua_files: number,
             access_agreement: number,
@@ -308,6 +309,7 @@ export interface IUserStats {
 
 export const emptyUserStats: IUserStats = {
       filesCount: 0,
+      storageUsed: 0,
       claimTypeCounts: {
             aqua_files: 0,
             access_agreement: 0,

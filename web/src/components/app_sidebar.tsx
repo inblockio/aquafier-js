@@ -11,7 +11,7 @@ import appStore from '@/store'
 import { WebConfig } from '@/types/types'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-      const { files, setOpenDialog, webConfig, session } = useStore(appStore)
+      const { files, setOpenDialog, webConfig, session , filesStats} = useStore(appStore)
 
       const [webConfigData, setWebConfigData] = useState<WebConfig>(webConfig)
       const [usedStorage, _setUsedStorage] = useState<number>(0)
@@ -57,6 +57,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             if (webConfig.BACKEND_URL) {
                   setWebConfigData(webConfig)
             }
+
+            const totalStorage = maxUserFileSizeForUpload //5; // GB
+      const usagePercentage = (usedStorage / totalStorage) * 100;
+
       }, [webConfig.BACKEND_URL])
 
       const sidebarItems = [
@@ -230,7 +234,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                     }
                               })
                         }}>
-                              {files.fileData.length > 0 ? (
+                              {filesStats.filesCount > 0 ? (
                                     <>
                                           <div className="bg-gray-50 p-4 rounded-lg">
                                                 {/* Storage Header */}
@@ -243,7 +247,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
                                                 {/* Storage Details */}
                                                 <div className="text-sm text-gray-600">
-                                                      <span className="text-blue-600 underline">{formatBytes(usedStorage)} </span> used of {formatBytes(totalStorage)} ({Math.round(usagePercentage)}%)
+                                                      <span className="text-blue-600 underline">{formatBytes(filesStats.storageUsed)} </span> used of {formatBytes(filesStats.storageUsed)} ({Math.round(usagePercentage)}%)
                                                 </div>
                                           </div>
                                     </>

@@ -2,7 +2,7 @@ import { IDBPDatabase, openDB } from 'idb'
 import { createStore } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { ApiFileInfo } from './models/FileInfo'
-import { ApiFileData, ApiFileInfoState, OpenDialog, Session, WebConfig } from './types/types'
+import { ApiFileData, ApiFileInfoState, emptyUserStats, IUserStats, OpenDialog, Session, WebConfig } from './types/types'
 import { FormTemplate } from './components/aqua_forms/types'
 import { ensureDomainUrlHasSSL } from './utils/functions'
 
@@ -20,6 +20,7 @@ type AppStoreState = {
       }
       session: Session | null
       files: ApiFileInfoState,
+      filesStats: IUserStats,
       workflows: ApiFileInfoState,
       webConfig: WebConfig,
       apiFileData: ApiFileData[]
@@ -44,6 +45,7 @@ type AppStoreActions = {
       setMetamaskAddress: (address: AppStoreState['metamaskAddress']) => void
       setAvatar: (avatar: AppStoreState['avatar']) => void
       setFiles: (files: AppStoreState['files']) => void
+      setFilesStats: (files: AppStoreState['filesStats']) => void
       setWorkflows: (workflows: AppStoreState['workflows']) => void
       setWebConfig: (config: AppStoreState['webConfig']) => void
       setSelectedFileInfo: (file: ApiFileInfo | null) => void
@@ -149,6 +151,7 @@ const appStore = createStore<TAppStore>()(
                         fileData: [],
                         status: 'idle',
                   },
+                  filesStats: emptyUserStats,
                   workflows: {
                         fileData: [],
                         status: 'idle',
@@ -181,6 +184,7 @@ const appStore = createStore<TAppStore>()(
                   setMetamaskAddress: (address: AppStoreState['metamaskAddress']) => set({ metamaskAddress: address }),
                   setAvatar: (avatar: AppStoreState['avatar']) => set({ avatar: avatar }),
                   setFiles: (files: AppStoreState['files']) => set({ files: files }),
+                  setFilesStats: (filesStats: AppStoreState['filesStats']) => set({ filesStats: filesStats }),
                   setWorkflows: (workflows: AppStoreState['workflows']) => set({ workflows: workflows }),
                   setSelectedFileInfo: (file: ApiFileInfo | null) => set({ selectedFileInfo: file }),
 
