@@ -11,11 +11,11 @@ import appStore from '@/store'
 import { WebConfig } from '@/types/types'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-      const { files, setOpenDialog, webConfig, session , filesStats} = useStore(appStore)
+      const { setOpenDialog, webConfig, session , filesStats} = useStore(appStore)
 
       const [webConfigData, setWebConfigData] = useState<WebConfig>(webConfig)
       // const [usedStorage, _setUsedStorage] = useState<number>(0)
-      const [totalStorage, _setTotalStorage] = useState<number>(maxUserFileSizeForUpload)
+      // const [totalStorage, _setTotalStorage] = useState<number>(maxUserFileSizeForUpload)
       const [usagePercentage, setUsagePercentage] = useState<number>(0)
       // let usedStorage =0; // GB
       // const totalStorage = maxUserFileSizeForUpload //5; // GB
