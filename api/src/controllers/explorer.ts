@@ -233,6 +233,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     return reply.code(500).send({ error: 'Genesis hash not found in aqua tree' });
                 }
 
+                Logger.info(`Asset file hash: ${fileHash}, genesisHash: ${genesisHash} , assetFilename : ${assetFilename} in explorer_aqua_file_upload ()`)
                 let serverAttestation = await saveAttestationFileAndAquaTree(aquaTree, genesisHash, walletAddress)
 
                 if (serverAttestation != null) {
@@ -348,7 +349,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 }
             }
             // Save the aqua tree
-            Logger.info(` ${isWorkFlow + "--"} `)
+            Logger.info(`  Save the aqua tree templateId :  ${templateId} , aquaTree : ${aquaTree} , isWorkFlow :  ${isWorkFlow + ""} in explorer_aqua_file_upload ()`)
             await saveAquaTree(aquaTree, walletAddress, templateId.length == 0 ? null : templateId, isWorkFlow);
 
             // Logger.info(`Aquatree to db ${JSON.stringify(aquaTree, null, 4)}`)
@@ -358,7 +359,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             // Get the protocol (http or https)
             const protocol = request.protocol || 'https'
 
-            //DO NOT FETCH  API FILE INFO ASS THE WALLET ADDRES COULD BE OF ANOTHER USER 
+            // DO NOT FETCH  API FILE INFO ASS THE WALLET ADDRES COULD BE OF ANOTHER USER 
             // REMEMBER CLAIM ATTESTATION SAVE FOR OTHER USERS 
             // THE FRON END  SHOULD USE FETCH API FILE INF0
             if (walletAddress !== session.address) {

@@ -138,14 +138,22 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
 
                         const provider = await getAppKitProvider()
                         await switchNetworkWalletConnect(ETH_CHAINID_MAP[user_profile?.witness_network as string])
+
+                        // EventWriter.write(bytes32[2]) requires TWO bytes32 values
+                        // We send the targetRevisionHash twice to form the array
+                        const hash1 = targetRevisionHash.slice(2) // Remove 0x prefix
+                        const hash2 = hash1 // Use same hash for second element
                         const txHash = await provider.request({
                               method: 'eth_sendTransaction',
                               params: [{
                                     from: walletAddress,
                                     to: user_profile?.witness_contract_address,
-                                    data: `0x9cef4ea1${targetRevisionHash.slice(2)}`
+                                    //    data: `0x9cef4ea1${targetRevisionHash.slice(2)}` // Function selector + bytes32 --old
+                                    data: `0x9cef4ea1${hash1}${hash2}` // Function selector + bytes32[2]
                               }]
                         });
+
+                        
 
                         // const transaction_hash = ""
 

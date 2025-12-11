@@ -31,7 +31,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [selectedFilters, setSelectedFilters] = useState<string[]>(['all'])
       const [tempSelectedFilters, setTempSelectedFilters] = useState<string[]>(['all'])
 
-      const { backend_url, session } = useStore(appStore)
+      const { backend_url, session, setFilesStats } = useStore(appStore)
       const { subscribe } = useNotificationWebSocketContext();
 
       // Use live query hook - automatically updates when DB changes
@@ -50,7 +50,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                   window.removeEventListener('resize', checkScreenSize)
             }
       }, [])
-
+ 
       const getUserStats = async () => {
             if (session) {
                   try {
@@ -61,6 +61,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                               }
                         })
                         setStats(result.data)
+                        setFilesStats(result.data)
                         let uniqueWorkflows = new Set<{ name: string; count: number }>()
                         let claimTypeCounts = result.data.claimTypeCounts
                         const claimTypes = Object.keys(claimTypeCounts)

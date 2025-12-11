@@ -894,60 +894,16 @@ export async function fundWallet(walletToFund: string) {
 
 }
 
-export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskResponse> {
-    const metamaskPath = path.join(__dirname, 'metamask-extension');
-    console.log(`metamaskPath: ${metamaskPath}`)
-
-    const isCI = process.env.CI === 'true';
-    console.log(`CI environment: ${isCI}`);
-    console.log(`PLAYWRIGHT_BROWSERS_PATH: ${process.env.PLAYWRIGHT_BROWSERS_PATH}`);
+/**
+ * Setup MetaMask wallet on an existing page
+ * Handles the entire MetaMask onboarding process
+ * @param metaMaskPage - The MetaMask extension page
+ * @returns The wallet address
+ */
+export async function setupMetaMaskWallet(metaMaskPage: Page): Promise<string> {
+    console.log("Setting up MetaMask wallet...");
     
-    // Create a temporary directory for user data
-    const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'metamask-'));
-    console.log(`userDataDir: ${userDataDir}`)
-    
-    // Get the executable path for chromium
-    let executablePath = chromium.executablePath();
-    console.log(`Chromium executable path: ${executablePath}`);
-    
-    // Verify the executable exists, if not, warn
-    if (!fs.existsSync(executablePath)) {
-        console.error(`❌ Chromium executable not found at ${executablePath}`);
-        console.error(`This is a critical error. Playwright browsers may not be properly installed.`);
-        throw new Error(`Chromium executable not found at ${executablePath}. Make sure 'npx playwright install --with-deps chromium' was run.`);
-    }
-    console.log(`✓ Chromium executable found`);
-
-    // Launch persistent context with proper settings for extensions
-    // Extensions don't work well in headless mode, so we use headed mode
-    const context = await chromium.launchPersistentContext(userDataDir, {
-        headless: false,  // Extensions require headed mode
-        executablePath: executablePath, // Explicitly set the executable path
-        args: [
-            `--disable-extensions-except=${metamaskPath}`,
-            `--load-extension=${metamaskPath}`,
-            '--no-sandbox',  // Required for CI environments
-            '--disable-setuid-sandbox',  // Required for CI environments
-            '--disable-gpu',  // Optional: can improve performance
-        ],
-    });
-
     try {
-        console.log(`✓ Browser context created`)
-
-        // Wait for MetaMask page to open
-        await context.waitForEvent("page")
-        console.log(`✓ MetaMask page appeared`)
-
-        // Get the MetaMask page - it should be the second page opened
-        const pages = context.pages();
-        if (pages.length < 2) {
-            throw new Error("MetaMask page not found");
-        }
-
-        const metaMaskPage = pages[1];
-        console.log(`metaMaskPage: ${JSON.stringify(metaMaskPage, null, 4)}`)
-
         // Wait for page to load
         await metaMaskPage.waitForLoadState("load");
 
@@ -981,14 +937,12 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
         await metaMaskPage.click('[data-testid="skip-srp-backup-popover-checkbox"]')
         await metaMaskPage.click('[data-testid="skip-srp-backup"]')
 
-
         // Complete onboarding
         console.log("Completing onboarding")
         await metaMaskPage.waitForSelector('[data-testid="onboarding-complete-done"]', {
             state: 'visible'
         });
         await metaMaskPage.click('[data-testid="onboarding-complete-done"]')
-
 
         // Complete tutorial
         console.log("Completing tutorial")
@@ -1008,9 +962,7 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
         console.log("Switching to test network")
 
         try {
-
             // Check if "Connecting to Ethereum Mainnet" is visible
-            // As soon as it disappears continue
             try {
                 await metaMaskPage.getByText("Connecting to Ethereum Mainnet").waitFor({
                     state: 'visible',
@@ -1029,14 +981,11 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
 
             // Try stop the not now popup
             try {
-
                 await metaMaskPage.getByText("Switch networks").waitFor({
                     state: 'visible',
                     timeout: 7000
                 });
                 await metaMaskPage.getByText("Switch networks").click();
-
-                // await metaMaskPage.click('[data-testid="not-now-button"]')
             } catch (error) {
                 console.log("switch networks is not visible ");
             }
@@ -1059,8 +1008,6 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
             } catch (error) {
                 console.log("network-display timed out ", error);
             }
-            // Pause execution for 30 seconds, use promise
-            // await new Promise(resolve => setTimeout(resolve, 30000));
 
             // I want you to click the show test networks here
             // This is how it looks like class="toggle-button toggle-button--off"
@@ -1089,14 +1036,99 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
         await metaMaskPage.waitForSelector('[class="mm-box mm-text qr-code__address-segments mm-text--body-md mm-box--margin-bottom-4 mm-box--color-text-default"]')
         const address = await metaMaskPage.locator('[class="mm-box mm-text qr-code__address-segments mm-text--body-md mm-box--margin-bottom-4 mm-box--color-text-default"]').textContent()
 
-        // Close the MetaMask page
-        await metaMaskPage.close()
-
-        console.log("Wallet finished!!! Adr: " + address)
+        console.log("Wallet setup finished! Address: " + address)
 
         if (address == null) {
             throw Error(`Wallet address cannot be null`)
         }
+        
+        return address;
+    } catch (error) {
+        console.error("Error in setupMetaMaskWallet:", error);
+        throw error;
+    }
+}
+
+/**
+ * Cleanup MetaMask context
+ * Properly closes and cleans up resources
+ * @param context - The browser context to clean up
+ */
+export async function cleanupMetaMask(context: BrowserContext): Promise<void> {
+    try {
+        await context.close();
+        console.log("✅ MetaMask context cleaned up");
+    } catch (error) {
+        console.error("Error closing MetaMask context:", error);
+    }
+}
+
+
+export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskResponse> {
+    const metamaskPath = path.join(__dirname, 'metamask-extension');
+    console.log(`metamaskPath: ${metamaskPath}`)
+
+    const isCI = process.env.CI === 'true';
+    console.log(`CI environment: ${isCI}`);
+    console.log(`PLAYWRIGHT_BROWSERS_PATH: ${process.env.PLAYWRIGHT_BROWSERS_PATH}`);
+    
+    // Create a temporary directory for user data
+    const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'metamask-'));
+    console.log(`userDataDir: ${userDataDir}`)
+    
+    // Get the executable path for chromium
+    let executablePath = chromium.executablePath();
+    console.log(`Chromium executable path: ${executablePath}`);
+    
+    // Verify the executable exists, if not, warn
+    if (!fs.existsSync(executablePath)) {
+        console.error(`❌ Chromium executable not found at ${executablePath}`);
+        console.error(`This is a critical error. Playwright browsers may not be properly installed.`);
+        throw new Error(`Chromium executable not found at ${executablePath}. Make sure 'npx playwright install --with-deps chromium' was run.`);
+    }
+    console.log(`✓ Chromium executable found`);
+
+    // Launch persistent context with proper settings for extensions
+    // Default to headless mode for better performance, but MetaMask works best in headed mode
+    // Override with HEADLESS=false to see the browser
+    const headlessMode = process.env.HEADLESS !== 'false'; // Default: true (headless)
+    console.log(`Headless mode: ${headlessMode}`);
+    
+    const context = await chromium.launchPersistentContext(userDataDir, {
+        headless: headlessMode,
+        executablePath: executablePath, // Explicitly set the executable path
+        args: [
+            `--disable-extensions-except=${metamaskPath}`,
+            `--load-extension=${metamaskPath}`,
+            '--no-sandbox',  // Required for CI environments
+            '--disable-setuid-sandbox',  // Required for CI environments
+            '--disable-gpu',  // Optional: can improve performance
+        ],
+    });
+
+    try {
+        console.log(`✓ Browser context created`)
+
+        // Wait for MetaMask page to open
+        await context.waitForEvent("page")
+        console.log(`✓ MetaMask page appeared`)
+
+        // Get the MetaMask page - it should be the second page opened
+        const pages = context.pages();
+        if (pages.length < 2) {
+            throw new Error("MetaMask page not found");
+        }
+
+        const metaMaskPage = pages[1];
+
+        // Setup MetaMask wallet using extracted function
+        const address = await setupMetaMaskWallet(metaMaskPage);
+
+        // Close the MetaMask page
+        await metaMaskPage.close()
+
+        console.log("Wallet setup complete! Address: " + address)
+
         return new RegisterMetaMaskResponse(context, address);
     } catch (error) {
         console.error("Error in registerNewMetaMaskWallet:", error);
@@ -1347,7 +1379,7 @@ export async function waitAndClick(page: Page, selector: string) {
     await page.click(selector);
 }
 
-class RegisterMetaMaskResponse {
+export class RegisterMetaMaskResponse {
 
     constructor(context: BrowserContext, walletAddress: string) {
         this.context = context;

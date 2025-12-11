@@ -11,6 +11,7 @@ import { Prisma, PrismaClient, UserAttestationAddresses } from '@prisma/client';
 import { DefaultArgs } from '@prisma/client/runtime/library';
 import Logger from '../utils/logger';
 import { TEMPLATE_HASHES } from '../models/constants';
+import fs from 'fs';
 
 export default async function userController(fastify: FastifyInstance) {
 
@@ -775,31 +776,125 @@ export default async function userController(fastify: FastifyInstance) {
          */
         // 1. All user revisions
         // const queryStart = performance.now()
-        const allUserRevisions = await prisma.revision.findMany({
-            select: {
-                pubkey_hash: true,
-                // revision_type: true,
-                previous: true,
-                // Link: {
-                //     select: {
-                //         link_verification_hashes: true
-                //     }
-                // }
-                AquaForms: {
-                    select: {
-                        key: true
+
+        // TODO do not delete
+        // const revisionsInDB = await prisma.revision.findMany({
+        //     select: {
+        //         pubkey_hash: true,
+        //         // revision_type: true,
+        //         previous: true,
+        //         // Link: {
+        //         //     select: {
+        //         //         link_verification_hashes: true
+        //         //     }
+        //         // }
+        //         AquaForms: {
+        //             select: {
+        //                 key: true
+        //             }
+        //         }
+        //     },
+        //     where: {
+        //         pubkey_hash: {
+        //             startsWith: userAddress
+        //         },
+        //         previous: {
+        //             equals: ""
+        //         },
+
+        //     }
+        // });
+
+
+        let allUserRevisions: {
+            pubkey_hash: string;
+            previous: string | null;
+            AquaForms: {
+                key: string | null;
+            }[] 
+        }[]= [];
+
+
+        
+         const latestRecords = await prisma.latest.findMany({
+                where: {
+                    AND: {
+                        user: userAddress,
+                        template_id: null,
+                        is_workflow: false
+                    }
+                },
+                select: {
+                    hash: true
+                },
+                
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            });
+
+            for (let index = 0; index < latestRecords.length; index++) {
+                const element = latestRecords[index];
+                
+                let revision = await prisma.revision.findFirst({
+                    where: {
+                        pubkey_hash: element.hash
+                    },  
+                });
+                if(revision){
+                    let aquaForms = await prisma.aquaForms.findMany({
+                        where: {
+                            hash: revision.pubkey_hash
+                        },  
+                    });
+                    allUserRevisions.push({
+                        pubkey_hash: revision.pubkey_hash,
+                        previous: revision.previous,    
+                        AquaForms: aquaForms
+                    });
+                }  
+
+            }
+
+
+
+
+
+        let allFilesSizes = 0
+        // loop through all genesis revisions,
+        //  find the file hash from file index table
+        // use file has to find file path
+        // calculate the file size and sum it up
+        for (let i = 0; i < allUserRevisions.length; i++) {
+            const revision = allUserRevisions[i];
+            const fileIndex = await prisma.fileIndex.findFirst({
+                where: {
+                    pubkey_hash: {
+                        has: revision.pubkey_hash
                     }
                 }
-            },
-            where: {
-                pubkey_hash: {
-                    startsWith: userAddress
-                },
-                previous: {
-                    equals: ""
+            });
+            if (fileIndex) {
+                let fileResult = await prisma.file.findFirst({
+                    where: {
+                        file_hash: fileIndex.file_hash
+
+                    }
+                });
+                if (fileResult) {
+                    try {
+                        const stats = fs.statSync(fileResult.file_location!!);
+                        allFilesSizes += stats.size;
+                    } catch (err) {
+                        Logger.error(`Error getting file size for ${fileResult.file_location}: ${err}`);
+                    }
+
+
                 }
+
+
             }
-        });
+        }
         // const queryEnd = performance.now()
         // console.log(cliGreenify(`Genesis revisions query took ${(queryEnd - queryStart).toFixed(2)}ms`))
 
@@ -879,6 +974,7 @@ export default async function userController(fastify: FastifyInstance) {
 
         return reply.code(200).send({
             filesCount: totalFiles,
+            storageUsed: allFilesSizes,
             // totalRevisions: allUserRevisions.length,
             // linkRevisionsCount: linkRevisions.length,
             claimTypeCounts: {
