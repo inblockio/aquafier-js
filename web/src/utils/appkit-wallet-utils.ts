@@ -96,8 +96,9 @@ export const createSiweMessage = (address: string, statement: string): string =>
   const origin = window.location.origin
   const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
 
-  const network = appStore.getState().user_profile?.witness_network ? appStore.getState().user_profile?.witness_network : "sepolia"
+  const network = appStore.getState().user_profile?.witness_network ? appStore.getState().user_profile?.witness_network : "mainnet"
   const chainId = ETH_CHAINID_MAP_NUMBERS[network]
+  console.log("chainId", chainId, network)
 
   const message = new SiweMessage({
     domain,
