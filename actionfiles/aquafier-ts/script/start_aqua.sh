@@ -36,7 +36,7 @@ if [ -n "${BACKUP_CRON}" ]; then
   echo "prepare backup cron"
   
   # Create cron job with proper format (username required for /etc/cron.d/)
-  printf '%s root /bin/bash -c "cd /app && /app/utils/create_backup.sh" >> /var/log/aquafier_ext 2>&1\n' "${BACKUP_CRON}" > /etc/cron.d/backup_cron
+  printf '%s root /bin/bash -c "cd /app && /app/utils/create_backup.sh" >> /var/log/aquafier_ext\n' "${BACKUP_CRON}" > /etc/cron.d/backup_cron
   
   # Ensure proper permissions and newline
   chmod 0644 /etc/cron.d/backup_cron
