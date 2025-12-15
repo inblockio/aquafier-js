@@ -29,6 +29,7 @@ import { useStore } from 'zustand'
 import axios from 'axios'
 import { getDNSStatusBadge, IDnsVerificationResult, verifyDNS } from '@/utils/verifiy_dns'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
+import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 
 interface ISignatureWalletAddressCard {
       index?: number
@@ -478,6 +479,11 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                               toast.success('Profile Aqua tree created successfully')
                               callBack && callBack()
+
+
+                              // trigger file reloads 
+                               await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                                          await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
 
 
                               // Create the profile item to share

@@ -789,7 +789,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             } catch (e) {
                 throw new Error(`Error processing revision ${revisionHash}: ${e}`);
             }
-        }); 
+        });
 
         try {
             displayData = await Promise.all(displayDataPromises);
@@ -847,7 +847,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
         for (let i = hashestoIterate.length - 1; i >= 0; i--) {
             const revisionHash = hashestoIterate[i];
             const completeRevisionHash = `${userAddress}_${revisionHash}`;
-            
+
             // Check if the user owns this revision
             const revision = await prisma.revision.findUnique({
                 select: {
@@ -906,8 +906,8 @@ export default async function revisionsController(fastify: FastifyInstance) {
             where: {
                 AND: {
                     user: userAddress,
-                    // template_id: null,
-                    // is_workflow: false
+                    template_id: null,
+                    is_workflow: false
                 }
             }
         });
@@ -917,8 +917,8 @@ export default async function revisionsController(fastify: FastifyInstance) {
             where: {
                 AND: {
                     user: userAddress,
-                    // template_id: null,
-                    // is_workflow: false
+                    template_id: null,
+                    is_workflow: false
                 }
             },
             select: {
@@ -1005,10 +1005,24 @@ export default async function revisionsController(fastify: FastifyInstance) {
         const url = getBaseUrl(request)
 
         // Query genesis revisions of type 'file' for the user
-        const whereClause = {
-            pubkey_hash: {
-                startsWith: userAddress
-            },
+        // const whereClause = {
+        //     pubkey_hash: {
+        //         startsWith: userAddress
+        //     },
+        //     revision_type: "file",
+        //     OR: [
+        //         { previous: null },
+        //         { previous: "" }
+        //     ]
+        // };
+
+
+
+
+        // @Dalmas since you are using  revision and not latest,And we were asked to filter out workflow files, 
+        // will fetch workflow hashes from latest table and exclude them from this query
+
+        const whereClause: any = {
             revision_type: "file",
             OR: [
                 { previous: null },
@@ -1016,10 +1030,53 @@ export default async function revisionsController(fastify: FastifyInstance) {
             ]
         };
 
+        let workflowRevisionsToExclude: string[] = []
+
+        const workflowLatestRecords = await prisma.latest.findMany({
+
+            where: {
+                AND: {
+                    user: userAddress,
+                    is_workflow: true
+                }
+            },
+            select: {
+                hash: true
+            }
+        });
+        workflowRevisionsToExclude = workflowLatestRecords.map(record => record.hash);
+
+        if (workflowRevisionsToExclude.length > 0) {
+
+
+            whereClause['AND'] = [
+                {
+                    pubkey_hash: {
+                        startsWith: userAddress
+                    }
+                },
+                {
+                    pubkey_hash: {
+                        notIn: workflowRevisionsToExclude
+                    }
+                }
+            ];
+        } else {
+            whereClause['pubkey_hash'] = {
+                startsWith: userAddress
+            };
+        }
+
+        // end of workflow exclusion code
+
+
+
         // Get total count for pagination metadata
         const totalCount = await prisma.revision.count({
             where: whereClause
         });
+
+
 
         // Get paginated genesis file revisions
         const genesisFileRevisions = await prisma.revision.findMany({

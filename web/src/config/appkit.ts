@@ -56,7 +56,7 @@ export const appKit = createAppKit({
     "1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369", // Rainbow
     "e0c2e199712878ed272e2c170b585baa0ff0eb50b07521ca586ebf7aeeffc598", // Talisman
     "4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0", // Trust Wallet
-    "9ce87712b99b3eb57396cc8621db8900ac983c712236f48fb70ad28760be3f6a", // Subwallet
+    "9ce87712b99b3eb57396cc8621db8900ac983c712236f48fb70ad28760be3f6a", // Subwallet 
   ]
 })
 
