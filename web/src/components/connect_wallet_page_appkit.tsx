@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from './ui/alert'
 import { toast } from 'sonner'
 import { generateAvatar, fetchFiles } from '../utils/functions'
 import { ethers } from 'ethers'
-
+  
 export const ConnectWalletPageAppKit = () => {
   const { open } = useAppKit()
   const { address, isConnected, status } = useAppKitAccount()

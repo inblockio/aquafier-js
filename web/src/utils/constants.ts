@@ -109,6 +109,17 @@ export const initializeBackendUrl = async (): Promise<{
       return { backend_url: BACKEND_URL, config: configObj, apmConfig: apmConfig }
 }
 
+export const USER_PROFILE_DEFAULT = {
+                        ens_name: '',
+                        user_pub_key: '',
+                        cli_pub_key: '',
+                        cli_priv_key: '',
+                        alchemy_key: '',
+                        theme: 'light',
+                        witness_network:"mainnet",
+                        enable_dba_claim: false,
+                        witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+                  }
 export const testWitness = {
       previous_verification_hash: '0x8fe3842787eb5d37c2fb170906a3d4c73c32b9dab7aab4525a06199fe9b9c823',
       nonce: 'AEkjaXCgfD2rP8ZGS-Xhl4eeksNRVOYlykWACBvVeXA',
