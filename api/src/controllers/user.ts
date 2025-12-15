@@ -12,6 +12,7 @@ import { DefaultArgs } from '@prisma/client/runtime/library';
 import Logger from '../utils/logger';
 import { TEMPLATE_HASHES } from '../models/constants';
 import fs from 'fs';
+import { findAquaTreeRevision } from '../utils/revisions_operations_utils';
 
 export default async function userController(fastify: FastifyInstance) {
 
@@ -801,7 +802,6 @@ export default async function userController(fastify: FastifyInstance) {
         //         previous: {
         //             equals: ""
         //         },
-
         //     }
         // });
 
@@ -841,19 +841,27 @@ export default async function userController(fastify: FastifyInstance) {
                         pubkey_hash: element.hash
                     },  
                 });
-                if(revision){
-                    let aquaForms = await prisma.aquaForms.findMany({
-                        where: {
-                            hash: revision.pubkey_hash
-                        },  
-                    });
-                    allUserRevisions.push({
-                        pubkey_hash: revision.pubkey_hash,
-                        previous: revision.previous,    
-                        AquaForms: aquaForms
-                    });
-                }  
 
+                // get genesis 
+                if(revision){
+                    let aquaTreeRevisions = await findAquaTreeRevision(revision?.pubkey_hash)
+                    
+                    let genesisRevision = aquaTreeRevisions.find((e)=>e.previous==null || e.previous=="")
+
+                    if(genesisRevision){
+
+                        let aquaForms = await prisma.aquaForms.findMany({
+                            where: {
+                                hash: genesisRevision.pubkey_hash
+                            },  
+                        });
+                        allUserRevisions.push({
+                            pubkey_hash: genesisRevision.pubkey_hash,
+                            previous: genesisRevision.previous,    
+                            AquaForms: aquaForms
+                        });
+                    }
+                }  
             }
 
 
