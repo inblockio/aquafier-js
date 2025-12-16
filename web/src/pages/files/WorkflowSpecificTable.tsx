@@ -48,6 +48,7 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
                 page: currentPage,
                 limit: 10,
                 claim_types: JSON.stringify([workflowName]),
+                // filter_by: 
                 // wallet_address: session?.address
             }
             const filesDataQuery = await axios.get(`${backend_url}/${endpoint}`, {

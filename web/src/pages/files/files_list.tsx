@@ -182,6 +182,15 @@ export default function FilesList(filesListProps: FilesListProps) {
                   { value: 'aqua_files', label: 'Aqua Files (Non worklows)', count: 0 }
             ]
 
+
+            Object.keys(stats.claimTypeCounts).forEach((item)=>{
+                  options.push({
+                        label: item,
+                        value: item,
+                        count: stats.claimTypeCounts[item as keyof typeof stats.claimTypeCounts] as number ?? 0
+                  })
+            })
+
             // const someData = systemFileInfo.map(e => {
             //       try {
             //             return getAquaTreeFileName(e.aquaTree!)
@@ -414,7 +423,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                                           </div>
                                           {!isSmallScreen && (
                                                 <div className="flex items-center space-x-2">
-                                                      <button
+                                                      {/* <button
                                                             onClick={() => {
                                                                   setTempSelectedFilters(selectedFilters)
                                                                   setShowFilterModal(true)
@@ -426,7 +435,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                                                             title="Filter files"
                                                       >
                                                             <Filter className="w-4 h-4" />
-                                                      </button>
+                                                      </button> */}
 
                                                       <div className="flex bg-gray-100 rounded-md">
                                                             <button onClick={() => setView('card')} className={`p-2 rounded-md ${view === 'card' ? 'bg-white shadow-sm' : ''}`}>
