@@ -423,7 +423,7 @@ export default function WorkflowsTablePage() {
                                     <CardTitle className="flex items-center gap-2 justify-between">
                                           <div className="flex items-center gap-2">
                                                 <FileText className="h-5 w-5" />
-                                                <span>Aqua Sign Workflows</span>
+                                                <span>AquaSign - PDF Signature</span>
                                           </div>
                                           <button
                                                 className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
@@ -465,7 +465,7 @@ export default function WorkflowsTablePage() {
                                                                   <TableCell colSpan={6} className="h-[400px] text-center">
                                                                         <div className="flex items-center justify-center gap-2">
                                                                               <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
-                                                                              <span>Loading Aqua Sign Workflows...</span>
+                                                                              <span>Loading AquaSign - PDF Signature...</span>
                                                                         </div>
                                                                   </TableCell>
                                                             </TableRow>

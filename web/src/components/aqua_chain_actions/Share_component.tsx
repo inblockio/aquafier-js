@@ -23,7 +23,7 @@ const ShareComponent = () => {
 
       const { selectedFileInfo, setSelectedFileInfo, setOpenDialog, backend_url, session, setWorkflows } = useStore(appStore)
       const [loading, setLoading] = useState(true)
-      const [recipientType, setRecipientType] = useState<'0xfabacc150f2a0000000000000000000000000000' | 'specific'>('0xfabacc150f2a0000000000000000000000000000')
+      const [recipientType, setRecipientType] = useState<'0xfabacc150f2a0000000000000000000000000000' | 'specific'>(SYSTEM_WALLET_ADDRESS)
       // const [walletAddress, setWalletAddress] = useState('')
       const [optionType, setOptionType] = useState<'latest' | 'current'>('latest')
       const [shared, setShared] = useState<string | null>(null)
@@ -291,7 +291,7 @@ const ShareComponent = () => {
                                                 ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500/20'
                                                 : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                                 }`}
-                                          onClick={() => setRecipientType('0xfabacc150f2a0000000000000000000000000000')}
+                                          onClick={() => setRecipientType(SYSTEM_WALLET_ADDRESS)}
                                     >
                                           <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">

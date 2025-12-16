@@ -32,6 +32,7 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
                 page: 1,
                 limit:  10_000,//Number.MIN_SAFE_INTEGER,
                 claim_types: JSON.stringify(['identity_attestation']),
+                // filter_by: "date",//
                 // wallet_address: session?.address
             }
             const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${endpoint}`), {

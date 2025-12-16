@@ -309,10 +309,10 @@ export default function FilesListItem({
                                     // not selected, so select
                                     if (!showWorkFlowsOnly && workflowInfo?.isWorkFlow && workflowInfo.workFlow == 'aqua_sign') {
 
-                                          toast.error("Aqua Sign workflows cannot be selected", {
+                                          toast.error("AquaSign - PDF Signature cannot be selected", {
                                                 duration: 1500,
                                           })
-                                          // do not allow selection of  aqua sign workflows
+                                          // do not allow selection of  AquaSign - PDF Signature
                                           return
                                     }
                                     filesListProps.onFileSelected(file)
@@ -330,7 +330,7 @@ export default function FilesListItem({
                                                 if (checked === true) {
                                                       // setLinkItem(itemLoop)
                                                       if (!showWorkFlowsOnly && workflowInfo?.isWorkFlow && workflowInfo.workFlow == 'aqua_sign') {
-                                                            toast.error("Aqua Sign workflows cannot be selected")
+                                                            toast.error("AquaSign - PDF Signature cannot be selected")
                                                             // do not allow selection of  aqua sign workflows
                                                             return
                                                       } else {

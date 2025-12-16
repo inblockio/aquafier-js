@@ -86,12 +86,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const applicationsItems = [
             // { label: 'Create AquaSign', icon: Signature, id: "/form-instance/aqua_sign" },
             {
-                  label: 'AquaSign Workflows',
+                  label: 'AquaSign - PDF Signature',
                   icon: Workflow,
                   id: '/workflows'
             },
             {
-                  label: 'Claim & Attestation',
+                  label: 'AquaID - Claims & Attestation',
                   icon: Link,
                   id: '/claims_and_attestation',
             },
@@ -254,7 +254,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
                                                 {/* Storage Details */}
                                                 <div className="text-sm text-gray-600">
-                                                      <span className="text-blue-600 underline">{formatBytes(filesStats.storageUsed)} </span> used of {formatBytes(filesStats.storageUsed)} ({Math.round(usagePercentage)}%)
+                                                      <span className="text-blue-600 underline">{formatBytes(filesStats.storageUsed, 2, true)} </span> used of {formatBytes(maxUserFileSizeForUpload, 2, true)} ({Math.round(usagePercentage)}%)
                                                 </div>
                                           </div>
                                     </>
