@@ -154,6 +154,7 @@ export const API_ENDPOINTS = {
       USER_STATS: 'user_data_stats',
       ALL_USER_FILES: 'tree/all_files',
       USER_AQUA_FILES: 'tree/aqua_files',
+      SORTED_FILES: 'tree/sorted_files',
       SYSTEM_AQUA_FILES: 'system/aqua_tree',
       SYSTEM_AQUA_FILES_NAMES: 'system/aqua_tree/names',
       LINKED_FILES: '/tree/by_genesis_hash',
