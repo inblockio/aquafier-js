@@ -1,7 +1,6 @@
 import { ApiFileInfo } from "@/models/FileInfo"
 import appStore from "@/store"
 import { FilesListProps } from "@/types/types"
-import { getAquaTreeFileName } from "@/utils/functions"
 import { useStore } from "zustand"
 import FilesListItem from "./files_list_item"
 

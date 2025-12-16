@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Filter, Grid3X3, List, X } from 'lucide-react'
+import { Grid3X3, List, X } from 'lucide-react'
 
 import { useStore } from 'zustand'
 import appStore from '../../store'
