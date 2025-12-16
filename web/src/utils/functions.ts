@@ -2441,7 +2441,8 @@ export function formatBytes(bytes: number, decimals = 2, binary = false) {
       const dm = decimals < 0 ? 0 : decimals
 
       // Units for decimal (SI) and binary systems
-      const sizes = binary ? ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'] : ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+      // const sizes = binary ? ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'] : ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+      const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
 
       const i = Math.floor(Math.log(bytes) / Math.log(k))
       const size = parseFloat((bytes / Math.pow(k, i)).toFixed(dm))

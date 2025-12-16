@@ -20,9 +20,10 @@ interface IWorkflowSpecificTable {
     filesListProps: FilesListProps
     isSmallScreen: boolean
     systemAquaFileNames: string[]
+    sortBy: 'date' | 'name' | 'size'
 }
 
-const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScreen, systemAquaFileNames }: IWorkflowSpecificTable) => {
+const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScreen, systemAquaFileNames, sortBy }: IWorkflowSpecificTable) => {
  
     const { session, backend_url } = useStore(appStore)
 
@@ -37,19 +38,25 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
         if (!session?.address || !backend_url) return;
         setFiles([])
         try {
-            let endpoint = API_ENDPOINTS.GET_PER_TYPE
-            if (workflowName === 'all') {
-                endpoint = API_ENDPOINTS.ALL_USER_FILES
-            } else if (workflowName === 'aqua_files') {
-                endpoint = API_ENDPOINTS.USER_AQUA_FILES
-            }
             setLoading(true)
-            const params = {
+
+            // Determine if we should use the new sorted endpoint or the old per_type endpoint
+            let endpoint = API_ENDPOINTS.SORTED_FILES
+            let params: any = {
                 page: currentPage,
                 limit: 10,
-                claim_types: JSON.stringify([workflowName]),
-                // wallet_address: session?.address
+                orderBy: sortBy,
             }
+
+            // For specific workflow types (claims), use the old endpoint
+            if (workflowName !== 'all' && workflowName !== 'aqua_files') {
+                endpoint = API_ENDPOINTS.GET_PER_TYPE
+                params.claim_types = JSON.stringify([workflowName])
+            } else {
+                // For 'all' and 'aqua_files', use the new sorted endpoint
+                params.fileType = workflowName
+            }
+
             const filesDataQuery = await axios.get(`${backend_url}/${endpoint}`, {
                 headers: {
                     'Content-Type': 'application/json',
@@ -75,7 +82,7 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
 
     useEffect(() => {
         loadFiles()
-    }, [backend_url, JSON.stringify(session), `${currentPage}-${workflowName}`]);
+    }, [backend_url, JSON.stringify(session), `${currentPage}-${workflowName}`, sortBy]);
 
     // Determine the appropriate reload key based on workflow type
     const getReloadKey = (workflowName: string): string => {
@@ -142,11 +149,6 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
                                 }
                                 {!loading && files.length > 0 ? (
                                     files
-                                        .sort((a, b) => {
-                                            const filenameA = getAquaTreeFileName(a.aquaTree!)
-                                            const filenameB = getAquaTreeFileName(b.aquaTree!)
-                                            return filenameA.localeCompare(filenameB)
-                                        })
                                         .map((file, index) => (
                                             <div key={`mobile-${index}`}>
                                                 <FilesListItem

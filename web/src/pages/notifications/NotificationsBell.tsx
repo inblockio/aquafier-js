@@ -111,7 +111,7 @@ const NotificationsBell = () => {
                         </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-74 p-0 rounded-md" align="end">
-                        <NotificationsHolder notifications={notifications} isLoading={isLoading} markAllAsRead={markAllAsRead} onNotificationRead={fetchNotifications} />
+                        <NotificationsHolder notifications={notifications.filter((e)=>e.is_read==false)} isLoading={isLoading} markAllAsRead={markAllAsRead} onNotificationRead={fetchNotifications} />
                   </PopoverContent>
             </Popover>
       )

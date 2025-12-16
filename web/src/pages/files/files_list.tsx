@@ -20,9 +20,10 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [uniqueWorkflows, setUniqueWorkflows] = useState<{ name: string, count: number }[]>([])
       const [selectedWorkflow, setSelectedWorkflow] = useState<string>('aqua_files') //aqua_files
       const [stats, setStats] = useState<IUserStats>(emptyUserStats)
+      const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date')
 
       const [searchParams] = useSearchParams();
-      
+
       // Read the tab parameter from URL
       const tabFromUrl = searchParams.get('tab');
 
@@ -181,6 +182,15 @@ export default function FilesList(filesListProps: FilesListProps) {
                   { value: 'all', label: 'All Files .', count: 0 },
                   { value: 'aqua_files', label: 'Aqua Files (Non worklows)', count: 0 }
             ]
+
+
+            Object.keys(stats.claimTypeCounts).forEach((item)=>{
+                  options.push({
+                        label: item,
+                        value: item,
+                        count: stats.claimTypeCounts[item as keyof typeof stats.claimTypeCounts] as number ?? 0
+                  })
+            })
 
             // const someData = systemFileInfo.map(e => {
             //       try {
@@ -414,19 +424,16 @@ export default function FilesList(filesListProps: FilesListProps) {
                                           </div>
                                           {!isSmallScreen && (
                                                 <div className="flex items-center space-x-2">
-                                                      <button
-                                                            onClick={() => {
-                                                                  setTempSelectedFilters(selectedFilters)
-                                                                  setShowFilterModal(true)
-                                                            }}
-                                                            className={`p-2 rounded-md border ${!selectedFilters.includes('all')
-                                                                  ? 'bg-blue-50 border-blue-200 text-blue-700'
-                                                                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                                  }`}
-                                                            title="Filter files"
+                                                      {/* Sort selector */}
+                                                      <select
+                                                            value={sortBy}
+                                                            onChange={(e) => setSortBy(e.target.value as 'date' | 'name' | 'size')}
+                                                            className="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                       >
-                                                            <Filter className="w-4 h-4" />
-                                                      </button>
+                                                            <option value="date">Sort by Date</option>
+                                                            <option value="name">Sort by Name</option>
+                                                            <option value="size">Sort by Size</option>
+                                                      </select>
 
                                                       <div className="flex bg-gray-100 rounded-md">
                                                             <button onClick={() => setView('card')} className={`p-2 rounded-md ${view === 'card' ? 'bg-white shadow-sm' : ''}`}>
@@ -450,6 +457,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                               filesListProps={filesListProps}
                               isSmallScreen={isSmallScreen}
                               systemAquaFileNames={systemAquaFileNames}
+                              sortBy={sortBy}
                         />
 
                   </div>
