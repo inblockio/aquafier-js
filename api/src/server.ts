@@ -11,6 +11,7 @@ import * as fs from "fs"
 import chequeApiController from './controllers/chequeApi';
 import userController from './controllers/user';
 import authController from './controllers/auth';
+import oauthController from './controllers/oauth';
 import indexController from './controllers/index';
 import versionController from './controllers/version';
 import filesController from './controllers/files';
@@ -144,6 +145,7 @@ function buildServer() {
 
     // Register controllers
     fastify.register(authController);
+    fastify.register(oauthController);
     fastify.register(userController);
     fastify.register(indexController);
     fastify.register(versionController);

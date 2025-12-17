@@ -8,25 +8,25 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [
     react(),
-    // nodePolyfills()
     tailwindcss(),
+    {
+      name: 'configure-response-headers',
+      configureServer: (server) => {
+        server.middlewares.use((_req, res, next) => {
+          res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups')
+          res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none')
+          next()
+        })
+      },
+      configurePreviewServer: (server) => {
+        server.middlewares.use((_req, res, next) => {
+          res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups')
+          res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none')
+          next()
+        })
+      }
+    }
   ],
-  server: {
-    // allowedHosts: ['moonscape.ngrok.io'],
-    // headers: {
-    //   'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-    //   // 'Cross-Origin-Embedder-Policy': 'require-corp',
-    //   'Cross-Origin-Embedder-Policy': 'unsafe-none',
-    // }
-  },
-  preview: {
-    port: 3000,
-    host: '0.0.0.0',
-    // headers: {
-    //   'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-    //   // 'Cross-Origin-Embedder-Policy': 'unsafe-none',
-    // }
-  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),

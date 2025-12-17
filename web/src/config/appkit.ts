@@ -4,8 +4,8 @@ import { mainnet, sepolia, polygon, arbitrum } from '@reown/appkit/networks'
 import { siweConfig } from './siweConfig'
 
 // Get projectId from https://cloud.reown.com
-// export const projectId = '80d7707d71e3502f8635b00e56173cdf'
-export const projectId = "9ed78593f9e1f84e3151ea58cfeea38b"
+export const projectId = '80d7707d71e3502f8635b00e56173cdf'
+// export const projectId = "9ed78593f9e1f84e3151ea58cfeea38b"
 
 // Create networks array
 export const networks = [
@@ -37,8 +37,8 @@ export const appKit = createAppKit({
   metadata,
   features: {
     analytics: false,
-    email: false,
-    socials: false,
+    email: true,
+    socials: ['google', 'facebook'],
     swaps: false,
     onramp: false
   },

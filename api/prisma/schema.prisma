@@ -12,11 +12,13 @@ model Users {
   address       String                     @id
   ens_name      String?
   email         String?
+  auth_provider String?                    @default("wallet") // "wallet", "google", "facebook", or "hybrid"
   createdAt     DateTime                   @default(now()) @map("created_at")
   updatedAt     DateTime                   @updatedAt @map("updated_at")
   Latest        Latest[]
   Settings      Settings?
   UserAddresses UserAttestationAddresses[]
+  OAuthAccounts OAuthAccount[]
 
   @@map("users")
 }
@@ -90,10 +92,31 @@ model SiweSession {
   nonce          String    @unique
   issuedAt       DateTime  @default(now())
   expirationTime DateTime?
+  provider       String?   @default("wallet") // "wallet", "google", or "facebook"
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
   @@map("siwe_session")
+}
+
+model OAuthAccount {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  provider      String   // "google" or "facebook"
+  providerId    String   @map("provider_id") // Unique ID from OAuth provider
+  email         String?
+  name          String?
+  picture       String?
+  accessToken   String?  @map("access_token")
+  refreshToken  String?  @map("refresh_token")
+  expiresAt     DateTime? @map("expires_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  User          Users    @relation(fields: [userId], references: [address])
+
+  @@unique([provider, providerId])
+  @@map("oauth_accounts")
 }
 
 model Contract {
