@@ -303,7 +303,7 @@ export const getWalletClaims = (aquaTemplateNames: string[], files: ApiFileInfo[
                   const aquaTree = files[i].aquaTree
                   if (aquaTree) {
                         const { isWorkFlow, workFlow } = isWorkFlowData(aquaTree!, aquaTemplates)
-                        if (isWorkFlow && (workFlow === 'simple_claim' || workFlow === 'identity_claim' || workFlow === "user_signature")) {
+                        if (isWorkFlow && (workFlow === 'simple_claim' || workFlow === 'identity_claim' || workFlow === "user_signature" || workFlow === "email_claim")) {
                               const orderedAquaTree = OrderRevisionInAquaTree(aquaTree)
                               const revisionHashes = Object.keys(orderedAquaTree.revisions)
                               const firstRevisionHash = revisionHashes[0]
@@ -319,10 +319,15 @@ export const getWalletClaims = (aquaTemplateNames: string[], files: ApiFileInfo[
             if (firstClaim) {
                   const genesisHash = getGenesisHash(firstClaim.aquaTree!)
                   const firstRevision = firstClaim.aquaTree!.revisions[genesisHash!]
-                  const name = firstRevision.forms_name
+                  let nameOrEmail = ""
+                  if(firstRevision.forms_name){
+                        nameOrEmail = firstRevision.forms_name
+                  }else if(firstRevision.forms_email){
+                        nameOrEmail = firstRevision.forms_email
+                  }
 
                   return {
-                        name
+                        name: nameOrEmail
                   }
             }
       }

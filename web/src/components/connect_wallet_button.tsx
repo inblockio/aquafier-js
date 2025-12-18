@@ -173,7 +173,7 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
 
       {/* Profile Dialog for authenticated users */}
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-        <DialogContent aria-describedby="Account dialog" aria-description="Account dialog" className="sm:max-w-[425px] max-w-[425px]">
+        <DialogContent aria-describedby="Account dialog" aria-description="Account dialog" className="sm:max-w-[425px] max-w-[90%]">
           <DialogHeader>
             <DialogTitle>Account</DialogTitle>
           </DialogHeader>

@@ -234,7 +234,7 @@ const setUpSystemTemplates = async () => {
 
         let subtitles: Map<string, string> = new Map();
         subtitles.set("access_agreement", "Create a new access agreement workflow");
-        subtitles.set("aqua_sign", "Create a new aquasign workflow");   
+        subtitles.set("aqua_sign", "Create new PDF signing workflow");   
 
         // template
         await prisma.aquaTemplate.upsert({
