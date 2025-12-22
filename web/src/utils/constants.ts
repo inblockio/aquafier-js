@@ -6,7 +6,7 @@ import { Building2, CheckCircle, CreditCard, Droplet, FileText, Globe, Mail, Pen
 export const SEPOLIA_SMART_CONTRACT_ADDRESS = '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611'
 export const SYSTEM_WALLET_ADDRESS = "0xfabacc150f2a0000000000000000000000000000"
 
-export const maxUserFileSizeForUpload = 1024 * 1024 * 1000 // 1 GB in bytes
+export const maxUserFileSizeForUpload = 1024 * 1024 * 1024 // 1 GB in bytes
 export const maxFileSizeForUpload = 200 * 1024 * 1024 // 200MB in bytes
 
 export const SESSION_COOKIE_NAME = 'pkc_nonce'
@@ -109,6 +109,17 @@ export const initializeBackendUrl = async (): Promise<{
       return { backend_url: BACKEND_URL, config: configObj, apmConfig: apmConfig }
 }
 
+export const USER_PROFILE_DEFAULT = {
+                        ens_name: '',
+                        user_pub_key: '',
+                        cli_pub_key: '',
+                        cli_priv_key: '',
+                        alchemy_key: '',
+                        theme: 'light',
+                        witness_network:"mainnet",
+                        enable_dba_claim: false,
+                        witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+                  }
 export const testWitness = {
       previous_verification_hash: '0x8fe3842787eb5d37c2fb170906a3d4c73c32b9dab7aab4525a06199fe9b9c823',
       nonce: 'AEkjaXCgfD2rP8ZGS-Xhl4eeksNRVOYlykWACBvVeXA',
@@ -143,6 +154,7 @@ export const API_ENDPOINTS = {
       USER_STATS: 'user_data_stats',
       ALL_USER_FILES: 'tree/all_files',
       USER_AQUA_FILES: 'tree/aqua_files',
+      SORTED_FILES: 'tree/sorted_files',
       SYSTEM_AQUA_FILES: 'system/aqua_tree',
       SYSTEM_AQUA_FILES_NAMES: 'system/aqua_tree/names',
       LINKED_FILES: '/tree/by_genesis_hash',

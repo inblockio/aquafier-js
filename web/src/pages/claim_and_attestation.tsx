@@ -309,7 +309,7 @@ const ClaimsAndAttestationPage = () => {
                                           <div className="flex flex-col gap-2">
                                                 <div className="flex items-center gap-2">
                                                       <FileText className="h-5 w-5" />
-                                                      <span>Aqua Claim Workflows</span>
+                                                      <span>AquaID - Claims & Attestation</span>
                                                 </div>
                                                 <label className="text-sm font-medium text-gray-900  text-left">
                                                       Your claims & attestations

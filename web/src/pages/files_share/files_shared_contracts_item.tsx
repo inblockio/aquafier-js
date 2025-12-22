@@ -15,6 +15,7 @@ import WalletAddresClaim from "../v2_claims_workflow/WalletAdrressClaim"
 import { toast } from 'sonner'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { ImportAquaChainFromChain } from '@/components/dropzone_file_actions/import_aqua_tree_from_aqua_tree'
+import { SYSTEM_WALLET_ADDRESS } from '@/utils/constants'
 
 
 export const SharedContract = ({ type, contract, index, contractDeleted }: { type: 'outgoing' | 'incoming', contract: Contract; index: number; contractDeleted: (hash: string) => void }) => {
@@ -244,7 +245,11 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
                                                                               <div>
                                                                                     <p className="text-xs break-words sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate">
                                                                                           {/* {formatCryptoAddress(contract.receiver)} */}
-                                                                                          <WalletAddresClaim walletAddress={recipient} isShortened={false} />
+                                                                                          {
+                                                                                                recipient==SYSTEM_WALLET_ADDRESS? <>Many potential receivers - file shared by link.</>:
+                                                                                                <WalletAddresClaim walletAddress={recipient} isShortened={false} />
+                                                                                          }
+                                                                                          
                                                                                     </p>
                                                                               </div>
                                                                         </>

@@ -5,6 +5,7 @@ import { ApiFileInfo } from './models/FileInfo'
 import { ApiFileData, ApiFileInfoState, emptyUserStats, IUserStats, OpenDialog, Session, WebConfig } from './types/types'
 import { FormTemplate } from './components/aqua_forms/types'
 import { ensureDomainUrlHasSSL } from './utils/functions'
+import { USER_PROFILE_DEFAULT } from './utils/constants'
 
 type AppStoreState = {
       user_profile: {
@@ -131,21 +132,12 @@ const indexedDBStorage = {
       },
 }
 
+
 const appStore = createStore<TAppStore>()(
       persist(
             set => ({
                   // Initial state
-                  user_profile: {
-                        ens_name: '',
-                        user_pub_key: '',
-                        cli_pub_key: '',
-                        cli_priv_key: '',
-                        witness_network: '',
-                        alchemy_key: '',
-                        theme: 'light',
-                        enable_dba_claim: false,
-                        witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
-                  },
+                  user_profile: USER_PROFILE_DEFAULT,
                   session: null,
                   files: {
                         fileData: [],

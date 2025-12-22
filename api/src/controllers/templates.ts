@@ -1,11 +1,11 @@
-import {FastifyInstance, FastifyRequest} from 'fastify';
-import {prisma} from '../database/db';
-import {AquaFormRequest} from '../models/request_models';
-import {saveTemplateFileData} from '../utils/api_utils';
-import {authenticate, AuthenticatedRequest} from '../middleware/auth_middleware';
-import Aquafier, {AquaTree, FileObject} from 'aqua-js-sdk';
-import {deleteAquaTreeFromSystem, saveAquaTree} from '../utils/revisions_utils';
-import Logger from "../utils/logger"; 
+import { FastifyInstance, FastifyRequest } from 'fastify';
+import { prisma } from '../database/db';
+import { AquaFormRequest } from '../models/request_models';
+import { saveTemplateFileData } from '../utils/api_utils';
+import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
+import Aquafier, { AquaTree, FileObject } from 'aqua-js-sdk';
+import { deleteAquaTreeFromSystem, saveAquaTree } from '../utils/revisions_utils';
+import Logger from "../utils/logger";
 
 export default async function templatesController(fastify: FastifyInstance) {
 
@@ -77,10 +77,16 @@ export default async function templatesController(fastify: FastifyInstance) {
                         }
                     }
                 });
+                
+                let subtitle = template.subtitle
+                if (template.name === "aqua_sign") {
+                    subtitle = "Create new PDF signing workflow"
+                }
 
                 data.push({
                     ...template,
-                    fields: fields
+                    fields: fields,
+                    subtitle
                 });
             }
         }
@@ -125,7 +131,7 @@ export default async function templatesController(fastify: FastifyInstance) {
 
                 Logger.info(`results.hash --${JSON.stringify(results.hash, null, 4)}`)
                 let response = await deleteAquaTreeFromSystem(request.user?.address ?? "-", results.hash)
-                Logger.info("Template delete result", {response})
+                Logger.info("Template delete result", { response })
                 if (response[0] != 200) {
                     return reply.code(response[0]).send({ success: response[0] == 200 ? true : false, message: response[1] });
 
@@ -148,7 +154,7 @@ export default async function templatesController(fastify: FastifyInstance) {
             });
 
             return reply.code(200).send({ success: true });
-        } catch (error : any) {
+        } catch (error: any) {
             return reply.code(500).send({ success: false, error: "Failed to delete template" });
         }
     });
@@ -278,7 +284,7 @@ export default async function templatesController(fastify: FastifyInstance) {
             } else {
                 return reply.code(500).send({ success: true, logs: resIdentityAquaTree.data });
             }
-        } catch (error : any) {
+        } catch (error: any) {
             Logger.error("Error creating template:", error);
             return reply.code(500).send({ success: false, message: "Failed to create template" });
         }
@@ -339,7 +345,7 @@ export default async function templatesController(fastify: FastifyInstance) {
             }
 
             return reply.code(200).send({ success: true });
-        } catch (error : any) {
+        } catch (error: any) {
             Logger.error("Error creating template:", error);
             return reply.code(500).send({ success: false, message: "Failed to create template" });
         }

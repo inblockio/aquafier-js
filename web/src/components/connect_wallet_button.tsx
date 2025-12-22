@@ -8,7 +8,7 @@ import appStore from '../store'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog'
 import { ethers } from 'ethers'
 import { toast } from 'sonner'
-import { SESSION_COOKIE_NAME } from '../utils/constants'
+import { SESSION_COOKIE_NAME, USER_PROFILE_DEFAULT } from '../utils/constants'
 import axios from 'axios'
 import { ContactsService } from '@/storage/databases/contactsDb'
 
@@ -129,6 +129,7 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
       const store = appStore.getState()
       store.setMetamaskAddress(null)
       store.setAvatar(undefined)
+      store.setUserProfile(USER_PROFILE_DEFAULT)
       store.setSession(null)
       store.setFiles({
         fileData: [],
@@ -172,7 +173,7 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
 
       {/* Profile Dialog for authenticated users */}
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-        <DialogContent aria-describedby="Account dialog" aria-description="Account dialog" className="sm:max-w-[425px] max-w-[425px]">
+        <DialogContent aria-describedby="Account dialog" aria-description="Account dialog" className="sm:max-w-[425px] max-w-[90%]">
           <DialogHeader>
             <DialogTitle>Account</DialogTitle>
           </DialogHeader>

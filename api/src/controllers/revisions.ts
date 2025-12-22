@@ -17,6 +17,7 @@ import Logger from "../utils/logger";
 import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
 import { TEMPLATE_HASHES } from '../models/constants';
 import { ethers } from 'ethers';
+import * as fs from 'fs';
 
 export default async function revisionsController(fastify: FastifyInstance) {
     // fetch aqua tree from a revision hash
@@ -595,7 +596,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
     }, async (request: AuthenticatedRequest, reply) => {
         const userAddress = request.user?.address;
 
-        const { claim_types, wallet_address, use_wallet } = request.query as { claim_types: string, wallet_address?: string, use_wallet?: string };
+        const { claim_types, wallet_address, use_wallet, orderBy = 'date' } = request.query as { claim_types: string, wallet_address?: string, use_wallet?: string, orderBy?: string };
 
         const claimTypes = JSON.parse(claim_types)
 
@@ -797,6 +798,24 @@ export default async function revisionsController(fastify: FastifyInstance) {
             return reply.code(500).send({ success: false, message: `Error ${e}` });
         }
 
+        // Apply sorting based on orderBy parameter
+        if (orderBy === 'size') {
+            // Sort by file size (largest first)
+            displayData.sort((a, b) => {
+                const sizeA = a.fileObject[0]?.fileSize || 0;
+                const sizeB = b.fileObject[0]?.fileSize || 0;
+                return sizeB - sizeA;
+            });
+        } else if (orderBy === 'name') {
+            // Sort by file name (alphabetical)
+            displayData.sort((a, b) => {
+                const nameA = getAquaTreeFileName(a.aquaTree);
+                const nameB = getAquaTreeFileName(b.aquaTree);
+                return nameA.localeCompare(nameB);
+            });
+        }
+        // For 'date', the data is already sorted by createdAt in the query
+
         // const queryEnd = performance.now()
         // const queryDuration = (queryEnd - queryStart) / 1000
         // Logger.info(`Query duration: ${queryDuration} seconds`)
@@ -894,7 +913,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
         const queryStart = performance.now()
 
         // Get pagination parameters from query
-        const { page = 1, limit = 100 } = request.query as { page?: string | number, limit?: string | number };
+        const { page = 1, limit = 100, orderBy = 'date' } = request.query as { page?: string | number, limit?: string | number, orderBy?: string };
         const pageNum = typeof page === 'string' ? parseInt(page, 10) : page;
         const limitNum = typeof limit === 'string' ? parseInt(limit, 10) : limit;
         const skip = (pageNum - 1) * limitNum;
@@ -927,7 +946,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             skip: skip,
             take: limitNum,
             orderBy: {
-                createdAt: 'desc'
+                createdAt: orderBy === 'date' ? 'desc' : 'asc'
             }
         });
 
@@ -958,6 +977,24 @@ export default async function revisionsController(fastify: FastifyInstance) {
         } catch (e) {
             return reply.code(500).send({ success: false, message: `Error ${e}` });
         }
+
+        // Apply sorting based on orderBy parameter
+        if (orderBy === 'size') {
+            // Sort by file size (largest first)
+            displayData.sort((a, b) => {
+                const sizeA = a.fileObject[0]?.fileSize || 0;
+                const sizeB = b.fileObject[0]?.fileSize || 0;
+                return sizeB - sizeA;
+            });
+        } else if (orderBy === 'name') {
+            // Sort by file name (alphabetical)
+            displayData.sort((a, b) => {
+                const nameA = getAquaTreeFileName(a.aquaTree);
+                const nameB = getAquaTreeFileName(b.aquaTree);
+                return nameA.localeCompare(nameB);
+            });
+        }
+        // For 'date', the data is already sorted by createdAt in the query
 
         const queryEnd = performance.now()
         const queryDuration = (queryEnd - queryStart) / 1000
@@ -997,7 +1034,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
         // const queryStart = performance.now()
 
         // Get pagination parameters from query
-        const { page = 1, limit = 100 } = request.query as { page?: string | number, limit?: string | number };
+        const { page = 1, limit = 100, orderBy = 'date' } = request.query as { page?: string | number, limit?: string | number, orderBy?: string };
         const pageNum = typeof page === 'string' ? parseInt(page, 10) : page;
         const limitNum = typeof limit === 'string' ? parseInt(limit, 10) : limit;
         const skip = (pageNum - 1) * limitNum;
@@ -1087,7 +1124,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             skip: skip,
             take: limitNum,
             orderBy: {
-                local_timestamp: 'desc'
+                local_timestamp: orderBy === 'date' ? 'desc' : 'asc'
             }
         });
 
@@ -1119,6 +1156,24 @@ export default async function revisionsController(fastify: FastifyInstance) {
             return reply.code(500).send({ success: false, message: `Error ${e}` });
         }
 
+        // Apply sorting based on orderBy parameter
+        if (orderBy === 'size') {
+            // Sort by file size (largest first)
+            displayData.sort((a, b) => {
+                const sizeA = a.fileObject[0]?.fileSize || 0;
+                const sizeB = b.fileObject[0]?.fileSize || 0;
+                return sizeB - sizeA;
+            });
+        } else if (orderBy === 'name') {
+            // Sort by file name (alphabetical)
+            displayData.sort((a, b) => {
+                const nameA = getAquaTreeFileName(a.aquaTree);
+                const nameB = getAquaTreeFileName(b.aquaTree);
+                return nameA.localeCompare(nameB);
+            });
+        }
+        // For 'date', the data is already sorted by local_timestamp in the query
+
         // const queryEnd = performance.now()
         // const queryDuration = (queryEnd - queryStart) / 1000
         // Logger.info(`Query duration: ${queryDuration} seconds`)
@@ -1141,6 +1196,279 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
         })
     })
+
+    // New efficient endpoint with database-level sorting
+    fastify.get('/tree/sorted_files', {
+        preHandler: authenticate
+    }, async (request: AuthenticatedRequest, reply) => {
+        const userAddress = request.user?.address;
+
+        if (!userAddress) {
+            return reply.code(401).send({ error: 'Unauthorized' });
+        }
+
+        const queryStart = performance.now()
+
+        // Get pagination and sorting parameters from query
+        const { page = 1, limit = 100, orderBy = 'date', fileType = 'all' } = request.query as {
+            page?: string | number,
+            limit?: string | number,
+            orderBy?: string,
+            fileType?: string
+        };
+        const pageNum = typeof page === 'string' ? parseInt(page, 10) : page;
+        const limitNum = typeof limit === 'string' ? parseInt(limit, 10) : limit;
+        const skip = (pageNum - 1) * limitNum;
+
+        const url = getBaseUrl(request)
+
+        let revisionHashes: string[] = [];
+        let totalCount = 0;
+
+        try {
+            if (orderBy === 'name') {
+                // Start from FileName table for filename-based sorting
+                const fileNameRecords = await prisma.fileName.findMany({
+                    where: {
+                        pubkey_hash: {
+                            startsWith: userAddress
+                        }
+                    },
+                    select: {
+                        pubkey_hash: true,
+                        file_name: true
+                    },
+                    orderBy: {
+                        file_name: 'asc'
+                    }
+                });
+
+                // Check if these are file-type revisions
+                const fileRevisions = await prisma.revision.findMany({
+                    where: {
+                        pubkey_hash: {
+                            in: fileNameRecords.map(fn => fn.pubkey_hash)
+                        },
+                        revision_type: 'file',
+                        OR: [
+                            { previous: null },
+                            { previous: "" }
+                        ]
+                    },
+                    select: {
+                        pubkey_hash: true
+                    }
+                });
+
+                const fileRevisionHashes = new Set(fileRevisions.map(fr => fr.pubkey_hash));
+                const filteredFileNames = fileNameRecords.filter(fn => fileRevisionHashes.has(fn.pubkey_hash));
+
+                // Filter out workflow files if needed
+                if (fileType === 'aqua_files') {
+                    const workflowLatestRecords = await prisma.latest.findMany({
+                        where: {
+                            AND: {
+                                user: userAddress,
+                                is_workflow: true
+                            }
+                        },
+                        select: {
+                            hash: true
+                        }
+                    });
+                    const workflowHashes = new Set(workflowLatestRecords.map(r => r.hash));
+                    const nonWorkflowFileNames = filteredFileNames.filter(fn => !workflowHashes.has(fn.pubkey_hash));
+                    totalCount = nonWorkflowFileNames.length;
+                    const paginatedFileNames = nonWorkflowFileNames.slice(skip, skip + limitNum);
+                    revisionHashes = paginatedFileNames.map(fn => fn.pubkey_hash);
+                } else {
+                    totalCount = filteredFileNames.length;
+                    const paginatedFileNames = filteredFileNames.slice(skip, skip + limitNum);
+                    revisionHashes = paginatedFileNames.map(fn => fn.pubkey_hash);
+                }
+
+            } else if (orderBy === 'size') {
+                // Start from Revision table to get user's file-type revisions
+                const fileRevisions = await prisma.revision.findMany({
+                    where: {
+                        pubkey_hash: {
+                            startsWith: userAddress
+                        },
+                        revision_type: 'file',
+                        OR: [
+                            { previous: null },
+                            { previous: "" }
+                        ]
+                    },
+                    select: {
+                        pubkey_hash: true
+                    }
+                });
+
+                const userFileHashes = fileRevisions.map(fr => fr.pubkey_hash);
+
+                // Get FileIndex records for these revisions
+                const fileIndexRecords = await prisma.fileIndex.findMany({
+                    where: {
+                        pubkey_hash: {
+                            hasSome: userFileHashes
+                        }
+                    },
+                    select: {
+                        pubkey_hash: true,
+                        file_hash: true
+                    }
+                });
+
+                // Map file index to individual pubkey_hashes
+                const pubkeyToFileHash = new Map<string, string>();
+                for (const fileIndex of fileIndexRecords) {
+                    for (const pubkeyHash of fileIndex.pubkey_hash) {
+                        if (pubkeyHash.startsWith(userAddress)) {
+                            pubkeyToFileHash.set(pubkeyHash, fileIndex.file_hash);
+                        }
+                    }
+                }
+
+                // Get file sizes from File table
+                const allFileHashes = [...new Set(Array.from(pubkeyToFileHash.values()))];
+                const fileRecords = await prisma.file.findMany({
+                    where: {
+                        file_hash: {
+                            in: allFileHashes
+                        }
+                    },
+                    select: {
+                        file_hash: true,
+                        file_location: true
+                    }
+                });
+
+                // Calculate file sizes
+                const fileSizeMap = new Map<string, number>();
+                for (const fileRecord of fileRecords) {
+                    try {
+                        const stats = fs.statSync(fileRecord.file_location);
+                        fileSizeMap.set(fileRecord.file_hash, stats.size);
+                    } catch (error) {
+                        fileSizeMap.set(fileRecord.file_hash, 0);
+                    }
+                }
+
+                // Map pubkey_hash to size
+                const pubkeyWithSize = Array.from(pubkeyToFileHash.entries()).map(([pubkey_hash, fileHash]) => ({
+                    pubkey_hash,
+                    size: fileSizeMap.get(fileHash) || 0
+                }));
+
+                // Filter out workflow files if needed
+                if (fileType === 'aqua_files') {
+                    const workflowLatestRecords = await prisma.latest.findMany({
+                        where: {
+                            AND: {
+                                user: userAddress,
+                                is_workflow: true
+                            }
+                        },
+                        select: {
+                            hash: true
+                        }
+                    });
+                    const workflowHashes = new Set(workflowLatestRecords.map(r => r.hash));
+                    const filtered = pubkeyWithSize.filter(p => !workflowHashes.has(p.pubkey_hash));
+                    totalCount = filtered.length;
+
+                    // Sort by size (largest first) and paginate
+                    const sorted = filtered.sort((a, b) => b.size - a.size);
+                    revisionHashes = sorted.slice(skip, skip + limitNum).map(p => p.pubkey_hash);
+                } else {
+                    totalCount = pubkeyWithSize.length;
+
+                    // Sort by size (largest first) and paginate
+                    const sorted = pubkeyWithSize.sort((a, b) => b.size - a.size);
+                    revisionHashes = sorted.slice(skip, skip + limitNum).map(p => p.pubkey_hash);
+                }
+
+            } else {
+                // Default: date-based sorting from Latest table
+                const whereClause: any = {
+                    AND: {
+                        user: userAddress,
+                        template_id: null,
+                        is_workflow: fileType === 'aqua_files' ? false : undefined
+                    }
+                };
+
+                totalCount = await prisma.latest.count({ where: whereClause });
+
+                const latestRecords = await prisma.latest.findMany({
+                    where: whereClause,
+                    select: {
+                        hash: true
+                    },
+                    skip: skip,
+                    take: limitNum,
+                    orderBy: {
+                        createdAt: 'desc'
+                    }
+                });
+
+                revisionHashes = latestRecords.map(r => r.hash);
+            }
+
+            // Build aqua trees for the revision hashes
+            let displayData: Array<{
+                aquaTree: AquaTree,
+                fileObject: FileObject[]
+            }> = []
+
+            const displayDataPromises = revisionHashes.map(async (revisionHash) => {
+                try {
+                    const aquaTreeJustRevisions = await buildEntireTreeFromGivenRevisionHash(revisionHash);
+                    const latestRevisionHash = aquaTreeJustRevisions[aquaTreeJustRevisions.length - 1].revisionHash;
+                    const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(latestRevisionHash, url);
+                    const sortedAquaTree = OrderRevisionInAquaTree(anAquaTree);
+                    return {
+                        aquaTree: sortedAquaTree,
+                        fileObject: fileObject
+                    };
+                } catch (e) {
+                    throw new Error(`Error processing revision ${revisionHash}: ${e}`);
+                }
+            });
+
+            displayData = await Promise.all(displayDataPromises);
+
+            const queryEnd = performance.now()
+            const queryDuration = (queryEnd - queryStart) / 1000
+            Logger.info(`Query duration: ${queryDuration} seconds`)
+
+            const totalPages = Math.ceil(totalCount / limitNum);
+            const hasNextPage = pageNum < totalPages;
+            const hasPrevPage = pageNum > 1;
+
+            return reply.code(200).send({
+                aquaTrees: deleteChildrenFieldFromAquaTrees(displayData),
+                linkRevisionsForTrackedClaimTypes: [],
+                claimTypeCounts: {},
+                pagination: {
+                    currentPage: pageNum,
+                    totalPages,
+                    totalCount,
+                    limit: limitNum,
+                    hasNextPage,
+                    hasPrevPage
+                }
+            })
+
+        } catch (error: any) {
+            Logger.error("Error in sorted_files endpoint:", error);
+            return reply.code(500).send({
+                success: false,
+                message: `Error fetching sorted files: ${error.message}`
+            });
+        }
+    });
 
     // Get all link revisions that contain a specific genesis hash in their link_verification_hashes
     fastify.get('/tree/by_genesis_hash', {

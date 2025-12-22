@@ -1,7 +1,6 @@
 import { ApiFileInfo } from "@/models/FileInfo"
 import appStore from "@/store"
 import { FilesListProps } from "@/types/types"
-import { getAquaTreeFileName } from "@/utils/functions"
 import { useStore } from "zustand"
 import FilesListItem from "./files_list_item"
 
@@ -63,11 +62,6 @@ export const RenderFilesList = ({ filteredFiles, filesListProps, view, loading =
                 </tr>
                 ) : null}
             {filteredFiles
-                .sort((a, b) => {
-                    const filenameA = getAquaTreeFileName(a.aquaTree!)
-                    const filenameB = getAquaTreeFileName(b.aquaTree!)
-                    return filenameA.localeCompare(filenameB)
-                })
                 .map((file, index) => {
                     return (
                         <FilesListItem
@@ -92,11 +86,6 @@ export const RenderFilesListCard = ({ filteredFiles, filesListProps, view, syste
     const { systemFileInfo, backend_url, session } = useStore(appStore)
     return <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredFiles
-            .sort((a, b) => {
-                const filenameA = getAquaTreeFileName(a.aquaTree!)
-                const filenameB = getAquaTreeFileName(b.aquaTree!)
-                return filenameA.localeCompare(filenameB)
-            })
             .map((file, index) => {
                 return (
                     <FilesListItem

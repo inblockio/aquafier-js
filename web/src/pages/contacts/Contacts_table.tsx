@@ -399,7 +399,7 @@ const ContactsTable = () => {
             </div>
             <Dialog open={openDialog} onOpenChange={setOpenDialog}>
                 {/* <DialogTrigger>Open</DialogTrigger> */}
-                <DialogContent className="rounded-2xl max-w-[90%] md:max-w-[400px] px-2 md:px-4">
+                <DialogContent className="rounded-2xl max-w-[90%] md:max-w-[425px] px-2 md:px-4">
                     <DialogHeader>
                         <DialogTitle>Profile</DialogTitle>
                         <DialogDescription style={{

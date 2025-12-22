@@ -303,7 +303,7 @@ export const getWalletClaims = (aquaTemplateNames: string[], files: ApiFileInfo[
                   const aquaTree = files[i].aquaTree
                   if (aquaTree) {
                         const { isWorkFlow, workFlow } = isWorkFlowData(aquaTree!, aquaTemplates)
-                        if (isWorkFlow && (workFlow === 'simple_claim' || workFlow === 'identity_claim' || workFlow === "user_signature")) {
+                        if (isWorkFlow && (workFlow === 'simple_claim' || workFlow === 'identity_claim' || workFlow === "user_signature" || workFlow === "email_claim")) {
                               const orderedAquaTree = OrderRevisionInAquaTree(aquaTree)
                               const revisionHashes = Object.keys(orderedAquaTree.revisions)
                               const firstRevisionHash = revisionHashes[0]
@@ -319,10 +319,15 @@ export const getWalletClaims = (aquaTemplateNames: string[], files: ApiFileInfo[
             if (firstClaim) {
                   const genesisHash = getGenesisHash(firstClaim.aquaTree!)
                   const firstRevision = firstClaim.aquaTree!.revisions[genesisHash!]
-                  const name = firstRevision.forms_name
+                  let nameOrEmail = ""
+                  if(firstRevision.forms_name){
+                        nameOrEmail = firstRevision.forms_name
+                  }else if(firstRevision.forms_email){
+                        nameOrEmail = firstRevision.forms_email
+                  }
 
                   return {
-                        name
+                        name: nameOrEmail
                   }
             }
       }
@@ -2441,7 +2446,8 @@ export function formatBytes(bytes: number, decimals = 2, binary = false) {
       const dm = decimals < 0 ? 0 : decimals
 
       // Units for decimal (SI) and binary systems
-      const sizes = binary ? ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'] : ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+      // const sizes = binary ? ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'] : ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+      const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
 
       const i = Math.floor(Math.log(bytes) / Math.log(k))
       const size = parseFloat((bytes / Math.pow(k, i)).toFixed(dm))
