@@ -86,7 +86,7 @@ jobs:
           DISPLAY: :99
         run: cd e2e && npx playwright test
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         if: ${{ !cancelled() }}
         with:
           name: playwright-report
@@ -100,7 +100,7 @@ jobs:
         with:
           dest: 'docker-logs'
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         if: ${{ !cancelled() }}
         with:
           name: docker-logs
