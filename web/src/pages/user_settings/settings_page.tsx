@@ -83,18 +83,20 @@ const DeleteUserData = () => {
                         setMetamaskAddress(null)
                         setAvatar(undefined)
                         // Reset local dexie dbs we have created
-                        ContactsService.getInstance().clear()
-                        AquaSystemNamesService.getInstance().clear()
+                        await ContactsService.getInstance().clear()
+                        await AquaSystemNamesService.getInstance().clear()
 
                         // Remove cookie
                         document.cookie = 'pkc_nonce=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
 
                         toast('User data cleared successfully. You have been logged out.')
 
+
                         if (window.location.pathname == '/') {
                               window.location.reload()
                         } else {
-                              navigate('/app')
+                              // navigate('/app')
+                              window.location.href = '/'  // Force reload to clear state
                         }
                   }
 
