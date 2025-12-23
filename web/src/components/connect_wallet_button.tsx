@@ -110,6 +110,7 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
       console.error('Sign out error:', error)
       toast.error('Error signing out')
     }
+   
   } finally {
     try {
         const nonce = getCookie(SESSION_COOKIE_NAME)
@@ -143,6 +144,8 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
       setCookie(SESSION_COOKIE_NAME, '', new Date('1970-01-01T00:00:00Z'))
     }
     setIsSigningOut(false)
+
+     window.location.href = '/'  // Force reload to clear state
   }
 }
 
