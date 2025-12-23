@@ -3,7 +3,6 @@ import { LuSettings, LuSun, LuUser, LuWallet, LuKey, LuNetwork, LuSave } from 'r
 import { FaEthereum, FaFileContract } from 'react-icons/fa6'
 import appStore from '@/store'
 import { useStore } from 'zustand'
-import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import axios from 'axios'
 import { Button } from '@/components/ui/button'
@@ -45,8 +44,6 @@ export function ConfirmDeleteDialog({ children, deleteFunc, title, description, 
 
 const DeleteUserData = () => {
       const [_deleting, setDeleting] = useState(false)
-
-      const navigate = useNavigate()
 
       const { setUserProfile, setFiles, setSession, setMetamaskAddress, setAvatar, backend_url, session } = useStore(appStore)
 
