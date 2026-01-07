@@ -154,7 +154,10 @@ const appStore = createStore<TAppStore>()(
                         CUSTOM_LOGO_URL: false,
                         SENTRY_DSN: undefined,
                         BACKEND_URL: undefined,
-                        AUTH_PROVIDER: undefined
+                        AUTH_PROVIDER: undefined,
+                        DEFAULT_PAYMENT_METHOD: "CRYPTO",
+                        ENABLE_CRYPTO_PAYMENTS: true,
+                        ENABLE_STRIPE_PAYMENTS: false,
                   },
                   openDialog: null, // Initialize openDialog state
                   // openFilesDetailsPopUp: false,

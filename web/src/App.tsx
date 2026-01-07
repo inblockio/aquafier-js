@@ -35,6 +35,9 @@ import ContactsLoader from './pages/contacts/ContactsLoader'
 import { NotificationWebSocketProvider } from './contexts/NotificationWebSocketContext'
 import UserStats from './pages/user_settings/UserStats'
 import EnsResolverPage from './pages/ens_resolver.page'
+import PricingPage from './pages/pricing/PricingPage'
+import SubscriptionPage from './pages/subscription/SubscriptionPage'
+import PaymentHistoryPage from './pages/billing/PaymentHistoryPage'
 
 
 function startApm(config: APMConfig) {
@@ -155,6 +158,11 @@ function App() {
                             <Route path="ens_resolver" element={<EnsResolverPage />} />
                             <Route path="info" element={<InfoPage />} />
                             <Route path="settings" element={<SettingsPage />} />
+
+                            {/* Billing Routes */}
+                            <Route path="pricing" element={<PricingPage />} />
+                            <Route path="subscription" element={<SubscriptionPage />} />
+                            <Route path="billing/history" element={<PaymentHistoryPage />} />
 
                             <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
                             <Route path="loading" element={<Loading />} />

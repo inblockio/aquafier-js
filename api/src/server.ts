@@ -34,6 +34,8 @@ import DNSClaimVerificationController from './controllers/dns_claim_verification
 import metricsController from './controllers/metrics';
 import workflowsController from './controllers/workflow';
 import enhancedWebSocketController from './controllers/websocketController2';
+import subscriptionsController from './controllers/subscriptions';
+import paymentsController from './controllers/payments';
 import { prisma } from './database/db';
 import logger from './utils/logger';
 
@@ -163,6 +165,8 @@ function buildServer() {
     fastify.register(DNSClaimVerificationController);
     fastify.register(metricsController);
     fastify.register(workflowsController);
+    fastify.register(subscriptionsController);
+    fastify.register(paymentsController);
 
     // Hook to add wallet address to labels when user is authenticated
     fastify.addHook("onRequest", async function (request, reply) {

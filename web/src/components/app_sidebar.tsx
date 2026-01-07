@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, useSidebar } from '@/components/ui/sidebar'
 import CustomNavLink from './ui/CustomNavLink'
-import { Contact, FileText, LayoutDashboard, LayoutTemplate, Link, Link2, Settings, Share2, Star, User, Workflow } from 'lucide-react'
+import { Contact, FileText, LayoutDashboard, LayoutTemplate, Link, Link2, Settings, Share2, Star, User, Workflow, CreditCard, Receipt, DollarSign } from 'lucide-react'
 import { maxUserFileSizeForUpload } from '@/utils/constants'
 import { formatBytes } from '@/utils/functions'
 import { useStore } from 'zustand'
@@ -81,6 +81,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const quickAccessItems = [
             { label: 'Info', icon: Star, id: '/info' },
             { label: 'Settings', icon: Settings, id: '/settings' },
+      ]
+
+      const billingItems = [
+            { label: 'Subscription', icon: CreditCard, id: '/subscription' },
+            { label: 'Payment History', icon: Receipt, id: '/billing/history' },
+            { label: 'Pricing', icon: DollarSign, id: '/pricing' },
       ]
 
       const applicationsItems = [
@@ -202,6 +208,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                                       }
                                                 }}
                                           />
+                                    </div>
+                              </div>
+
+                              {/* Billing & Subscription */}
+                              <div className="mt-8">
+                                    <div className="flex items-center justify-between mb-3">
+                                          <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Billing</h3>
+                                    </div>
+                                    <div className="space-y-2">
+                                          {billingItems.map((item, index) => (
+                                                <CustomNavLink
+                                                      key={`billing_${index}`}
+                                                      item={{ ...item, id: `/app${item.id}` }}
+                                                      index={index}
+                                                      callBack={() => {
+                                                            const isMobileView = window.innerWidth < 768 // md breakpoint is 768px
+                                                            if (isMobileView) {
+                                                                  toggleSidebar()
+                                                            }
+                                                      }}
+                                                />
+                                          ))}
                                     </div>
                               </div>
 
