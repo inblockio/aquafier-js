@@ -120,7 +120,7 @@ export default function PaymentHistoryPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                        ${payment.amount.toFixed(2)} {payment.currency}
+                        ${Number(payment.amount).toFixed(2)} {payment.currency}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getStatusBadge(payment.status)}
@@ -173,7 +173,7 @@ export default function PaymentHistoryPage() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-bold text-gray-900 dark:text-white">
-                      ${payment.amount.toFixed(2)} {payment.currency}
+                      ${Number(payment.amount).toFixed(2)} {payment.currency}
                     </span>
                     {payment.receipt_url && (
                       <a
@@ -228,7 +228,7 @@ export default function PaymentHistoryPage() {
               $
               {payments
                 .filter(p => p.status === 'SUCCEEDED')
-                .reduce((sum, p) => sum + p.amount, 0)
+                .reduce((sum, p) => sum + Number(p.amount), 0)
                 .toFixed(2)}
             </p>
           </div>

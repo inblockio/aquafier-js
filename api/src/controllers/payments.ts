@@ -356,7 +356,7 @@ export default async function paymentsController(fastify: FastifyInstance) {
             currency: 'USD',
             payment_method: 'CRYPTO',
             status: 'PENDING',
-            nowpayments_payment_id: payment.payment_id,
+            nowpayments_payment_id: payment.id, // Use invoice ID from NOWPayments
             nowpayments_order_id: subscription.id,
             crypto_payment_address: payment.pay_address,
             crypto_amount: payment.pay_amount,
@@ -420,25 +420,39 @@ export default async function paymentsController(fastify: FastifyInstance) {
 
       Logger.info('NOWPayments IPN received', { payment_id: ipnData.payment_id, status: ipnData.payment_status });
 
-      // Store webhook event
-      await prisma.webhookEvent.create({
-        data: {
-          source: 'NOWPAYMENTS',
-          event_type: 'payment.status.update',
-          event_id: String(ipnData.payment_id),
-          payload: ipnData,
-          processed: false,
-        },
+      const uniqueEventId = `${ipnData.payment_id}_${ipnData.payment_status}_${ipnData.updated_at || Date.now()}`;
+
+      // Check for duplicate event (Idempotency)
+      const existingEvent = await prisma.webhookEvent.findUnique({
+        where: { event_id: uniqueEventId },
       });
 
-      // Find payment record
+      if (existingEvent && existingEvent.processed) {
+        Logger.info('IPN already processed', { event_id: uniqueEventId });
+        return reply.send({ success: true });
+      }
+
+      // Store webhook event if it doesn't exist
+      if (!existingEvent) {
+        await prisma.webhookEvent.create({
+          data: {
+            source: 'NOWPAYMENTS',
+            event_type: 'payment.status.update',
+            event_id: uniqueEventId,
+            payload: ipnData,
+            processed: false,
+          },
+        });
+      }
+
+      // Find payment record using order_id (payment_id may not be set initially)
       const payment = await prisma.payment.findFirst({
-        where: { nowpayments_payment_id: ipnData.payment_id },
+        where: { nowpayments_order_id: ipnData.order_id },
         include: { Subscription: true },
       });
 
       if (!payment) {
-        Logger.warn('Payment not found for IPN', { payment_id: ipnData.payment_id });
+        Logger.warn('Payment not found for IPN', { order_id: ipnData.order_id, payment_id: ipnData.payment_id });
         return reply.send({ success: true });
       }
 
@@ -503,9 +517,9 @@ export default async function paymentsController(fastify: FastifyInstance) {
       }
 
       // Mark webhook as processed
-      await prisma.webhookEvent.updateMany({
-        where: { event_id: ipnData.payment_id },
-        data: { processed: true },
+      await prisma.webhookEvent.update({
+        where: { event_id: uniqueEventId },
+        data: { processed: true, processed_at: new Date() },
       });
 
       return reply.send({ success: true });
