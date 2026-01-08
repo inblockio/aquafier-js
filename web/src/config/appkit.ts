@@ -38,9 +38,10 @@ export const appKit = createAppKit({
   features: {
     analytics: false,
     email: true,
-    socials: ['google', 'facebook'],
+    socials: ['google', 'facebook', 'x', 'discord', 'farcaster'],
     swaps: false,
-    onramp: false
+    onramp: false,
+    emailShowWallets: true
   },
   themeMode: 'light',
   themeVariables: {

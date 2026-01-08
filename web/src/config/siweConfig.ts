@@ -86,8 +86,8 @@ export const siweConfig = createSIWEConfig({
     return null
   },
 
-  enabled:true,
-  required: true,
+  enabled: true,
+  required: false,
   
 
   signOutOnDisconnect: false,        // ADD

@@ -14,19 +14,22 @@ export default defineConfig({
       configureServer: (server) => {
         server.middlewares.use((_req, res, next) => {
           res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups')
-          res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none')
+          res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp')
           next()
         })
       },
       configurePreviewServer: (server) => {
         server.middlewares.use((_req, res, next) => {
           res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups')
-          res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none')
+          res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp')
           next()
         })
       }
     }
   ],
+  server: {
+ allowedHosts: ['localhost', '8297ed98a409.ngrok-free.app'],
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
