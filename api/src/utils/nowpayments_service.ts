@@ -1,4 +1,5 @@
 import axios from 'axios';
+import crypto from 'crypto';
 import Logger from './logger';
 
 const NOWPAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
@@ -113,7 +114,6 @@ export class NOWPaymentsService {
    * Verify IPN callback signature
    */
   static verifyIPNSignature(receivedSignature: string, payload: string): boolean {
-    const crypto = require('crypto');
     const ipnSecret = process.env.NOWPAYMENTS_IPN_SECRET || '';
 
     const hmac = crypto.createHmac('sha512', ipnSecret);

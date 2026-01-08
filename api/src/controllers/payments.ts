@@ -5,7 +5,7 @@ import Logger from '../utils/logger';
 import { StripeService } from '../utils/stripe_service';
 import { NOWPaymentsService } from '../utils/nowpayments_service';
 import Stripe from 'stripe';
-import { cliRedify } from 'aqua-js-sdk';
+import { cliGreenify, cliRedify } from 'aqua-js-sdk';
 
 export default async function paymentsController(fastify: FastifyInstance) {
 
@@ -334,15 +334,15 @@ export default async function paymentsController(fastify: FastifyInstance) {
 
         // Create NOWPayments payment
         const payment = await NOWPaymentsService.createPayment({
-          price_amount: priceAmount,
-          // price_amount: 2, // TEMPORARY FIX FOR TESTING PURPOSES
+          // price_amount: priceAmount,
+          price_amount: 1, // TEMPORARY FIX FOR TESTING PURPOSES
           price_currency: 'usd',
           // pay_currency: pay_currency || 'btc',
           pay_currency: 'usdc',
           order_id: subscription.id,
           order_description: `${plan.display_name} - ${billing_period} subscription`,
-          ipn_callback_url: `${process.env.BACKEND_URL}/payments/crypto/webhook`,
-          // ipn_callback_url: `https://3d9739c57402.ngrok-free.app/payments/crypto/webhook`,
+          // ipn_callback_url: `${process.env.BACKEND_URL}/payments/crypto/webhook`,
+          ipn_callback_url: `https://1b67cbd1a47e.ngrok-free.app/payments/crypto/webhook`,
           // ipn_callback_url: "https://webhook.site/050d6a84-c4da-463d-9fb4-35cc87be0180",
           success_url: success_url,
           cancel_url: cancel_url,
@@ -402,6 +402,11 @@ export default async function paymentsController(fastify: FastifyInstance) {
    */
   fastify.post('/payments/crypto/webhook', async (request, reply: FastifyReply) => {
     try {
+      console.log("==================")
+      console.log("NOWPayments IPN Received:")
+      console.log(cliGreenify(JSON.stringify(request.headers, null, 4)))
+      console.log(cliRedify(JSON.stringify(request.body, null, 4)))
+      console.log("==================")
       const signature = request.headers['x-nowpayments-sig'] as string;
       const payload = JSON.stringify(request.body);
 
@@ -420,7 +425,7 @@ export default async function paymentsController(fastify: FastifyInstance) {
         data: {
           source: 'NOWPAYMENTS',
           event_type: 'payment.status.update',
-          event_id: ipnData.payment_id,
+          event_id: String(ipnData.payment_id),
           payload: ipnData,
           processed: false,
         },
@@ -452,13 +457,28 @@ export default async function paymentsController(fastify: FastifyInstance) {
 
       const newStatus = statusMap[ipnData.payment_status] || 'PENDING';
 
+      // Extract fee information and actual received amount
+      const actuallyPaid = ipnData.actually_paid || 0;
+      const outcomeAmount = ipnData.outcome_amount || 0;
+      const feeInfo = ipnData.fee || {};
+
       await prisma.payment.update({
         where: { id: payment.id },
         data: {
           status: newStatus,
           paid_at: newStatus === 'SUCCEEDED' ? new Date() : null,
           failed_at: newStatus === 'FAILED' ? new Date() : null,
+          crypto_amount: actuallyPaid, // Amount customer paid
+          // Store additional fee and outcome information in metadata if needed
         },
+      });
+
+      Logger.info('Payment updated', {
+        payment_id: ipnData.payment_id,
+        status: newStatus,
+        actually_paid: actuallyPaid,
+        outcome_amount: outcomeAmount,
+        fees: feeInfo,
       });
 
       // Update subscription status if payment succeeded
