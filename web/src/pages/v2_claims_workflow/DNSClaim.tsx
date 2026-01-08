@@ -194,167 +194,104 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
             }
       }, [domain, walletAddress])
 
-      return (
-            <div className="grid lg:grid-cols-12 gap-4 relative" id={`${genesisRevisionHash}`}>
-                  {
-                                    urlHash?.replace("#", "") === genesisRevisionHash ? (
-                                          <div className='absolute top-0 right-0 z-10 bg-green-500 w-fit px-2 py-1 text-white rounded-md'>
-                                                Selected
+            return (
+                  <div className="p-0"> {/* Removed redundant card styling; adjust padding as needed */}
+                        <div className={`rounded-lg shadow-sm border p-6 ${getCardBackgroundColor()}`}>
+                              <div className="flex items-start justify-between mb-4">
+                                    <div className="flex items-start gap-3">
+                                          <div className="bg-purple-50 p-2 rounded-lg">
+                                                <TbWorldWww className="text-purple-500 w-6 h-6" />
                                           </div>
-                                    ) : null
-                              }
-                  <div className='col-span-7 bg-gray-50 p-2'>
-                        <div className="flex flex-col gap-2">
-                              <div className={`rounded-lg shadow-sm border p-6 ${getCardBackgroundColor()}`}>
-                                    <div className="flex items-start justify-between mb-4">
-                                          <div className="flex items-start gap-3">
-                                                <div className="bg-purple-50 p-2 rounded-lg">
-                                                      <TbWorldWww className="text-purple-500 w-6 h-6" />
-                                                </div>
-                                                <div>
-                                                      <h2 className="text-xl font-bold">{claimName}</h2>
-                                                      <p className="text-gray-600 text-sm">{description}</p>
-                                                </div>
-                                          </div>
-
-                                          {/* DNS Verification Status Indicator */}
-                                          <div className="flex items-center">
-                                                {verificationStatus === 'loading' && (
-                                                      <div className="flex items-center text-blue-500">
-                                                            <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full mr-2"></div>
-                                                            <span className="text-xs">Verifying...</span>
-                                                      </div>
-                                                )}
-                                                {verificationStatus === 'verified' && (
-                                                      <div className="flex items-center text-green-500">
-                                                            <FaCheck className="mr-1" />
-                                                            <span className="text-xs">Verified</span>
-                                                      </div>
-                                                )}
-                                                {verificationStatus === 'not_found' && (
-                                                      <div className="flex items-center text-amber-500">
-                                                            <FaTimes className="mr-1" />
-                                                            <span className="text-xs">Records Not Found</span>
-                                                      </div>
-                                                )}
-                                                {verificationStatus === 'failed' && (
-                                                      <div className="flex items-center text-red-500">
-                                                            <FaTimes className="mr-1" />
-                                                            <span className="text-xs">Verification Failed</span>
-                                                      </div>
-                                                )}
+                                          <div>
+                                                <h2 className="text-xl font-bold">{claimName}</h2>
+                                                <p className="text-gray-600 text-sm">{description}</p>
                                           </div>
                                     </div>
-
-                                    <div className="border-t border-gray-100 pt-4 mb-4">
-                                          <div className="flex justify-between items-start">
-                                                <div>
-                                                      <p className="text-sm text-gray-700">Domain verification</p>
-                                                      <p className="text-xs text-gray-500">{date}</p>
+      
+                                    {/* DNS Verification Status Indicator */}
+                                    <div className="flex items-center">
+                                          {verificationStatus === 'loading' && (
+                                                <div className="flex items-center text-blue-500">
+                                                      <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full mr-2"></div>
+                                                      <span className="text-xs">Verifying...</span>
                                                 </div>
-
-                                                {domain && (
-                                                      <div className="text-right">
-                                                            <p className="text-sm font-medium">{domain}</p>
-                                                            <p className="text-xs text-gray-500">{verificationMessage}</p>
-                                                      </div>
-                                                )}
-                                          </div>
+                                          )}
+                                          {verificationStatus === 'verified' && (
+                                                <div className="flex items-center text-green-500">
+                                                      <FaCheck className="mr-1" />
+                                                      <span className="text-xs">Verified</span>
+                                                </div>
+                                          )}
+                                          {verificationStatus === 'not_found' && (
+                                                <div className="flex items-center text-amber-500">
+                                                      <FaTimes className="mr-1" />
+                                                      <span className="text-xs">Records Not Found</span>
+                                                </div>
+                                          )}
+                                          {verificationStatus === 'failed' && (
+                                                <div className="flex items-center text-red-500">
+                                                      <FaTimes className="mr-1" />
+                                                      <span className="text-xs">Verification Failed</span>
+                                                </div>
+                                          )}
                                     </div>
-                                    <div className="flex flex-col gap-3">{fields}</div>
-
-                                    {/* Verification alert */}
-                                    {/* {verificationStatus !== 'loading' && (
+                              </div>
+      
+                              <div className="border-t border-gray-100 pt-4 mb-4">
+                                    <div className="flex justify-between items-start">
+                                          <div>
+                                                <p className="text-sm text-gray-700">Domain verification</p>
+                                                <p className="text-xs text-gray-500">{date}</p>
+                                          </div>
+      
+                                          {domain && (
+                                                <div className="text-right">
+                                                      <p className="text-sm font-medium">{domain}</p>
+                                                      <p className="text-xs text-gray-500">{verificationMessage}</p>
+                                                </div>
+                                          )}
+                                    </div>
+                              </div>
+                              <div className="flex flex-col gap-3">{fields}</div>
+      
+                              {verificationResult && (
+                                    <div className="mt-4">
                                           <div
-                                                className={`mt-4 p-3 rounded-md ${verificationStatus === 'verified' ? 'bg-green-50 border border-green-200' : verificationStatus === 'not_found' ? 'bg-amber-50 border border-amber-200' : 'bg-red-50 border border-red-200'}`}
+                                                className={`p-3 rounded-md ${verificationResult.success
+                                                      ? 'bg-green-100 border border-green-200'
+                                                      : 'bg-red-100 border border-red-200'
+                                                      }`}
                                           >
-                                                <div className="flex items-center">
-                                                      {verificationStatus === 'verified' && <FaCheck className="text-green-500 mr-2" />}
-                                                      {verificationStatus === 'not_found' && <FaTimes className="text-amber-500 mr-2" />}
-                                                      {verificationStatus === 'failed' && <FaTimes className="text-red-500 mr-2" />}
-                                                      <p
-                                                            className={`text-sm font-medium ${verificationStatus === 'verified' ? 'text-green-800' : verificationStatus === 'not_found' ? 'text-amber-800' : 'text-red-800'}`}
-                                                      >
-                                                            {verificationStatus === 'verified' ? 'Domain Ownership Verified' : verificationStatus === 'not_found' ? 'DNS Records Not Found' : 'Verification Failed'}
-                                                      </p>
+                                                <div className="flex items-center justify-between">
+                                                      <div className="flex items-center">
+                                                            {verificationResult.success ? (
+                                                                  <FaCheck className="text-green-500 mr-2" />
+                                                            ) : (
+                                                                  <FaTimes className="text-red-500 mr-2" />
+                                                            )}
+                                                            <p
+                                                                  className={`text-sm font-medium ${verificationResult.success ? 'text-green-800' : 'text-red-800'
+                                                                        }`}
+                                                            >
+                                                                  {verificationResult.success ? 'Domain Ownership Verified' : 'Verification Failed'}
+                                                            </p>
+                                                      </div>
                                                 </div>
-                                                <p className={`mt-1 text-xs ${verificationStatus === 'verified' ? 'text-green-700' : verificationStatus === 'not_found' ? 'text-amber-700' : 'text-red-700'}`}>
+      
+                                                <p className={`mt-1 text-xs ${verificationResult.success ? 'text-green-700' : 'text-red-700'}`}>
                                                       {verificationMessage}
                                                 </p>
-
-                                                {dnsRecords.length > 0 && verificationStatus !== 'verified' && (
-                                                      <div className="mt-2">
-                                                            <p className="text-xs font-medium mb-1">Found DNS TXT Records:</p>
-                                                            <div className="text-xs bg-white/50 p-2 rounded max-h-24 overflow-y-auto">
-                                                                  {dnsRecords.map((record, index) => (
-                                                                        <div key={index} className="font-mono mb-1 break-all">
-                                                                              {record}
-                                                                        </div>
-                                                                  ))}
-                                                            </div>
-                                                      </div>
+      
+                                                {verificationResult.totalRecords > 0 && (
+                                                      <p className="text-xs text-gray-600 mt-1">
+                                                            Records: {verificationResult.verifiedRecords}/{verificationResult.totalRecords} verified
+                                                      </p>
                                                 )}
                                           </div>
-                                    )} */}
-                                    {verificationResult && (
-                                          <div className="mt-4">
-                                                <div
-                                                      className={`p-3 rounded-md ${verificationResult.success
-                                                            ? 'bg-green-100 border border-green-200'
-                                                            : 'bg-red-100 border border-red-200'
-                                                            }`}
-                                                >
-                                                      <div className="flex items-center justify-between">
-                                                            <div className="flex items-center">
-                                                                  {verificationResult.success ? (
-                                                                        <FaCheck className="text-green-500 mr-2" />
-                                                                  ) : (
-                                                                        <FaTimes className="text-red-500 mr-2" />
-                                                                  )}
-                                                                  <p
-                                                                        className={`text-sm font-medium ${verificationResult.success ? 'text-green-800' : 'text-red-800'
-                                                                              }`}
-                                                                  >
-                                                                        {verificationResult.success ? 'Domain Ownership Verified' : 'Verification Failed'}
-                                                                  </p>
-                                                            </div>
-                                                      </div>
-
-                                                      <p className={`mt-1 text-xs ${verificationResult.success ? 'text-green-700' : 'text-red-700'}`}>
-                                                            {verificationMessage}
-                                                      </p>
-
-                                                      {verificationResult.totalRecords > 0 && (
-                                                            <p className="text-xs text-gray-600 mt-1">
-                                                                  Records: {verificationResult.verifiedRecords}/{verificationResult.totalRecords} verified
-                                                            </p>
-                                                      )}
-                                                </div>
-                                          </div>
-                                    )}
-                              </div>
-                              {claimInfo?.forms_wallet_address?.trim().toLowerCase() === sessionAddress?.trim().toLowerCase() && (
-                                    <ShareButton item={apiFileInfo} nonce={nonce} />
+                                    </div>
                               )}
                         </div>
                   </div>
-                  <div className='col-span-5 p-2'>
-                        <div className="flex flex-col gap-2">
-                              <h3 className="text-lg font-bold text-center">Claim Verification</h3>
-                              <div className="flex flex-col h-[600px] overflow-y-auto px-2">
-                                    {verificationResult && (
-                                          <ImprovedDNSLogs
-                                                verificationResult={verificationResult}
-                                                verificationMessage={verificationMessage}
-                                                showLogs={true}
-                                                onToggleLogs={() => { }}
-                                          />
-                                    )}
-                              </div>
-                        </div>
-                  </div>
-            </div>
-      )
-}
+            )}
 
 export default DNSClaim

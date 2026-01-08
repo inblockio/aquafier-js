@@ -101,7 +101,7 @@ const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
 
 
       return (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="p-0"> {/* Removed redundant card styling; adjust padding as needed */}
                   <div className="flex items-start gap-3 mb-4">
                         <div className="bg-blue-50 p-2 rounded-lg">
                               {Icon}
@@ -112,27 +112,7 @@ const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
                         </div>
                   </div>
 
-                  {/* <div className="border-t border-gray-100 pt-4 mb-4">
-                        <p className="text-sm text-gray-700">Claim verified to "{verifiedTo}"</p>
-                        <p className="text-xs text-gray-500">{date}</p>
-                  </div> */}
                   <div className="flex flex-col gap-3">{fields}</div>
-
-                  {/* <div className="space-y-2">
-                {claimant && (
-                    <div className="flex justify-between items-start">
-                        <span className="text-sm text-gray-600">Claimant</span>
-                        <span className="text-sm font-medium">{claimant}</span>
-                    </div>
-                )}
-
-                {wallet && (
-                    <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Wallet</span>
-                        <span className="text-sm font-mono">{formatCryptoAddress(wallet, 6, 4)}</span>
-                    </div>
-                )}
-            </div> */}
             </div>
       )
 }

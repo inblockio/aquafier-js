@@ -31,7 +31,7 @@ const UserSignatureClaim = ({ claim }: { claim: ICompleteClaimInformation }) => 
     }, [])
 
     return (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="p-0"> {/* Removed redundant card styling; adjust padding as needed */}
             <div className="flex items-start gap-3 mb-4">
                 <div className="bg-blue-50 p-2 rounded-lg">
                     <Signature className="text-blue-500 w-6 h-6" />

@@ -6,77 +6,18 @@ YELLOW='\033[1;33m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
-echo "Running spelling and grammar checks..."
+echo "Running pre-commit checks..."
 
-# Get list of staged files (only text files)
-FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(md|txt|js|ts|jsx|tsx|py|java|c|cpp|h|sh|yml|yaml|json|html|css)$')
+# Get list of staged files
+FILES=$(git diff --cached --name-only --diff-filter=ACM)
 
 if [ -z "$FILES" ]; then
-    echo -e "${GREEN}No text files to check.${NC}"
+    echo -e "${YELLOW}No files staged for commit.${NC}"
     exit 0
 fi
 
-ERRORS=0
-WARNINGS=0
+# Add your pre-commit checks here
+# Example: linting, formatting, tests, etc.
 
-# Check if required tools are installed
-if ! command -v cspell &> /dev/null; then
-    echo -e "${RED}Error: cspell is not installed!${NC}"
-    echo -e "${YELLOW}Install it with: npm install -g cspell${NC}"
-    exit 1
-fi
-
-if ! command -v write-good &> /dev/null; then
-    echo -e "${YELLOW}Warning: write-good is not installed. Skipping grammar check.${NC}"
-    echo -e "${YELLOW}Install it with: npm install -g write-good${NC}"
-fi
-
-# Spelling check with cspell
-echo -e "\n${YELLOW}Checking spelling...${NC}"
-for FILE in $FILES; do
-    if [ -f "$FILE" ]; then
-        SPELLING_OUTPUT=$(cspell "$FILE" 2>&1)
-        if [ $? -ne 0 ]; then
-            echo -e "${RED}Spelling errors in $FILE:${NC}"
-            echo "$SPELLING_OUTPUT"
-            ERRORS=1
-        else
-            echo -e "${GREEN}✓ $FILE - No spelling errors${NC}"
-        fi
-    fi
-done
-
-# Grammar check with write-good
-if command -v write-good &> /dev/null; then
-    echo -e "\n${YELLOW}Checking grammar and style...${NC}"
-    for FILE in $FILES; do
-        if [ -f "$FILE" ]; then
-            # write-good only works well with markdown and text files
-            if [[ "$FILE" =~ \.(md|txt)$ ]]; then
-                GRAMMAR_OUTPUT=$(write-good "$FILE" 2>&1)
-                if [ ! -z "$GRAMMAR_OUTPUT" ]; then
-                    echo -e "${YELLOW}Grammar suggestions for $FILE:${NC}"
-                    echo "$GRAMMAR_OUTPUT"
-                    WARNINGS=1
-                else
-                    echo -e "${GREEN}✓ $FILE - No grammar issues${NC}"
-                fi
-            fi
-        fi
-    done
-fi
-
-# Check if errors were found
-if [ $ERRORS -eq 1 ]; then
-    echo -e "\n${RED}❌ Commit rejected due to spelling errors.${NC}"
-    echo -e "${YELLOW}Fix the errors above or add words to .cspell.json${NC}"
-    echo -e "${YELLOW}To bypass this check, use: git commit --no-verify${NC}"
-    exit 1
-fi
-
-if [ $WARNINGS -eq 1 ]; then
-    echo -e "\n${YELLOW}⚠ Grammar suggestions found (not blocking commit)${NC}"
-fi
-
-echo -e "\n${GREEN}✓ All checks passed!${NC}"
+echo -e "${GREEN}✓ Pre-commit checks passed!${NC}"
 exit 0

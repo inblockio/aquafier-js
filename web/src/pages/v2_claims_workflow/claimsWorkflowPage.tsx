@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
 import appStore from '../../store'
 import { useStore } from 'zustand'
@@ -15,7 +15,7 @@ import SimpleClaim from './SimpleClaim'
 import DNSClaim from './DNSClaim'
 import { toast } from 'sonner'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, Activity, Shield, FileText, Share2, CheckCircle2, LayoutDashboard } from 'lucide-react'
 import WalletAddressProfile from './WalletAddressProfile'
 import UserSignatureClaim from './UserSignatureClaim'
 import { AddressView } from './AddressView'
@@ -25,6 +25,11 @@ import { API_ENDPOINTS, IDENTITY_CLAIMS } from '@/utils/constants'
 import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Separator } from '@/components/ui/separator'
+import { Progress } from '@/components/ui/progress'
 
 
 export default function ClaimsWorkflowPage() {
@@ -32,7 +37,7 @@ export default function ClaimsWorkflowPage() {
 
       const [claims, setClaims] = useState<Array<{ file: ApiFileInfo, processedInfo: ClaimInformation, attestations: Array<IAttestationEntry>, sharedContracts: Contract[] }>>([])
       const [isLoading, setIsLoading] = useState(true)
-      const [isProcessingClaims, setIsProcessingClaims] = useState(true)
+      const [, setIsProcessingClaims] = useState(true)
 
       const [currentPage, _setCurrentPage] = useState(1)
       const [_pagination, setPagination] = useState<GlobalPagination | null>(null)
@@ -40,6 +45,23 @@ export default function ClaimsWorkflowPage() {
 
       const { walletAddress } = useParams()
       const urlHash = useLocation().hash
+
+      // Statistics for Dashboard
+      const stats = useMemo(() => {
+            const totalClaims = claims.length
+            const verifiedClaims = claims.filter(c => c.attestations.length > 0).length
+            const totalAttestations = claims.reduce((acc, curr) => acc + curr.attestations.length, 0)
+            const sharedContractsCount = claims.reduce((acc, curr) => acc + (curr.sharedContracts?.length || 0), 0)
+            const verificationScore = totalClaims > 0 ? Math.round((verifiedClaims / totalClaims) * 100) : 0
+            
+            return {
+                  totalClaims,
+                  verifiedClaims,
+                  totalAttestations,
+                  sharedContractsCount,
+                  verificationScore
+            }
+      }, [claims])
 
       const loadSharedContractsData = async (_latestRevisionHash: string) => {
             try {
@@ -163,56 +185,107 @@ export default function ClaimsWorkflowPage() {
 
       const renderClaim = (claim: ICompleteClaimInformation) => {
             const claimInfo = claim.processedInfo.claimInformation
-            const genesisRevisionHash = getGenesisHash(claim.file.aquaTree!)
+            const genesisRevisionHash = getGenesisHash(claim.file.aquaTree!) || ''
 
+            let ClaimComponent;
             if (claimInfo.forms_type === 'dns_claim') {
-                  return (
-                        <DNSClaim claimInfo={claimInfo} apiFileInfo={claim.file} nonce={session!.nonce} sessionAddress={session!.address} />
-                  )
+                  ClaimComponent = <DNSClaim claimInfo={claimInfo} apiFileInfo={claim.file} nonce={session!.nonce} sessionAddress={session!.address} />
+            } else if (claimInfo.forms_type === 'user_signature') {
+                  ClaimComponent = <UserSignatureClaim claim={claim} />
+            } else {
+                  ClaimComponent = <SimpleClaim claimInfo={claimInfo} />
             }
-            // else if (claimInfo.forms_type === 'phone_number_claim') {
-            //       return (
-            //             <PhoneNumberClaim claim={claim} />
-            //       )
-            // }
-            // else if (claimInfo.forms_type === 'email_claim') {
-            //       return (
-            //             <EmailClaim claim={claim} />
-            //       )
-            // }
-            else if (claimInfo.forms_type === 'user_signature') {
-                  return (
-                        <div className="grid lg:grid-cols-12 gap-4 relative" id={`${genesisRevisionHash}`}>
-                              <div className='col-span-7 bg-gray-50 p-2'>
-                                    <div className="flex flex-col gap-2">
-                                          <UserSignatureClaim claim={claim} />
-                                          {claim.processedInfo?.walletAddress?.trim().toLowerCase() === session?.address?.trim().toLowerCase() && (
-                                                <ShareButton item={claim.file} nonce={session!.nonce} />
-                                          )}
+
+            const isSelected = urlHash?.replace("#", "") === genesisRevisionHash;
+
+            return (
+                  <Card key={`${genesisRevisionHash}`} id={`${genesisRevisionHash}`} className={`mb-4 transition-all duration-200 border-l-4 ${isSelected ? 'border-l-blue-500 shadow-md' : 'border-l-transparent hover:border-l-gray-300'}`}>
+                        <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+                              <div className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-2">
+                                          <Badge variant="outline" className="capitalize bg-slate-50">
+                                                {claimInfo.forms_type.replace('_', ' ')}
+                                          </Badge>
+                                          <span className="text-xs text-muted-foreground">{timeToHumanFriendly(claim.file.aquaTree?.revisions[genesisRevisionHash]?.local_timestamp || '', true)}</span>
                                     </div>
+                                    <CardTitle className="text-lg font-medium">
+                                          {claimInfo.forms_name || claimInfo.forms_domain || "Untitled Claim"}
+                                    </CardTitle>
                               </div>
-                              <div className='col-span-5 p-2'>
-                                    <div className="flex flex-col gap-2 h-full">
+                              <div className="flex items-center gap-2">
+                                    {claim.attestations.length > 0 ? (
+                                          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200 gap-1">
+                                                <CheckCircle2 size={12} /> Verified
+                                          </Badge>
+                                    ) : (
+                                          <Badge variant="secondary" className="gap-1 text-gray-500">
+                                                Unverified
+                                          </Badge>
+                                    )}
+                                    {claim.processedInfo?.walletAddress?.trim().toLowerCase() === session?.address?.trim().toLowerCase() && (
+                                           <div className="scale-75 origin-right">
+                                                <ShareButton item={claim.file} nonce={session!.nonce} />
+                                           </div>
+                                    )}
+                              </div>
+                        </CardHeader>
+                        <CardContent className="grid md:grid-cols-12 gap-6">
+                              <div className="md:col-span-7 space-y-4">
+                                    <div className="bg-white rounded-lg p-6 border border-slate-200">
+                                        {ClaimComponent}
+                                    </div>
+                                    
+                                    <Collapsible>
+                                          <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+                                                <Share2 size={14} />
+                                                <span>Shared with {claim.sharedContracts?.length || 0} entities</span>
+                                                <ChevronDown size={14} />
+                                          </CollapsibleTrigger>
+                                          <CollapsibleContent className="pt-4 space-y-2">
+                                                {claim.sharedContracts?.map((contract, index) => (
+                                                      <SharedContract
+                                                            type='outgoing'
+                                                            key={`${contract.hash}`}
+                                                            contract={contract}
+                                                            index={index}
+                                                            contractDeleted={hash => {
+                                                                  let newState = claim.sharedContracts?.filter(e => e.hash != hash)
+                                                                  claim.sharedContracts = newState
+                                                                  // Force re-render if needed or update local state
+                                                                  setClaims(prev => prev.map(c => c === claim ? {...c, sharedContracts: newState} : c))
+                                                            }}
+                                                      />
+                                                ))}
+                                                {claim.sharedContracts?.length === 0 && (
+                                                      <p className="text-xs text-muted-foreground italic pl-6">Not shared with anyone yet.</p>
+                                                )}
+                                          </CollapsibleContent>
+                                    </Collapsible>
+                              </div>
+
+                              <div className="md:col-span-5 border-l pl-0 md:pl-6 border-dashed">
+                                    <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                                          <Shield size={14} className="text-blue-500" /> 
+                                          Attestations
+                                    </h4>
+                                    
+                                    <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
                                           {claim.attestations.length > 0 ? (
-                                                <div className="flex flex-col gap-2">
-                                                      <h3 className="text-lg font-bold text-center">Claim Attestations</h3>
-                                                      <div className="flex flex-col gap-0 max-h-[300px] overflow-y-auto">
-                                                            {claim.attestations.map((attestation, index) => (
-                                                                  <AttestationEntry
-                                                                        key={`attestation-${index}_${genesisRevisionHash}`}
-                                                                        walletAddress={attestation.walletAddress}
-                                                                        context={attestation.context}
-                                                                        createdAt={timeToHumanFriendly(attestation.createdAt, true) ?? ''}
-                                                                        nonce={session!.nonce}
-                                                                        file={attestation.file}
-                                                                  />
-                                                            ))}
+                                                claim.attestations.map((attestation, index) => (
+                                                      <div key={`att-${index}`} className="text-sm bg-slate-50 p-3 rounded-md border border-slate-100">
+                                                           <AttestationEntry
+                                                                  key={`attestation-${index}_${genesisRevisionHash}`}
+                                                                  walletAddress={attestation.walletAddress}
+                                                                  context={attestation.context}
+                                                                  createdAt={timeToHumanFriendly(attestation.createdAt, true) ?? ''}
+                                                                  nonce={session!.nonce}
+                                                                  file={attestation.file}
+                                                            />
                                                       </div>
-                                                </div>
+                                                ))
                                           ) : (
-                                                <div className="text-center py-8 flex flex-col gap-2 items-center justify-center h-full bg-gray-50">
-                                                      <h3 className="text-lg font-bold text-center">Claim Attestations</h3>
-                                                      <p className="text-gray-600">No attestations found for this claim.</p>
+                                                <div className="flex flex-col items-center justify-center py-8 text-center bg-slate-50 rounded-lg border border-dashed">
+                                                      <p className="text-xs text-muted-foreground mb-3">No attestations yet.</p>
                                                       {claim.processedInfo?.walletAddress?.trim().toLowerCase() !== session?.address?.trim().toLowerCase() && (
                                                             <AttestAquaClaim file={claim.file!!} index={1} />
                                                       )}
@@ -220,71 +293,14 @@ export default function ClaimsWorkflowPage() {
                                           )}
                                     </div>
                               </div>
-                        </div>
-                  )
-            }
-            else {
-                  return (
-                        <div className="grid lg:grid-cols-12 gap-4 relative" id={`${genesisRevisionHash}`}>
-                              {
-                                    urlHash?.replace("#", "") === genesisRevisionHash ? (
-                                          <div className='absolute top-0 right-0 z-10 bg-green-500 w-fit px-2 py-1 text-white rounded-md'>
-                                                Selected
-                                          </div>
-                                    ) : null
-                              }
-                              <div className='col-span-7 bg-gray-50 p-2'>
-                                    <div className="flex flex-col gap-2">
-                                          <SimpleClaim claimInfo={claimInfo} />
-                                          {claim.processedInfo?.walletAddress?.trim().toLowerCase() === session?.address?.trim().toLowerCase() && (
-                                                <ShareButton item={claim.file} nonce={session!.nonce} />
-                                          )}
-                                    </div>
-                              </div>
-                              <div className='col-span-5 p-2'>
-                                    <div className="flex flex-col gap-2 h-full">
-                                          {claim.attestations.length > 0 ? (
-                                                <div className="flex flex-col gap-2">
-                                                      <h3 className="text-lg font-bold text-center">Claim Attestations</h3>
-                                                      <div className="flex flex-col gap-0 max-h-[300px] overflow-y-auto">
-                                                            {claim.attestations.map((attestation, index) => (
-                                                                  <AttestationEntry
-                                                                        key={`attestation-${index}_${genesisRevisionHash}`}
-                                                                        walletAddress={attestation.walletAddress}
-                                                                        context={attestation.context}
-                                                                        createdAt={timeToHumanFriendly(attestation.createdAt, true) ?? ''}
-                                                                        nonce={session!.nonce}
-                                                                        file={attestation.file}
-                                                                  />
-                                                            ))}
-                                                      </div>
-                                                </div>
-                                          ) : (
-                                                <div className="text-center py-8 flex flex-col gap-2 items-center justify-center h-full bg-gray-50">
-                                                      <h3 className="text-lg font-bold text-center">Claim Attestations</h3>
-                                                      <p className="text-gray-600">No attestations found for this claim.</p>
-                                                      {claim.processedInfo?.walletAddress?.trim().toLowerCase() !== session?.address?.trim().toLowerCase() && (
-                                                            <AttestAquaClaim file={claim.file!!} index={1} />
-                                                      )}
-                                                </div>
-                                          )}
-                                    </div>
-                              </div>
-                        </div>
-                  )
-            }
+                        </CardContent>
+                  </Card>
+            )
       }
 
       async function loadClaimsFileData() {
             setFiles([])
             setClaims([])
-            // let isGood = cleanEthAddress(walletAddress)
-            // if (!isGood) {
-            //       toast.warning("Invalid wallet address", {
-            //             position: "top-center"
-            //       })
-            //       return
-            // }
             setIsLoading(true);
             try {
                   const params = {
@@ -314,30 +330,8 @@ export default function ClaimsWorkflowPage() {
                   setIsProcessingClaims(false)
             } finally {
                   setIsLoading(false);
-                  // setIsProcessingClaims(false)
             }
       }
-
-      // const watchFilesChange = useMemo(() => {
-      //       if (!files?.length) return '0';
-
-      //       let totalRevisions = 0;
-      //       let aquaTreeHashes: string[] = [];
-
-      //       for (const file of files) {
-      //             if (file.aquaTree?.revisions) {
-      //                   const revisionCount = Object.keys(file.aquaTree.revisions).length;
-      //                   totalRevisions += revisionCount;
-
-      //                   // Create a stable identifier for this aquaTree based on its revisions
-      //                   const revisionKeys = Object.keys(file.aquaTree.revisions).sort();
-      //                   const aquaTreeHash = `${revisionCount}-${revisionKeys.join(',')}`;
-      //                   aquaTreeHashes.push(aquaTreeHash);
-      //             }
-      //       }
-      //       // Create a stable watch value based on total revisions and aquaTree structure
-      //       return `${totalRevisions}-${aquaTreeHashes.sort().join('|')}`;
-      // }, [files]);
 
       useReloadWatcher({
             key: RELOAD_KEYS.user_profile,
@@ -351,151 +345,144 @@ export default function ClaimsWorkflowPage() {
       }, [walletAddress]);
 
       return (
-            <div className='py-6 flex flex-col gap-4'>
-
-                  <div className="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 p-4 sm:p-6 lg:p-8 rounded-lg">
-                        <div className="max-w-2xl mx-auto">
-                              <div className="text-center mb-8">
-                                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Identity Profiles</h1>
-                                    <p className="text-gray-600">See detailed information for each identity</p>
+            <div className='min-h-screen bg-slate-50/30 pb-12'>
+                  <div className="max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+                        
+                        {/* Header Section */}
+                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                              <div>
+                                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
+                                          <LayoutDashboard className="h-8 w-8 text-blue-600" />
+                                          Identity Dashboard
+                                    </h1>
+                                    <p className="text-muted-foreground mt-1">Manage and verify identity claims for this account.</p>
                               </div>
-
                               <AddressView
                                     address={`${walletAddress}`}
-                                    className="max-w-full"
+                                    className="w-auto"
                               />
-
                         </div>
-                  </div>
 
-                  {(isLoading) ? (
-                        <>
-                              <div className="py-6 flex flex-col items-center justify-center h-full w-full">
-                                    <ClipLoader color="#000" loading={isLoading} size={50} />
-                                    <p className="text-sm">Loading...</p>
+                        <Separator />
+
+                        {isLoading ? (
+                              <div className="h-[60vh] flex flex-col items-center justify-center">
+                                    <ClipLoader color="#2563EB" loading={isLoading} size={50} />
+                                    <p className="text-sm text-muted-foreground mt-4">Loading identity profile...</p>
                               </div>
-                        </>
-                  ) : null}
+                        ) : (
+                              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                                    
+                                    {/* Left Sidebar - Profile Card */}
+                                    <div className="lg:col-span-3 space-y-6">
+                                          <Card className="border-t-4 border-t-blue-500 shadow-md">
+                                                <CardHeader>
+                                                      <CardTitle>Profile Overview</CardTitle>
+                                                </CardHeader>
+                                                <CardContent className="p-0">
+                                                      <WalletAddressProfile walletAddress={walletAddress} hideOpenProfileButton={true} files={files} noBg={true} />
+                                                </CardContent>
+                                          </Card>
 
-                  {
-                        (claims.length === 0 && !isLoading && !isProcessingClaims) ? (
-                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mx-auto max-w-md">
-                                    <div className="flex items-center justify-center flex-col gap-3">
-                                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
+                                          {/* Trust Score Card (Visual only for now) */}
+                                          <Card>
+                                                <CardHeader className="pb-2">
+                                                      <CardTitle className="text-sm font-medium text-muted-foreground">Identity Strength</CardTitle>
+                                                      <div className="text-2xl font-bold">{stats.verificationScore}%</div>
+                                                </CardHeader>
+                                                <CardContent>
+                                                      <Progress value={stats.verificationScore} className="h-2" />
+                                                      <p className="text-xs text-muted-foreground mt-2">
+                                                            Based on verified claims ratio.
+                                                      </p>
+                                                </CardContent>
+                                          </Card>
+                                    </div>
+
+                                    {/* Main Content Area */}
+                                    <div className="lg:col-span-9 space-y-6">
+                                          
+                                          {/* Stats Row */}
+                                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                <Card>
+                                                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                                            <CardTitle className="text-sm font-medium">Total Claims</CardTitle>
+                                                            <FileText className="h-4 w-4 text-muted-foreground" />
+                                                      </CardHeader>
+                                                      <CardContent>
+                                                            <div className="text-2xl font-bold">{stats.totalClaims}</div>
+                                                      </CardContent>
+                                                </Card>
+                                                <Card>
+                                                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                                            <CardTitle className="text-sm font-medium">Verified</CardTitle>
+                                                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                                      </CardHeader>
+                                                      <CardContent>
+                                                            <div className="text-2xl font-bold">{stats.verifiedClaims}</div>
+                                                      </CardContent>
+                                                </Card>
+                                                <Card>
+                                                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                                            <CardTitle className="text-sm font-medium">Attestations</CardTitle>
+                                                            <Shield className="h-4 w-4 text-blue-500" />
+                                                      </CardHeader>
+                                                      <CardContent>
+                                                            <div className="text-2xl font-bold">{stats.totalAttestations}</div>
+                                                      </CardContent>
+                                                </Card>
+                                                <Card>
+                                                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                                            <CardTitle className="text-sm font-medium">Shared</CardTitle>
+                                                            <Share2 className="h-4 w-4 text-purple-500" />
+                                                      </CardHeader>
+                                                      <CardContent>
+                                                            <div className="text-2xl font-bold">{stats.sharedContractsCount}</div>
+                                                      </CardContent>
+                                                </Card>
                                           </div>
-                                          <div className="text-center">
-                                                <h3 className="text-lg font-semibold text-blue-900 mb-1">No Claims Found</h3>
-                                                <p className="text-sm text-blue-700">This wallet address doesn't have any verified claims yet.</p>
-                                          </div>
+
+                                          {/* Tabs for Claims */}
+                                          <Tabs defaultValue="all" className="w-full">
+                                                <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
+                                                      <TabsTrigger value="all">All Claims</TabsTrigger>
+                                                      <TabsTrigger value="identity">Identity</TabsTrigger>
+                                                      <TabsTrigger value="documents">Documents</TabsTrigger>
+                                                </TabsList>
+                                                
+                                                <TabsContent value="all" className="mt-6 space-y-4">
+                                                      {claims.length === 0 ? (
+                                                             <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-lg border border-dashed">
+                                                                  <div className="bg-blue-50 p-4 rounded-full mb-4">
+                                                                        <Activity className="h-8 w-8 text-blue-500" />
+                                                                  </div>
+                                                                  <h3 className="text-lg font-semibold text-gray-900">No Claims Found</h3>
+                                                                  <p className="text-gray-500 max-w-sm mt-2">There are no claims associated with this identity profile yet.</p>
+                                                            </div>
+                                                      ) : (
+                                                            claims.map((claim) => renderClaim(claim))
+                                                      )}
+                                                </TabsContent>
+                                                
+                                                <TabsContent value="identity" className="mt-6 space-y-4">
+                                                      {claims.filter(item => ["simple_claim", "identity_claim", "user_signature", "phone_number_claim", "email_claim"].includes(item.processedInfo.claimInformation.forms_type)).length === 0 ? (
+                                                            <div className="p-8 text-center text-muted-foreground bg-white rounded-lg border border-dashed">No identity claims found.</div>
+                                                      ) : (
+                                                            claims.filter(item => ["simple_claim", "identity_claim", "user_signature", "phone_number_claim", "email_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim) => renderClaim(claim))
+                                                      )}
+                                                </TabsContent>
+                                                
+                                                <TabsContent value="documents" className="mt-6 space-y-4">
+                                                      {claims.filter(item => !["simple_claim", "identity_claim", "user_signature", "phone_number_claim", "email_claim"].includes(item.processedInfo.claimInformation.forms_type)).length === 0 ? (
+                                                            <div className="p-8 text-center text-muted-foreground bg-white rounded-lg border border-dashed">No document claims found.</div>
+                                                      ) : (
+                                                            claims.filter(item => !["simple_claim", "identity_claim", "user_signature", "phone_number_claim", "email_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim) => renderClaim(claim))
+                                                      )}
+                                                </TabsContent>
+                                          </Tabs>
                                     </div>
                               </div>
-                        ) : null
-                  }
-
-                  {
-                        (!isLoading && !isProcessingClaims && claims.length > 0) ? (
-                              <div className="container mx-auto py-4 bg-white rounded-lg">
-                                    <WalletAddressProfile walletAddress={walletAddress} hideOpenProfileButton={true} files={files} />
-                              </div>
-                        ) : null
-                  }
-
-                  <div className="flex flex-col gap-4">
-                        {
-                              claims.filter(item => ["simple_claim", "identity_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
-                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg border-[2px] border-gray-400">
-                                          {renderClaim(claim)}
-                                          <Collapsible className=' bg-gray-50 p-2 rounded-lg'>
-                                                <CollapsibleTrigger className='cursor-pointer w-full p-2 border-2 border-gray-200 rounded-lg flex justify-between items-center'>
-                                                      <div className="flex flex-col text-start">
-                                                            <p className='font-bold text-gray-700'>Sharing Information</p>
-                                                            <p className='text-gray-600'>Who have you shared the claim with</p>
-                                                      </div>
-                                                      <div className='flex flex-col gap-0 h-fit'>
-                                                            <ChevronDown />
-                                                            <ChevronUp />
-                                                      </div>
-                                                </CollapsibleTrigger>
-                                                <CollapsibleContent>
-                                                      <div className="flex flex-col gap-2 p-2">
-                                                            {
-                                                                  claim.sharedContracts?.map((contract, index) => (
-                                                                        <div key={`shared_contract_${index}`}>
-                                                                              <SharedContract
-                                                                                    type='outgoing'
-                                                                                    key={`${contract.hash}`}
-                                                                                    contract={contract}
-                                                                                    index={index}
-                                                                                    contractDeleted={hash => {
-                                                                                          let newState = claim.sharedContracts?.filter(e => e.hash != hash)
-                                                                                          claim.sharedContracts = newState
-                                                                                    }}
-                                                                              />
-                                                                        </div>
-                                                                  ))
-                                                            }
-                                                      </div>
-                                                      {
-                                                            claim.sharedContracts?.length === 0 ? (
-                                                                  <div className="flex flex-col gap-2 p-4 text-center">
-                                                                        <p>No shared contracts found</p>
-                                                                  </div>
-                                                            ) : null
-                                                      }
-                                                </CollapsibleContent>
-                                          </Collapsible>
-                                    </div>
-                              ))
-                        }
-                        {
-                              claims.filter(item => !["simple_claim", "identity_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
-                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg border-[2px] border-gray-400">
-                                          {renderClaim(claim)}
-                                          <Collapsible className='mt-4 bg-gray-50 p-2 rounded-lg'>
-                                                <CollapsibleTrigger className='cursor-pointer w-full p-2 border-2 border-gray-200 rounded-lg flex justify-between items-center'>
-                                                      <div className="flex flex-col text-start">
-                                                            <p className='font-bold text-gray-700'>Sharing Information</p>
-                                                            <p className='text-gray-600'>Who have you shared the claim with</p>
-                                                      </div>
-                                                      <div className='flex flex-col gap-0 h-fit'>
-                                                            <ChevronDown />
-                                                            <ChevronUp />
-                                                      </div>
-                                                </CollapsibleTrigger>
-                                                <CollapsibleContent>
-                                                      <div className="flex flex-col gap-2 p-2">
-                                                            {
-                                                                  claim.sharedContracts?.map((contract, index) => (
-                                                                        <div key={`shared_contract_${index}`}>
-                                                                              <SharedContract
-                                                                                    type='outgoing'
-                                                                                    key={`${contract.hash}`}
-                                                                                    contract={contract}
-                                                                                    index={index}
-                                                                                    contractDeleted={hash => {
-                                                                                          let newState = claim.sharedContracts?.filter(e => e.hash != hash)
-                                                                                          claim.sharedContracts = newState
-                                                                                    }}
-                                                                              />
-                                                                        </div>
-                                                                  ))
-                                                            }
-                                                      </div>
-                                                      {
-                                                            claim.sharedContracts?.length === 0 ? (
-                                                                  <div className="flex flex-col gap-2 p-4 text-center">
-                                                                        <p>No shared contracts found</p>
-                                                                  </div>
-                                                            ) : null
-                                                      }
-                                                </CollapsibleContent>
-                                          </Collapsible>
-                                    </div>
-                              ))
-                        }
+                        )}
                   </div>
             </div>
       )
