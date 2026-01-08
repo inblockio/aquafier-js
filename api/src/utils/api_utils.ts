@@ -21,14 +21,15 @@ const getPort = (): number => {
     return Number(process.env.PORT) || 3000
 }
 
-const fetchEnsName = async (walletAddress: string, infuraKey: string): Promise<string> => {
+const fetchEnsName = async (walletAddress: string, alchemyProjectKey: string): Promise<string> => {
     let ensName = "";
     try {
         // Create an Ethereum provider
         // const provider = new ethers.JsonRpcProvider(
-        //     `https://mainnet.infura.io/v3/${infuraKey}`
+        //     `https://mainnet.infura.io/v3/${alchemyProjectKey}`
         // );
-        const provider = new ethers.JsonRpcProvider(`https://eth-mainnet.g.alchemy.com/v2/${infuraKey}`);
+        console.log(`Using Alchemy for ENS lookup ${alchemyProjectKey}`);
+        const provider = new ethers.JsonRpcProvider(`https://eth-mainnet.g.alchemy.com/v2/${alchemyProjectKey}`);
 
         // Look up ENS name for the address
         ensName = await provider.lookupAddress(walletAddress) ?? "";

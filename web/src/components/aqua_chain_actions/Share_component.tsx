@@ -229,7 +229,7 @@ const ShareComponent = () => {
                         <span style={{ fontSize: 24, fontWeight: 500 }}>Loading...</span>
                   </div>
             )
-      }
+      } 
 
       return (
             <div className='h-full w-full'>
@@ -334,7 +334,7 @@ const ShareComponent = () => {
                                                 </div>
                                           </div>
                                     </div>
-                              </div>
+                              </div> 
 
                               {/* Wallet Address Input */}
                               {recipientType === 'specific' && (
@@ -361,7 +361,7 @@ const ShareComponent = () => {
                                                                               address={address}
                                                                               multipleAddresses={multipleAddresses}
                                                                               setMultipleAddresses={setMultipleAddresses}
-                                                                              placeholder="Enter wallet address (0x...)"
+                                                                              // placeholder="Enter wallet address (0x...)"
                                                                               className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                                                                         />
                                                                         {

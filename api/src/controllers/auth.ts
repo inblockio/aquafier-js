@@ -135,15 +135,15 @@ export default async function authController(fastify: FastifyInstance) {
       })
 
       // Check if we should attempt ENS lookup
-      const infuraProjectId = process.env.VITE_INFURA_PROJECT_ID;
+      const alchemyProjectKey = process.env.ALCHEMY_API_KEY;
       const duration = Date.now() - startTime;
       Logger.logAuthEvent('user-login', EventOutcome.SUCCESS, siweData.address!!);
 
       if (userData == null) {
         let ensName = null
 
-        if (infuraProjectId) {
-          ensName = await fetchEnsName(siweData.address!!, infuraProjectId)
+        if (alchemyProjectKey) {
+          ensName = await fetchEnsName(siweData.address!!, alchemyProjectKey)
         }
         await prisma.users.create({
           data: {
@@ -168,8 +168,8 @@ export default async function authController(fastify: FastifyInstance) {
       } else {
 
         if (userData.ens_name == null || userData.ens_name == undefined || userData.ens_name == "") {
-          if (infuraProjectId) {
-            const ensName = await fetchEnsName(siweData.address!!, infuraProjectId)
+          if (alchemyProjectKey) {
+            const ensName = await fetchEnsName(siweData.address!!, alchemyProjectKey)
 
             await prisma.users.update({
               where: {
