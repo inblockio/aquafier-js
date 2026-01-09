@@ -5,7 +5,11 @@ import Logger from '../utils/logger';
 import { StripeService } from '../utils/stripe_service';
 import { NOWPaymentsService } from '../utils/nowpayments_service';
 import Stripe from 'stripe';
-import { cliGreenify, cliRedify } from 'aqua-js-sdk';
+import { cliGreenify, cliRedify, cliYellowfy } from 'aqua-js-sdk';
+import { InvoiceUtils } from '../utils/invoice_utils';
+import { InvoiceData } from '../models/invoice';
+import logger from '../utils/logger';
+import { getHost, getPort } from '../utils/api_utils';
 
 export default async function paymentsController(fastify: FastifyInstance) {
 
@@ -342,7 +346,7 @@ export default async function paymentsController(fastify: FastifyInstance) {
           order_id: subscription.id,
           order_description: `${plan.display_name} - ${billing_period} subscription`,
           // ipn_callback_url: `${process.env.BACKEND_URL}/payments/crypto/webhook`,
-          ipn_callback_url: `https://1b67cbd1a47e.ngrok-free.app/payments/crypto/webhook`,
+          ipn_callback_url: `https://61e085a77a50.ngrok-free.app/payments/crypto/webhook`,
           // ipn_callback_url: "https://webhook.site/050d6a84-c4da-463d-9fb4-35cc87be0180",
           success_url: success_url,
           cancel_url: cancel_url,
@@ -522,9 +526,70 @@ export default async function paymentsController(fastify: FastifyInstance) {
         data: { processed: true, processed_at: new Date() },
       });
 
+      console.log(cliYellowfy(`Status: ${newStatus}`))
+      if (newStatus === "SUCCEEDED") {
+        // Generate invoice and save it to the user context
+        let paymentsCount = await prisma.payment.count();
+        let invoiceNumber = `INV-${paymentsCount + 1}`;
+        console.log("Payment:  ", payment)
+        console.log(cliYellowfy(JSON.stringify(payment.Subscription, null, 4)))
+        let userAddress = payment.Subscription.user_address
+        let userDetails = await prisma.users.findUnique({ where: { address: userAddress } })
+        let subscriptionPlan = await prisma.subscriptionPlan.findUnique({ where: { id: payment.Subscription.plan_id } })
+
+        const data: InvoiceData = {
+          invoiceNumber,
+          date: new Date(),
+          // dueDate: new Date(Date.now() + 86400000 * 30),
+          status: 'PAID',
+          billingTo: {
+            name: userAddress,
+            address: 'Aquafier Instance',
+            // email: 'john@example.com'
+          },
+          billingFrom: {
+            name: 'Inblokcio GmbH Assets',
+            address: '456 Business Rd\nTech City',
+            email: 'billing@inblockio.com',
+            website: 'www.inblockio.com'
+          },
+          items: [
+            { description: 'Aquafier Professional Plan', quantity: 1, unitPrice: parseFloat(subscriptionPlan?.price_monthly_usd?.toString() ?? "1.00"), amount: parseFloat(subscriptionPlan?.price_monthly_usd?.toString() ?? "1.00") },
+          ],
+          subtotal: parseFloat(subscriptionPlan?.price_monthly_usd?.toString() ?? "1.00"),
+          // tax: 13,
+          // taxRate: 10,
+          total: parseFloat(subscriptionPlan?.price_monthly_usd?.toString() ?? "1.00"),
+          currency: 'USD',
+          notes: 'Thank you for your business!'
+        };
+
+        try {
+          // console.log('Generating and Saving PDF Invoice...');
+
+          const host = request.headers.host || `${getHost()}:${getPort()}`;
+          const protocol = request.protocol || 'https';
+          const url = `${protocol}://${host}`;
+
+          const result = await InvoiceUtils.createAndSaveInvoice(
+            data,
+            userAddress,
+            url,
+            protocol,
+            true
+          );
+
+          // console.log('PDF Generated and Saved!', JSON.stringify(result.fileObject, null, 2));
+        } catch (error: any) {
+          Logger.error("Error generating invoice: ", error);
+        }
+
+      }
+
+
       return reply.send({ success: true });
     } catch (error: any) {
-      Logger.error('Error processing NOWPayments IPN:', error);
+      Logger.error("Error processing NOWPayments IPN: ", error);
       return reply.code(500).send({ success: false, error: error.message });
     }
   });

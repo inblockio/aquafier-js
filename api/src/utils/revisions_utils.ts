@@ -294,7 +294,7 @@ export async function transferRevisionChainData(
     chainData: {
         aquaTree: AquaTree; fileObject: FileObject[]
     },
-    
+
     templateId: string | null = null, isWorkFlow: boolean = false): Promise<{ success: boolean, message: string }> {
 
     try {
@@ -1588,7 +1588,7 @@ export async function saveAquaTree(
     const lastPubKeyHash = `${userAddress}_${latestHash}`;
 
     // Only register the latest hash for the user
-    let inserRes = await prisma.latest.upsert({
+    let insertRes = await prisma.latest.upsert({
         where: { hash: lastPubKeyHash },
         create: {
             hash: lastPubKeyHash,
@@ -1616,10 +1616,10 @@ export async function saveAquaTree(
 
         const revisionChildren = []
 
-        for(let a = i + 1; a < allHash.length; a++){
+        for (let a = i + 1; a < allHash.length; a++) {
             const childHash = allHash[a];
             const childData = aquaTreeWithOrderdRevision.revisions[childHash];
-            if(childData.previous_verification_hash.includes(revisionHash)){
+            if (childData.previous_verification_hash.includes(revisionHash)) {
                 const childPubKeyHash = `${userAddress}_${childHash}`;
                 revisionChildren.push(childPubKeyHash);
             }
@@ -1721,16 +1721,16 @@ export function isAquaTree(content: any): boolean {
     let json = null
     let isJsonAlready = true
     if (typeof content === 'string') {
-          isJsonAlready = false
+        isJsonAlready = false
     }
     if (isJsonAlready) {
-          json = content
-    }else {
-          try {
-                json = JSON.parse(content)
-          } catch (e) {
-                return false
-          }
+        json = content
+    } else {
+        try {
+            json = JSON.parse(content)
+        } catch (e) {
+            return false
+        }
     }
     // Check if content has the properties of an AquaTree
     return json && typeof json === 'object' && 'revisions' in json && 'file_index' in json
@@ -1740,8 +1740,8 @@ export function isAquaTree(content: any): boolean {
 export function getAquatreeObject(content: any): AquaTree {
     let isJsonAlready = true
     if (typeof content === 'string') {
-          isJsonAlready = false
-          return JSON.parse(content)
+        isJsonAlready = false
+        return JSON.parse(content)
     }
     return content
 }
