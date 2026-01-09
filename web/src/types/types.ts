@@ -86,6 +86,7 @@ export interface ContactProfile {
       name?: string;
       phone?: string;
       email?: string;
+      ensName?: string;
       // A construction of all searchable details
       searchString?: string;
       claims: Record<string, string[]>

@@ -300,14 +300,17 @@ export function isEnsNameOrAddrss(str: string): string {
 export async function getAddressGivenEnsName(ensName: string): Promise<string | null> {
     try {
         // Get the Alchemy API key from environment variables
-        const infuraKey = process.env.ALCHEMY_API_KEY;
-        if (!infuraKey) {
+        const alchemyProjectKey = process.env.ALCHEMY_API_KEY;
+        console.log(`Using Alchemy Key: ${alchemyProjectKey}`);
+        if (!alchemyProjectKey) {
             Logger.error('ALCHEMY_API_KEY not found in environment variables');
             return null;
         }
 
+       
+
         // Create an Ethereum provider
-        const provider = new ethers.JsonRpcProvider(`https://eth-mainnet.g.alchemy.com/v2/${infuraKey}`);
+        const provider = new ethers.JsonRpcProvider(`https://eth-mainnet.g.alchemy.com/v2/${alchemyProjectKey}`);
 
         // Resolve ENS name to address
         const address = await provider.resolveName(ensName);

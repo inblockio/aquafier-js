@@ -110,15 +110,15 @@ export default async function userController(fastify: FastifyInstance) {
         }
 
         // Fetch from blockchain
-        const infuraProjectId = process.env.ALCHEMY_API_KEY;
-        if (!infuraProjectId) {
+        const alchemyProjectKey = process.env.ALCHEMY_API_KEY;
+        if (!alchemyProjectKey) {
             return reply.code(404).send({
                 success: false,
                 message: "ENS resolution unavailable: API key not configured"
             });
         }
 
-        const ensName = await fetchEnsName(address, infuraProjectId);
+        const ensName = await fetchEnsName(address, alchemyProjectKey);
         if (ensName) {
             // Save to database
             await saveEnsToDatabase(address, ensName, useEns);

@@ -3,6 +3,9 @@ import { Input } from './ui/input';
 import { Popover, PopoverContent, PopoverAnchor } from './ui/popover';
 import { ContactsService } from '@/storage/databases/contactsDb';
 import { ContactProfile } from '@/types/types';
+import { toast } from 'sonner';
+import appStore from '@/store';
+import { useStore } from 'zustand';
 
 interface WalletAutosuggestProps {
   field: {
@@ -16,22 +19,80 @@ interface WalletAutosuggestProps {
   className?: string;
   disabled?: boolean;
 }
-export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({ 
-  field, 
-  index, 
-  address, 
-  multipleAddresses, 
-  setMultipleAddresses, 
-  placeholder = "Enter wallet address...", 
-  className = "", 
+export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
+  field,
+  index,
+  address,
+  multipleAddresses,
+  setMultipleAddresses,
+  placeholder = "Enter wallet address or ENS name...",
+  className = "",
   disabled = false 
 }) => {
+
+  const { session, backend_url } = useStore(appStore);
   const [suggestions, setSuggestions] = useState<ContactProfile[]>([]);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const [activeSuggestion, setActiveSuggestion] = useState<number>(-1);
+  const [loadingEns, setLoadingEns] = useState<boolean>(false);
+  const [ensName, setEnsName] = useState<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
   const contactsService = ContactsService.getInstance();
   const suggestionsRef = useRef<HTMLDivElement>(null);
+
+
+  const resolveENS = async () : Promise<string | null> => {
+    const trimmedInput = address.trim();
+
+    if (!trimmedInput) {
+      console.log('Please enter an Ethereum address or ENS name');
+      return null;
+    }
+
+    if (!session?.nonce) {
+      console.log('Please connect your wallet first');
+      return null;
+    }
+
+    setLoadingEns(true);
+
+    try {
+      const response = await fetch(`${backend_url}/resolve/${trimmedInput}?useEns=true`, {
+        method: 'GET',
+        headers: {
+          'nonce': session.nonce,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // data.type indicates what the result is:
+        // 'ens_name' means input was address, result is ENS name
+        // Otherwise, input was ENS name, result is wallet address
+
+        if (data.type === 'ens_name') {
+          // Input was wallet address, result is ENS name
+          setEnsName(data.result);
+          return trimmedInput; // Return the wallet address
+        } else {
+          // Input was ENS name, result is wallet address
+          setEnsName(trimmedInput);
+          return data.result; // Return the wallet address
+        }
+      } else {
+        toast.error(data.message || 'Resolution failed');
+        return null;
+      }
+    } catch (err) {
+      console.error('Resolution error:', err);
+      toast.error('Failed to resolve. The service may be unavailable.');
+      return null;
+    } finally {
+      setLoadingEns(false);
+    }
+  };
 
   // Filter suggestions based on input - searches contacts database
   const filterSuggestions = async (input: string): Promise<ContactProfile[]> => {
@@ -50,7 +111,7 @@ export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
 
   const handleInputChange = async (ev: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const value: string = ev.target.value;
-    
+
     // Update the addresses array
     const newData: string[] = multipleAddresses.map((e: string, i: number) => {
       if (i === index) {
@@ -60,6 +121,11 @@ export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
     });
     setMultipleAddresses(newData);
 
+    // Clear ENS name when user manually edits
+    if (ensName && value !== address) {
+      setEnsName('');
+    }
+
     // Update suggestions
     const filtered: ContactProfile[] = await filterSuggestions(value);
     setSuggestions(filtered);
@@ -68,56 +134,97 @@ export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
   };
 
   const handleSuggestionClick = (contact: ContactProfile): void => {
-    // Use the contact's wallet address
+    // Always store the wallet address in multipleAddresses
     const newData: string[] = multipleAddresses.map((e: string, i: number) => {
       if (i === index) {
-        return contact.walletAddress; // Set the contact's wallet address
+        return contact.walletAddress;
       }
       return e;
     });
     setMultipleAddresses(newData);
-    
+
+    // Store the ENS name separately for display purposes
+    if (contact.ensName) {
+      setEnsName(contact.ensName);
+    } else {
+      setEnsName('');
+    }
+
     setShowSuggestions(false);
     setActiveSuggestion(-1);
     inputRef.current?.focus();
   };
 
-  const handleKeyDown = (ev: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (!showSuggestions) return;
+  const handleKeyDown = async (ev: React.KeyboardEvent<HTMLInputElement>): Promise<void> => {
+    // Handle ENS resolution first if input ends with .eth and Enter is pressed
+    if (ev.key === 'Enter' && address.trim().endsWith('.eth') && (!showSuggestions || activeSuggestion < 0)) {
+      ev.preventDefault();
+      const resolved = await resolveENS();
+      if (resolved) {
+        // Update the addresses array with resolved address
+        const newData: string[] = multipleAddresses.map((e: string, i: number) => {
+          if (i === index) {
+            return resolved;
+          }
+          return e;
+        });
+        setMultipleAddresses(newData);
+        toast.success(`Resolved ${address.trim()} to ${resolved.slice(0, 10)}...${resolved.slice(-6)}`);
+      }
+      return;
+    }
 
-    switch (ev.key) {
-      case 'ArrowDown':
-        ev.preventDefault();
-        setActiveSuggestion((prev: number) => 
-          prev < suggestions.length - 1 ? prev + 1 : prev
-        );
-        break;
-      
-      case 'ArrowUp':
-        ev.preventDefault();
-        setActiveSuggestion((prev: number) => prev > 0 ? prev - 1 : -1);
-        break;
-      
-      case 'Enter':
-        ev.preventDefault();
-        if (activeSuggestion >= 0) {
-          handleSuggestionClick(suggestions[activeSuggestion]);
-        }
-        break;
-      
-      case 'Escape':
-        setShowSuggestions(false);
-        setActiveSuggestion(-1);
-        break;
+    if (showSuggestions) {
+      switch (ev.key) {
+        case 'ArrowDown':
+          ev.preventDefault();
+          setActiveSuggestion((prev: number) =>
+            prev < suggestions.length - 1 ? prev + 1 : prev
+          );
+          break;
+
+        case 'ArrowUp':
+          ev.preventDefault();
+          setActiveSuggestion((prev: number) => prev > 0 ? prev - 1 : -1);
+          break;
+
+        case 'Enter':
+          ev.preventDefault();
+          if (activeSuggestion >= 0) {
+            handleSuggestionClick(suggestions[activeSuggestion]);
+            return;
+          }
+          break;
+
+        case 'Escape':
+          setShowSuggestions(false);
+          setActiveSuggestion(-1);
+          break;
+      }
     }
   };
 
-  const handleBlur = (_ev: React.FocusEvent<HTMLInputElement>): void => {
+  const handleBlur = async (_ev: React.FocusEvent<HTMLInputElement>): Promise<void> => {
     // Delay hiding suggestions to allow for click events
-    setTimeout(() => {
+    setTimeout(async () => {
       if (!suggestionsRef.current?.contains(document.activeElement)) {
         setShowSuggestions(false);
         setActiveSuggestion(-1);
+
+        // Auto-resolve ENS if input ends with .eth
+        if (address.trim().endsWith('.eth') && !ensName) {
+          const resolved = await resolveENS();
+          if (resolved) {
+            // Update the addresses array with resolved address
+            const newData: string[] = multipleAddresses.map((e: string, i: number) => {
+              if (i === index) {
+                return resolved;
+              }
+              return e;
+            });
+            setMultipleAddresses(newData);
+          }
+        }
       }
     }, 150);
   };
@@ -140,31 +247,57 @@ export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
   }, [address]);
 
   return (
-    <Popover open={showSuggestions && suggestions.length > 0} onOpenChange={setShowSuggestions}>
-      <PopoverAnchor asChild>
-        <Input
-          ref={inputRef}
-          data-testid={`input-${field.name}-${index}`}
-          className={className}
-          placeholder={placeholder}
-          type="text"
-          value={address}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          onBlur={handleBlur}
-          onFocus={handleFocus}
-          autoComplete="off"
-          disabled={disabled}
-        />
-      </PopoverAnchor>
-      
-      <PopoverContent
-        ref={suggestionsRef}
-        className="w-[var(--radix-popover-trigger-width)] p-0 max-h-48 overflow-y-auto"
-        align="start"
-        sideOffset={4}
-        onOpenAutoFocus={(e) => e.preventDefault()}
-      >
+    <div className="relative">
+      {loadingEns && (
+        <div className="mb-1 flex items-center gap-2">
+          <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded flex items-center gap-1">
+            <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Resolving ENS...
+          </span>
+        </div>
+      )}
+      {!loadingEns && address.trim().endsWith('.eth') && !ensName && (
+        <div className="mb-1 flex items-center gap-2">
+          <span className="text-xs font-medium text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
+            Press Enter or tab out to resolve ENS
+          </span>
+        </div>
+      )}
+      {ensName && !loadingEns && (
+        <div className="mb-1 flex items-center gap-2">
+          <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+            ENS: {ensName}
+          </span>
+        </div>
+      )}
+      <Popover open={showSuggestions && suggestions.length > 0} onOpenChange={setShowSuggestions}>
+        <PopoverAnchor asChild>
+          <Input
+            ref={inputRef}
+            data-testid={`input-${field.name}-${index}`}
+            className={className}
+            placeholder={placeholder}
+            type="text"
+            value={address}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+            onFocus={handleFocus}
+            autoComplete="off"
+            disabled={disabled}
+          />
+        </PopoverAnchor>
+
+        <PopoverContent
+          ref={suggestionsRef}
+          className="w-[var(--radix-popover-trigger-width)] p-0 max-h-48 overflow-y-auto"
+          align="start"
+          sideOffset={4}
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
         {suggestions.map((contact: ContactProfile, suggestionIndex: number) => (
           <div
             key={contact.walletAddress}
@@ -182,6 +315,11 @@ export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
                 {contact.name || 'Unnamed Contact'}
                 {contact.email && <span className="text-xs ml-2 text-gray-500">({contact.email})</span>}
               </div>
+              {contact.ensName && (
+                <div className="text-xs text-blue-600 font-medium mt-1">
+                  {contact.ensName}
+                </div>
+              )}
               <div className="text-xs text-gray-500 font-mono mt-1" title={contact.walletAddress}>
                 {contact.walletAddress.slice(0, 10)}...{contact.walletAddress.slice(-6)}
               </div>
@@ -190,5 +328,6 @@ export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
         ))}
       </PopoverContent>
     </Popover>
+    </div>
   );
 };
