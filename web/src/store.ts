@@ -24,6 +24,12 @@ type AppStoreState = {
       filesStats: IUserStats,
       workflows: ApiFileInfoState,
       webConfig: WebConfig,
+      workSpaceDowload: {
+            fileName: string,
+            fileIndex: number,
+            totalFiles: number
+      },
+      
       apiFileData: ApiFileData[]
       systemFileInfo: ApiFileInfo[]
       formTemplates: FormTemplate[]
@@ -49,6 +55,7 @@ type AppStoreActions = {
       setFilesStats: (files: AppStoreState['filesStats']) => void
       setWorkflows: (workflows: AppStoreState['workflows']) => void
       setWebConfig: (config: AppStoreState['webConfig']) => void
+      setWorkSpaceDowload: (config: AppStoreState['workSpaceDowload']) => void
       setSelectedFileInfo: (file: ApiFileInfo | null) => void
 
       setOpenDialog: (state: OpenDialog | null) => void
@@ -156,6 +163,12 @@ const appStore = createStore<TAppStore>()(
                         BACKEND_URL: undefined,
                         AUTH_PROVIDER: undefined
                   },
+
+                  workSpaceDowload: {
+                        fileName: '',
+                        fileIndex: 0,
+                        totalFiles: 0
+                  },
                   openDialog: null, // Initialize openDialog state
                   // openFilesDetailsPopUp: false,
                   // openCreateTemplatePopUp: false,
@@ -193,6 +206,9 @@ const appStore = createStore<TAppStore>()(
                   setContracts: (contractData: any[]) => set({ contracts: contractData }),
                   setWebConfig(config) {
                         set({ webConfig: config })
+                  },
+                  setWorkSpaceDowload(config) {
+                        set({ workSpaceDowload: config })
                   },
                   addFile: (file: ApiFileInfo) => {
                         const { files } = appStore.getState()
