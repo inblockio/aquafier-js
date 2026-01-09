@@ -548,9 +548,7 @@ export default async function explorerController(fastify: FastifyInstance) {
 
 
             if (!zipData.files['aqua.json']) {
-
                 return reply.code(400).send({ error: 'Invalid ZIP file: Missing aqua.json' });
-
             }
 
             let aquaJsonContent = await zipData.files['aqua.json'].async("string");
@@ -566,12 +564,13 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             }
 
-            if (aquaJson.type !== "aqua_file_backup") {
+            if (aquaJson.type !== "aqua_workspace_backup") {
                 return reply.code(400).send({ error: 'Invalid aqua.json type for workspace upload' });
             }
          
-
-            // await processAquaFiles(zipData, session.address, null);
+// Process aqua.json metadata first
+            await processAquaMetadata(zipData, session.address);
+            
 
             let userAddress= session.address;
            try {
