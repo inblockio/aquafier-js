@@ -34,6 +34,7 @@ import DNSClaimVerificationController from './controllers/dns_claim_verification
 import metricsController from './controllers/metrics';
 import workflowsController from './controllers/workflow';
 import enhancedWebSocketController from './controllers/websocketController2';
+import adminController from './controllers/admin';
 import subscriptionsController from './controllers/subscriptions';
 import paymentsController from './controllers/payments';
 import { prisma } from './database/db';
@@ -165,6 +166,7 @@ function buildServer() {
     fastify.register(DNSClaimVerificationController);
     fastify.register(metricsController);
     fastify.register(workflowsController);
+    fastify.register(adminController);
     fastify.register(subscriptionsController);
     fastify.register(paymentsController);
 

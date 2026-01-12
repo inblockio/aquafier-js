@@ -34,6 +34,8 @@ import ContactsPageV2 from './pages/contacts/contactsV2'
 import ContactsLoader from './pages/contacts/ContactsLoader'
 import { NotificationWebSocketProvider } from './contexts/NotificationWebSocketContext'
 import UserStats from './pages/user_settings/UserStats'
+import Dashboard from './pages/dashboard/Dashboard'
+import AdminEntityList from './pages/dashboard/AdminEntityList'
 import EnsResolverPage from './pages/ens_resolver.page'
 import PricingPage from './pages/pricing/PricingPage'
 import SubscriptionPage from './pages/subscription/SubscriptionPage'
@@ -150,6 +152,8 @@ function App() {
                             <Route path="contact_list" element={<ContactsPageV2 />} />
                             <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2 />} />
                             <Route path="dashboard" element={<UserStats />} />
+                            <Route path="admin/dashboard" element={<Dashboard />} />
+                            <Route path="admin/list/:type" element={<AdminEntityList />} />
 
                             <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
                             <Route path="files_workflows" element={<FilesPage />} />

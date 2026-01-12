@@ -43,6 +43,7 @@ export interface MetricsResponse {
     total: number;
     newToday: number;
     growth: string;
+    breakdown: Array<{ type: string | null; count: number }>;
   };
   files: {
     total: number;

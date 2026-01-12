@@ -19,6 +19,11 @@ export default async function metricsController(fastify: FastifyInstance) {
             return reply.code(403).send({ success: false, message: "Nounce  is invalid "+nonce  });
         }
 
+        const allowedWallets = (process.env.DASHBOARD_WALLETS || "").split(",").map(w => w.trim().toLowerCase());
+        if (!session.address || !allowedWallets.includes(session.address.toLowerCase())) {
+             return reply.code(403).send({ error: 'Unauthorized: Access denied' });
+        }
+
 
         try {
             // Get start of today in UTC
@@ -55,6 +60,7 @@ export default async function metricsController(fastify: FastifyInstance) {
                 totalNotifications,
                 unreadNotifications,
                 newNotificationsToday,
+                revisionTypes,
             ] = await Promise.all([
                 // Core metrics - Users
                 prisma.users.count(),
@@ -117,6 +123,12 @@ export default async function metricsController(fastify: FastifyInstance) {
                 prisma.notifications.count({
                     where: { created_on: { gte: startOfToday } },
                 }),
+
+                // Revision Types Breakdown
+                prisma.revision.groupBy({
+                    by: ['revision_type'],
+                    _count: true,
+                }),
             ]);
 
             // Calculate growth percentages
@@ -138,6 +150,12 @@ export default async function metricsController(fastify: FastifyInstance) {
             const contractsPerUser = totalUsers > 0
                 ? (totalContracts / totalUsers).toFixed(2)
                 : '0';
+            
+            // Format revision breakdown
+            const revisionBreakdown = revisionTypes.map(rt => ({
+                type: rt.revision_type,
+                count: rt._count
+            })).sort((a, b) => b.count - a.count);
 
             const metrics: MetricsResponse = {
                 users: {
@@ -154,6 +172,7 @@ export default async function metricsController(fastify: FastifyInstance) {
                     total: totalRevisions,
                     newToday: newRevisionsToday,
                     growth: calculateGrowth(newRevisionsToday, totalRevisions),
+                    breakdown: revisionBreakdown,
                 },
                 files: {
                     total: totalFiles,
@@ -238,6 +257,11 @@ export default async function metricsController(fastify: FastifyInstance) {
             return reply.code(403).send({ success: false, message: "Nounce  is invalid "+nonce  });
         }
 
+        const allowedWallets = (process.env.DASHBOARD_WALLETS || "").split(",").map(w => w.trim().toLowerCase());
+        if (!session.address || !allowedWallets.includes(session.address.toLowerCase())) {
+             return reply.code(403).send({ error: 'Unauthorized: Access denied' });
+        }
+
         
         try {
             const { startDate, endDate, tables } = request.query;
@@ -284,7 +308,7 @@ export default async function metricsController(fastify: FastifyInstance) {
                 merkleNodes: 'createdAt',
                 settings: 'createdAt',
                 verificationAttempt: 'createdAt',
-                dNSClaimVerificationOne: 'createdAt',
+                dNSClaimVerification: 'createdAt',
             };
 
             // Determine which tables to query
