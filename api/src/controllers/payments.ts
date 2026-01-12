@@ -338,15 +338,15 @@ export default async function paymentsController(fastify: FastifyInstance) {
 
         // Create NOWPayments payment
         const payment = await NOWPaymentsService.createPayment({
-          // price_amount: priceAmount,
-          price_amount: 1, // TEMPORARY FIX FOR TESTING PURPOSES
+          price_amount: priceAmount,
+          // price_amount: 1, // TEMPORARY FIX FOR TESTING PURPOSES
           price_currency: 'usd',
           // pay_currency: pay_currency || 'btc',
           pay_currency: 'usdc',
           order_id: subscription.id,
           order_description: `${plan.display_name} - ${billing_period} subscription`,
-          // ipn_callback_url: `${process.env.BACKEND_URL}/payments/crypto/webhook`,
-          ipn_callback_url: `https://61e085a77a50.ngrok-free.app/payments/crypto/webhook`,
+          ipn_callback_url: `${process.env.BACKEND_URL}/payments/crypto/webhook`,
+          // ipn_callback_url: `https://61e085a77a50.ngrok-free.app/payments/crypto/webhook`,
           // ipn_callback_url: "https://webhook.site/050d6a84-c4da-463d-9fb4-35cc87be0180",
           success_url: success_url,
           cancel_url: cancel_url,
