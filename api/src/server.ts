@@ -21,7 +21,7 @@ import revisionsController from './controllers/revisions';
 import shareController from './controllers/share';
 import fetchChainController from './controllers/fetch-chain';
 import templatesController from './controllers/templates';
-import {setUpSystemTemplates} from './utils/api_utils';
+import {setupPaymentPlans, setUpSystemTemplates} from './utils/api_utils';
 import systemController from './controllers/system';
 import webSocketController from './controllers/websocketController';
 import notificationsController from './controllers/notifications';
@@ -87,6 +87,9 @@ function buildServer() {
 
     // reister system templates ie cheque, identity and attestation
     setUpSystemTemplates();
+
+    // Setup payment plans
+    setupPaymentPlans()
 
 
     let corsAllowedOrigins = process.env.ALLOWED_CORS ? [process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()), ...ensureDomainViewForCors(process.env.FRONTEND_URL)] : [

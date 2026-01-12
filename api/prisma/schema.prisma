@@ -327,7 +327,7 @@ model ENSName {
 // ============================================================================
 
 model SubscriptionPlan {
-  id                   String         @id @default(uuid())
+  id                   String         @id
   name                 String         @unique // "Free", "Pro", "Enterprise"
   display_name         String // "Free Plan", "Professional Plan"
   description          String?
