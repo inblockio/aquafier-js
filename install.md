@@ -22,7 +22,7 @@ We will be using docker to run the aquafier  instance.
 
 ## Clear/Prune Unused images
 
-To clear unused images run `sudo docker image prune -a`
-To clear unused volumes run `sudo docker volume prune`
+To clear unused images run `sudo docker image prune -a`.
+To clear unused volumes run `sudo docker volume prune`.
 
-To cleare everything that is dangling and unused run `sudo docker system prune -a`
+To cleare everything that is dangling and unused run `sudo docker system prune -a`.

@@ -28,6 +28,11 @@ export default async function adminController(fastify: FastifyInstance) {
         }
     });
 
+    fastify.get('/admin/check', async (request, reply) => {
+        // If we reach here, the preHandler has already verified the user is an admin
+        return reply.send({ isAdmin: true });
+    });
+
     fastify.get('/admin/data/:type', async (request, reply) => {
         const { type } = request.params as { type: string };
         const { page = 1, limit = 20 } = request.query as { page?: number, limit?: number };

@@ -7,7 +7,6 @@ import {
     ChevronLeft, 
     ChevronRight, 
     ArrowLeft,
-    Search,
     RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -44,7 +43,7 @@ const AdminEntityList = () => {
 
     const columnsMap: Record<string, Column[]> = {
         users: [
-            { key: 'index', label: '#', render: (val, row, rowIndex) => (pagination.page - 1) * pagination.limit + rowIndex + 1 },
+            { key: 'index', label: '#', render: (_val, _row, rowIndex) => (pagination.page - 1) * pagination.limit + rowIndex + 1 },
             { key: 'address', label: 'Wallet Address', render: (val) => <span title={val} className="font-mono text-xs">{formatAddress(val)}</span> },
             { key: 'email', label: 'Email' },
             { key: 'ens_name', label: 'ENS Name' },
@@ -52,7 +51,7 @@ const AdminEntityList = () => {
             { key: 'updatedAt', label: 'Last Active', render: formatDate },
         ],
         contracts: [
-            { key: 'index', label: '#', render: (val, row, rowIndex) => (pagination.page - 1) * pagination.limit + rowIndex + 1 },
+            { key: 'index', label: '#', render: (_val, _row, rowIndex) => (pagination.page - 1) * pagination.limit + rowIndex + 1 },
             { key: 'hash', label: 'Contract Hash', render: (val) => <span title={val} className="font-mono text-xs">{formatAddress(val)}</span> },
             { key: 'file_name', label: 'File Name', render: (val) => <span className="font-medium text-slate-700">{val || 'Untitled'}</span> },
             { key: 'sender', label: 'Sender', render: (val) => <span title={val} className="font-mono text-xs">{formatAddress(val)}</span> },
@@ -60,14 +59,14 @@ const AdminEntityList = () => {
             { key: 'created_at', label: 'Created At', render: formatDate },
         ],
         revisions: [
-            { key: 'index', label: '#', render: (val, row, rowIndex) => (pagination.page - 1) * pagination.limit + rowIndex + 1 },
+            { key: 'index', label: '#', render: (_val, _row, rowIndex) => (pagination.page - 1) * pagination.limit + rowIndex + 1 },
             { key: 'pubkey_hash', label: 'Revision Hash', render: (val) => <span title={val} className="font-mono text-xs">{formatAddress(val)}</span> },
             { key: 'revision_type', label: 'Type' },
             { key: 'has_content', label: 'Has Content', render: (val: boolean) => val ? <span className="text-green-600">Yes</span> : <span className="text-slate-400">No</span> },
             { key: 'createdAt', label: 'Created At', render: formatDate },
         ],
         files: [
-            { key: 'index', label: '#', render: (val, row, rowIndex) => (pagination.page - 1) * pagination.limit + rowIndex + 1 },
+            { key: 'index', label: '#', render: (_val, _row, rowIndex) => (pagination.page - 1) * pagination.limit + rowIndex + 1 },
             { key: 'file_hash', label: 'File Hash', render: (val) => <span title={val} className="font-mono text-xs">{formatAddress(val)}</span> },
             { key: 'file_location', label: 'Location' },
             { key: 'createdAt', label: 'Created At', render: formatDate },

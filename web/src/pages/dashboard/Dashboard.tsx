@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import  { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useStore } from 'zustand';
 import appStore from '@/store';
@@ -8,7 +8,6 @@ import {
     GitBranch, 
     Files, 
     Activity, 
-    Bell, 
     PenTool, 
     Database, 
     RefreshCw,

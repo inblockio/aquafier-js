@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, useSidebar } from '@/components/ui/sidebar'
 import CustomNavLink from './ui/CustomNavLink'
-import { Contact, FileText, LayoutDashboard, LayoutTemplate, Link, Link2, Settings, Share2, Star, User, Workflow, CreditCard, Receipt, DollarSign } from 'lucide-react'
+import { Contact, FileText, LayoutDashboard, LayoutTemplate, Link, Link2, Settings, Share2, Star, User, Workflow, CreditCard, Receipt, DollarSign, Shield } from 'lucide-react'
 import { maxUserFileSizeForUpload } from '@/utils/constants'
 import { formatBytes } from '@/utils/functions'
 import { useStore } from 'zustand'
@@ -11,7 +11,7 @@ import appStore from '@/store'
 import { WebConfig } from '@/types/types'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-      const { setOpenDialog, webConfig, session , filesStats} = useStore(appStore)
+      const { setOpenDialog, webConfig, session, filesStats, isAdmin } = useStore(appStore)
 
       const [webConfigData, setWebConfigData] = useState<WebConfig>(webConfig)
       // const [usedStorage, _setUsedStorage] = useState<number>(0)
@@ -112,7 +112,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   id: '/ens_resolver',
             },
             {
-                  label: 'Dashboard',
+                  label: 'User Dashboard',
                   icon: LayoutDashboard,
                   id: '/dashboard',
             },
@@ -210,6 +210,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                           />
                                     </div>
                               </div>
+
+                              {/* Admin Section */}
+                              {isAdmin && (
+                                    <div className="mt-8">
+                                          <div className="flex items-center justify-between mb-3">
+                                                <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Admin</h3>
+                                          </div>
+                                          <div className="space-y-2">
+                                                <CustomNavLink
+                                                      item={{ label: 'Admin Dashboard', icon: Shield, id: '/app/admin/dashboard' }}
+                                                      index={20}
+                                                      callBack={() => {
+                                                            const isMobileView = window.innerWidth < 768
+                                                            if (isMobileView) {
+                                                                  toggleSidebar()
+                                                            }
+                                                      }}
+                                                />
+                                          </div>
+                                    </div>
+                              )}
 
                               {/* Billing & Subscription */}
                               <div className="mt-8">
