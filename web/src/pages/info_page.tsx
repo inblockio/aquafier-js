@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import JSZip from 'jszip'
 import { getGenesisHash, getAquaTreeFileName, ensureDomainUrlHasSSL, isValidUrl } from '../utils/functions'
 import { ApiFileInfo } from '@/models/FileInfo'
+import WorkspaceDialogUI from '@/components/workspace_download_dialog_ui'
 
 
 const InfoPage = () => {
@@ -31,7 +32,7 @@ const InfoPage = () => {
       const [isDownloading, setIsDownloading] = useState(false)
       // const [isOperationOpen, setIsOperationOpen] = useState(false)
       // const [operationMessage, setOperationMessage] = useState('')
-      const [operationProgress, setOperationProgress] = useState(0)
+      const [_operationProgress, setOperationProgress] = useState(0)
       // const [operationFileName, setOperationFileName] = useState('')
 
       const fetchVersionDetails = async () => {
