@@ -204,6 +204,9 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
 
             //create aqua.json
             const aquaObject: AquaJsonInZip = {
+                  type: "aqua_file_backup",
+                        version: "1.0.0",
+                        createdAt: new Date().toISOString(),
                   genesis: mainAquaFileName,
                   name_with_hash: nameWithHashes,
             }
