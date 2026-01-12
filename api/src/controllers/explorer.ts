@@ -9,9 +9,13 @@ import * as fs from "fs"
 import {
     deleteAquaTreeFromSystem,
     fetchAquatreeFoUser,
+    getAquaFiles,
     getUserApiFileInfo,
+    isWorkFlowData,
+    processAllAquaFiles,
     processAquaFiles,
     processAquaMetadata,
+    processRegularFiles,
     saveAquaTree,
     transferRevisionChainData
 } from '../utils/revisions_utils';
@@ -19,10 +23,11 @@ import { getHost, getPort } from '../utils/api_utils';
 import { DeleteRevision } from '../models/request_models';
 import { getGenesisHash, removeFilePathFromFileIndex, validateAquaTree } from '../utils/aqua_tree_utils';
 // import { systemTemplateHashes } from '../models/constants';
-import { saveAttestationFileAndAquaTree } from '../utils/server_utils';
+import { dummyCredential, getServerWalletInformation, saveAttestationFileAndAquaTree } from '../utils/server_utils';
 import Logger from "../utils/logger";
 import { sendNotificationReloadToWallet } from './websocketController2';
 import { createNotificationAndSendWebSocketNotification } from '../utils/notification_utils';
+import { systemTemplateHashes } from '../models/constants';
 // import { saveAquaFile } from '../utils/server_utils';
 // import getStream from 'get-stream';
 // Promisify pipeline
@@ -84,6 +89,30 @@ export default async function explorerController(fastify: FastifyInstance) {
             const fileBuffer = await streamToBuffer(data.file);
             const zip = new JSZip();
             const zipData = await zip.loadAsync(fileBuffer);
+
+
+            if (!zipData.files['aqua.json']) {
+
+                return reply.code(400).send({ error: 'Invalid ZIP file: Missing aqua.json' });
+
+            }
+
+            let aquaJsonContent = await zipData.files['aqua.json'].async("string");
+
+            if (!aquaJsonContent) {
+                return reply.code(400).send({ error: 'Invalid aqua.json content' });
+            }
+
+            let aquaJson = JSON.parse(aquaJsonContent);
+
+            if (aquaJson.type !== "aqua_workspace_backup" && aquaJson.type !== "aqua_file_backup") {
+                return reply.code(400).send({ error: 'Invalid aqua.json type' });
+
+            }
+
+            if (aquaJson.type !== "aqua_file_backup") {
+                return reply.code(400).send({ error: 'Invalid aqua.json type for workspace upload' });
+            }
 
             // Process aqua.json metadata first
             await processAquaMetadata(zipData, session.address);
@@ -217,10 +246,6 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             // Handle the asset if it exists
             if (hasAsset && assetBuffer) {
-                // Process the asset - this depends on your requirements
-                // For example, you might want to store it separately or attach it to the aqua tree
-                // aquaTreeWithFileObject.assetData = assetBuffer.toString('base64');
-                // Or handle the asset in some other way based on your application's needs
 
                 let aquafier = new Aquafier()
 
@@ -348,6 +373,48 @@ export default async function explorerController(fastify: FastifyInstance) {
                     return reply.code(500).send({ error: `Asset is required , not found in system -- hasAsset ${hasAsset} -- assetBuffer ${assetBuffer}` });
                 }
             }
+
+            //Aqua sign workflow needs to be signed by the server
+            let workflowDataResponse = isWorkFlowData(aquaTree, systemTemplateHashes)
+            const workflowName = workflowDataResponse.workFlow.replace(".json", "")
+
+            if (workflowDataResponse.isWorkFlow && workflowName === "aqua_sign") {
+                const aquafier = new Aquafier()
+
+                const serverWalletInformation = await getServerWalletInformation()
+
+                if (!serverWalletInformation) {
+
+                    Logger.error("Server wallet information is not defined");
+
+                    return reply.code(500).send({ error: "Server wallet information is not defined, server cannot sign" });
+
+                }
+
+                const creds = dummyCredential()
+                creds.mnemonic = serverWalletInformation.mnemonic
+                const linkedAquaTree = aquaTree
+                const aquaTreeWrapper: AquaTreeWrapper = {
+                    aquaTree: linkedAquaTree!,
+                    fileObject: undefined,// not needed for signing
+                    revision: ""
+                }
+                const signAquaTreeResult = await aquafier.signAquaTree(aquaTreeWrapper, "cli", creds)
+
+                if (signAquaTreeResult.isErr()) {
+                    Logger.error(`Error signing aqua tree ${signAquaTreeResult.data}`)
+                    return null;
+                }
+
+                if (signAquaTreeResult.data.aquaTree == null) {
+                    Logger.error(`Signed aqua tree is null ${signAquaTreeResult.data}`)
+
+                    return reply.code(500).send({ error: "Server wallet information is not defined, server cannot sign" });
+
+                }
+                aquaTree = signAquaTreeResult.data.aquaTree
+                // const signedAttestation = signAquaTreeResult.data.aquaTree
+            }
             // Save the aqua tree
             Logger.info(`  Save the aqua tree templateId :  ${templateId} , aquaTree : ${aquaTree} , isWorkFlow :  ${isWorkFlow + ""} in explorer_aqua_file_upload ()`)
             await saveAquaTree(aquaTree, walletAddress, templateId.length == 0 ? null : templateId, isWorkFlow);
@@ -399,7 +466,7 @@ export default async function explorerController(fastify: FastifyInstance) {
     });
 
     // get file using file hash with pagination
-    fastify.get('/explorer_files', async (request, reply) => {
+   fastify.get('/explorer_files', async (request, reply) => {
         // file content from db
         // return as a blob
 
@@ -443,6 +510,131 @@ export default async function explorerController(fastify: FastifyInstance) {
             ...paginatedData
         });
 
+    });
+
+
+    fastify.get('/explorer_workspace_download', async (request, reply) => {
+    // Read `nonce` from headers
+        const nonce = request.headers['nonce']; // Headers are case-insensitive
+
+        // Check if `nonce` is missing or empty
+        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+        }
+
+        const session = await prisma.siweSession.findUnique({
+            where: { nonce }
+        });
+
+        if (!session) {
+            return reply.code(403).send({ success: false, message: "Nonce is invalid" });
+        }
+
+        // Get the host from the request headers
+        const host = request.headers.host || `${getHost()}:${getPort()}`;
+
+        // Get the protocol (http or https)
+        const protocol = request.protocol || 'https'
+
+        // Construct the full URL
+        const url = `${protocol}://${host}`;
+
+
+        // Extract pagination parameters from query string
+        const query = request.query as Record<string, string | undefined>;
+        const page = 1; //parseInt(query.page ?? Number, 10) || 1;
+        const limit =Number.MAX_SAFE_INTEGER ; //parseInt(query.limit ?? '10', 10) || 10;
+     
+         const paginatedData = await getUserApiFileInfo(url, session.address, page, limit)
+        // console.log(JSON.stringify(paginatedData, null, 4))
+        // throw new Error("test")
+        return reply.code(200).send({
+            success: true,
+            message: 'Aqua tree saved successfully',
+            ...paginatedData
+        });
+      
+    });
+    fastify.post('/explorer_workspace_upload', async (request, reply) => {
+        // Reuse logic from /explorer_aqua_zip
+         try {
+            const nonce = request.headers['nonce'];
+            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+            }
+
+            const session = await prisma.siweSession.findUnique({ where: { nonce } });
+            if (!session) {
+                return reply.code(403).send({ success: false, message: "Nonce is invalid" });
+            }
+
+            if (!request.isMultipart()) {
+                return reply.code(400).send({ error: 'Expected multipart form data' });
+            }
+
+            const data = await request.file();
+            if (!data?.file) {
+                return reply.code(400).send({ error: 'No file uploaded' });
+            }
+
+            const maxFileSize = 200 * 1024 * 1024;
+            if (data.file.bytesRead > maxFileSize) {
+                return reply.code(413).send({ error: 'File too large. Maximum file size is 200MB' });
+            }
+
+            const fileBuffer = await streamToBuffer(data.file);
+            const zip = new JSZip();
+            const zipData = await zip.loadAsync(fileBuffer);
+
+
+            if (!zipData.files['aqua.json']) {
+                return reply.code(400).send({ error: 'Invalid ZIP file: Missing aqua.json' });
+            }
+
+            let aquaJsonContent = await zipData.files['aqua.json'].async("string");
+
+            if (!aquaJsonContent) {
+                return reply.code(400).send({ error: 'Invalid aqua.json content' });
+            }
+
+            let aquaJson = JSON.parse(aquaJsonContent);
+
+            if (aquaJson.type !== "aqua_workspace_backup" && aquaJson.type !== "aqua_file_backup") {
+                return reply.code(400).send({ error: 'Invalid aqua.json type' });
+
+            }
+
+            if (aquaJson.type !== "aqua_workspace_backup") {
+                return reply.code(400).send({ error: 'Invalid aqua.json type for workspace upload' });
+            }
+         
+// Process aqua.json metadata first
+            await processAquaMetadata(zipData, session.address);
+            
+
+            let userAddress= session.address;
+           try {
+          
+          
+                  await processAllAquaFiles(zipData, userAddress, null, null, null, false);
+              } catch (error: any) {
+                  Logger.error('Error processing aqua files:', error);
+          
+                  const aquaFiles = getAquaFiles(zipData);
+                  await processRegularFiles(aquaFiles, userAddress, null, false);
+              }
+
+            return reply.code(200).send({
+                success: true,
+                message: 'Workspace imported successfully'
+            });
+
+        } catch (error: any) {
+            request.log.error(error);
+            return reply.code(500).send({
+                error: error instanceof Error ? error.message : 'File upload failed'
+            });
+        }
     });
 
     fastify.post('/explorer_files', async (request, reply) => {

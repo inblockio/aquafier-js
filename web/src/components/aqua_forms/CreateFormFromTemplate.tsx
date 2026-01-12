@@ -1147,10 +1147,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   await triggerWorkflowReload(RELOAD_KEYS.contacts);
             }
 
-            // Do navigation here
+            // Do navigation here for aqua_sign
             if (selectedTemplate.name === "aqua_sign") {
                   let apiFileInfoFromSystem = await loadThisTreeFromSystem(signedAquaTree)
-                  if(apiFileInfoFromSystem){
+                  if (apiFileInfoFromSystem) {
                         setSelectedFileInfo(apiFileInfoFromSystem)
                         navigate('/app/pdf/workflow')
                   }
@@ -1358,14 +1358,22 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         aquafier
                   )
 
-                  // Step 11: Sign aqua tree
-                  const signedAquaTree = await signAquaTree(aquaTreeData, fileObject, aquafier)
 
 
-                  clearSignature()
+                  if (selectedTemplate?.name !== 'aqua_sign') {
+                        // Step 11: Sign aqua tree
+                        const signedAquaTree = await signAquaTree(aquaTreeData, fileObject, aquafier)
+                        clearSignature()
 
-                  // Step 12: Handle post-signing actions
-                  await handlePostSigning(signedAquaTree, fileObject, finalFormDataFiltered, selectedTemplate, session, selectedFileInfo)
+                        // Step 12: Handle post-signing actions
+                        await handlePostSigning(signedAquaTree, fileObject, finalFormDataFiltered, selectedTemplate, session, selectedFileInfo)
+                  } else {
+                        await handlePostSigning(aquaTreeData, fileObject, finalFormDataFiltered, selectedTemplate, session, selectedFileInfo)
+
+                  }
+                  // aqua sign signing happen in the server 
+
+
 
 
             } catch (error: any) {
@@ -1742,9 +1750,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             const fields = reorderInputFields(selectedTemplate!.fields)
             const documentField = fields.find(f => f.type === 'document')
             const otherFields = fields.filter(f => f.type !== 'document')
-            
+
             // Check if user has added themselves to signers
-            const userInSigners = multipleAddresses.some(addr => 
+            const userInSigners = multipleAddresses.some(addr =>
                   addr.toLowerCase() === session?.address?.toLowerCase()
             )
 
@@ -1753,22 +1761,20 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         {/* Step indicator */}
                         <div className="flex items-center justify-center mb-6">
                               <div className="flex items-center gap-2">
-                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                                          aquaSignStep === 1 
-                                                ? 'bg-blue-600 text-white' 
+                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${aquaSignStep === 1
+                                                ? 'bg-blue-600 text-white'
                                                 : 'bg-green-500 text-white'
-                                    }`}>
+                                          }`}>
                                           {aquaSignStep === 1 ? '1' : '✓'}
                                     </div>
                                     <span className={`text-sm ${aquaSignStep === 1 ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
                                           Select Document
                                     </span>
                                     <div className="w-12 h-0.5 bg-gray-300 mx-2" />
-                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                                          aquaSignStep === 2 
-                                                ? 'bg-blue-600 text-white' 
+                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${aquaSignStep === 2
+                                                ? 'bg-blue-600 text-white'
                                                 : 'bg-gray-300 text-gray-600'
-                                    }`}>
+                                          }`}>
                                           2
                                     </div>
                                     <span className={`text-sm ${aquaSignStep === 2 ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
@@ -1785,7 +1791,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           <p className="text-sm text-gray-500 mt-1">Upload the document that requires signatures</p>
                                     </div>
                                     {renderSingleField(documentField, 0)}
-                                    
+
                                     <div className="flex justify-end pt-4">
                                           <Button
                                                 type="button"
@@ -1799,7 +1805,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                 }}
                                                 className="bg-blue-600 hover:bg-blue-700 text-white px-6"
                                                 disabled={!formData['document']}
-                                         >
+                                          >
                                                 Go to Add signers
                                           </Button>
                                     </div>
@@ -1818,22 +1824,22 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           <Alert className="border-amber-200 bg-amber-50">
                                                 <AlertCircle className="h-4 w-4 text-amber-600" />
                                                 <AlertDescription className="text-amber-800">
-                                                      
+
                                                       You haven't added yourself as a signer. If you need to sign this document, add your wallet address to the signers list.
-                                               <Button onClick={() => {
-                                                if(session){
-                                                      setMultipleAddresses( curr => [...curr, session?.address])
-                                                }
-                                               }}>
-                                                      Add Yourself
-                                                </Button>
+                                                      <Button onClick={() => {
+                                                            if (session) {
+                                                                  setMultipleAddresses(curr => [...curr, session?.address])
+                                                            }
+                                                      }}>
+                                                            Add Yourself
+                                                      </Button>
                                                 </AlertDescription>
                                           </Alert>
                                     )}
 
                                     {otherFields.map((field, idx) => renderSingleField(field, idx))}
                                     {/* Warning if user hasn't added themselves */}
-                                    
+
                                     <div className="flex justify-between pt-4">
                                           <Button
                                                 type="button"
@@ -2046,10 +2052,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
                                           <div className="space-y-4 sm:space-y-6">
                                                 {/* Use multi-step form for aqua_sign, default rendering for others */}
-                                                {isAquaSignTemplate 
+                                                {isAquaSignTemplate
                                                       ? renderAquaSignForm()
                                                       : selectedTemplate
-                                                            ? reorderInputFields(selectedTemplate.fields).map((field, fieldIndex) => 
+                                                            ? reorderInputFields(selectedTemplate.fields).map((field, fieldIndex) =>
                                                                   renderSingleField(field, fieldIndex)
                                                             )
                                                             : null

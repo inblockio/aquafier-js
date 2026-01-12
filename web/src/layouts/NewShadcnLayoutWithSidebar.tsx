@@ -7,7 +7,7 @@ import appStore from '../store'
 import { Crown, X } from 'lucide-react'
 import { Outlet } from 'react-router-dom'
 import { Toaster } from 'sonner'
-import { useStore } from 'zustand'
+import { useStore } from 'zustand' 
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Button } from '../components/ui/button'
 import CreateFormFromTemplate from '../components/aqua_forms/CreateFormFromTemplate'
@@ -21,6 +21,7 @@ import { getAquaTreeFileName } from '@/utils/functions'
 import { IDrawerStatus } from '@/models/AquaTreeDetails'
 import { useState } from 'react'
 import { RELOAD_KEYS, triggerWorkflowReload } from '../utils/reloadDatabase';
+import WorkspaceDialogUI from '@/components/workspace_download_dialog_ui'
 export default function NewShadcnLayoutWithSidebar() {
 
       const {
@@ -186,6 +187,14 @@ export default function NewShadcnLayoutWithSidebar() {
                               </div>
 
                               <ScrollArea className="h-full">
+
+                                     {openDialog?.dialogType === 'explorer_workspace_download' && (
+                                          <WorkspaceDialogUI
+                                                isDone={function (): void {
+                                                      setOpenDialog(null)
+                                                }}
+                                          />)}
+
                                     {openDialog?.dialogType === 'form_template_editor' && (
                                           <FormTemplateEditorShadcn
                                                 onSave={function (): void {

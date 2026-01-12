@@ -26,7 +26,9 @@ export interface AquaJsonNameWithHash {
       hash: string
 }
 export interface AquaJsonManifestFileInZip {
-
+      type: "aqua_workspace_backup" | "aqua_file_backup",
+      version: string,
+      createdAt: string,
       genesis: string,
       name_with_hash: Array<AquaJsonNameWithHash>
 
@@ -51,6 +53,9 @@ export interface WebConfig {
       CUSTOM_NAME?: string
       CUSTOM_DESCRIPTION?: string
       AUTH_PROVIDER?: "wallet_connect" | "metamask"
+      ENABLE_CRYPTO_PAYMENTS?: boolean
+      ENABLE_STRIPE_PAYMENTS?: boolean
+      DEFAULT_PAYMENT_METHOD?: "CRYPTO" | "STRIPE"
 }
 export interface DNSProof {
       walletAddress: string;
@@ -105,7 +110,7 @@ export interface FilesListProps {
 }
 
 export interface OpenDialog {
-      dialogType: 'share_dialog' | 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'dba_claim' | 'aqua_sign' | 'identity_attestation' | 'early_bird_offer' | 'user_signature' | 'email_claim' | 'phone_number_claim',//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'
+      dialogType: 'share_dialog' | 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'dba_claim' | 'aqua_sign' | 'identity_attestation' | 'early_bird_offer' | 'user_signature' | 'email_claim' | 'phone_number_claim' | 'explorer_workspace_download',//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'
       isOpen: boolean
       onClose: () => void
       onConfirm: (data: any) => void
@@ -371,7 +376,7 @@ export interface ICompleteClaimInformation {
 
 export interface IUserStats {
       filesCount: number,
-      storageUsed : number,
+      storageUsed: number,
       claimTypeCounts: {
             aqua_files: number,
             access_agreement: number,
