@@ -1963,7 +1963,7 @@ async function deletLatestIfExistsForAquaTree(aquaTree: AquaTree, userAddress: s
     }
 }
 
-async function processAllAquaFiles(
+export async function processAllAquaFiles(
     zipData: JSZip,
     userAddress: string,
     templateId: string | null,
@@ -1986,7 +1986,7 @@ async function processAllAquaFiles(
     }
 }
 
-async function processWorkflowFiles(
+export async function processWorkflowFiles(
     aquaFiles: Array<{ fileName: string; file: JSZip.JSZipObject }>,
     genesisFileName: string,
     userAddress: string,
@@ -2007,7 +2007,7 @@ async function processWorkflowFiles(
     }
 }
 
-async function processRegularFiles(
+export async function processRegularFiles(
     aquaFiles: Array<{ fileName: string; file: JSZip.JSZipObject }>,
     userAddress: string,
     templateId: string | null,
@@ -2030,13 +2030,13 @@ async function processRegularFiles(
 
 
 
-function getAquaFiles(zipData: JSZip): Array<{ fileName: string; file: JSZip.JSZipObject }> {
+export function getAquaFiles(zipData: JSZip): Array<{ fileName: string; file: JSZip.JSZipObject }> {
     return Object.entries(zipData.files)
         .filter(([fileName]) => fileName.endsWith(".aqua.json") && fileName !== 'aqua.json')
         .map(([fileName, file]) => ({ fileName, file }));
 }
 
-async function parseAquaFile(file: JSZip.JSZipObject): Promise<AquaTree> {
+export async function parseAquaFile(file: JSZip.JSZipObject): Promise<AquaTree> {
     const fileContent = await file.async('text');
     return JSON.parse(fileContent);
 }
