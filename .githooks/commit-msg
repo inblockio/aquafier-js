@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# Colors for output
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+echo "Checking commit message spelling..."
+
+# The commit message file is passed as the first argument
+COMMIT_MSG_FILE=$1
+
+if [ ! -f "$COMMIT_MSG_FILE" ]; then
+    echo -e "${RED}Error: Commit message file not found!${NC}"
+    exit 1
+fi
+
+# Check if cspell is installed
+if ! command -v cspell &> /dev/null; then
+    echo -e "${RED}Error: cspell is not installed!${NC}"
+    echo -e "${YELLOW}Install it with: npm install -g cspell${NC}"
+    exit 1
+fi
+
+# Read the commit message
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+echo ""
+echo -e "${YELLOW}Commit message:${NC}"
+echo "\"$COMMIT_MSG\""
+echo ""
+
+# Check spelling of commit message with detailed output
+SPELLING_OUTPUT=$(cspell stdin --no-summary --no-progress 2>&1 <<< "$COMMIT_MSG")
+
+if [ ! -z "$SPELLING_OUTPUT" ]; then
+    echo -e "${RED}❌ Spelling errors found:${NC}"
+    echo "$SPELLING_OUTPUT"
+    echo ""
+    echo -e "${YELLOW}Misspelled words detected. Options:${NC}"
+    echo -e "${YELLOW}1. Fix the spelling in your commit message${NC}"
+    echo -e "${YELLOW}2. Add technical terms to .cspell.json if they're correct${NC}"
+    echo -e "${YELLOW}3. Bypass with: git commit --no-verify${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✓ Commit message spelling check passed!${NC}"
+exit 0

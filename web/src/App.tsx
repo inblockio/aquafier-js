@@ -25,7 +25,7 @@ import ClaimsAndAttestationPage from './pages/claim_and_attestation'
 import ClaimsWorkflowPageV2 from './pages/v2_claims_workflow/claimsWorkflowPage'
 // Import appkit config to initialize AppKit at module level
 // import './config/appkit'
-
+ 
 import { WebConfig } from './types/types'
 import * as Sentry from "@sentry/react";
 import { init as initApm } from '@elastic/apm-rum'
