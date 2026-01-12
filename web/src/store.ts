@@ -20,6 +20,7 @@ type AppStoreState = {
             witness_contract_address: string | null
       }
       session: Session | null
+      isAdmin: boolean
       files: ApiFileInfoState,
       filesStats: IUserStats,
       workflows: ApiFileInfoState,
@@ -49,6 +50,7 @@ type AppStoreState = {
 type AppStoreActions = {
       setUserProfile: (config: AppStoreState['user_profile']) => void
       setSession: (config: AppStoreState['session']) => void
+      setIsAdmin: (isAdmin: boolean) => void
       setMetamaskAddress: (address: AppStoreState['metamaskAddress']) => void
       setAvatar: (avatar: AppStoreState['avatar']) => void
       setFiles: (files: AppStoreState['files']) => void
@@ -146,6 +148,7 @@ const appStore = createStore<TAppStore>()(
                   // Initial state
                   user_profile: USER_PROFILE_DEFAULT,
                   session: null,
+                  isAdmin: false,
                   files: {
                         fileData: [],
                         status: 'idle',
@@ -189,6 +192,7 @@ const appStore = createStore<TAppStore>()(
                   // Actions
                   setUserProfile: config => set({ user_profile: config }),
                   setSession: session => set({ session: session }),
+                  setIsAdmin: (isAdmin: boolean) => set({ isAdmin: isAdmin }),
                   setMetamaskAddress: (address: AppStoreState['metamaskAddress']) => set({ metamaskAddress: address }),
                   setAvatar: (avatar: AppStoreState['avatar']) => set({ avatar: avatar }),
                   setFiles: (files: AppStoreState['files']) => set({ files: files }),

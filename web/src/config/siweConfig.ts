@@ -156,6 +156,7 @@ export const siweConfig = createSIWEConfig({
       store.setMetamaskAddress(null)
       store.setAvatar(undefined)
       store.setSession(null)
+      store.setIsAdmin(false)
       store.setFiles({
         fileData: [],
         status: 'idle',
