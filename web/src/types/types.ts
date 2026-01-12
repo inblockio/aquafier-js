@@ -53,6 +53,9 @@ export interface WebConfig {
       CUSTOM_NAME?: string
       CUSTOM_DESCRIPTION?: string
       AUTH_PROVIDER?: "wallet_connect" | "metamask"
+      ENABLE_CRYPTO_PAYMENTS?: boolean
+      ENABLE_STRIPE_PAYMENTS?: boolean
+      DEFAULT_PAYMENT_METHOD?: "CRYPTO" | "STRIPE"
 }
 export interface DNSProof {
       walletAddress: string;

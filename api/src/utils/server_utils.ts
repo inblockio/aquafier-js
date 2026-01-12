@@ -1,15 +1,15 @@
-import Aquafier, {AquaTree, CredentialsData} from "aqua-js-sdk";
-import {ethers,} from "ethers";
-import {ServerWalletInformation} from "../models/types";
-import {getFileUploadDirectory} from "./file_utils";
+import Aquafier, { AquaTree, CredentialsData } from "aqua-js-sdk";
+import { ethers, } from "ethers";
+import { ServerWalletInformation } from "../models/types";
+import { getFileUploadDirectory } from "./file_utils";
 import fs from 'fs';
 import path from 'path';
-import {prisma} from "../database/db";
-import {randomUUID} from "crypto";
-import {isWorkFlowData, saveAquaTree} from "./revisions_utils";
-import {serverAttestation} from "./server_attest";
-import {systemTemplateHashes} from "../models/constants";
-import {getGenesisHash} from "./aqua_tree_utils";
+import { prisma } from "../database/db";
+import { randomUUID } from "crypto";
+import { isWorkFlowData, saveAquaTree } from "./revisions_utils";
+import { serverAttestation } from "./server_attest";
+import { systemTemplateHashes } from "../models/constants";
+import { getGenesisHash } from "./aqua_tree_utils";
 import Logger from "./logger";
 
 
@@ -35,16 +35,16 @@ export function getRandomNumber(min: number, max: number): number | null {
 }
 
 
-export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesisHashOfFile: string, walletAddress: string) :Promise<{
-    aquaTree : AquaTree,
-    attestationJSONfileData : Object, 
-    attestationJSONfileName : string
+export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesisHashOfFile: string, walletAddress: string): Promise<{
+    aquaTree: AquaTree,
+    attestationJSONfileData: Object,
+    attestationJSONfileName: string
 } | null> {
 
     // Logic to check and attest an aquatree if its a phone number claim or email_claim
     let workflowDataResponse = isWorkFlowData(aquaTree, systemTemplateHashes)
     const workflowName = workflowDataResponse.workFlow.replace(".json", "")
-    
+
     // throw new Error(`workflowDataResponse ${JSON.stringify(workflowDataResponse)}`)
     if (workflowDataResponse.isWorkFlow && (workflowName.includes("phone_number_claim") || workflowName.includes("email_claim"))) {
         let serverAttestationInfo = await serverAttestation(genesisHashOfFile, walletAddress, workflowName as "email_claim" | "phone_number_claim")
@@ -77,7 +77,7 @@ export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesis
             }
 
             let existingFileIndex = await prisma.fileIndex.findFirst({
-                where: {file_hash: fileHash},
+                where: { file_hash: fileHash },
             });
 
             // Create unique filename
@@ -99,7 +99,7 @@ export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesis
                 Logger.info(`Update file index counter`)
 
                 await prisma.fileIndex.update({
-                    where: {file_hash: existingFileIndex.file_hash},
+                    where: { file_hash: existingFileIndex.file_hash },
                     data: {
                         pubkey_hash: [...existingFileIndex.pubkey_hash, filepubkeyhash]//`${session.address}_${genesisHash}`]
                     }
@@ -217,7 +217,7 @@ export async function getServerWalletInformation(): Promise<ServerWalletInformat
             publicKey
         };
     } catch (error: any) {
-        Logger.error('Error getting server wallet information', {err: error})
+        Logger.error('Error getting server wallet information', { err: error })
         return null;
     }
 }
@@ -236,7 +236,7 @@ export function dummyCredential(): CredentialsData {
 
 
 export async function saveAquaFile(aquaTree: AquaTree, assetBuffer: Buffer, genesisHash: string,
-                                   fileHash: string, fileName: string, filepubkeyhash: string) {
+    fileHash: string, fileName: string, filepubkeyhash: string) {
     const UPLOAD_DIR = getFileUploadDirectory();
 
     const aquafier = new Aquafier();
@@ -288,10 +288,10 @@ export function ensureDomainViewForCors(domain?: string): string[] {
 }
 
 export function isEnsNameOrAddrss(str: string): string {
-    if(str.startsWith("0x")){
+    if (str.startsWith("0x")) {
         return "address"
     }
-    if(str.includes(".")){
+    if (str.includes(".")) {
         return "ens"
     }
     return ""
@@ -314,7 +314,7 @@ export async function getAddressGivenEnsName(ensName: string): Promise<string | 
 
         // Resolve ENS name to address
         const address = await provider.resolveName(ensName);
-        
+
         return address;
 
     } catch (error: any) {

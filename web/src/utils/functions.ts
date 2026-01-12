@@ -156,7 +156,7 @@ export function isAquaTree(content: any): boolean {
       }
       if (isJsonAlready) {
             json = content
-      }else {
+      } else {
             try {
                   json = JSON.parse(content)
             } catch (e) {
@@ -225,8 +225,8 @@ export function getAquatreeObject(content: any): AquaTree {
             return JSON.parse(content)
       }
       return content
-  }
-  
+}
+
 
 export function getAquaTreeFileObject(fileInfo: ApiFileInfo): FileObject | undefined {
       let mainAquaFileName = ''
@@ -320,9 +320,9 @@ export const getWalletClaims = (aquaTemplateNames: string[], files: ApiFileInfo[
                   const genesisHash = getGenesisHash(firstClaim.aquaTree!)
                   const firstRevision = firstClaim.aquaTree!.revisions[genesisHash!]
                   let nameOrEmail = ""
-                  if(firstRevision.forms_name){
+                  if (firstRevision.forms_name) {
                         nameOrEmail = firstRevision.forms_name
-                  }else if(firstRevision.forms_email){
+                  } else if (firstRevision.forms_email) {
                         nameOrEmail = firstRevision.forms_email
                   }
 
@@ -2877,7 +2877,7 @@ export const reorderRevisionsInAquaTree = (aquaTree: AquaTree): string[] => {
 
       const revisions = aquaTree.revisions
       const orderedHashes: string[] = []
-      
+
       // Find genesis revision (one with empty previous_hash)
       let genesisHash: string | null = null
       for (const [hash, revision] of Object.entries(revisions)) {
