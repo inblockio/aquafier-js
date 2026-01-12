@@ -336,6 +336,12 @@ export default async function paymentsController(fastify: FastifyInstance) {
           },
         });
 
+        const BACKEND_URL = process.env.BACKEND_URL
+        let callBackBaseUrl = BACKEND_URL
+        if (!BACKEND_URL?.startsWith("http")) {
+          callBackBaseUrl = `https://${BACKEND_URL}`
+        }
+
         // Create NOWPayments payment
         const payment = await NOWPaymentsService.createPayment({
           price_amount: priceAmount,
@@ -345,7 +351,7 @@ export default async function paymentsController(fastify: FastifyInstance) {
           pay_currency: 'usdc',
           order_id: subscription.id,
           order_description: `${plan.display_name} - ${billing_period} subscription`,
-          ipn_callback_url: `${process.env.BACKEND_URL}/payments/crypto/webhook`,
+          ipn_callback_url: `${callBackBaseUrl}/payments/crypto/webhook`,
           // ipn_callback_url: `https://61e085a77a50.ngrok-free.app/payments/crypto/webhook`,
           // ipn_callback_url: "https://webhook.site/050d6a84-c4da-463d-9fb4-35cc87be0180",
           success_url: success_url,
