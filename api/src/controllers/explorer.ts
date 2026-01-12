@@ -10,6 +10,7 @@ import {
     deleteAquaTreeFromSystem,
     fetchAquatreeFoUser,
     getUserApiFileInfo,
+    isWorkFlowData,
     processAquaFiles,
     processAquaMetadata,
     saveAquaTree,
@@ -19,10 +20,11 @@ import { getHost, getPort } from '../utils/api_utils';
 import { DeleteRevision } from '../models/request_models';
 import { getGenesisHash, removeFilePathFromFileIndex, validateAquaTree } from '../utils/aqua_tree_utils';
 // import { systemTemplateHashes } from '../models/constants';
-import { saveAttestationFileAndAquaTree } from '../utils/server_utils';
+import { dummyCredential, getServerWalletInformation, saveAttestationFileAndAquaTree } from '../utils/server_utils';
 import Logger from "../utils/logger";
 import { sendNotificationReloadToWallet } from './websocketController2';
 import { createNotificationAndSendWebSocketNotification } from '../utils/notification_utils';
+import { systemTemplateHashes } from '../models/constants';
 // import { saveAquaFile } from '../utils/server_utils';
 // import getStream from 'get-stream';
 // Promisify pipeline
@@ -217,10 +219,6 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             // Handle the asset if it exists
             if (hasAsset && assetBuffer) {
-                // Process the asset - this depends on your requirements
-                // For example, you might want to store it separately or attach it to the aqua tree
-                // aquaTreeWithFileObject.assetData = assetBuffer.toString('base64');
-                // Or handle the asset in some other way based on your application's needs
 
                 let aquafier = new Aquafier()
 
@@ -347,6 +345,48 @@ export default async function explorerController(fastify: FastifyInstance) {
                 if (res == null) {
                     return reply.code(500).send({ error: `Asset is required , not found in system -- hasAsset ${hasAsset} -- assetBuffer ${assetBuffer}` });
                 }
+            }
+
+            //Aqua sign workflow needs to be signed by the server
+            let workflowDataResponse = isWorkFlowData(aquaTree, systemTemplateHashes)
+            const workflowName = workflowDataResponse.workFlow.replace(".json", "")
+
+            if (workflowDataResponse.isWorkFlow && workflowName === "aqua_sign") {
+                const aquafier = new Aquafier()
+
+                const serverWalletInformation = await getServerWalletInformation()
+
+                if (!serverWalletInformation) {
+
+                    Logger.error("Server wallet information is not defined");
+
+                    return reply.code(500).send({ error: "Server wallet information is not defined, server cannot sign" });
+
+                }
+
+                const creds = dummyCredential()
+                creds.mnemonic = serverWalletInformation.mnemonic
+                const linkedAquaTree = aquaTree
+                const aquaTreeWrapper: AquaTreeWrapper = {
+                    aquaTree: linkedAquaTree!,
+                    fileObject: undefined,// not needed for signing
+                    revision: ""
+                }
+                const signAquaTreeResult = await aquafier.signAquaTree(aquaTreeWrapper, "cli", creds)
+
+                if (signAquaTreeResult.isErr()) {
+                    Logger.error(`Error signing aqua tree ${signAquaTreeResult.data}`)
+                    return null;
+                }
+
+                if (signAquaTreeResult.data.aquaTree == null) {
+                    Logger.error(`Signed aqua tree is null ${signAquaTreeResult.data}`)
+
+                    return reply.code(500).send({ error: "Server wallet information is not defined, server cannot sign" });
+
+                }
+                aquaTree = signAquaTreeResult.data.aquaTree
+                // const signedAttestation = signAquaTreeResult.data.aquaTree
             }
             // Save the aqua tree
             Logger.info(`  Save the aqua tree templateId :  ${templateId} , aquaTree : ${aquaTree} , isWorkFlow :  ${isWorkFlow + ""} in explorer_aqua_file_upload ()`)
