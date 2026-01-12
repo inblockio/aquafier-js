@@ -5,7 +5,6 @@ import { useSubscriptionStore } from '../../stores/subscriptionStore';
 import {
   fetchCurrentSubscription,
   cancelSubscription,
-  changePlan,
   createStripePortal,
 } from '../../api/subscriptionApi';
 

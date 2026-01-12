@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { HardDrive, FileText, FileContract, Layout, TrendingUp } from 'lucide-react';
+import { HardDrive, FileText, Layout, TrendingUp, File } from 'lucide-react';
 import { useSubscriptionStore } from '../../stores/subscriptionStore';
 import { fetchUsageStats } from '../../api/subscriptionApi';
 
@@ -45,7 +45,7 @@ export default function UsageMetrics() {
       percentage: percentageUsed?.files || 0,
     },
     {
-      icon: FileContract,
+      icon: File,
       label: 'Contracts',
       used: usage?.contracts_count || 0,
       limit: limits?.max_contracts || 0,
