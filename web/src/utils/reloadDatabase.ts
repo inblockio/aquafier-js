@@ -95,7 +95,7 @@ export const RELOAD_KEYS = {
  */
 export const triggerWorkflowReload = async (workflowType: string, watchAll?: boolean) => {
     try {
-        console.log("Workflow type: ", workflowType)
+        // console.log("Workflow type: ", workflowType)
         if (workflowType === 'all') {
             await triggerReload(RELOAD_KEYS.all_files);
             await triggerReload(RELOAD_KEYS.contacts);

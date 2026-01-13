@@ -51,7 +51,7 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
 
                         if (allAquaTrees) {
                               for (const anAquaTreeFileObject of allAquaTrees) {
-                                    console.log("Data ."+JSON.stringify(anAquaTreeFileObject));
+                                 
                                     const anAquaTree: AquaTree = parseAquaTreeContent(anAquaTreeFileObject.fileContent) as AquaTree
                                     if (!anAquaTree || !anAquaTree.revisions) {
                                           toast.error("Error parsing AquaTree from file object.");
