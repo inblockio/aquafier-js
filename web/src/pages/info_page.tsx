@@ -327,6 +327,60 @@ const InfoPage = () => {
                         return
                   }
 
+
+
+
+                  //todo loop through all files that end with .aqua.json
+                  // parse them and check if the files in file index exist in the zip
+                  for (const [decodedName, originalKey] of decodedFileMap.entries()) {
+                        if (decodedName.toLowerCase().endsWith('.aqua.json') && decodedName !== 'aqua.json') {
+                              try {
+                                    const aquaTreeFile = zipContent.file(originalKey)
+                                    if (!aquaTreeFile) continue
+                                    const aquaTreeContent = await aquaTreeFile.async("string")
+
+                                    let aquaTreeJsonContent = aquaTreeContent
+                                    if (aquaTreeContent.includes(',') && /^[\d,\s]+$/.test(aquaTreeContent.substring(0, 100))) {
+                                          console.log(`Detected byte-encoded AquaTree JSON content in ${decodedName}, decoding...`)
+                                          const bytes = aquaTreeContent.split(',').map(b => parseInt(b.trim(), 10))
+                                          aquaTreeJsonContent = String.fromCharCode(...bytes)
+                                          console.log(`Decoded AquaTree JSON content in ${decodedName} (first 200 chars):`, aquaTreeJsonContent.substring(0, 200))
+                                    }
+                                    const aquaTree = JSON.parse(aquaTreeJsonContent)
+                                    if (aquaTree.fileIndex && Array.isArray(aquaTree.fileIndex)) {
+                                          for (const fileEntry of aquaTree.fileIndex) {
+                                                const fileName = fileEntry.fileName
+                                                let fileFound = false
+                                                // First try direct access
+                                                if (zipContent.file(fileName)) {
+                                                      fileFound = true
+                                                }
+                                                // If not found, search in decoded names
+                                                if (!fileFound) {
+                                                      const foundDecodedName = Array.from(decodedFileMap.keys()).find(name =>
+                                                            name === fileName ||
+                                                            (name.toLowerCase().endsWith(fileName.toLowerCase()) && !zipContent.files[decodedFileMap.get(name)!].dir)
+                                                      )
+                                                      if (foundDecodedName) {
+                                                            fileFound = true
+                                                      }
+                                                }
+
+                                                if (!fileFound) {
+                                                      toast.error(`Invalid workspace: File ${fileName} listed in ${decodedName} is missing from ZIP`)
+                                                      if (fileInputRef.current) {
+                                                            fileInputRef.current.value = ''
+                                                      }
+                                                      return
+                                                }
+                                          }
+                                    }
+                              } catch (err) {
+                                    console.error(`Error validating AquaTree file ${decodedName}:`, err)
+                                    toast.error(`Invalid workspace: Failed to validate ${decodedName}`)
+                              }
+                        }
+                  }
                   // Check if all files in name_with_hash exist in the zip
                   const missingFiles: string[] = []
                   const decodedNames = Array.from(decodedFileMap.keys())
