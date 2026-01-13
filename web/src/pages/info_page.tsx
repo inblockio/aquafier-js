@@ -32,7 +32,7 @@ const InfoPage = () => {
       const [isDownloading, setIsDownloading] = useState(false)
       // const [isOperationOpen, setIsOperationOpen] = useState(false)
       // const [operationMessage, setOperationMessage] = useState('')
-      const [_operationProgress, setOperationProgress] = useState(0)
+      const [operationProgress, setOperationProgress] = useState(0)
       // const [operationFileName, setOperationFileName] = useState('')
 
       const fetchVersionDetails = async () => {
@@ -62,6 +62,8 @@ const InfoPage = () => {
                   toast.error("Please connect your wallet first")
                   return
             }
+
+            setIsDownloading(true)
 
             try {
                   // setIsOperationOpen(true)
@@ -170,6 +172,8 @@ const InfoPage = () => {
             } catch (error) {
                   console.error(error)
                   toast.error("Failed to download workspace")
+            } finally {
+                  setIsDownloading(false)
             }
       }
 
@@ -185,6 +189,9 @@ const InfoPage = () => {
                   toast.error("Please connect your wallet first")
                   return
             }
+
+            setIsUploading(true)
+            setOperationProgress(0)
 
             const formData = new FormData()
             formData.append('file', file)
@@ -215,6 +222,7 @@ const InfoPage = () => {
                   console.error(error)
                   toast.error("Failed to upload workspace")
             } finally {
+                  setIsUploading(false)
                   // setIsOperationOpen(false)
                   // setOperationProgress(0)
                   // setOperationFileName('')
@@ -442,9 +450,12 @@ const InfoPage = () => {
 
                   /* Workspace Operation Dialog */
                   {(isUploading || isDownloading) && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="fixed inset-0 bg-white/30 dark:bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
                               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-11/12 max-w-md">
                                     <WorkspaceDialogUI
+                                          title={isUploading ? "Uploading Workspace" : "Downloading Workspace"}
+                                          uploadProgress={operationProgress}
+                                          isUploading={isUploading}
                                           isDone={() => {
                                                 setIsUploading(false)
                                                 setIsDownloading(false)

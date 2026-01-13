@@ -166,6 +166,23 @@ export function isAquaTree(content: any): boolean {
       // Check if content has the properties of an AquaTree
       return json && typeof json === 'object' && 'revisions' in json && 'file_index' in json
 }
+
+export function parseAquaTreeContent(content: any): any {
+      // If content is already an object with revisions, return it
+      if (content && typeof content === 'object' && 'revisions' in content) {
+            return content
+      }
+      // If content is a string, try to parse it
+      if (typeof content === 'string') {
+            try {
+                  return JSON.parse(content)
+            } catch (e) {
+                  console.error('Failed to parse AquaTree content:', e)
+                  return null
+            }
+      }
+      return content
+}
 export function formatCryptoAddress(address?: string, start: number = 10, end: number = 4, message?: string): string {
       if (!address) return message ?? 'NO ADDRESS'
       if (address?.length < start + end) {
