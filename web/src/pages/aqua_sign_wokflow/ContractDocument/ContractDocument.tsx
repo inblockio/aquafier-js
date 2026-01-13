@@ -8,7 +8,7 @@ import {
     OrderRevisionInAquaTree,
     Revision
 } from 'aqua-js-sdk/web'
-import {ensureDomainUrlHasSSL, getAquatreeObject, getHighestFormIndex, isAquaTree, reorderRevisionsInAquaTree} from '../../../utils/functions'
+import {ensureDomainUrlHasSSL, getAquatreeObject, getHighestFormIndex, isAquaTree, parseAquaTreeContent, reorderRevisionsInAquaTree} from '../../../utils/functions'
 
 import {PDFDisplayWithJustSimpleOverlay} from './components/signature_overlay'
 import {toast} from 'sonner'
@@ -45,10 +45,14 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                         const hashSigPositionHashString = selectedFileInfo!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0]
 
                         if (allAquaTrees) {
-                              for (const anAquaTree of allAquaTrees) {
-                                    const allHashes = Object.keys(anAquaTree)
+                              for (const anAquaTreeFileObject of allAquaTrees) {
+                                    const aquaTreeData = parseAquaTreeContent(anAquaTreeFileObject.fileContent) as AquaTree
+                                    if (!aquaTreeData || !aquaTreeData.revisions) {
+                                          toast.error("Error parsing AquaTree from file object.");
+                                          continue
+                                    }
+                                    const allHashes = Object.keys(aquaTreeData.revisions)
                                     if (allHashes.includes(hashSigPositionHashString)) {
-                                          const aquaTreeData = anAquaTree.fileContent as AquaTree
                                           const revData = aquaTreeData.revisions[hashSigPositionHashString]
                                           signaturePositionCount = getHighestFormIndex(revData)
 

@@ -7,7 +7,8 @@ import {
       convertTemplateNameToTitle,
       getFileName,
       getHighestFormIndex,
-      isAquaTree
+      isAquaTree,
+      parseAquaTreeContent
 } from '../../utils/functions'
 import { ContractDocumentView } from './ContractDocument/ContractDocument'
 import { ContractSummaryView } from './ContractSummary/ContractSummary'
@@ -19,6 +20,7 @@ import { HiDocumentText } from 'react-icons/hi'
 import { FaCircleInfo } from 'react-icons/fa6'
 import { Check } from 'lucide-react'
 import { ApiFileInfo } from '@/models/FileInfo'
+import { toast } from 'sonner'
 
 export default function PdfWorkflowPage() {
       const [activeStep, setActiveStep] = useState(1)
@@ -48,10 +50,14 @@ export default function PdfWorkflowPage() {
                         const hashSigPositionHashString = selectedFileInfo!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0]
 
                         if (allAquaTrees) {
-                              for (const anAquaTree of allAquaTrees) {
-                                    const allHashes = Object.keys(anAquaTree)
+                              for (const anAquaTreeFileObject of allAquaTrees) {
+                                    const aquaTreeData = parseAquaTreeContent(anAquaTreeFileObject.fileContent) as AquaTree
+                                    if (!aquaTreeData || !aquaTreeData.revisions) {
+                                          toast.error("Error parsing AquaTree from file object.");
+                                          continue
+                                    }
+                                    const allHashes = Object.keys(aquaTreeData.revisions)
                                     if (allHashes.includes(hashSigPositionHashString)) {
-                                          const aquaTreeData = anAquaTree.fileContent as AquaTree
                                           const revData = aquaTreeData.revisions[hashSigPositionHashString]
                                           signaturePositionCount = getHighestFormIndex(revData)
 
