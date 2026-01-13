@@ -2491,7 +2491,11 @@ const getSignatureRevionHashes = (hashesToLoopPar: Array<string>, selectedFileIn
                   const hashSigPositionHashString = selectedFileInfo!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0]
                   if (allAquaTrees) {
                         for (const anAquaTreeFileObject of allAquaTrees) {
-                              const anAquaTree: AquaTree = anAquaTreeFileObject.fileContent as AquaTree
+                              const anAquaTree: AquaTree = parseAquaTreeContent(anAquaTreeFileObject.fileContent) as AquaTree
+                              if (!anAquaTree || !anAquaTree.revisions) {
+                                    console.error("Error parsing AquaTree from file object.")
+                                    continue
+                              }
                               const allHashes = Object.keys(anAquaTree.revisions)
                               if (allHashes.includes(hashSigPositionHashString)) {
                                     const revData = anAquaTree.revisions[hashSigPositionHashString]

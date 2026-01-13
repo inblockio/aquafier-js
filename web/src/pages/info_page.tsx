@@ -13,7 +13,8 @@ import JSZip from 'jszip'
 import { getGenesisHash, getAquaTreeFileName, ensureDomainUrlHasSSL, isValidUrl } from '../utils/functions'
 import { ApiFileInfo } from '@/models/FileInfo'
 import WorkspaceDialogUI from '@/components/workspace_download_dialog_ui'
-
+import { isAquaTree } from '../utils/functions'
+import { AquaTree } from 'aqua-js-sdk'
 
 const InfoPage = () => {
       const { backend_url, session, setWorkSpaceDowload } = useStore(appStore) // Removed setOpenDialog as dialog is now local
@@ -83,6 +84,7 @@ const InfoPage = () => {
                   const zip = new JSZip()
                   const nameWithHash: { name: string, hash: string }[] = []
                   const processedFiles = new Set<string>()
+                  // throw new Error("Debugging download workspace")
 
                   for (let i = 0; i < totalFiles; i++) {
                         const fileInfo = allFiles[i]
@@ -106,7 +108,7 @@ const InfoPage = () => {
                               fileIndex: i, totalFiles: totalFiles, fileName: fileName
                         })
 
-                        
+
 
 
                         // Add aqua tree JSON
@@ -129,12 +131,38 @@ const InfoPage = () => {
                                                 })
                                                 fileContent = fileResponse.data
                                           } else if (typeof fileObj.fileContent === 'string') {
-                                                fileContent = fileObj.fileContent
+
+                                                let json = fileObj.fileContent;
+                                                try {
+                                                      const jsonData = JSON.parse(json);
+                                                      fileContent = JSON.stringify(jsonData, null, 2)
+                                                } catch (e) {
+
+                                                      fileContent = fileObj.fileContent
+                                                }
                                           } else if (fileObj.fileContent instanceof Uint8Array) {
                                                 fileContent = fileObj.fileContent
+                                          } else if (isAquaTree(fileObj.fileContent)) {
+
+                                                let aquatreeData: AquaTree
+                                                if (typeof fileObj.fileContent === 'string') {
+                                                      aquatreeData = JSON.parse(fileObj.fileContent as string)
+                                                } else {
+                                                      aquatreeData = fileObj.fileContent as AquaTree
+                                                }
+                                                try {
+                                                      let genesisHash = getGenesisHash(aquatreeData)
+                                                      nameWithHash.push({ name: fileObj.fileName, hash: genesisHash ?? "" })
+                                                } catch (err) {
+                                                      console.error("Error adding to nameWithHash:", err)
+                                                }
+                                                fileContent = JSON.stringify(fileObj.fileContent, null, 2)
+                                          } else {
+                                                throw new Error("Unsupported file content type")
                                           }
 
                                           if (fileContent) {
+
                                                 zip.file(fileObj.fileName, fileContent)
                                                 processedFiles.add(fileObj.fileName)
                                           }
@@ -157,7 +185,7 @@ const InfoPage = () => {
 
                   // setOperationMessage("Generating ZIP file...")
 
-                  
+
                   const content = await zip.generateAsync({ type: "blob" })
 
                   const url = window.URL.createObjectURL(content)
@@ -196,6 +224,7 @@ const InfoPage = () => {
             const formData = new FormData()
             formData.append('file', file)
 
+            let isSuccess = false
             try {
                   // setIsOperationOpen(true)
                   // setOperationMessage("Uploading workspace...")
@@ -216,18 +245,25 @@ const InfoPage = () => {
                   })
 
                   if (response.status === 200) {
-                        toast.success("Workspace uploaded successfully")
+
+                        isSuccess = true
                   }
             } catch (error) {
                   console.error(error)
                   toast.error("Failed to upload workspace")
             } finally {
-                  setIsUploading(false)
+
                   // setIsOperationOpen(false)
                   // setOperationProgress(0)
                   // setOperationFileName('')
                   if (fileInputRef.current) {
                         fileInputRef.current.value = ''
+                  }
+                  if (isSuccess) {
+                        toast.success("Workspace uploaded successfully")
+                        window.location.href = "/app"
+                  } else {
+                        setIsUploading(false)
                   }
             }
       }
