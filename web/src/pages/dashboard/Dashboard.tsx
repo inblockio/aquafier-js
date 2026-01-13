@@ -206,7 +206,7 @@ const Dashboard = () => {
                         </div>
                         <h2 className="text-lg font-bold text-slate-800">Signatures & Witnesses</h2>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div className="p-4 bg-slate-50 rounded-lg">
                             <p className="text-sm text-slate-500 mb-1">Total Signatures</p>
                             <p className="text-2xl font-bold text-slate-800">{metrics.additionalMetrics.signatures.total}</p>
@@ -217,29 +217,25 @@ const Dashboard = () => {
                             <p className="text-2xl font-bold text-slate-800">{metrics.additionalMetrics.witnesses.total}</p>
                             <p className="text-xs text-green-600 mt-1">+{metrics.additionalMetrics.witnesses.newToday} today</p>
                         </div>
+                         <div className="p-4 bg-slate-50 rounded-lg">
+                            <p className="text-sm text-slate-500 mb-1">Total Form Revisions</p>
+                            <p className="text-2xl font-bold text-slate-800">{metrics.additionalMetrics.revisionStats.form.total}</p>
+                            <p className="text-xs text-green-600 mt-1">+{metrics.additionalMetrics.revisionStats.form.newToday} today</p>
+                        </div>
+                         <div className="p-4 bg-slate-50 rounded-lg">
+                            <p className="text-sm text-slate-500 mb-1">Total Link Revisions</p>
+                            <p className="text-2xl font-bold text-slate-800">{metrics.additionalMetrics.revisionStats.link.total}</p>
+                            <p className="text-xs text-green-600 mt-1">+{metrics.additionalMetrics.revisionStats.link.newToday} today</p>
+                        </div>
+                         <div className="p-4 bg-slate-50 rounded-lg">
+                            <p className="text-sm text-slate-500 mb-1">Total File Revisions</p>
+                            <p className="text-2xl font-bold text-slate-800">{metrics.additionalMetrics.revisionStats.file.total}</p>
+                            <p className="text-xs text-green-600 mt-1">+{metrics.additionalMetrics.revisionStats.file.newToday} today</p>
+                        </div>
                         <div className="p-4 bg-slate-50 rounded-lg">
                             <p className="text-sm text-slate-500 mb-1">Public Templates</p>
                             <p className="text-2xl font-bold text-slate-800">{metrics.additionalMetrics.templates.publicTemplates}</p>
                             <p className="text-xs text-slate-500 mt-1">of {metrics.additionalMetrics.templates.total} total</p>
-                        </div>
-                        <div className="p-4 bg-slate-50 rounded-lg">
-                            <p className="text-sm text-slate-500 mb-1">Avg Revisions/Contract</p>
-                            <p className="text-2xl font-bold text-slate-800">{metrics.additionalMetrics.averages.revisionsPerContract}</p>
-                        </div>
-                        
-                        {/* Revision Types Breakdown */}
-                        <div className="col-span-2 mt-2">
-                             <h3 className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Revision Types</h3>
-                             <div className="grid grid-cols-2 gap-2">
-                                {metrics.revisions.breakdown?.map((item, idx) => (
-                                    <div key={idx} className="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-lg border border-slate-100">
-                                        <span className="text-slate-600 text-sm capitalize truncate pr-2" title={item.type || 'Unknown'}>
-                                            {item.type ? item.type.replace(/_/g, ' ') : 'Unknown'}
-                                        </span>
-                                        <span className="font-bold text-slate-800 text-sm">{item.count}</span>
-                                    </div>
-                                ))}
-                             </div>
                         </div>
                     </div>
                 </div>

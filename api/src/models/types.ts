@@ -80,6 +80,11 @@ export interface MetricsResponse {
       unread: number;
       newToday: number;
     };
+    revisionStats: {
+      form: { total: number; newToday: number };
+      link: { total: number; newToday: number };
+      file: { total: number; newToday: number };
+    };
     averages: {
       revisionsPerContract: string;
       filesPerRevision: string;
