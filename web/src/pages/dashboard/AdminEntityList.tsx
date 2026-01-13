@@ -70,6 +70,29 @@ const AdminEntityList = () => {
             { key: 'file_hash', label: 'File Hash', render: (val) => <span title={val} className="font-mono text-xs">{formatAddress(val)}</span> },
             { key: 'file_location', label: 'Location' },
             { key: 'createdAt', label: 'Created At', render: formatDate },
+        ],
+        payments: [
+            { key: 'index', label: '#', render: (_val, _row, rowIndex) => (pagination.page - 1) * pagination.limit + rowIndex + 1 },
+            { key: 'id', label: 'Payment ID', render: (val) => <span title={val} className="font-mono text-xs">{formatAddress(val)}</span> },
+            { key: 'user', label: 'User', render: (_val, row) => {
+                const addr = row.Subscription?.user_address;
+                return addr ? <span title={addr} className="font-mono text-xs text-blue-600">{formatAddress(addr)}</span> : '-';
+            }},
+            { key: 'amount', label: 'Amount', render: (val, row) => <span className="font-medium">${val} {row.currency}</span> },
+            { key: 'status', label: 'Status', render: (val) => {
+                const colors: Record<string, string> = {
+                    'SUCCEEDED': 'text-emerald-600 bg-emerald-50',
+                    'PENDING': 'text-amber-600 bg-amber-50',
+                    'FAILED': 'text-red-600 bg-red-50',
+                };
+                return (
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[val] || 'text-slate-600 bg-slate-100'}`}>
+                        {val}
+                    </span>
+                );
+            }},
+            { key: 'payment_method', label: 'Method', render: (val) => <span className="text-xs uppercase text-slate-500">{val}</span> },
+            { key: 'createdAt', label: 'Date', render: formatDate },
         ]
     };
 
@@ -79,6 +102,7 @@ const AdminEntityList = () => {
             case 'contracts': return 'Contracts Registry';
             case 'revisions': return 'Revision History';
             case 'files': return 'File Storage';
+            case 'payments': return 'Payment History';
             default: return 'Data List';
         }
     };

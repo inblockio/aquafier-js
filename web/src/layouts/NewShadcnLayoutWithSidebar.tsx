@@ -190,6 +190,7 @@ export default function NewShadcnLayoutWithSidebar() {
 
                                      {openDialog?.dialogType === 'explorer_workspace_download' && (
                                           <WorkspaceDialogUI
+                                                title="Download Workspace"
                                                 isDone={function (): void {
                                                       setOpenDialog(null)
                                                 }}

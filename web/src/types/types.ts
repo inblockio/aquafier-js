@@ -324,6 +324,13 @@ export interface MetricsResponse {
     newToday: number;
     growth: string;
   };
+  payments: {
+    total: number;
+    totalAmount: string;
+    newToday: number;
+    growth: string;
+    breakdown: Array<{ status: string; count: number }>;
+  };
   additionalMetrics: {
     activeUsers: {
       last24Hours: number;

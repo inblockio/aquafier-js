@@ -11,7 +11,9 @@ import {
     PenTool, 
     Database, 
     RefreshCw,
-    Shield
+    Shield,
+    CreditCard,
+    DollarSign
 } from 'lucide-react';
 import { MetricsResponse, AdvancedMetricsResponse } from '@/types/types';
 import { toast } from 'sonner';
@@ -125,7 +127,7 @@ const Dashboard = () => {
             </div>
 
             {/* Core Metrics */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <StatCard 
                     title="Total Users" 
                     value={metrics.users.total} 
@@ -159,10 +161,19 @@ const Dashboard = () => {
                     colorClass="text-amber-600 bg-amber-100" 
                     onClick={() => navigate('/app/admin/list/files')}
                 />
+                 <StatCard 
+                    title="Total Revenue" 
+                    value={`$${metrics.payments.totalAmount}`} 
+                    subValue={metrics.payments.growth} 
+                    icon={CreditCard} 
+                    colorClass="text-emerald-600 bg-emerald-100" 
+                    description={`${metrics.payments.newToday} new payments today`}
+                    onClick={() => navigate('/app/admin/list/payments')}
+                />
             </div>
 
             {/* Activity & Health */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Active Users */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <div className="flex items-center gap-3 mb-6">
@@ -228,6 +239,52 @@ const Dashboard = () => {
                                         <span className="font-bold text-slate-800 text-sm">{item.count}</span>
                                     </div>
                                 ))}
+                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Payment Analytics */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 bg-emerald-100 rounded-lg">
+                            <DollarSign className="w-5 h-5 text-emerald-600" />
+                        </div>
+                        <h2 className="text-lg font-bold text-slate-800">Financial Overview</h2>
+                    </div>
+                    <div className="space-y-4">
+                         <div className="p-4 bg-slate-50 rounded-lg flex justify-between items-center">
+                            <div>
+                                <p className="text-sm text-slate-500 mb-1">Total Payments</p>
+                                <p className="text-2xl font-bold text-slate-800">{metrics.payments.total}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-sm text-slate-500 mb-1">Today</p>
+                                <p className="text-lg font-bold text-emerald-600">+{metrics.payments.newToday}</p>
+                            </div>
+                        </div>
+
+                         <div className="mt-4">
+                             <h3 className="text-xs font-semibold text-slate-500 mb-3 uppercase tracking-wider">Payment Status</h3>
+                             <div className="space-y-2">
+                                {metrics.payments.breakdown?.map((item, idx) => (
+                                    <div key={idx} className="flex justify-between items-center bg-slate-50 px-3 py-3 rounded-lg border border-slate-100">
+                                        <div className="flex items-center gap-2">
+                                            <div className={`w-2 h-2 rounded-full ${
+                                                item.status === 'SUCCEEDED' ? 'bg-emerald-500' : 
+                                                item.status === 'PENDING' ? 'bg-amber-500' : 
+                                                item.status === 'FAILED' ? 'bg-red-500' : 'bg-slate-500'
+                                            }`} />
+                                            <span className="text-slate-600 text-sm capitalize">
+                                                {item.status ? item.status.replace(/_/g, ' ').toLowerCase() : 'unknown'}
+                                            </span>
+                                        </div>
+                                        <span className="font-bold text-slate-800 text-sm">{item.count}</span>
+                                    </div>
+                                ))}
+                                {(!metrics.payments.breakdown || metrics.payments.breakdown.length === 0) && (
+                                    <p className="text-sm text-slate-400 text-center py-2">No payment data available</p>
+                                )}
                              </div>
                         </div>
                     </div>
