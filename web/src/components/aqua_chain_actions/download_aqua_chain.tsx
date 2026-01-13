@@ -203,6 +203,7 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                         let fileName: string
                         // console.log("Handling arbitrary file", fileObj)
                         if (isAquaTreeData) {
+                              console.log("ONE: ", fileObj.fileName)
                               // It's an AquaTree, so stringify it as JSON
                               const jsonContent = getAquatreeObject(fileObj.fileContent)
                               
@@ -210,12 +211,14 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                               zip.file(fileName, getCorrectUTF8JSONString(jsonContent))
                               hashData = aquafier.getFileHash(JSON.stringify(jsonContent))
                         } else if (typeof fileObj.fileContent === 'string') {
+                              console.log("TWO: ", fileObj.fileName)
                               fileName = fileObj.fileName
                               // It's a plain text file, so add it directly without JSON.stringify
                               zip.file(fileName, fileObj.fileContent)
                               hashData = aquafier.getFileHash(fileObj.fileContent)
                         } else if (fileObj.fileContent instanceof Uint8Array || fileObj.fileContent instanceof ArrayBuffer) {
                               // Handle binary data
+                              console.log("THREE: ", fileObj.fileName)
                               fileName = fileObj.fileName
                               zip.file(fileName, fileObj.fileContent, {
                                     binary: true,
@@ -225,6 +228,7 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                               const dataForHash = fileObj.fileContent instanceof ArrayBuffer ? new Uint8Array(fileObj.fileContent) : fileObj.fileContent
                               hashData = aquafier.getFileHash(dataForHash)
                         } else {
+                              console.log("FOUR: ", fileObj.fileName)
                               // For other types, use JSON.stringify (objects, etc.)
                               // Explicitly encode as UTF-8 to preserve special characters
                               const jsonContent = JSON.stringify(fileObj.fileContent)
@@ -250,6 +254,7 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                   type: 'aqua_file_backup',
                   version: '1.0.0',
             }
+            
             zip.file('aqua.json', JSON.stringify(aquaObject))
 
             const nameWithoutExtension = mainAquaFileName.replace(/\.[^/.]+$/, '')
