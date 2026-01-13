@@ -12,6 +12,7 @@ import { toast } from 'sonner'
 import { useStore } from 'zustand'
 import WorkspaceDialogUI from './workspace_download_dialog_ui'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
+import { getCorrectUTF8JSONString } from '@/lib/utils'
 
 const WorkspaceManagment = () => {
 
@@ -87,7 +88,7 @@ const WorkspaceManagment = () => {
 
                 // Add aqua tree JSON
                 const aquaTreeFileName = `${fileName}.aqua.json`
-                zip.file(aquaTreeFileName, JSON.stringify(aquaTree, null, 2))
+                zip.file(aquaTreeFileName, getCorrectUTF8JSONString(JSON.stringify(aquaTree, null, 2)))
 
                 let exist = nameWithHash.find(nwh => nwh.name === aquaTreeFileName)
                 if (!exist) {
@@ -145,7 +146,7 @@ const WorkspaceManagment = () => {
 
                             if (fileContent) {
 
-                                zip.file(fileObj.fileName, fileContent)
+                                zip.file(fileObj.fileName, getCorrectUTF8JSONString(fileContent))
                                 processedFiles.add(fileObj.fileName)
                             }
                         } catch (err) {
@@ -163,7 +164,7 @@ const WorkspaceManagment = () => {
                 genesis: "0000000000000000000000000000000000000000000000000000000000000000",
                 name_with_hash: nameWithHash
             }
-            zip.file("aqua.json", JSON.stringify(aquaManifest, null, 2))
+            zip.file("aqua.json", getCorrectUTF8JSONString(JSON.stringify(aquaManifest, null, 2)))
 
             // setOperationMessage("Generating ZIP file...")
 
