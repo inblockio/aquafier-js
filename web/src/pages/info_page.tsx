@@ -114,7 +114,11 @@ const InfoPage = () => {
                         // Add aqua tree JSON
                         const aquaTreeFileName = `${fileName}.aqua.json`
                         zip.file(aquaTreeFileName, JSON.stringify(aquaTree, null, 2))
-                        nameWithHash.push({ name: aquaTreeFileName, hash: genesisHash })
+
+                        let exist = nameWithHash.find(nwh => nwh.name === aquaTreeFileName)
+                        if (!exist) {
+                              nameWithHash.push({ name: aquaTreeFileName, hash: genesisHash })
+                        }
 
                         // Process associated files
                         for (const fileObj of fileInfo.fileObject) {
@@ -152,7 +156,11 @@ const InfoPage = () => {
                                                 }
                                                 try {
                                                       let genesisHash = getGenesisHash(aquatreeData)
-                                                      nameWithHash.push({ name: fileObj.fileName, hash: genesisHash ?? "" })
+                                                      let exist = nameWithHash.find(nwh => nwh.name === fileObj.fileName)
+                                                      if (!exist) {
+
+                                                            nameWithHash.push({ name: fileObj.fileName, hash: genesisHash ?? "" })
+                                                      }
                                                 } catch (err) {
                                                       console.error("Error adding to nameWithHash:", err)
                                                 }
@@ -215,6 +223,154 @@ const InfoPage = () => {
 
             if (!session?.nonce) {
                   toast.error("Please connect your wallet first")
+                  return
+            }
+
+            // Validate that the file is a zip
+            if (!file.name.toLowerCase().endsWith('.zip')) {
+                  toast.error("Please select a ZIP file")
+                  if (fileInputRef.current) {
+                        fileInputRef.current.value = ''
+                  }
+                  return
+            }
+
+            try {
+                  // Load and validate zip contents
+                  const zip = new JSZip()
+                  const zipContent = await zip.loadAsync(file)
+
+                  // Helper function to decode byte-encoded filenames
+                  const decodeFileName = (name: string): string => {
+                        // Check if the name looks like a comma-separated byte array
+                        if (name.includes(',') && /^[\d,]+$/.test(name)) {
+                              try {
+                                    const bytes = name.split(',').map(b => parseInt(b.trim(), 10))
+                                    return String.fromCharCode(...bytes)
+                              } catch (e) {
+                                    return name
+                              }
+                        }
+                        return name
+                  }
+
+                  // Get all files and decode their names
+                  const allFiles = Object.keys(zipContent.files)
+                  const decodedFileMap = new Map<string, string>() // decoded name -> original key
+
+                  allFiles.forEach(originalKey => {
+                        const decodedName = decodeFileName(originalKey)
+                        decodedFileMap.set(decodedName, originalKey)
+                  })
+
+                  console.log("Decoded files in ZIP:", Array.from(decodedFileMap.keys()))
+                  console.log("Decoded:", decodedFileMap)
+
+                  // Check if aqua.json exists (try multiple variations)
+                  let aquaJsonFile = null
+                  let aquaJsonOriginalKey = null
+
+                  // First try direct access using decoded name
+                  if (decodedFileMap.get("aqua.json")) {
+                        aquaJsonOriginalKey = decodedFileMap.get("aqua.json")!
+                        aquaJsonFile = zipContent.file(aquaJsonOriginalKey)
+                        console.log("Found aqua.json with original key:", aquaJsonOriginalKey)
+                  }
+
+                  if (!aquaJsonFile) {
+                        toast.error("Invalid workspace: aqua.json not found in ZIP")
+                        if (fileInputRef.current) {
+                              fileInputRef.current.value = ''
+                        }
+                        return
+                  }
+
+                  // Read and parse aqua.json
+                  const aquaJsonContent = await aquaJsonFile.async("string")
+                  console.log("aqua.json content (first 200 chars):", aquaJsonContent.substring(0, 200))
+                  console.log("aqua.json content length:", aquaJsonContent.length)
+
+                  let aquaManifest: {
+                        type: string
+                        version: string
+                        createdAt: string
+                        genesis: string
+                        name_with_hash: { name: string, hash: string }[]
+                  }
+
+                  try {
+                        // Check if content might be byte-encoded
+                        let jsonContent = aquaJsonContent
+                        if (aquaJsonContent.includes(',') && /^[\d,\s]+$/.test(aquaJsonContent.substring(0, 100))) {
+                              console.log("Detected byte-encoded JSON content, decoding...")
+                              const bytes = aquaJsonContent.split(',').map(b => parseInt(b.trim(), 10))
+                              jsonContent = String.fromCharCode(...bytes)
+                              console.log("Decoded JSON content (first 200 chars):", jsonContent.substring(0, 200))
+                        }
+
+                        aquaManifest = JSON.parse(jsonContent)
+                  } catch (parseError) {
+                        console.error("JSON parse error:", parseError)
+                        toast.error("Invalid workspace: aqua.json is not valid JSON")
+                        if (fileInputRef.current) {
+                              fileInputRef.current.value = ''
+                        }
+                        return
+                  }
+
+                  // Validate aqua.json structure
+                  if (!aquaManifest.name_with_hash || !Array.isArray(aquaManifest.name_with_hash)) {
+                        toast.error("Invalid workspace: name_with_hash property not found or invalid")
+                        if (fileInputRef.current) {
+                              fileInputRef.current.value = ''
+                        }
+                        return
+                  }
+
+                  // Check if all files in name_with_hash exist in the zip
+                  const missingFiles: string[] = []
+                  const decodedNames = Array.from(decodedFileMap.keys())
+
+                  for (const fileEntry of aquaManifest.name_with_hash) {
+                        const fileName = fileEntry.name
+                        let fileFound = false
+
+                        // First try direct access
+                        if (zipContent.file(fileName)) {
+                              fileFound = true
+                        }
+
+                        // If not found, search in decoded names
+                        if (!fileFound) {
+                              const foundDecodedName = decodedNames.find(name =>
+                                    name === fileName ||
+                                    (name.toLowerCase().endsWith(fileName.toLowerCase()) && !zipContent.files[decodedFileMap.get(name)!].dir)
+                              )
+                              if (foundDecodedName) {
+                                    fileFound = true
+                              }
+                        }
+
+                        if (!fileFound) {
+                              missingFiles.push(fileName)
+                        }
+                  }
+
+                  if (missingFiles.length > 0) {
+                        toast.error(`Invalid workspace: ${missingFiles.length} file(s) missing from ZIP. First missing: ${missingFiles[0]}`)
+                        if (fileInputRef.current) {
+                              fileInputRef.current.value = ''
+                        }
+                        return
+                  }
+
+                  toast.success("Workspace validated successfully")
+            } catch (error) {
+                  console.error("Error validating workspace:", error)
+                  toast.error("Failed to validate workspace ZIP file")
+                  if (fileInputRef.current) {
+                        fileInputRef.current.value = ''
+                  }
                   return
             }
 
