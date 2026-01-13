@@ -166,6 +166,23 @@ export function isAquaTree(content: any): boolean {
       // Check if content has the properties of an AquaTree
       return json && typeof json === 'object' && 'revisions' in json && 'file_index' in json
 }
+
+export function parseAquaTreeContent(content: any): any {
+      // If content is already an object with revisions, return it
+      if (content && typeof content === 'object' && 'revisions' in content) {
+            return content
+      }
+      // If content is a string, try to parse it
+      if (typeof content === 'string') {
+            try {
+                  return JSON.parse(content)
+            } catch (e) {
+                  console.error('Failed to parse AquaTree content:', e)
+                  return null
+            }
+      }
+      return content
+}
 export function formatCryptoAddress(address?: string, start: number = 10, end: number = 4, message?: string): string {
       if (!address) return message ?? 'NO ADDRESS'
       if (address?.length < start + end) {
@@ -2474,7 +2491,11 @@ const getSignatureRevionHashes = (hashesToLoopPar: Array<string>, selectedFileIn
                   const hashSigPositionHashString = selectedFileInfo!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0]
                   if (allAquaTrees) {
                         for (const anAquaTreeFileObject of allAquaTrees) {
-                              const anAquaTree: AquaTree = anAquaTreeFileObject.fileContent as AquaTree
+                              const anAquaTree: AquaTree = parseAquaTreeContent(anAquaTreeFileObject.fileContent) as AquaTree
+                              if (!anAquaTree || !anAquaTree.revisions) {
+                                    console.error("Error parsing AquaTree from file object.")
+                                    continue
+                              }
                               const allHashes = Object.keys(anAquaTree.revisions)
                               if (allHashes.includes(hashSigPositionHashString)) {
                                     const revData = anAquaTree.revisions[hashSigPositionHashString]

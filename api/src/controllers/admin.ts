@@ -115,6 +115,24 @@ export default async function adminController(fastify: FastifyInstance) {
                     ]);
                     break;
 
+                case 'payments':
+                    [totalCount, data] = await Promise.all([
+                        prisma.payment.count(),
+                        prisma.payment.findMany({
+                            skip,
+                            take: limitNum,
+                            orderBy: { createdAt: 'desc' },
+                            include: {
+                                Subscription: {
+                                    select: {
+                                        user_address: true
+                                    }
+                                }
+                            }
+                        })
+                    ]);
+                    break;
+
                 default:
                     return reply.code(400).send({ error: 'Invalid type requested' });
             }

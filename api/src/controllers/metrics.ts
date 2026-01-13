@@ -60,7 +60,15 @@ export default async function metricsController(fastify: FastifyInstance) {
                 totalNotifications,
                 unreadNotifications,
                 newNotificationsToday,
+                // Revision Types Breakdown
                 revisionTypes,
+                revisionTypesToday,
+
+                // Core metrics - Payments
+                totalPayments,
+                newPaymentsToday,
+                totalPaymentAmount,
+                paymentStatusBreakdown,
             ] = await Promise.all([
                 // Core metrics - Users
                 prisma.users.count(),
@@ -129,6 +137,25 @@ export default async function metricsController(fastify: FastifyInstance) {
                     by: ['revision_type'],
                     _count: true,
                 }),
+                prisma.revision.groupBy({
+                    by: ['revision_type'],
+                    where: { createdAt: { gte: startOfToday } },
+                    _count: true,
+                }),
+
+                // Payment Metrics
+                prisma.payment.count(),
+                prisma.payment.count({
+                    where: { createdAt: { gte: startOfToday } },
+                }),
+                prisma.payment.aggregate({
+                    _sum: { amount: true },
+                    where: { status: 'SUCCEEDED' }
+                }),
+                prisma.payment.groupBy({
+                    by: ['status'],
+                    _count: true,
+                }),
             ]);
 
             // Calculate growth percentages
@@ -157,6 +184,19 @@ export default async function metricsController(fastify: FastifyInstance) {
                 count: rt._count
             })).sort((a, b) => b.count - a.count);
 
+            // Calculate revision stats
+            const getRevStat = (type: string) => {
+                const total = revisionTypes.find(rt => rt.revision_type === type)?._count || 0;
+                const newToday = revisionTypesToday.find(rt => rt.revision_type === type)?._count || 0;
+                return { total, newToday };
+            };
+
+            // Format payment breakdown
+            const paymentBreakdown = paymentStatusBreakdown.map(pb => ({
+                status: pb.status,
+                count: pb._count
+            })).sort((a, b) => b.count - a.count);
+
             const metrics: MetricsResponse = {
                 users: {
                     total: totalUsers,
@@ -178,6 +218,13 @@ export default async function metricsController(fastify: FastifyInstance) {
                     total: totalFiles,
                     newToday: newFilesToday,
                     growth: calculateGrowth(newFilesToday, totalFiles),
+                },
+                payments: {
+                    total: totalPayments,
+                    newToday: newPaymentsToday,
+                    growth: calculateGrowth(newPaymentsToday, totalPayments),
+                    totalAmount: totalPaymentAmount._sum.amount?.toString() || '0',
+                    breakdown: paymentBreakdown,
                 },
                 additionalMetrics: {
                     activeUsers: {
@@ -201,6 +248,11 @@ export default async function metricsController(fastify: FastifyInstance) {
                         total: totalNotifications,
                         unread: unreadNotifications,
                         newToday: newNotificationsToday,
+                    },
+                    revisionStats: {
+                        form: getRevStat('form'),
+                        link: getRevStat('link'),
+                        file: getRevStat('file'),
                     },
                     averages: {
                         revisionsPerContract,

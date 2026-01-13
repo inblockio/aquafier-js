@@ -324,6 +324,13 @@ export interface MetricsResponse {
     newToday: number;
     growth: string;
   };
+  payments: {
+    total: number;
+    totalAmount: string;
+    newToday: number;
+    growth: string;
+    breakdown: Array<{ status: string; count: number }>;
+  };
   additionalMetrics: {
     activeUsers: {
       last24Hours: number;
@@ -346,6 +353,11 @@ export interface MetricsResponse {
       total: number;
       unread: number;
       newToday: number;
+    };
+    revisionStats: {
+      form: { total: number; newToday: number };
+      link: { total: number; newToday: number };
+      file: { total: number; newToday: number };
     };
     averages: {
       revisionsPerContract: string;

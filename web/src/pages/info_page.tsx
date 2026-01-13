@@ -1,23 +1,17 @@
 import { useStore } from 'zustand'
 import appStore from '../store'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import axios from 'axios'
 import VersionDetails from '@/models/VersionDetails'
 import { toast } from 'sonner'
-import { LuCalendarClock, LuCode, LuExternalLink, LuGithub, LuGlobe, LuShieldCheck, LuTag, LuDownload, LuUpload } from 'react-icons/lu'
+import { LuCalendarClock, LuCode, LuExternalLink, LuGithub, LuGlobe, LuShieldCheck, LuTag } from 'react-icons/lu'
 import { FaEthereum } from 'react-icons/fa6'
 import versionInfo from '../version-info.json'
 import { AlertTriangleIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import JSZip from 'jszip'
-import { getGenesisHash, getAquaTreeFileName, ensureDomainUrlHasSSL, isValidUrl } from '../utils/functions'
-import { ApiFileInfo } from '@/models/FileInfo'
-import WorkspaceDialogUI from '@/components/workspace_download_dialog_ui'
-
+import WorkspaceManagment from '@/components/workspace/WorkspaceManagment'
 
 const InfoPage = () => {
-      const { backend_url, session, setWorkSpaceDowload } = useStore(appStore) // Removed setOpenDialog as dialog is now local
-      const fileInputRef = useRef<HTMLInputElement>(null)
+      const { backend_url } = useStore(appStore)
 
       // const [isOpen, setIsOpen] = useState(false);
       const [versionDetails, setVersionDetails] = useState<VersionDetails>({
@@ -27,13 +21,7 @@ const InfoPage = () => {
             protocol: '1.2.X',
       })
 
-      // New states for workspace operation progress dialog
-      const [isUploading, setIsUploading] = useState(false)
-      const [isDownloading, setIsDownloading] = useState(false)
-      // const [isOperationOpen, setIsOperationOpen] = useState(false)
-      // const [operationMessage, setOperationMessage] = useState('')
-      const [_operationProgress, setOperationProgress] = useState(0)
-      // const [operationFileName, setOperationFileName] = useState('')
+      
 
       const fetchVersionDetails = async () => {
             try {
@@ -57,172 +45,9 @@ const InfoPage = () => {
             }
       }, [backend_url])
 
-      const handleDownloadWorkspace = async () => {
-            if (!session?.nonce) {
-                  toast.error("Please connect your wallet first")
-                  return
-            }
+      
 
-            try {
-                  // setIsOperationOpen(true)
-                  // setOperationMessage("Fetching workspace files...")
-                  // setOperationProgress(0)
-                  // setOperationFileName("")
-
-                  // Fetch list of all files (limit=1000000)
-                  const listResponse = await axios.get(`${backend_url}/explorer_files?limit=1000000`, {
-                        headers: {
-                              'nonce': session.nonce
-                        }
-                  })
-
-                  const allFiles: ApiFileInfo[] = listResponse.data.data
-                  const totalFiles = allFiles.length
-                  const zip = new JSZip()
-                  const nameWithHash: { name: string, hash: string }[] = []
-                  const processedFiles = new Set<string>()
-
-                  for (let i = 0; i < totalFiles; i++) {
-                        const fileInfo = allFiles[i]
-                        const aquaTree = fileInfo.aquaTree
-                        if (!aquaTree) continue
-
-                        const genesisHash = getGenesisHash(aquaTree)
-                        if (!genesisHash) continue
-
-                        const fileName = getAquaTreeFileName(aquaTree)
-                        if (!fileName) continue
-
-                        console.log("Downloading file: index ", i)
-
-                        // setOperationMessage(`Processing files... (${i + 1}/${totalFiles})`)
-                        // setOperationProgress(Math.round(((i + 1) / totalFiles) * 100))
-                        // setOperationFileName(fileName)
-
-                        setWorkSpaceDowload({
-
-                              fileIndex: i, totalFiles: totalFiles, fileName: fileName
-                        })
-
-                        
-
-
-                        // Add aqua tree JSON
-                        const aquaTreeFileName = `${fileName}.aqua.json`
-                        zip.file(aquaTreeFileName, JSON.stringify(aquaTree, null, 2))
-                        nameWithHash.push({ name: aquaTreeFileName, hash: genesisHash })
-
-                        // Process associated files
-                        for (const fileObj of fileInfo.fileObject) {
-                              if (fileObj.fileName && !processedFiles.has(fileObj.fileName)) {
-                                    try {
-                                          let fileContent: ArrayBuffer | string | null | Uint8Array<ArrayBufferLike> = null
-
-                                          if (typeof fileObj.fileContent === 'string' && isValidUrl(fileObj.fileContent)) {
-                                                const actualUrl = ensureDomainUrlHasSSL(fileObj.fileContent)
-                                                // Fetch file content
-                                                const fileResponse = await axios.get(actualUrl, {
-                                                      responseType: 'arraybuffer',
-                                                      headers: { 'nonce': session.nonce }
-                                                })
-                                                fileContent = fileResponse.data
-                                          } else if (typeof fileObj.fileContent === 'string') {
-                                                fileContent = fileObj.fileContent
-                                          } else if (fileObj.fileContent instanceof Uint8Array) {
-                                                fileContent = fileObj.fileContent
-                                          }
-
-                                          if (fileContent) {
-                                                zip.file(fileObj.fileName, fileContent)
-                                                processedFiles.add(fileObj.fileName)
-                                          }
-                                    } catch (err) {
-                                          console.error(`Failed to download asset ${fileObj.fileName}:`, err)
-                                    }
-                              }
-                        }
-                  }
-
-                  // Create manifest
-                  const aquaManifest = {
-                        type: "aqua_workspace_backup",
-                        version: "1.0.0",
-                        createdAt: new Date().toISOString(),
-                        genesis: "0000000000000000000000000000000000000000000000000000000000000000",
-                        name_with_hash: nameWithHash
-                  }
-                  zip.file("aqua.json", JSON.stringify(aquaManifest, null, 2))
-
-                  // setOperationMessage("Generating ZIP file...")
-
-                  
-                  const content = await zip.generateAsync({ type: "blob" })
-
-                  const url = window.URL.createObjectURL(content)
-                  const link = document.createElement('a')
-                  link.href = url
-                  link.setAttribute('download', `workspace_${session.address || 'backup'}.zip`)
-                  document.body.appendChild(link)
-                  link.click()
-                  link.parentNode?.removeChild(link)
-                  toast.success("Workspace downloaded successfully")
-
-            } catch (error) {
-                  console.error(error)
-                  toast.error("Failed to download workspace")
-            }
-      }
-
-      const handleUploadWorkspaceClick = () => {
-            fileInputRef.current?.click()
-      }
-
-      const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-            const file = event.target.files?.[0]
-            if (!file) return
-
-            if (!session?.nonce) {
-                  toast.error("Please connect your wallet first")
-                  return
-            }
-
-            const formData = new FormData()
-            formData.append('file', file)
-
-            try {
-                  // setIsOperationOpen(true)
-                  // setOperationMessage("Uploading workspace...")
-                  // setOperationProgress(0)
-                  // setOperationFileName(file.name) // Set filename for display
-
-                  const response = await axios.post(`${backend_url}/explorer_workspace_upload`, formData, {
-                        headers: {
-                              'nonce': session.nonce,
-                              'Content-Type': 'multipart/form-data'
-                        },
-                        onUploadProgress: (progressEvent) => {
-                              if (progressEvent.total) {
-                                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-                                    setOperationProgress(percentCompleted)
-                              }
-                        }
-                  })
-
-                  if (response.status === 200) {
-                        toast.success("Workspace uploaded successfully")
-                  }
-            } catch (error) {
-                  console.error(error)
-                  toast.error("Failed to upload workspace")
-            } finally {
-                  // setIsOperationOpen(false)
-                  // setOperationProgress(0)
-                  // setOperationFileName('')
-                  if (fileInputRef.current) {
-                        fileInputRef.current.value = ''
-                  }
-            }
-      }
+     
 
       return (
             <div className="container mx-auto py-3 px-2 sm:px-4">
@@ -232,42 +57,7 @@ const InfoPage = () => {
                               {/* Main content grid */}
                               <div className="grid grid-cols-12 md:grid-cols-6 gap-4 sm:gap-6">
                                     {/* Workspace Management Card */}
-                                    <div className="col-span-12 md:col-span-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                                          <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-3 sm:px-6 py-3 sm:py-4">
-                                                <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
-                                                      <LuCode className="h-5 w-5 text-primary" />
-                                                      Workspace Management
-                                                </h2>
-                                          </div>
-                                          <div className="p-3 sm:p-6 flex flex-wrap gap-4">
-                                                <Button
-                                                      onClick={handleDownloadWorkspace}
-                                                      disabled={isDownloading}
-                                                      className="flex items-center gap-2"
-                                                >
-                                                      <LuDownload className="h-4 w-4" />
-                                                      {isDownloading ? "Downloading..." : "Download Workspace"}
-                                                </Button>
-
-                                                <input
-                                                      type="file"
-                                                      ref={fileInputRef}
-                                                      onChange={handleFileChange}
-                                                      accept=".zip"
-                                                      className="hidden"
-                                                />
-
-                                                <Button
-                                                      onClick={handleUploadWorkspaceClick}
-                                                      disabled={isUploading}
-                                                      variant="outline"
-                                                      className="flex items-center gap-2"
-                                                >
-                                                      <LuUpload className="h-4 w-4" />
-                                                      {isUploading ? "Uploading..." : "Upload Workspace"}
-                                                </Button>
-                                          </div>
-                                    </div>
+                                    <WorkspaceManagment />
 
                                     {/* Version info card */}
                                     <div className="col-span-12 md:col-span-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -440,21 +230,6 @@ const InfoPage = () => {
                         </div>
                   </div>
 
-                  /* Workspace Operation Dialog */
-                  {(isUploading || isDownloading) && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-11/12 max-w-md">
-                                    <WorkspaceDialogUI
-                                          isDone={() => {
-                                                setIsUploading(false)
-                                                setIsDownloading(false)
-                                                setOperationProgress(0)
-                                          }
-                                          }
-                                    />
-                              </div>
-                        </div>
-                  )}
             </div>
       )
 }

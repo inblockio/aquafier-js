@@ -21,7 +21,7 @@ import { getAquaTreeFileName } from '@/utils/functions'
 import { IDrawerStatus } from '@/models/AquaTreeDetails'
 import { useState } from 'react'
 import { RELOAD_KEYS, triggerWorkflowReload } from '../utils/reloadDatabase';
-import WorkspaceDialogUI from '@/components/workspace_download_dialog_ui'
+import WorkspaceDialogUI from '@/components/workspace/workspace_download_dialog_ui'
 export default function NewShadcnLayoutWithSidebar() {
 
       const {
@@ -190,6 +190,7 @@ export default function NewShadcnLayoutWithSidebar() {
 
                                      {openDialog?.dialogType === 'explorer_workspace_download' && (
                                           <WorkspaceDialogUI
+                                                title="Download Workspace"
                                                 isDone={function (): void {
                                                       setOpenDialog(null)
                                                 }}
