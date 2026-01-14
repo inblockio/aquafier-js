@@ -33,7 +33,7 @@ services:
   #     - .env
   #   restart: "no"  # Run once and exit
   filebeat:
-    image: docker.elastic.co/beats/filebeat:9.2.3
+    image: docker.elastic.co/beats/filebeat:9.2.4
     container_name: filebeat
     user: root
     volumes:
