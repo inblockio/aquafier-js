@@ -1,0 +1,11 @@
+[
+   
+    { 
+        "name": "wallet_address",
+        "label": "Wallet Address",
+        "type": "wallet_address",
+        "required": true,
+        "isArray": false,
+        "isEditable": false
+    }
+]

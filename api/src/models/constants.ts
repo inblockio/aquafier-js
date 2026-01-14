@@ -14,8 +14,9 @@ export const systemTemplateHashes = [
     '0x4b9202932025142b4d9a75141239e46ebfed210d178434303d1c7e5f586959c3', // email claim
     '0xfa4c4ffde60cd293033b986034890800a63bd27ca2cde44d1fce5a073ae5e937', // phone number claim
     '0x5e339aed4184f012f1ec5e9a084636fb437f535233e20277a63c13d3e4af96e8', // user profile
+    '0x5285900dcc1586d6f22bb2a16a15ef7fff78c9c8506d7745a947c50d2545a6d6', // identity card
 ]
-
+ 
 
 
 export const TEMPLATE_HASHES = {
@@ -30,6 +31,7 @@ export const TEMPLATE_HASHES = {
     email_claim: "0x4b9202932025142b4d9a75141239e46ebfed210d178434303d1c7e5f586959c3",
     phone_number_claim: "0xfa4c4ffde60cd293033b986034890800a63bd27ca2cde44d1fce5a073ae5e937",
     user_profile: "0x5e339aed4184f012f1ec5e9a084636fb437f535233e20277a63c13d3e4af96e8",
+    identity_card: "0x5285900dcc1586d6f22bb2a16a15ef7fff78c9c8506d7745a947c50d2545a6d6"
 }
 
 
