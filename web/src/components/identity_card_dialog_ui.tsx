@@ -7,7 +7,6 @@ import appStore from "@/store"
 import { ApiFileInfo } from "@/models/FileInfo"
 import {
   estimateFileSize,
-  fetchFiles,
   getAquaTreeFileObject,
   getGenesisHash,
   getRandomNumber,
@@ -21,6 +20,7 @@ import axios from "axios"
 import { useAquaSystemNames } from "@/hooks/useAquaSystemNames"
 import { RELOAD_KEYS, triggerWorkflowReload } from "@/utils/reloadDatabase"
 import FilesList from "@/pages/files/files_list"
+import { API_ENDPOINTS } from "@/utils/constants"
 
 interface IdentityCardDialogUiProps {
   isOpen: boolean
@@ -33,7 +33,7 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
   onClose,
   walletAddress
 }: IdentityCardDialogUiProps) => {
-  const { session, backend_url, setFiles, workflows, setOpenDialog, setSelectedFileInfo } = useStore(appStore)
+  const { session, backend_url, setOpenDialog, setSelectedFileInfo } = useStore(appStore)
   const { systemNames: systemAquaFileNames } = useAquaSystemNames()
 
   const [selectedWorkflows, setSelectedWorkflows] = useState<ApiFileInfo[]>([])
@@ -44,14 +44,15 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
 
   // Define which workflows are allowed in identity cards (claims and related workflows)
   const allowedWorkflowsForIdentityCard = [
-    'simple_claim',
+    // 'simple_claim',
     'domain_claim',
     'identity_claim',
     'phone_number_claim',
     'email_claim',
     'user_signature',
-    'dns_claim',
-    'dba_claim'
+    // 'dns_claim',
+    'dba_claim',
+    // 'ens_claim',
   ]
 
   // Load workflows on mount
@@ -65,27 +66,28 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
     setLoading(true)
     try {
       // Fetch all files with a large limit to get workflows
-      const response = await axios.get(`${backend_url}/explorer_files`, {
+      const response = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
         headers: {
           'nonce': session?.nonce,
         },
         params: {
           page: 1,
-          limit: 1000000 // Large limit to fetch all files
+          limit: 1000000, // Large limit to fetch all files
+          claim_types: JSON.stringify(allowedWorkflowsForIdentityCard),
         }
       })
 
-      const allFiles = response.data.data || []
+      const workflowFiles = response.data.aquaTrees || []
 
       // Filter only allowed workflow files for identity cards
-      const filteredWorkflows = allFiles.filter((file: ApiFileInfo) => {
-        if (!file.aquaTree) return false
-        const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree, systemAquaFileNames)
-        // Only include workflows that are in the allowed list
-        return isWorkFlow && workFlow && allowedWorkflowsForIdentityCard.includes(workFlow)
-      })
+      // const filteredWorkflows = allFiles.filter((file: ApiFileInfo) => {
+      //   if (!file.aquaTree) return false
+      //   const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree, systemAquaFileNames)
+      //   // Only include workflows that are in the allowed list
+      //   return isWorkFlow && workFlow && allowedWorkflowsForIdentityCard.includes(workFlow)
+      // })
 
-      setWorkflowFiles(filteredWorkflows)
+      setWorkflowFiles(workflowFiles)
     } catch (error) {
       console.error('Error loading workflows:', error)
       toast.error('Failed to load workflows')
@@ -129,10 +131,20 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
       const aquaTreeBlob = new Blob([JSON.stringify(aquaTree)], {
         type: 'application/json',
       })
+      const assetContentBlob = new Blob([fileObject.fileContent as string], {
+        type: 'application/json',
+      })
       formData.append('file', aquaTreeBlob, fileObject.fileName)
+      formData.append('asset', assetContentBlob, fileObject.fileName)
       formData.append('account', session?.address || '')
       formData.append('is_workflow', 'false')
-      formData.append('has_asset', 'false')
+      formData.append('has_asset', 'true')
+
+      console.log("Submitting Aqua Tree:", aquaTree)
+      console.log("Submitting fileobject:", fileObject)
+
+
+      // throw new Error('Debugging stop')
 
       const response = await axios.post(url, formData, {
         headers: {
@@ -142,22 +154,23 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
 
       if (response.status === 200 || response.status === 201) {
         if (isFinal) {
-          const filesApi = await fetchFiles(
-            session!.address,
-            `${backend_url}/explorer_files`,
-            session!.nonce
-          )
-          setFiles({
-            fileData: filesApi.files,
-            pagination: filesApi.pagination,
-            status: 'loaded'
-          })
+          // const filesApi = await fetchFiles(
+          //   session!.address,
+          //   `${backend_url}/explorer_files`,
+          //   session!.nonce
+          // )
+          // setFiles({
+          //   fileData: filesApi.files,
+          //   pagination: filesApi.pagination,
+          //   status: 'loaded'
+          // })
 
           toast.success('Identity card created successfully')
 
           // Trigger file reloads
-          await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true)
-          await triggerWorkflowReload(RELOAD_KEYS.all_files, true)
+          await triggerWorkflowReload(RELOAD_KEYS.aqua_files, false)
+          await triggerWorkflowReload(RELOAD_KEYS.all_files, false)
+          await triggerWorkflowReload(RELOAD_KEYS.identity_card, true)
 
           return {
             aquaTree,
@@ -327,6 +340,8 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
 
         currentAquaTree = linkedAquaTreeResponse.data.aquaTree
       }
+
+      console.log("Current Aqua Tree:", currentAquaTree)
 
       // Save the identity card
       const result = await saveAquaTree(currentAquaTree!, fileObject, true)
