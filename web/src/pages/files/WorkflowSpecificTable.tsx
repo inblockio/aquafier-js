@@ -34,7 +34,7 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
     const { subscribe } = useNotificationWebSocketContext();
 
     const loadFiles = async () => {
-        if (!session?.address || !backend_url) return;
+        if (!session?.address || !backend_url || !workflowName) return;
         setFiles([])
         try {
             setLoading(true)

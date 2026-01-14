@@ -7,7 +7,7 @@ import appStore from '../store'
 import { Crown, X } from 'lucide-react'
 import { Outlet } from 'react-router-dom'
 import { Toaster } from 'sonner'
-import { useStore } from 'zustand' 
+import { useStore } from 'zustand'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Button } from '../components/ui/button'
 import CreateFormFromTemplate from '../components/aqua_forms/CreateFormFromTemplate'
@@ -22,6 +22,8 @@ import { IDrawerStatus } from '@/models/AquaTreeDetails'
 import { useState } from 'react'
 import { RELOAD_KEYS, triggerWorkflowReload } from '../utils/reloadDatabase';
 import WorkspaceDialogUI from '@/components/workspace/workspace_download_dialog_ui'
+import IdentityCardDialogUi from '@/components/identity_card_dialog_ui'
+
 export default function NewShadcnLayoutWithSidebar() {
 
       const {
@@ -158,9 +160,18 @@ export default function NewShadcnLayoutWithSidebar() {
                         </div>
                   )}
 
+                  <IdentityCardDialogUi
+                        // title="Create Identity Card"
+                        isOpen={openDialog?.isOpen!}
+                        walletAddress={session?.address!}
+                        onClose={function (): void {
+                              setOpenDialog(null)
+                        }}
+                  />
+
                   {/* General Dialogs */}
                   <Dialog
-                        open={openDialog !== null && openDialog.isOpen && openDialog.dialogType != 'aqua_file_details' && openDialog.dialogType != 'share_dialog' && openDialog.dialogType != 'early_bird_offer'}
+                        open={openDialog !== null && openDialog.isOpen && openDialog.dialogType != 'aqua_file_details' && openDialog.dialogType != 'identity_card' && openDialog.dialogType != 'share_dialog' && openDialog.dialogType != 'early_bird_offer'}
                         onOpenChange={openState => {
                               if (!openState) {
                                     setOpenDialog(null)
@@ -188,13 +199,17 @@ export default function NewShadcnLayoutWithSidebar() {
 
                               <ScrollArea className="h-full">
 
-                                     {openDialog?.dialogType === 'explorer_workspace_download' && (
+                                    {openDialog?.dialogType === 'explorer_workspace_download' && (
                                           <WorkspaceDialogUI
                                                 title="Download Workspace"
                                                 isDone={function (): void {
                                                       setOpenDialog(null)
                                                 }}
                                           />)}
+
+
+
+
 
                                     {openDialog?.dialogType === 'form_template_editor' && (
                                           <FormTemplateEditorShadcn

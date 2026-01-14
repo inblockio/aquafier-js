@@ -87,6 +87,7 @@ export const RELOAD_KEYS = {
     claims_and_attestations: "claims_and_attestations",
     user_stats: "user_stats",
     contacts: "contacts",
+    identity_card: "identity_card",
 };
 
 /**

@@ -18,7 +18,9 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [view, setView] = useState<'table' | 'card'>('table')
       const [isSmallScreen, setIsSmallScreen] = useState(false)
       const [uniqueWorkflows, setUniqueWorkflows] = useState<{ name: string, count: number }[]>([])
-      const [selectedWorkflow, setSelectedWorkflow] = useState<string>('aqua_files') //aqua_files
+      const [selectedWorkflow, setSelectedWorkflow] = useState<string>(
+            filesListProps.hideAllFilesAndAquaFiles ? '' : 'aqua_files'
+      )
       const [stats, setStats] = useState<IUserStats>(emptyUserStats)
       const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date')
 
@@ -96,6 +98,30 @@ export default function FilesList(filesListProps: FilesListProps) {
                   }
             }
       }, [tabFromUrl, stats])
+
+      // Set initial selected workflow when filtering workflows
+      useEffect(() => {
+            if ((filesListProps.hideAllFilesAndAquaFiles || filesListProps.allowedWorkflows) && uniqueWorkflows.length > 0) {
+                  // Apply the same filtering logic as renderWorkflowTabs
+                  let filteredWorkflows = uniqueWorkflows
+
+                  // If allowedWorkflows is provided, only show those workflows
+                  if (filesListProps.allowedWorkflows && filesListProps.allowedWorkflows.length > 0) {
+                        filteredWorkflows = filteredWorkflows.filter(w =>
+                              filesListProps.allowedWorkflows!.includes(w.name)
+                        )
+                  }
+
+                  // If hideAllFilesAndAquaFiles is true, filter out aqua_files
+                  if (filesListProps.hideAllFilesAndAquaFiles) {
+                        filteredWorkflows = filteredWorkflows.filter(w => w.name !== 'aqua_files')
+                  }
+
+                  if (filteredWorkflows.length > 0 && !selectedWorkflow) {
+                        setSelectedWorkflow(filteredWorkflows[0].name)
+                  }
+            }
+      }, [uniqueWorkflows, filesListProps.hideAllFilesAndAquaFiles, filesListProps.allowedWorkflows])
 
       // Watch for stats reload triggers
       useReloadWatcher({
@@ -290,25 +316,41 @@ export default function FilesList(filesListProps: FilesListProps) {
       const renderWorkflowTabs = () => {
             if (uniqueWorkflows.length === 0 || !selectedFilters.includes('all')) return null
 
+            // Filter workflows based on props
+            let workflowsToShow = uniqueWorkflows
+
+            // If allowedWorkflows is provided, only show those workflows
+            if (filesListProps.allowedWorkflows && filesListProps.allowedWorkflows.length > 0) {
+                  workflowsToShow = workflowsToShow.filter(w =>
+                        filesListProps.allowedWorkflows!.includes(w.name)
+                  )
+            }
+
+            // If hideAllFilesAndAquaFiles is true, filter out aqua_files
+            if (filesListProps.hideAllFilesAndAquaFiles) {
+                  workflowsToShow = workflowsToShow.filter(w => w.name !== 'aqua_files')
+            }
+
             return (
                   <div className="mb-6">
                         <div className="border-b border-gray-200">
                               <nav className="-mb-px flex space-x-8 overflow-x-auto">
 
-                                    <button
-                                          onClick={() => setSelectedWorkflow('all')}
-                                          className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${selectedWorkflow === 'all'
-                                                ? 'border-blue-500 text-blue-600'
-                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                                }`}
-                                    >
-                                          All Files ({stats.filesCount})
-                                    </button>
-
-
+                                    {/* Only show "All Files" if hideAllFilesAndAquaFiles is false */}
+                                    {!filesListProps.hideAllFilesAndAquaFiles && (
+                                          <button
+                                                onClick={() => setSelectedWorkflow('all')}
+                                                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${selectedWorkflow === 'all'
+                                                      ? 'border-blue-500 text-blue-600'
+                                                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                      }`}
+                                          >
+                                                All Files ({stats.filesCount})
+                                          </button>
+                                    )}
 
                                     {
-                                          view === 'table' && uniqueWorkflows.sort((a, b) => a.name.localeCompare(b.name)).map((workflow) => {
+                                          view === 'table' && workflowsToShow.sort((a, b) => a.name.localeCompare(b.name)).map((workflow) => {
 
                                                 return (
                                                       <button

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, Globe, Mail, Phone, Plus, Scale, Signature, UserLock } from 'lucide-react';
+import { ChevronDown, Globe, Mail, Phone, Plus, Scale, Signature, UserLock, Blinds } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import appStore from '../store'
 import { useStore } from 'zustand'
@@ -11,7 +11,7 @@ export default function ClaimTypesDropdownButton() {
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const handleItemClick = (item: 'identity_claim' | 'dns_claim' | 'user_signature' | 'email_claim' | 'phone_number_claim' | 'dba_claim') => {
+  const handleItemClick = (item: 'identity_claim' | 'dns_claim' | 'user_signature' | 'email_claim' | 'phone_number_claim' | 'dba_claim' | 'identity_card') => {
     setIsOpen(false);
 
     setOpenDialog({ dialogType: item, isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
@@ -147,6 +147,16 @@ export default function ClaimTypesDropdownButton() {
           >
             <Phone className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
             Create Phone Number claim
+          </button>
+
+
+           <button
+            data-testid="create-phone-number-claim-dropdown-button-item"
+            onClick={() => handleItemClick('identity_card')}
+            className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+          >
+            <Blinds className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
+            Create Identity card
           </button>
         </div>
       </div>

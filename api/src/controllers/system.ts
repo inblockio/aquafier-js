@@ -210,7 +210,8 @@ export default async function systemController(fastify: FastifyInstance) {
             "identity_claim.json",
             "phone_number_claim.json",
             "user_profile.json",
-            "user_signature.json"
+            "user_signature.json",
+            "identity_card.json"
         ]
 
 
