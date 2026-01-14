@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { AlertCircle, Loader2, Save, Share2, CheckSquare } from "lucide-react"
+import { AlertCircle, Loader2, Save, CheckSquare } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useStore } from "zustand"
 import appStore from "@/store"
@@ -379,9 +379,9 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
     createIdentityCard(false)
   }
 
-  const handleShareCard = () => {
-    createIdentityCard(true)
-  }
+  // const handleShareCard = () => {
+  //   createIdentityCard(true)
+  // }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -509,7 +509,7 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
                 )}
               </Button>
 
-              <Button
+              {/* <Button
                 onClick={handleShareCard}
                 disabled={isSaving || isSharing || selectedWorkflows.length === 0}
                 className="bg-orange-600 hover:bg-orange-700 text-white"
@@ -525,7 +525,7 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
                     Share Card
                   </>
                 )}
-              </Button>
+              </Button> */}
             </div>
           </div>
         </DialogFooter>
