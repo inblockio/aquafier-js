@@ -107,6 +107,8 @@ export interface FilesListProps {
       selectedFiles: Array<ApiFileInfo>
       onFileDeSelected: (file: ApiFileInfo) => void
       onFileSelected: (file: ApiFileInfo) => void
+      hideAllFilesAndAquaFiles?: boolean // Hide "All Files" and "Aqua files" tabs
+      allowedWorkflows?: string[] // Only show these specific workflow tabs (if provided, filters all workflows)
 }
 
 export interface OpenDialog {
