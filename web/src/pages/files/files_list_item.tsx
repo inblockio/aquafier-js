@@ -467,6 +467,35 @@ export default function FilesListItem({
                   }
             }
 
+            if (workflowInfo?.workFlow == "ens_claim") {
+                  let genesisHash = getGenesisHash(file.aquaTree!)
+                  if (!genesisHash) {
+                        return <div />
+                  }
+                  let genRevision = file.aquaTree?.revisions[genesisHash]
+                  if (!genRevision) {
+                        return <div />
+                  }
+
+                  let creatorWallet = genRevision[`forms_wallet_address`]
+                  let ensName = genRevision[`forms_ens_name`]
+
+                  if (creatorWallet) {
+
+                        return <>
+                              <div className="flex flex-nowrap  text-xs text-gray-500">
+                                    <p className="text-xs">ENS Name: &nbsp;</p>
+                                    <p className="text-xs ">{ensName}</p>
+                              </div>
+                              <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
+                                    <p className="text-xs ">Owner   {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
+                                    <WalletAdrressClaim walletAddress={creatorWallet} />
+                              </div>
+
+                        </>
+                  }
+            }
+
             if (workflowInfo?.workFlow == "identity_attestation") {
                   let genesisHash = getGenesisHash(file.aquaTree!)
                   if (!genesisHash) {

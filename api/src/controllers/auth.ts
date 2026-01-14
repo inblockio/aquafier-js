@@ -34,11 +34,14 @@ export default async function authController(fastify: FastifyInstance) {
       let settingsData = await prisma.settings.findFirst({
         where: {
           user_pub_key: session.address!!
+        },
+        include: {
+          User: true
         }
       })
 
       if (settingsData == null) {
-        let defaultData = {
+        const defaultData = {
           user_pub_key: session.address!!,
           cli_pub_key: "",
           cli_priv_key: "",
@@ -46,14 +49,13 @@ export default async function authController(fastify: FastifyInstance) {
           witness_network: process.env.DEFAULT_WITNESS_NETWORK ?? "sepolia",
           theme: "light",
           witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
-          createdAt: new Date(),
-          updatedAt: new Date(),
         }
 
-        settingsData = defaultData
-
-        await prisma.settings.create({
-          data: defaultData
+        settingsData = await prisma.settings.create({
+          data: defaultData,
+          include: {
+            User: true
+          }
         })
       }
 
@@ -182,16 +184,19 @@ export default async function authController(fastify: FastifyInstance) {
           }
         }
       }
-
+ 
 
       let settingsData = await prisma.settings.findFirst({
         where: {
-          user_pub_key: siweData.address!!
+          user_pub_key: siweData.address!!,
+        },
+        include: {
+          User: true
         }
       })
 
       if (settingsData == null) {
-        let defaultData = {
+        const defaultData = {
           user_pub_key: siweData.address!!,
           cli_pub_key: "",
           cli_priv_key: "",
@@ -199,11 +204,7 @@ export default async function authController(fastify: FastifyInstance) {
           witness_network: process.env.DEFAULT_WITNESS_NETWORK ?? "sepolia",
           theme: "light",
           witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
-          createdAt: new Date(),
-          updatedAt: new Date(),
         }
-
-        settingsData = defaultData
 
         await prisma.notifications.create({
           data: {
@@ -216,8 +217,11 @@ export default async function authController(fastify: FastifyInstance) {
           }
         })
 
-        await prisma.settings.create({
-          data: defaultData
+        settingsData = await prisma.settings.create({
+          data: defaultData,
+          include: {
+            User: true
+          }
         })
       }
 

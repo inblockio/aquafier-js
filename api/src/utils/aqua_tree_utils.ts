@@ -192,7 +192,7 @@ export async function saveFileAndCreateOrUpdateFileIndex(walletAddress: string, 
 
     let genRevision = aquaTree.revisions[genesisHash]
     if (!genRevision) {
-        throw Error(`genesis revision of attested aqua tree casnnot be null`)
+        throw Error(`genesis revision of attested aqua tree canno be null`)
     }
     let aquaTreeFilehash = genRevision[`file_hash`]
     if (fileHash != aquaTreeFilehash) {

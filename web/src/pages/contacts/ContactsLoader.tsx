@@ -153,7 +153,8 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
           "email_claim": "forms_email",
           "phone_number_claim": "forms_phone_number",
           "user_signature": "forms_name",
-          "domain_claim": "forms_domain"
+          "domain_claim": "forms_domain",
+          "ens_claim": "forms_ens_name"
         };
 
         const fieldName = claimFieldMap[claimType];

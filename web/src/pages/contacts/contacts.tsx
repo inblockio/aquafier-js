@@ -11,6 +11,7 @@ import { LuGlobe, LuMail, LuPhone, LuSignature } from "react-icons/lu";
 import { LucideUserCircle } from "lucide-react";
 import { useNavigate } from 'react-router-dom'
 import { WalletAutosuggest } from "@/components/wallet_auto_suggest";
+import { FaEthereum } from "react-icons/fa6";
 
 const CLAIMS = new Set([
     "user_profile",
@@ -20,6 +21,7 @@ const CLAIMS = new Set([
     "email_claim",
     "phone_number_claim",
     "user_signature",
+    "ens_claim"
 ]);
 
 const ContactsPage = () => {
@@ -164,6 +166,12 @@ const ContactsPage = () => {
             },
             user_signature: {
                 icon: <LuSignature size={22} />,
+                label: "User Signature",
+                bgColor: "bg-gray-100",
+                textColor: "text-gray-700"
+            },
+            ens_claim: {
+                icon: <FaEthereum size={22} />,
                 label: "User Signature",
                 bgColor: "bg-gray-100",
                 textColor: "text-gray-700"

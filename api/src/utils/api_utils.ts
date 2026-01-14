@@ -226,7 +226,8 @@ const setUpSystemTemplates = async () => {
         "email_claim",
         "phone_number_claim",
         "user_profile",
-        "identity_card"
+        "identity_card",
+        "ens_claim"
     ]
     for (let index = 0; index < templates.length; index++) {
         const templateItem = templates[index];
