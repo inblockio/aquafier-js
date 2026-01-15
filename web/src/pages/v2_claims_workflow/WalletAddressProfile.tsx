@@ -31,6 +31,7 @@ import { getDNSStatusBadge, IDnsVerificationResult, verifyDNS } from '@/utils/ve
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 import { API_ENDPOINTS } from '@/utils/constants'
+import { FaEthereum } from 'react-icons/fa6'
 
 interface ISignatureWalletAddressCard {
       index?: number
@@ -86,6 +87,9 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
             else if (claim.claimType === 'user_signature') {
                   return 'Signature'
             }
+            else if (claim.claimType === 'ens_claim') {
+                  return 'ENS Name'
+            }
             else {
                   return 'Unknown'
             }
@@ -128,6 +132,17 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                   return (
                         <div className={`h-[34px] w-[34px] flex items-center justify-center ${extraClasses}`}>
                               <Mail size={ICON_SIZE} className='text-blue-500' />
+                        </div>
+                  )
+            }
+            else if (claim.claimType === 'ens_claim') {
+                  let extraClasses = ""
+                  if (claim.attestationsCount > 0) {
+                        extraClasses = "text-green-500"
+                  }
+                  return (
+                        <div className={`h-[34px] w-[34px] flex items-center justify-center ${extraClasses}`}>
+                              <FaEthereum size={ICON_SIZE} className='text-blue-500' />
                         </div>
                   )
             }
@@ -198,6 +213,15 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                         <div className="flex gap-2 items-center" onClick={() => {
                               verifyDomainClaim(true)
                         }}>
+
+                              {verificationBadge}
+                        </div>
+                  )
+            }
+            else if (claim.claimType === "ens_claim") {
+                  const verificationBadge = getDNSStatusBadge("verified", "Verified")
+                  return (
+                        <div className="flex gap-2 items-center" >
 
                               {verificationBadge}
                         </div>
@@ -276,6 +300,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
       const [claims, setClaims] = useState<IClaim[]>([])
       const [loading, setLoading] = useState(true)
       const [isLoading, setIsLoading] = useState<boolean>(true)
+      const [ensName, setEnsName] = useState<string | null>(null)
       const navigate = useNavigate()
 
       const loadSystemAquaFileNames = async () => {
@@ -375,7 +400,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                                 claimName = firstRevision.forms_phone_number
                                           } else if (workFlow === 'email_claim') {
                                                 claimName = firstRevision.forms_email
-                                          }else if (workFlow === 'ens_claim') {
+                                          } else if (workFlow === 'ens_claim') {
                                                 claimName = firstRevision.forms_ens_name
                                           }
                                           let claimInformation: IClaim = {
@@ -776,11 +801,53 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             }
       }
 
+      const hasEnsClaim = () => {
+            if (claims && claims.length > 0) {
+                  let ens_claim = claims.find(claim => claim.claimType === "ens_claim")
+                  if (ens_claim) {
+                        return true
+                  }
+            }
+            return false
+      }
+
+      const loadEnsName = async () => {
+            if (!session && !backend_url) {
+                  return
+            }
+            try {
+                  const response = await fetch(`${backend_url}/resolve/${session?.address}?useEns=true`, {
+                        method: 'GET',
+                        headers: {
+                              metamask_address: session?.address!,
+                              'nonce': session?.nonce!,
+                              'Content-Type': 'application/json'
+                        }
+                  });
+
+                  const data = await response.json();
+
+                  if (response.ok && data.success) {
+                        setEnsName(data.result);
+                  }
+            } catch (_err) {
+                  // console.error('Resolution error:', err);
+            }
+
+      }
+      // console.log("Claims: ", claims)
+
       useEffect(() => {
             if (walletAddress && session?.nonce) {
                   loadWorkflows()
             }
       }, [walletAddress, session?.nonce, files])
+
+      useEffect(() => {
+            if (session?.address && session.nonce && backend_url) {
+                  loadEnsName
+            }
+      }, [session, backend_url])
 
 
       return (
@@ -869,12 +936,12 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         }
 
                         {
-                              user_profile?.User?.ens_name ? (
+                              (ensName && claims.length > 0 && !isLoading && !loading && !hasEnsClaim()) ? (
                                     <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                           <div className="flex flex-col gap-1">
                                                 <p className="text-sm font-medium text-green-800">You have an ENS name</p>
                                                 <p className="text-sm text-green-700">Would you like to create your claim?</p>
-                                                <p className="text-sm font-semibold text-green-900 bg-green-100 px-2 py-1 rounded w-fit">{user_profile?.User?.ens_name}</p>
+                                                <p className="text-sm font-semibold text-green-900 bg-green-100 px-2 py-1 rounded w-fit">{user_profile?.ens_name}</p>
                                           </div>
                                           <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleCreateEnsClaim}>Create</Button>
                                     </div>

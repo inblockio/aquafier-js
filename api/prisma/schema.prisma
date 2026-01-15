@@ -8,9 +8,15 @@ generator client {
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
+enum EnsNameType {
+  ALIAS
+  ENS_NAME
+}
+
 model Users {
   address       String                     @id
   ens_name      String?
+  ens_name_type EnsNameType @default(ENS_NAME) 
   email         String?
   createdAt     DateTime                   @default(now()) @map("created_at")
   updatedAt     DateTime                   @updatedAt @map("updated_at")
@@ -316,6 +322,7 @@ model ENSName {
   id             String   @id @default(uuid())
   wallet_address String
   ens_name       String
+  // ens_expiry
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 

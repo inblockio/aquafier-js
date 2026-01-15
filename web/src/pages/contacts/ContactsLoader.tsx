@@ -6,7 +6,7 @@ import { ContactProfile } from '@/types/types';
 import { ApiFileInfo } from '@/models/FileInfo';
 import { API_ENDPOINTS, IDENTITY_CLAIMS } from '@/utils/constants';
 import { getGenesisHash, isWorkFlowData } from '@/utils/functions';
-import { OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
+// import { OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { ContactsService } from '@/storage/databases/contactsDb';
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames';
 import { useReloadWatcher } from '@/hooks/useReloadWatcher';
@@ -83,7 +83,7 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
     try {
       const params = {
         page: 1,
-        limit: 200,
+        limit: 10_000,
         claim_types: JSON.stringify(IDENTITY_CLAIMS),
       };
 
@@ -121,26 +121,42 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
       const claimType = workFlow.workFlow;
       if (!IDENTITY_CLAIMS.includes(claimType)) return null;
 
-      const orderedAquaTree = OrderRevisionInAquaTree(element.aquaTree!);
-      const allRevisions = Object.values(orderedAquaTree.revisions);
+      // const orderedAquaTree = OrderRevisionInAquaTree(element.aquaTree!);
+      // const allRevisions = Object.values(orderedAquaTree.revisions);
       let walletAddress = "";
 
-      if (workFlow.workFlow == "identity_attestation") {
-        let genHash = getGenesisHash(element.aquaTree!);
-        if (genHash) {
-          let genRevision = element.aquaTree!.revisions[genHash];
-          let walletClaimOwner = genRevision["forms_claim_wallet_address"];
-          if (walletClaimOwner) {
-            walletAddress = walletClaimOwner;
-          }
-        }
-      } else {
-        const signatureRevision = allRevisions.find(
-          (r) => r.revision_type === "signature"
-        ) as Revision | undefined;
+      console.log("workflow: ", workFlow)
+      const walletAddressField: Record<string, string> = {
+        identity_attestation: "forms_claim_wallet_address",
+        ens_claim: "forms_wallet_address",
+        identity_claim: "forms_wallet_address"
+      }
 
-        if (!signatureRevision?.signature_wallet_address) return null;
-        walletAddress = signatureRevision.signature_wallet_address;
+      // This code block somehow is broken, replaced it below
+      // if (workFlow.workFlow == "identity_attestation" || workFlow.workFlow == "ens_claim" || workFlow.workFlow == "simple_claim") {
+      //   let genHash = getGenesisHash(element.aquaTree!);
+      //   console.log("We went to genesis revision for: ", element)
+      //   if (genHash) {
+      //     let genRevision = element.aquaTree!.revisions[genHash];
+      //     let walletClaimOwner = genRevision["forms_claim_wallet_address"];
+      //     if (walletClaimOwner) {
+      //       walletAddress = walletClaimOwner;
+      //     }
+      //   }
+      // } else {
+      //   const signatureRevision = allRevisions.find(
+      //     (r) => r.revision_type === "signature"
+      //   ) as Revision | undefined;
+      //   if (signatureRevision?.signature_wallet_address){
+      //     walletAddress = signatureRevision.signature_wallet_address;
+      //   }
+      // }
+
+      const genesisHash = getGenesisHash(element.aquaTree!)
+      const genesisRevision = element.aquaTree?.revisions[genesisHash!]
+      const addressField = walletAddressField[workFlow.workFlow] || "forms_wallet_address"
+      if(genesisRevision){
+        walletAddress = genesisRevision[addressField]
       }
 
       let claimValue: string = "";
@@ -172,6 +188,7 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
           "email_claim": ["forms_email", "forms_wallet_address"],
           "user_signature": ["forms_wallet_address", "forms_name"],
           "domain_claim": ["forms_domain", "forms_wallet_address"],
+          "ens_claim": ["forms_ens_name", "forms_wallet_address"],
           //   "identity_attestation": ["forms_context", "forms_wallet_address"]
         };
 
@@ -198,6 +215,8 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
       // Process all files in parallel
       const processedFiles = await Promise.all(files.map(processFile));
       const validResults = processedFiles.filter(result => result !== null);
+
+      console.log(validResults)
 
       for (const result of validResults) {
         const { walletAddress, claimType, claimValue, searchText, element } = result!;

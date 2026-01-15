@@ -44,7 +44,8 @@ export default async function userController(fastify: FastifyInstance) {
                 address: address,
             },
             data: {
-                ens_name: addr.name
+                ens_name: addr.name,
+                ens_name_type: 'ALIAS'
             }
         });
 
@@ -254,20 +255,20 @@ export default async function userController(fastify: FastifyInstance) {
             return reply.code(400).send({error: "You are not logged in!"})
         }
 
-        const userEntry = await prisma.users.findFirst({
+        const ensEntry = await prisma.eNSName.findFirst({
             where: {
-                address: {
+                wallet_address: {
                     equals: userAddress,
                     mode: "insensitive"
                 }
             }
         })
 
-        if(!userEntry){
+        if(!ensEntry){
             return reply.code(400).send({error: "Please logout and login in again!"})
         }
 
-        const userEns = userEntry.ens_name
+        const userEns = ensEntry.ens_name
 
         if(!userEns){
             return reply.code(400).send({error: "You don't have an ENS name!"})
