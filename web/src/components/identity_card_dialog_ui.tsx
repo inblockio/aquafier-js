@@ -14,13 +14,14 @@ import {
   timeToHumanFriendly,
   ensureDomainUrlHasSSL
 } from "@/utils/functions"
-import Aquafier, { AquaTree, AquaTreeWrapper, FileObject } from "aqua-js-sdk"
+import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, OrderRevisionInAquaTree } from "aqua-js-sdk"
 import { toast } from "sonner"
 import axios from "axios"
 import { useAquaSystemNames } from "@/hooks/useAquaSystemNames"
 import { RELOAD_KEYS, triggerWorkflowReload } from "@/utils/reloadDatabase"
 import FilesList from "@/pages/files/files_list"
 import { API_ENDPOINTS } from "@/utils/constants"
+
 
 interface IdentityCardDialogUiProps {
   isOpen: boolean
@@ -41,6 +42,7 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
   const [isSharing, setIsSharing] = useState(false)
   const [workflowFiles, setWorkflowFiles] = useState<ApiFileInfo[]>([])
   const [loading, setLoading] = useState(true)
+  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false)
 
   // Define which workflows are allowed in identity cards (claims and related workflows)
   const allowedWorkflowsForIdentityCard = [
@@ -61,6 +63,17 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
       loadWorkflows()
     }
   }, [isOpen, walletAddress, systemAquaFileNames])
+
+  // Reset duplicate warning when dialog closes or workflows change
+  useEffect(() => {
+    if (!isOpen) {
+      setShowDuplicateWarning(false)
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    setShowDuplicateWarning(false)
+  }, [selectedWorkflows])
 
   const loadWorkflows = async () => {
     setLoading(true)
@@ -365,6 +378,11 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
         })
       }
 
+
+        // Reset the warning state after successful creation
+    setShowDuplicateWarning(false)
+setSelectedWorkflows([]);    
+
       onClose()
     } catch (error) {
       console.error("Error creating identity card:", error)
@@ -375,13 +393,117 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
     }
   }
 
-  const handleSave = () => {
-    createIdentityCard(false)
+
+
+   const verifyIfWorkFlowExist = async ()  : Promise<boolean>=> {
+    let similarWorkFlowExists = false
+    try {
+      // Fetch all files with a large limit to get workflows
+      const response = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
+        headers: {
+          'nonce': session?.nonce,
+        },
+        params: {
+          page: 1,
+          limit: 1000000, // Large limit to fetch all files
+          claim_types: JSON.stringify(['identity_card']),
+        }
+      })
+
+      const workflowFiles: Array<ApiFileInfo> = response.data.aquaTrees || []
+
+      // Get latest revision hashes of selected workflows
+      const selectedAquaTreeLatestHash = selectedWorkflows
+        .map(w => {
+          const aquaTree = w.aquaTree!
+          let orderedRevisions = OrderRevisionInAquaTree(aquaTree)
+          let latestHash = Object.keys(orderedRevisions.revisions)[Object.keys(orderedRevisions.revisions).length -1]
+          return latestHash
+        })
+        .filter(h => h !== null && h !== undefined) as string[]
+
+      // Helper function to collect all linked verification hashes from an identity card
+      const getLinkedVerificationHashes = (aquaTree: AquaTree): string[] => {
+        const linkedHashes: string[] = []
+        const genesisHash = getGenesisHash(aquaTree)
+
+        // Find the first link revision after genesis (template link)
+        let firstLinkAfterGenesisHash: string | null = null
+
+        for (const [hash, revision] of Object.entries(aquaTree.revisions)) {
+          if (revision.revision_type === 'link' && revision.previous_verification_hash === genesisHash) {
+            firstLinkAfterGenesisHash = hash
+            break
+          }
+        }
+
+        // Collect all link verification hashes except from the first link after genesis
+        Object.entries(aquaTree.revisions).forEach(([hash, revision]) => {
+          if (revision.revision_type === 'link' &&
+              revision.link_verification_hashes &&
+              hash !== firstLinkAfterGenesisHash) {
+            linkedHashes.push(...revision.link_verification_hashes)
+          }
+        })
+
+        return [...linkedHashes]
+      }
+
+      // Loop through workflowFiles and check if any of the workflowFiles are already included in any identity_card workflow
+      if (workflowFiles.length > 0) {
+        for (const identityCardTree of workflowFiles) {
+         
+          let orderRevisionsInAquaTree= OrderRevisionInAquaTree(identityCardTree.aquaTree!)
+          // console.log("OrderRevisionsInAquaTree:", orderRevisionsInAquaTree)
+          const linkedHashes = getLinkedVerificationHashes(orderRevisionsInAquaTree)
+
+          // Check if all selected workflow hashes are present in the linked hashes
+          const allSelectedIncluded = selectedAquaTreeLatestHash.every(hash => linkedHashes.includes(hash))
+
+          // Check if the lengths match (accounting for the template link)
+          // Identity card should have: template + selected workflows
+          const sameLengthWithTemplate = linkedHashes.length === selectedAquaTreeLatestHash.length 
+
+          console.log("selectedAquaTreeLatestHash:", selectedAquaTreeLatestHash, " Linked Hashes:", linkedHashes, " All Selected Included:", allSelectedIncluded, " Same Length With Template:", sameLengthWithTemplate)
+          // If they match by length and all selected workflows are included, mark as similar
+          if (allSelectedIncluded && sameLengthWithTemplate) {
+            similarWorkFlowExists = true
+            break
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading workflows:', error)
+      toast.error('Failed to load workflows')
+    }
+
+    return similarWorkFlowExists
   }
 
-  // const handleShareCard = () => {
-  //   createIdentityCard(true)
-  // }
+  const handleSave = async () => {
+    // Before creating, verify if similar identity card already exists
+    console.log("Verifying if similar identity card exists ---" +showDuplicateWarning)
+    if (!showDuplicateWarning) {
+      console.log("Verifying if similar identity card exists...")
+      const exists = await verifyIfWorkFlowExist()
+
+      if (exists) {
+        // Show warning banner and toast message
+        setShowDuplicateWarning(true)
+        toast.warning('A similar identity card with the same workflows already exists. Click "Proceed" to create anyway.', {
+          duration: 6000
+        })
+        return
+      }
+    }
+
+    // If no duplicate or user has chosen to proceed, create the card
+    await createIdentityCard(false)
+
+  
+  }
+
+ 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -419,6 +541,22 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
                 </div>
               </div>
             </div>
+
+            {showDuplicateWarning && (
+              <div className="bg-orange-50 border border-orange-300 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <div className="p-1 bg-orange-100 rounded">
+                    <AlertCircle className="h-4 w-4 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h5 className="font-medium text-orange-900 text-sm">Duplicate Identity Card Warning</h5>
+                    <p className="text-sm text-orange-700 mt-1">
+                      A similar identity card with the same workflows already exists. Click "Proceed" to create it anyway.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-col gap-2">
               <h5 className="text-sm font-semibold text-gray-900">
@@ -483,7 +621,13 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
           <div className="flex justify-between w-full gap-3">
             <Button
               variant="outline"
-              onClick={onClose}
+              onClick={()=>{
+                    // Reset the warning state after successful creation
+    setShowDuplicateWarning(false)
+setSelectedWorkflows([]);    
+//close dialog
+                onClose()
+              }}
               disabled={isSaving || isSharing}
             >
               Cancel
@@ -494,7 +638,7 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
                 onClick={handleSave}
                 disabled={isSaving || isSharing || selectedWorkflows.length === 0}
                 variant="default"
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className={showDuplicateWarning ? "bg-orange-600 hover:bg-orange-700 text-white" : "bg-blue-600 hover:bg-blue-700 text-white"}
               >
                 {isSaving ? (
                   <>
@@ -504,7 +648,7 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
                 ) : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    Save Card
+                    {showDuplicateWarning ? 'Proceed' : 'Save Card'}
                   </>
                 )}
               </Button>
