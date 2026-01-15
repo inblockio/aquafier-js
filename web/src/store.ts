@@ -18,6 +18,11 @@ type AppStoreState = {
             ens_name: string
             enable_dba_claim: boolean
             witness_contract_address: string | null
+            User?: {
+                  address: string
+                  ens_name: string
+                  email: string
+            }
       }
       session: Session | null
       isAdmin: boolean

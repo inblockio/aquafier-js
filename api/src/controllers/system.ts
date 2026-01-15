@@ -56,7 +56,8 @@ export default async function systemController(fastify: FastifyInstance) {
             "user_signature",
             "email_claim",
             "phone_number_claim",
-            "user_profile"
+            "user_profile",
+            "ens_claim"
         ]
 
         for (let index = 0; index < templates.length; index++) {
@@ -211,7 +212,8 @@ export default async function systemController(fastify: FastifyInstance) {
             "phone_number_claim.json",
             "user_profile.json",
             "user_signature.json",
-            "identity_card.json"
+            "identity_card.json",
+            "ens_claim.json"
         ]
 
 

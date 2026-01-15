@@ -13,6 +13,10 @@ import Logger from '../utils/logger';
 import { TEMPLATE_HASHES } from '../models/constants';
 import fs from 'fs';
 import { findAquaTreeRevision } from '../utils/revisions_operations_utils';
+import { generateENSClaim } from '../utils/server_attest';
+import { saveAquaTree } from '../utils/revisions_utils';
+import { saveFileAndCreateOrUpdateFileIndex } from '../utils/aqua_tree_utils';
+import Aquafier from 'aqua-js-sdk';
 
 export default async function userController(fastify: FastifyInstance) {
 
@@ -40,7 +44,8 @@ export default async function userController(fastify: FastifyInstance) {
                 address: address,
             },
             data: {
-                ens_name: addr.name
+                ens_name: addr.name,
+                ens_name_type: 'ALIAS'
             }
         });
 
@@ -236,6 +241,62 @@ export default async function userController(fastify: FastifyInstance) {
             return reply.code(500).send({ success: false, message: `error : ${e}`, });
 
         }
+    })
+
+    fastify.post('/user/create_ens_claim', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
+
+        const user = request.user;
+
+        const userAddress = user?.address
+
+        console.log("User address: ", userAddress)
+
+        if(!userAddress){
+            return reply.code(400).send({error: "You are not logged in!"})
+        }
+
+        const ensEntry = await prisma.eNSName.findFirst({
+            where: {
+                wallet_address: {
+                    equals: userAddress,
+                    mode: "insensitive"
+                }
+            }
+        })
+
+        if(!ensEntry){
+            return reply.code(400).send({error: "Please logout and login in again!"})
+        }
+
+        const userEns = ensEntry.ens_name
+
+        if(!userEns){
+            return reply.code(400).send({error: "You don't have an ENS name!"})
+        }
+
+        try {
+
+            let ensAquaClaim = await generateENSClaim(userEns, new Date().toString(), userAddress)
+            let ensClaimAquaTree = ensAquaClaim?.aquaTree
+            let ensFiledata = ensAquaClaim?.ensJSONfileData
+            let ensFileName = ensAquaClaim?.ensJSONfileName
+
+            if(ensClaimAquaTree && ensFiledata && ensFileName){
+                let ensFileBuffer = Buffer.from(JSON.stringify(ensFiledata))
+
+                let res = await saveAquaTree(ensClaimAquaTree, userAddress)
+               
+
+                let res2= await saveFileAndCreateOrUpdateFileIndex(userAddress, ensClaimAquaTree, ensFileName, ensFileBuffer)
+           
+                return reply.code(200).send({success: true, message: "Claim created successfully", aquaTree: ensClaimAquaTree})
+            }
+           
+        } catch (e: any) {
+            return reply.code(500).send({ success: true, message: `error : ${e}`, });
+
+        }
+
     })
 
     fastify.get('/attestation_address', {

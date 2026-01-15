@@ -160,7 +160,8 @@ export const API_ENDPOINTS = {
       LINKED_FILES: '/tree/by_genesis_hash',
       SEND_NOTIFICATION: 'api/notifications/:wallet_address',
       GET_AQUA_TREE: 'tree/revision_hash',
-      TRIGGER_WEBSOCKET: 'trigger/websocket'
+      TRIGGER_WEBSOCKET: 'trigger/websocket',
+      CREATE_ENS_CLAIM: 'user/create_ens_claim'
 }
 
 
@@ -182,7 +183,7 @@ export const getClaimIcon = (claimType: string) => {
       return iconMap[claimType] || FileText;
 };
 
-export const IDENTITY_CLAIMS = ['identity_claim', 'user_signature', 'email_claim', 'phone_number_claim', 'domain_claim', 'identity_attestation']
+export const IDENTITY_CLAIMS = ['identity_claim', 'user_signature', 'email_claim', 'phone_number_claim', 'domain_claim', 'identity_attestation', 'ens_claim']
 
 export const CLAIMS = new Set([
     "user_profile",
@@ -192,4 +193,5 @@ export const CLAIMS = new Set([
     "email_claim",
     "phone_number_claim",
     "user_signature",
+    "ens_claim"
 ]);

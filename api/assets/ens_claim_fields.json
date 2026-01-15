@@ -1,0 +1,26 @@
+[
+  {
+    "name": "ens_name",
+    "label": "ENS Name",
+    "type": "identity_claim_id",
+    "required": true,
+    "isArray": false,
+    "isHidden": false
+  },
+  {
+    "name": "expiry",
+    "label": "ENS Name Expiry Date",
+    "type": "text",
+    "required": true,
+    "isArray": false
+  },
+  {
+    "name": "wallet_address",
+    "label": "Wallet Address",
+    "type": "wallet_address",
+    "required": true,
+    "isArray": false,
+    "isEditable": false,
+    "isHidden": true
+  }
+]

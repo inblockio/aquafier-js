@@ -162,7 +162,7 @@ export default function NewShadcnLayoutWithSidebar() {
 
                   <IdentityCardDialogUi
                         // title="Create Identity Card"
-                        isOpen={openDialog?.isOpen!}
+                        isOpen={openDialog?.isOpen! && openDialog.dialogType === "identity_card"}
                         walletAddress={session?.address!}
                         onClose={function (): void {
                               setOpenDialog(null)
