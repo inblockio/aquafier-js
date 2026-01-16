@@ -1395,7 +1395,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                     AND: {
                         user: userAddress,
                         template_id: null,
-                        is_workflow: fileType === 'aqua_files' ? false : undefined
+                        is_workflow: fileType === 'all' || fileType == "aqua_files" ? false : undefined
                     }
                 };
 

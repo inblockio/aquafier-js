@@ -956,7 +956,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         throw new Error('Error creating aqua tree for file')
                   }
 
-                  await saveAquaTree(aquaTreeResponse.data.aquaTree!, item, false, true)
+                  await saveAquaTree(aquaTreeResponse.data.aquaTree!, item, true, true)
 
                   const aquaTreeWrapper: AquaTreeWrapper = {
                         aquaTree: currentAquaTreeData,

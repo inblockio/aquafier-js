@@ -160,6 +160,7 @@ export async function getUserApiFileInfo(
         }
     });
 
+    
     if (totalItems === 0) {
         return {
             data: [],
@@ -1831,7 +1832,7 @@ export async function processAquaFiles(
         Logger.error('Error processing aqua files:', error);
 
         const aquaFiles = getAquaFiles(zipData);
-        await processRegularFiles(aquaFiles, userAddress, templateId, isWorkFlow.isWorkFlow);
+        await processRegularFiles(aquaFiles, userAddress, templateId);
     }
 }
 
@@ -1982,7 +1983,7 @@ export async function processAllAquaFiles(
     } else {
 
         // Process regular files
-        await processRegularFiles(aquaFiles, userAddress, templateId, isWorkFlow);
+        await processRegularFiles(aquaFiles, userAddress, templateId);
     }
 }
 
@@ -2011,7 +2012,7 @@ export async function processRegularFiles(
     aquaFiles: Array<{ fileName: string; file: JSZip.JSZipObject }>,
     userAddress: string,
     templateId: string | null,
-    isWorkFlow: boolean
+    
 ) {
     for (const { file } of aquaFiles) {
         const aquaTree = await parseAquaFile(file);

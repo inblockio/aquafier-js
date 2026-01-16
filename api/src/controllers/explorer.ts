@@ -566,6 +566,7 @@ export default async function explorerController(fastify: FastifyInstance) {
         });
 
     });
+
     fastify.post('/explorer_workspace_upload', async (request, reply) => {
         // Reuse logic from /explorer_aqua_zip
         try {
@@ -627,12 +628,12 @@ export default async function explorerController(fastify: FastifyInstance) {
             try {
 
 
-                await processAllAquaFiles(zipData, userAddress, null, null, null, false);
+                await processAllAquaFiles(zipData, userAddress, null, null, null, true);
             } catch (error: any) {
                 Logger.error('Error processing aqua files:', error);
 
                 const aquaFiles = getAquaFiles(zipData);
-                await processRegularFiles(aquaFiles, userAddress, null, false);
+                await processRegularFiles(aquaFiles, userAddress, null);
             }
 
             return reply.code(200).send({
