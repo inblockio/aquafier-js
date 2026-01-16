@@ -155,7 +155,7 @@ function App() {
                             <Route path="admin/dashboard" element={<Dashboard />} />
                             <Route path="admin/list/:type" element={<AdminEntityList />} />
 
-                            <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
+                            <Route path="pdf/workflow/:page?" element={<PdfWorkflowPage />} />
                             <Route path="files_workflows" element={<FilesPage />} />
 
 
@@ -175,7 +175,7 @@ function App() {
                         <Route path="*" element={<PageNotFound />} />
                     </Routes>
                 </ErrorBoundary>
-            </BrowserRouter>
+            </BrowserRouter> 
         </NotificationWebSocketProvider>
     )
 }
