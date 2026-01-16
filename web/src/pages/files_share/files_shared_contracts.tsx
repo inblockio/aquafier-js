@@ -48,7 +48,10 @@ export function SharedContracts() {
                         contract.receiver?.toLowerCase().includes(searchQuery.toLowerCase())
             )
             setShareContracts(filteredContracts)
+            
       }, [JSON.stringify(contracts)])
+
+     
 
       return (
             <div>

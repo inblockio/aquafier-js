@@ -15,7 +15,7 @@ import WalletAddresClaim from "../v2_claims_workflow/WalletAdrressClaim"
 import { toast } from 'sonner'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { ImportAquaChainFromChain } from '@/components/dropzone_file_actions/import_aqua_tree_from_aqua_tree'
-import { SYSTEM_WALLET_ADDRESS } from '@/utils/constants'
+import { API_ENDPOINTS, SYSTEM_WALLET_ADDRESS } from '@/utils/constants'
 
 
 export const SharedContract = ({ type, contract, index, contractDeleted }: { type: 'outgoing' | 'incoming', contract: Contract; index: number; contractDeleted: (hash: string) => void }) => {
@@ -24,7 +24,7 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
       const [exactMatchFound, setExactMatchFound] = useState<boolean>(false)
       const [loadingSharedFileData, setLoadingSharedFileData] = useState(true)
       const [genesisMatch, setGenesisMatch] = useState(false)
-      const { backend_url, session, files } = useStore(appStore)
+      const { backend_url, session } = useStore(appStore)
 
 
       const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
@@ -97,26 +97,63 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
                         //check if file is already imported
                         let contractFileGenHash = getGenesisHash(apiFile.aquaTree!)
 
-                        for (let fileItem of files.fileData) {
 
-                              let currentGeesisHash = getGenesisHash(fileItem.aquaTree!)
+                        try {
+                              // fetch my aqaua tree using gen hash
 
-                              if (currentGeesisHash == contractFileGenHash) {
+                              const url = `${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`
+                              const res = await axios.post(url, {
+                                    revisionHashes: [contractFileGenHash]
+                              }, {
+                                    headers: {
+                                          'Content-Type': 'application/json',
+                                          nonce: session?.nonce,
+                                    },
+                              })
+                              if (res.status === 200) {
+                                    // setExistingChainFile(res.data.data)
+                                    // setHasFetchedanyExistingChain(true)
+                                    let fileItem = res.data.data
 
-                                    setGenesisMatch(true)
+                                    let currentGeesisHash = getGenesisHash(fileItem.aquaTree!)
 
-                                    //check if all hashes match
-                                    let allHashesInFileItem = Object.keys(fileItem.aquaTree!.revisions)
-                                    let allHashesInContract = Object.keys(apiFile.aquaTree!.revisions)
+                                    if (currentGeesisHash == contractFileGenHash) {
 
-                                    let allHashesMatch = arraysEqualIgnoreOrder(allHashesInFileItem, allHashesInContract)
-                                    if (allHashesMatch) {
-                                          setExactMatchFound(true)
+                                          setGenesisMatch(true)
+
+                                          //check if all hashes match
+                                          let allHashesInFileItem = Object.keys(fileItem.aquaTree!.revisions)
+                                          let allHashesInContract = Object.keys(apiFile.aquaTree!.revisions)
+
+                                          let allHashesMatch = arraysEqualIgnoreOrder(allHashesInFileItem, allHashesInContract)
+                                          if (allHashesMatch) {
+                                                setExactMatchFound(true)
+                                          }
+                                          //file exist
+                                         // break;
                                     }
-                                    //file exist
-                                    break;
                               }
+
+
+                        } catch (error: any) {
+
+                              if (error.response.status == 401) {
+                              } else if (error.response.status == 404) {
+                                    toast.error(`File could not be found (probably it was deleted)`)
+                              } else if (error.response.status == 412) {
+                                    toast.error(`File not found or no permission for access granted.`)
+                              } else {
+                                    toast.error(`Error : ${error}`)
+                              }
+                              console.error(error)
+
+                              toast.error(`Error fetching my aqua tree data`)
                         }
+
+                        // for (let fileItem of files.fileData) {
+
+
+                        // }
                   }
 
                   setLoadingSharedFileData(false)
@@ -246,10 +283,10 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
                                                                                     <p className="text-xs break-words sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate">
                                                                                           {/* {formatCryptoAddress(contract.receiver)} */}
                                                                                           {
-                                                                                                recipient==SYSTEM_WALLET_ADDRESS? <>Many potential receivers - file shared by link.</>:
-                                                                                                <WalletAddresClaim walletAddress={recipient} isShortened={false} />
+                                                                                                recipient == SYSTEM_WALLET_ADDRESS ? <>Many potential receivers - file shared by link.</> :
+                                                                                                      <WalletAddresClaim walletAddress={recipient} isShortened={false} />
                                                                                           }
-                                                                                          
+
                                                                                     </p>
                                                                               </div>
                                                                         </>

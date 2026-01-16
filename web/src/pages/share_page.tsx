@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert'
 import { CompleteChainView } from '../components/files_chain_details'
 
-const SharePage = () => {
+const SharePage = () => { 
       const { backend_url, metamaskAddress, session } = useStore(appStore)
       const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
       const [contractData, setContractData] = useState<any | null>(null)
