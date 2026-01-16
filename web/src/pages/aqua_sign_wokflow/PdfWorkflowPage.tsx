@@ -21,7 +21,6 @@ import { FaCircleInfo } from 'react-icons/fa6'
 import { Check } from 'lucide-react'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { toast } from 'sonner'
-import { set } from 'date-fns'
 
 export default function PdfWorkflowPage() {
       const [activeStep, setActiveStep] = useState(1)
@@ -32,6 +31,8 @@ export default function PdfWorkflowPage() {
       const { selectedFileInfo, setSelectedFileInfo } = useStore(appStore)
 
       const navigate = useNavigate()
+
+      const { page } = useParams();
 
       const getSignatureRevionHashes = (hashesToLoopPar: Array<string>): Array<SummaryDetailsDisplayData> => {
             const signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
@@ -182,6 +183,23 @@ export default function PdfWorkflowPage() {
             }
       }
 
+      const updateStepOnPageParam = () => {
+            if (page && timeLineItems.length > 0) {
+                  let pageNumber = parseInt(page);
+                  if (isNaN(pageNumber) || pageNumber < 1 || pageNumber > timeLineItems.length) {
+                        pageNumber = 1; // Default to 1 if invalid
+                  }
+                  setActiveStep(pageNumber);
+            }
+      }
+
+
+      useEffect(() => {
+            if (page && timeLineItems.length > 0) {
+                  updateStepOnPageParam()
+            }
+      }, [page, timeLineItems.length])
+
       useEffect(() => {
             if (selectedFileInfo) {
                   setFileInfo(selectedFileInfo)
@@ -195,18 +213,6 @@ export default function PdfWorkflowPage() {
 
       // Find the currently active content
       const activeContent = () => {
-
-            const { page } = useParams();
-
-            if (page) {
-
-                  let pageNumber = parseInt(page, 10);
-                  if (isNaN(pageNumber) || pageNumber < 1 || pageNumber > timeLineItems.length) {
-                        pageNumber = 1; // Default to 1 if invalid
-                  }
-                  setActiveStep(pageNumber);
-                  return timeLineItems.find(item => item.id === pageNumber)?.content
-            }
             return timeLineItems.find(item => item.id === activeStep)?.content
       }
 

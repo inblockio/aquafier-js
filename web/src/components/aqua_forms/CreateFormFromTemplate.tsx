@@ -366,7 +366,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
       const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false, isWorkflow: boolean = false, account: string = session?.address || '') => {
             try {
-                  const url = `${backend_url}/explorer_aqua_file_upload` 
+                  const url = `${backend_url}/explorer_aqua_file_upload`
 
                   // Create a FormData object to send multipart data
                   const formData = new FormData()
@@ -1152,7 +1152,27 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   let apiFileInfoFromSystem = await loadThisTreeFromSystem(signedAquaTree)
                   if (apiFileInfoFromSystem) {
                         setSelectedFileInfo(apiFileInfoFromSystem)
-                        navigate('/app/pdf/workflow')
+                        // navigate('/app/pdf/workflow')
+                        try {
+                              let genesisHash = getGenesisHash(signedAquaTree)
+                              if (genesisHash && session?.address) {
+                                    let genesisRevision = signedAquaTree.revisions[genesisHash]
+                                    let signers = genesisRevision?.forms_signers
+                                    if (signers) {
+                                          let signersArray = signers.split(",").map((item: string) => item.trim().toLocaleLowerCase())
+                                          let activeUserAddress = session.address.toLocaleLowerCase()
+                                          let isUserSigner = signersArray.find((signer: string) => signer === activeUserAddress)
+                                          if (isUserSigner) {
+                                                navigate('/app/pdf/workflow/2')
+                                          }
+                                    } else {
+
+                                          navigate('/app/pdf/workflow')
+                                    }
+                              }
+                        } catch (error: any) {
+                              navigate('/app/pdf/workflow')
+                        }
                   }
             }
       }
@@ -1762,8 +1782,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         <div className="flex items-center justify-center mb-6">
                               <div className="flex items-center gap-2">
                                     <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${aquaSignStep === 1
-                                                ? 'bg-blue-600 text-white'
-                                                : 'bg-green-500 text-white'
+                                          ? 'bg-blue-600 text-white'
+                                          : 'bg-green-500 text-white'
                                           }`}>
                                           {aquaSignStep === 1 ? '1' : '✓'}
                                     </div>
@@ -1772,8 +1792,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                     </span>
                                     <div className="w-12 h-0.5 bg-gray-300 mx-2" />
                                     <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${aquaSignStep === 2
-                                                ? 'bg-blue-600 text-white'
-                                                : 'bg-gray-300 text-gray-600'
+                                          ? 'bg-blue-600 text-white'
+                                          : 'bg-gray-300 text-gray-600'
                                           }`}>
                                           2
                                     </div>

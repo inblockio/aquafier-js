@@ -43,7 +43,7 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
             color: 'blue',
       })
 
-      const { backend_url, session } = useStore(appStore)
+      const { backend_url, session, setSelectedFileInfo } = useStore(appStore)
       const [existingChainFile, setExistingChainFile] = useState<ApiFileInfo | null>(null)
 
 
@@ -128,10 +128,15 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                         toast.success('Aqua Chain imported successfully')
 
                         // Use setTimeout to ensure state is updated before navigation
-                        setTimeout(() => {
-                              window.location.replace('/app');
-                              // navigate('/app',  { replace: true })
-                        }, 500)
+                        const aquaSystemFileNames = await loadSystemAquaFileNames()
+                        const { isWorkFlow, workFlow } = isWorkFlowData(fileInfo.aquaTree!, aquaSystemFileNames)
+
+                        if (isWorkFlow && workFlow == "aqua_sign") {
+                              setSelectedFileInfo(fileInfo)
+                              navigate('/app/pdf/workflow/2')
+                        } else {
+                              navigate('/app')
+                        }
                   } else {
                         toast.error('Failed to import chain')
                   }
@@ -190,9 +195,10 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
 
                         const aquaSystemFileNames = await loadSystemAquaFileNames()
                         const { isWorkFlow, workFlow } = isWorkFlowData(fileInfo.aquaTree!, aquaSystemFileNames)
-                        
+
                         if (isWorkFlow && workFlow == "aqua_sign") {
-                              navigate('/pdf/workflow/2')
+                              setSelectedFileInfo(fileInfo)
+                              navigate('/app/pdf/workflow/2')
                         } else {
                               navigate('/app')
                         }

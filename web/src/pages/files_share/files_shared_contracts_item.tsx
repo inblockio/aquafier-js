@@ -130,7 +130,7 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
                                                 setExactMatchFound(true)
                                           }
                                           //file exist
-                                         // break;
+                                          // break;
                                     }
                               }
 
@@ -139,7 +139,7 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
 
                               if (error.response.status == 401) {
                               } else if (error.response.status == 404) {
-                                    toast.error(`File could not be found (probably it was deleted)`)
+                                    // toast.error(`File could not be found (probably it was deleted)`)
                               } else if (error.response.status == 412) {
                                     toast.error(`File not found or no permission for access granted.`)
                               } else {
@@ -147,7 +147,7 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
                               }
                               console.error(error)
 
-                              toast.error(`Error fetching my aqua tree data`)
+                              // toast.error(`Error fetching my aqua tree data`)
                         }
 
                         // for (let fileItem of files.fileData) {
@@ -160,7 +160,7 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
             } catch (error: any) {
                   if (error.response.status == 401) {
                   } else if (error.response.status == 404) {
-                        toast.error(`File could not be found (probably it was deleted)`)
+                        // toast.error(`File could not be found (probably it was deleted)`)
                   } else if (error.response.status == 412) {
                         toast.error(`File not found or no permission for access granted.`)
                   } else {
@@ -168,10 +168,11 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
                   }
                   console.error(error)
 
-                  toast.error(`Error fetching data`)
+                  // toast.error(`Error fetching data`)
             }
 
       }
+
       useEffect(() => {
 
             if (contract.hash) {
