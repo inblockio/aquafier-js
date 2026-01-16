@@ -1195,15 +1195,29 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             // Clear the canvas first
             signatureRef.current.clear()
 
-            // Configure text style
-            const fontSize = isInitials ? Math.min(canvas.height * 0.6, 80) : Math.min(canvas.height * 0.4, 50)
+            // Configure text style - use larger font to fill the signature box
+            const displayText = isInitials ? text.split(' ').map(n => n.charAt(0).toUpperCase()).join('') : text
+
+            // Calculate font size based on canvas dimensions and text length
+            // Start with height-based sizing, then adjust for width if needed
+            let fontSize = isInitials ? canvas.height * 0.7 : canvas.height * 0.6
+
+            // Set font to measure text width
             ctx.font = `italic ${fontSize}px "Brush Script MT", "Segoe Script", "Bradley Hand", cursive`
+            let textWidth = ctx.measureText(displayText).width
+
+            // If text is too wide, scale down to fit within 90% of canvas width
+            const maxWidth = canvas.width * 0.9
+            if (textWidth > maxWidth) {
+                  fontSize = fontSize * (maxWidth / textWidth)
+                  ctx.font = `italic ${fontSize}px "Brush Script MT", "Segoe Script", "Bradley Hand", cursive`
+            }
+
             ctx.fillStyle = '#000000'
             ctx.textAlign = 'center'
             ctx.textBaseline = 'middle'
 
             // Draw the text centered
-            const displayText = isInitials ? text.split(' ').map(n => n.charAt(0).toUpperCase()).join('') : text
             ctx.fillText(displayText, canvas.width / 2, canvas.height / 2)
       }, [])
 
