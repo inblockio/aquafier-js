@@ -49,6 +49,10 @@ export default function FilesList(filesListProps: FilesListProps) {
             checkScreenSize()
             window.addEventListener('resize', checkScreenSize)
 
+              if (session?.nonce && backend_url) {
+                  getUserStats()
+            }
+            
             return () => {
                   window.removeEventListener('resize', checkScreenSize)
             }
