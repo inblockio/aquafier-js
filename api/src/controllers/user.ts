@@ -1041,7 +1041,7 @@ export default async function userController(fastify: FastifyInstance) {
         console.log("User data stats - form type counts:", JSON.stringify(formTypesToTrack, null, 4))
 
         const totalFiles = latestRecords.length;//allUserRevisions.length
-        const aquaFiles = totalFiles - Object.values(formTypesToTrack).reduce((a, b) => a + b, 0)
+        // const aquaFiles = totalFiles - Object.values(formTypesToTrack).reduce((a, b) => a + b, 0)
 
         return reply.code(200).send({
             filesCount:  totalFiles,
@@ -1050,7 +1050,7 @@ export default async function userController(fastify: FastifyInstance) {
             // linkRevisionsCount: linkRevisions.length,
             claimTypeCounts: {
                 ...formTypesToTrack,
-                aqua_files: aquaFiles
+                // aqua_files: aquaFiles
             }
         })
 
