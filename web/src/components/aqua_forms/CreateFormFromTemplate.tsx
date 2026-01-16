@@ -1199,7 +1199,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             const displayText = isInitials ? text.split(' ').map(n => n.charAt(0).toUpperCase()).join('') : text
 
             // Calculate font size based on canvas dimensions and text length
-            // Start with height-based sizing, then adjust for width if needed
+            // Start with height-based sizing, then adjust for width if neededz
             let fontSize = isInitials ? canvas.height * 0.7 : canvas.height * 0.6
 
             // Set font to measure text width
