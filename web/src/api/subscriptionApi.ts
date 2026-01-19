@@ -154,6 +154,25 @@ export async function fetchUsageStats(): Promise<{
   throw new Error(response.data.error || 'Failed to fetch usage stats');
 }
 
+export async function reFetchUsageStats(): Promise<{
+  usage: UsageStats;
+  limits: UsageLimits;
+  percentage_used: PercentageUsed;
+}> {
+  const backendUrl = getBackendUrl();
+  const headers = getHeaders();
+
+  const response = await axios.post(`${backendUrl}/subscriptions/usage/recalculate`, {}, {
+    headers,
+  });
+
+  if (response.data.success) {
+    return response.data.data;
+  }
+
+  throw new Error(response.data.error || 'Failed to fetch usage stats');
+}
+
 // ============================================================================
 // STRIPE PAYMENTS
 // ============================================================================

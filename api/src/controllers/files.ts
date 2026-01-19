@@ -1,7 +1,8 @@
-import {prisma} from '../database/db';
-import {getFile, streamToBuffer} from '../utils/file_utils.js';
-import Aquafier, {AquaTree, cliRedify, FileObject, LogType} from 'aqua-js-sdk';
-import {FastifyInstance} from 'fastify';
+import { prisma } from '../database/db';
+import { getFile, streamToBuffer } from '../utils/file_utils.js';
+import { getGenesisHash } from '../utils/aqua_tree_utils';
+import Aquafier, { AquaTree, cliRedify, FileObject, LogType } from 'aqua-js-sdk';
+import { FastifyInstance } from 'fastify';
 import path from 'path';
 import Logger from "../utils/logger";
 
@@ -98,13 +99,13 @@ export default async function filesController(fastify: FastifyInstance) {
 
             // Send the file content as a response
             return reply.send(fileContent);
-        } catch (error : any) {
+        } catch (error: any) {
             Logger.error('Error reading file:', error);
             return reply.code(500).send({ success: false, message: 'Error reading file content' });
         }
     });
 
- 
+
 
     fastify.post('/file/object', async (request, reply) => {
         let aquafier = new Aquafier();
@@ -163,7 +164,7 @@ export default async function filesController(fastify: FastifyInstance) {
             return reply.code(200).send({
                 aquaTree: resData,
             });
-        } catch (error : any) {
+        } catch (error: any) {
             request.log.error(error);
             return reply.code(500).send({ error: 'File upload failed' });
         }
@@ -255,11 +256,23 @@ export default async function filesController(fastify: FastifyInstance) {
 
             let resData: AquaTree = res.data.aquaTree!!;
 
+            // Update file size in database
+            const genesisHash = getGenesisHash(resData);
+            if (genesisHash && resData.revisions[genesisHash]) {
+                const fileHash = resData.revisions[genesisHash].file_hash;
+                if (fileHash) {
+                    await prisma.file.updateMany({
+                        where: { file_hash: fileHash },
+                        data: { file_size: fileBuffer.length }
+                    });
+                }
+            }
+
             // Return success response
             return reply.code(200).send({
                 aquaTree: resData,
             });
-        } catch (error : any) {
+        } catch (error: any) {
             request.log.error(error);
             return reply.code(500).send({ error: 'File upload failed' });
         }

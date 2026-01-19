@@ -412,11 +412,7 @@ export default async function paymentsController(fastify: FastifyInstance) {
    */
   fastify.post('/payments/crypto/webhook', async (request, reply: FastifyReply) => {
     try {
-      console.log("==================")
-      console.log("NOWPayments IPN Received:")
-      console.log(cliGreenify(JSON.stringify(request.headers, null, 4)))
-      console.log(cliRedify(JSON.stringify(request.body, null, 4)))
-      console.log("==================")
+
       const signature = request.headers['x-nowpayments-sig'] as string;
       const payload = JSON.stringify(request.body);
 
@@ -507,6 +503,27 @@ export default async function paymentsController(fastify: FastifyInstance) {
 
       // Update subscription status if payment succeeded
       if (newStatus === 'SUCCEEDED') {
+        // 1. Deactivate any OTHER active subscriptions for this user
+        // This ensures the user only has one ACTIVE plan at a time.
+        if (payment.Subscription && payment.Subscription.user_address) {
+          // Optional: Create a usage snapshot of the OLD subscription before cancelling it?
+          // Since we don't know exactly which one was active without a query, we'll just cancel them.
+          // The system will eventually snapshot them if we had a cron, but for now we just switch over.
+
+          await prisma.subscription.updateMany({
+            where: {
+              user_address: payment.Subscription.user_address,
+              id: { not: payment.subscription_id },
+              status: 'ACTIVE'
+            },
+            data: {
+              status: 'CANCELED',
+              // updated_at: new Date()
+            }
+          });
+        }
+
+        // 2. Activate the new subscription
         await prisma.subscription.update({
           where: { id: payment.subscription_id },
           data: {
