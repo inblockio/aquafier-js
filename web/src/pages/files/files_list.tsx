@@ -19,7 +19,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [isSmallScreen, setIsSmallScreen] = useState(false)
       const [uniqueWorkflows, setUniqueWorkflows] = useState<{ name: string, count: number }[]>([])
       const [selectedWorkflow, setSelectedWorkflow] = useState<string>(
-            filesListProps.hideAllFilesAndAquaFiles ? '' : 'aqua_files'
+            filesListProps.hideAllFilesAndAquaFiles ? '' : 'all'
       )
       const [stats, setStats] = useState<IUserStats>(emptyUserStats)
       const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date')
@@ -49,6 +49,10 @@ export default function FilesList(filesListProps: FilesListProps) {
             checkScreenSize()
             window.addEventListener('resize', checkScreenSize)
 
+              if (session?.nonce && backend_url) {
+                  getUserStats()
+            }
+            
             return () => {
                   window.removeEventListener('resize', checkScreenSize)
             }
@@ -206,7 +210,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const getFilterOptions = () => {
             const options = [
                   { value: 'all', label: 'All Files .', count: 0 },
-                  { value: 'aqua_files', label: 'Aqua Files (Non worklows)', count: 0 }
+                  // { value: 'aqua_files', label: 'Aqua Files (Non worklows)', count: 0 }
             ]
 
 

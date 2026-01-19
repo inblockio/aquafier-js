@@ -20,7 +20,7 @@ interface IWorkflowSpecificTable {
     isSmallScreen: boolean
     systemAquaFileNames: string[]
     sortBy: 'date' | 'name' | 'size'
-}
+} 
 
 const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScreen, systemAquaFileNames, sortBy }: IWorkflowSpecificTable) => {
  

@@ -968,11 +968,11 @@ export default async function userController(fastify: FastifyInstance) {
         // console.log(cliGreenify(`Genesis revisions query took ${(queryEnd - queryStart).toFixed(2)}ms`))
 
         // Filter out revisions that contain aqua_sign fields (forms_signers)
-        const filteredUserRevisions = allUserRevisions.filter(revision => {
+        // const filteredUserRevisions = allUserRevisions.filter(revision => {
             // Check if any AquaForms has the key "forms_signers"
-            const hasFormsSigners = revision.AquaForms.some(form => form.key === "forms_signers")
-            return !hasFormsSigners // Return true if it doesn't have forms_signers (keep it)
-        })
+            // const hasFormsSigners = revision.AquaForms.some(form => form.key === "forms_signers")
+            // return !hasFormsSigners // Return true if it doesn't have forms_signers (keep it)
+        // })
 
         const allRevisionHashes = allUserRevisions.map(revision => revision.pubkey_hash)
 
@@ -1038,17 +1038,19 @@ export default async function userController(fastify: FastifyInstance) {
             }
         }
 
-        const totalFiles = filteredUserRevisions.length
-        const aquaFiles = totalFiles - Object.values(formTypesToTrack).reduce((a, b) => a + b, 0)
+        console.log("User data stats - form type counts:", JSON.stringify(formTypesToTrack, null, 4))
+
+        const totalFiles = latestRecords.length;//allUserRevisions.length
+        // const aquaFiles = totalFiles - Object.values(formTypesToTrack).reduce((a, b) => a + b, 0)
 
         return reply.code(200).send({
-            filesCount: totalFiles,
+            filesCount:  totalFiles,
             storageUsed: allFilesSizes,
             // totalRevisions: allUserRevisions.length,
             // linkRevisionsCount: linkRevisions.length,
             claimTypeCounts: {
                 ...formTypesToTrack,
-                aqua_files: aquaFiles
+                // aqua_files: aquaFiles
             }
         })
 
