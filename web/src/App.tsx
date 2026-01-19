@@ -38,6 +38,9 @@ import ContactsLoader from './pages/contacts/ContactsLoader'
 import { NotificationWebSocketProvider } from './contexts/NotificationWebSocketContext'
 import UserStats from './pages/user_settings/UserStats'
 import EnsResolverPage from './pages/ens_resolver.page'
+import { appKit } from './config/appkit'
+
+appKit; // Ensure appKit is initialized
 
 // Create QueryClient outside component to avoid recreation on re-renders
 const queryClient = new QueryClient()

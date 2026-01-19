@@ -37,14 +37,9 @@ export const ConnectWalletPageAppKit = () => {
     }
   }, [isConnected, address, setMetamaskAddress, setAvatar])
 
-  
-  useEffect(() => {
-    if (isConnected && address && session == null) {
 
-      console.log("Session is null after connection, signing out to reset state.")
-      handleSignOut()
-    }
-  }, [])
+  // Removed auto-signout logic that was causing premature disconnection
+  // Social login needs time to establish session after wallet connection
 
   
   // Monitor modal state changes
