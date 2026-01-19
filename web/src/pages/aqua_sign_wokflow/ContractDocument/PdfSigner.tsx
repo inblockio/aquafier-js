@@ -1085,7 +1085,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                           setCanPlaceSignature(true)
                                     }}
                               >
-                                    Add Signature to document
+                                    {/* Add Signature to document */}
+                                    Add signature to document
                               </Button>
 
                               {canPlaceSignature ? (
