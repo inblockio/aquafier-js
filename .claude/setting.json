@@ -1,7 +1,8 @@
  {
     "permissions": {
       "additionalDirectories": [
-        "C:\\Users\\ADMIN\\Desktop\\Development\\Typescript\\aqua-js-sdk"
+        "C:\\Users\\ADMIN\\Desktop\\Development\\Typescript\\aqua-js-sdk",
+        "C:\\Users\\ADMIN\\Desktop\\Development\\Projects\\appkit-web-examples\\react\\react-multichain"
       ]
     }
   }

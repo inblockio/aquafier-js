@@ -4,6 +4,8 @@ import { useEffect } from 'react'
 import appStore from './store'
 import { useStore } from 'zustand'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { WagmiProvider } from 'wagmi'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import ErrorBoundary from './components/error_boundary'
 import Loading from './pages/loading'
 import FilesPage from './pages/files/files'
@@ -23,10 +25,11 @@ import TermsAndConditions from './pages/legal/TermsAndConditions'
 import PrivacyPolicy from './pages/legal/PrivacyPolicy'
 import ClaimsAndAttestationPage from './pages/claim_and_attestation'
 import ClaimsWorkflowPageV2 from './pages/v2_claims_workflow/claimsWorkflowPage'
-// Import appkit config to initialize AppKit at module level
-// import './config/appkit'
 
 import { WebConfig } from './types/types'
+// Import AppKit config at module level (like Reown example)
+// AppKit is initialized in appkit.ts when this module is imported
+import { wagmiConfig } from './config/appkit'
 import * as Sentry from "@sentry/react";
 import { init as initApm } from '@elastic/apm-rum'
 import { APMConfig } from "@/types/apm.ts";
@@ -36,6 +39,8 @@ import { NotificationWebSocketProvider } from './contexts/NotificationWebSocketC
 import UserStats from './pages/user_settings/UserStats'
 import EnsResolverPage from './pages/ens_resolver.page'
 
+// Create QueryClient outside component to avoid recreation on re-renders
+const queryClient = new QueryClient()
 
 function startApm(config: APMConfig) {
     if (config.enabled && config.serviceName && config.serverUrl) {
@@ -61,7 +66,7 @@ function startApm(config: APMConfig) {
 }
 
 function App() {
-    const { setBackEndUrl, setWebConfig } = useStore(appStore)
+    const { setBackEndUrl, setWebConfig, webConfig } = useStore(appStore)
 
     const setUpSentry = (config: WebConfig) => {
         // Initialize Sentry for error tracking
@@ -104,13 +109,7 @@ function App() {
         setBackEndUrl(backend_url)
         setUpSentry(config)
         setWebConfig(config)
-
-
-        // Conditionally import AppKit based on AUTH_PROVIDER
-        if (config.AUTH_PROVIDER === 'wallet_connect') {
-            await import('./config/appkit')
-            // console.log('AppKit initialized for wallet_connect')
-        }
+        return config
     }
 
     useEffect(() => {
@@ -118,53 +117,62 @@ function App() {
     }, []) // Empty dependency array means this runs once on mount
 
 
+    // App content that will be conditionally wrapped with providers
+    const appContent = (
+        <BrowserRouter>
+            <LoadConfiguration />
+            {/* Background ContactsLoader component */}
+            <ContactsLoader
+                onContactsLoaded={() => { }}
+                onLoadingChange={() => { }}
+            />
+            <ErrorBoundary>
+                <Routes>
+                    <Route path="/" element={<TailwindMainLayout />}>
+                        <Route index element={<Home />} />
+                        <Route path="terms-and-conditions" element={<TermsAndConditions />} />
+                        <Route path="privacy-policy" element={<PrivacyPolicy />} />
+                    </Route>
+
+                    <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
+
+                        <Route index element={<FilesPage />} />
+                        <Route path="templates" element={<TemplatesPage />} />
+                        <Route path="shared-contracts" element={<FilesSharedContracts />} />
+                        <Route path="shared-contracts/:identifier" element={<SharePage />} />
+
+                        <Route path="workflows" element={<WorkflowsTablePage />} />
+                        <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage />} />
+                        <Route path="contact_list" element={<ContactsPageV2 />} />
+                        <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2 />} />
+                        <Route path="dashboard" element={<UserStats />} />
+
+                        <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
+                        <Route path="files_workflows" element={<FilesPage />} />
+
+
+                        <Route path="ens_resolver" element={<EnsResolverPage />} />
+                        <Route path="info" element={<InfoPage />} />
+                        <Route path="settings" element={<SettingsPage />} />
+
+                        <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
+                        <Route path="loading" element={<Loading />} />
+                    </Route>
+
+                    <Route path="*" element={<PageNotFound />} />
+                </Routes>
+            </ErrorBoundary>
+        </BrowserRouter>
+    )
+
     return (
-        <NotificationWebSocketProvider>
-            <BrowserRouter>
-                <LoadConfiguration />
-                {/* Background ContactsLoader component */}
-                <ContactsLoader
-                    onContactsLoaded={() => { }}
-                    onLoadingChange={() => { }}
-                />
-                <ErrorBoundary>
-                    <Routes>
-                        <Route path="/" element={<TailwindMainLayout />}>
-                            <Route index element={<Home />} />
-                            <Route path="terms-and-conditions" element={<TermsAndConditions />} />
-                            <Route path="privacy-policy" element={<PrivacyPolicy />} />
-                        </Route>
-
-                        <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
-
-                            <Route index element={<FilesPage />} />
-                            <Route path="templates" element={<TemplatesPage />} />
-                            <Route path="shared-contracts" element={<FilesSharedContracts />} />
-                            <Route path="shared-contracts/:identifier" element={<SharePage />} />
-
-                            <Route path="workflows" element={<WorkflowsTablePage />} />
-                            <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage />} />
-                            <Route path="contact_list" element={<ContactsPageV2 />} />
-                            <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2 />} />
-                            <Route path="dashboard" element={<UserStats />} />
-
-                            <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
-                            <Route path="files_workflows" element={<FilesPage />} />
-
-
-                            <Route path="ens_resolver" element={<EnsResolverPage />} />
-                            <Route path="info" element={<InfoPage />} />
-                            <Route path="settings" element={<SettingsPage />} />
-
-                            <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
-                            <Route path="loading" element={<Loading />} />
-                        </Route>
-
-                        <Route path="*" element={<PageNotFound />} />
-                    </Routes>
-                </ErrorBoundary>
-            </BrowserRouter>
-        </NotificationWebSocketProvider>
+        <WagmiProvider config={wagmiConfig}>
+            <QueryClientProvider client={queryClient}>
+                <NotificationWebSocketProvider>
+                    {appContent}
+                </NotificationWebSocketProvider>
+            </QueryClientProvider>
+        </WagmiProvider>
     )
 }
 
