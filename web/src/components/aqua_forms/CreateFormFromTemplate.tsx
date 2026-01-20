@@ -834,13 +834,18 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   const expirationDays = 90
                   const publicAssociation = completeFormData['public_association'] === 'true'
 
+                  let dataGen = async (message: string) => {
+                              return await domainTemplateSignMessageFunction(domain, message)
+                        }
+
+                        if(!dataGen){
+                              alert(`a critical error occurred, try again`)
+                        }
                   // Generate DNS claim using new format
                   const dnsClaim = await generateDNSClaim(
                         domain,
                         walletAddress,
-                        async (message: string) => {
-                              return await domainTemplateSignMessageFunction(domain, message)
-                        },
+                        dataGen,
                         expirationDays,
                         publicAssociation
                   )
@@ -856,7 +861,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   filteredData['etime'] = dnsClaim.etime
 
                   // Store complete claim as JSON string for easy download
-                  filteredData['claim_json'] = JSON.stringify(dnsClaim, null, 2)
+                  // filteredData['claim_json'] = JSON.stringify(dnsClaim, null, 2)
             }
             return { filteredData }
       }

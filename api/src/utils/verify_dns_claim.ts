@@ -674,8 +674,9 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
             dnsServers: dns.getServers()
           }
         });
-      response.message = `DNS lookup failed for ${recordName}. This could be due to network restrictions in the server environment.`;
-      return response;
+        response.message = `DNS lookup failed for ${domain}. This could be due to network restrictions in the server environment.`;
+        return response;
+      }
     }
 
     if (!txtRecords || txtRecords.length === 0) {
