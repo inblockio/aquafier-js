@@ -29,7 +29,7 @@ import ClaimsWorkflowPageV2 from './pages/v2_claims_workflow/claimsWorkflowPage'
 import { WebConfig } from './types/types'
 // Import AppKit config at module level (like Reown example)
 // AppKit is initialized in appkit.ts when this module is imported
-import { wagmiConfig } from './config/appkit'
+import { appKit, wagmiConfig } from './config/appkit'
 import * as Sentry from "@sentry/react";
 import { init as initApm } from '@elastic/apm-rum'
 import { APMConfig } from "@/types/apm.ts";
@@ -38,9 +38,11 @@ import ContactsLoader from './pages/contacts/ContactsLoader'
 import { NotificationWebSocketProvider } from './contexts/NotificationWebSocketContext'
 import UserStats from './pages/user_settings/UserStats'
 import EnsResolverPage from './pages/ens_resolver.page'
-import { appKit } from './config/appkit'
 
-appKit; // Ensure appKit is initialized
+// Initialize AppKit
+if (appKit) {
+    console.log('AppKit initialized in App.tsx', appKit)
+}
 
 // Create QueryClient outside component to avoid recreation on re-renders
 const queryClient = new QueryClient()

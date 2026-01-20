@@ -6,10 +6,17 @@ import { siweConfig } from './siweConfig'
 import { http } from 'viem'
 
 // Get projectId from environment or use default
-export const projectId =  "80d7707d71e3502f8635b00e56173cdf" ;// import.meta.env.VITE_PROJECT_ID || '80d7707d71e3502f8635b00e56173cdf'
+const HARDCODED_ID = '80d7707d71e3502f8635b00e56173cdf'
+export const projectId = import.meta.env.VITE_PROJECT_ID || HARDCODED_ID
 
-if (!projectId) {
+if (!projectId || projectId.trim() === '') {
+  console.error('CRITICAL: AppKit projectId is empty or undefined!')
   throw new Error('Project ID is not defined')
+}
+
+// Add to window for easy debugging in console
+if (typeof window !== 'undefined') {
+  (window as any).APPKIT_PROJECT_ID = projectId
 }
 
 // Get Alchemy API key from environment (optional)
@@ -68,7 +75,8 @@ console.log('WagmiConfig:', wagmiAdapter.wagmiConfig)
 export const metadata = {
   name: 'Aquafier',
   description: 'Aquafier - Decentralized Identity and Document Management',
-  url: "https://reown.com", // 'http://localhost:5173',
+  // url: "https://reown.com", // 'http://localhost:5173',
+  url: "http://localhost:5173",
   icons: ['https://avatars.githubusercontent.com/u/179229932']
 }
 
@@ -92,7 +100,7 @@ console.log('Creating AppKit with projectId:', projectId)
 //   },
 //   siweConfig
 // })
-export const appKit= createAppKit({
+export const appKit = createAppKit({
   adapters: [wagmiAdapter],
   networks: chains,
   projectId,

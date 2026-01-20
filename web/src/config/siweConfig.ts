@@ -6,34 +6,29 @@ import { ETH_CHAINID_MAP_NUMBERS, SESSION_COOKIE_NAME } from '../utils/constants
 import appStore from '../store'
 import { toast } from 'sonner'
 import { ethers } from 'ethers'
-import { getAddress } from 'viem'
 
-// Normalize the address (checksum) - handles both DID format and regular addresses
-const normalizeAddress = (address: string): string => {
-  try {
-    const splitAddress = address.split(':')
-    const extractedAddress = splitAddress[splitAddress.length - 1]
-    const checksumAddress = getAddress(extractedAddress)
-    splitAddress[splitAddress.length - 1] = checksumAddress
-    const normalizedAddress = splitAddress.join(':')
-    return normalizedAddress
-  } catch (error) {
-    return address
+// Helper function to extract Ethereum address from DID or return as-is if already an address
+export const extractEthereumAddress = (addressOrDid: string): string => {
+  // Check if it's a DID format: did:pkh:eip155:1:0x...
+  if (addressOrDid.startsWith('did:pkh:eip155:')) {
+    const parts = addressOrDid.split(':')
+    // The address is the last part after splitting by ':'
+    return parts[parts.length - 1]
   }
+
+  // Already a standard Ethereum address
+  return addressOrDid
 }
 
 export const siweConfig = createSIWEConfig({
 
+
   createMessage: ({ address, ...args }: SIWECreateMessageArgs) => {
-    // Use formatMessage from AppKit (like working example)
-    return formatMessage(args, normalizeAddress(address))
+    return formatMessage(args, address)
   },
 
   getNonce: async () => {
-    // Keep your existing nonce generation for now
-    // If backend provides /nonce endpoint, use that instead
     const nonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
-    console.log('getNonce called:', nonce)
     return nonce
   },
 
@@ -48,56 +43,47 @@ export const siweConfig = createSIWEConfig({
   },
 
   getSession: async () => {
-    console.log("getSession called")
     const nonce = getCookie(SESSION_COOKIE_NAME)
-    console.log("getSession: Nonce from cookie:", nonce)
+    // console.log("getSession : Nonce: ", nonce)
+    if (!nonce) return null
 
-    if (!nonce) {
-      console.log("getSession: No nonce found, returning null")
-      return null
-    }
+    // console.log("getSession : Here after nonce")
 
     try {
       const backend_url = appStore.getState().backend_url
       const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
-      console.log("getSession: Fetching from:", url)
-
       const response = await axios.get(url, {
         params: { nonce },
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       })
-
-      console.log("getSession: Response status:", response.status)
-      console.log("getSession: Response data:", response.data)
+      // console.log("Response: ", response)
 
       if (response.status === 200 && response.data?.session) {
+        // console.log("Session: ", response.data.session)
         const userSettings = response.data.user_settings
         const network = userSettings.witness_network
         const chainId = ETH_CHAINID_MAP_NUMBERS[network]
         let data = {
           address: ethers.getAddress(response.data.session.address),
+          // TODO: fix this. Find a way to return the connected chain id from the backend to avoid issues in which it asks the user to reconnect
+          // For now, I read the user settings to get chainID
           chainId: response.data.session.chain_id || chainId,
         } as SIWESession
 
-        console.log("getSession: Retrieved session data:", JSON.stringify(data))
+        // console.log("getSession : Retrieved session data:", JSON.stringify(data))
         return data
       }
     } catch (error) {
-      console.error('getSession: Failed to get session:', error)
-      if (axios.isAxiosError(error)) {
-        console.error('getSession: Response data:', error.response?.data)
-        console.error('getSession: Response status:', error.response?.status)
-      }
+      console.error('getSession : Failed to get session:', error)
     }
 
-    console.log("getSession: Returning null")
     return null
   },
 
   enabled: true,
-  required: false,
+  required: true,
 
 
   signOutOnDisconnect: false,        // ADD
@@ -106,10 +92,6 @@ export const siweConfig = createSIWEConfig({
 
 
   verifyMessage: async ({ message, signature }: SIWEVerifyMessageArgs) => {
-    console.log("verifyMessage called")
-    console.log("Message: ", message)
-    console.log("Signature: ", signature)
-
     try {
       const backend_url = appStore.getState().backend_url
       const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
@@ -120,9 +102,6 @@ export const siweConfig = createSIWEConfig({
         signature,
         domain,
       })
-
-      console.log("verifyMessage response status:", response.status)
-      console.log("verifyMessage response data:", response.data)
 
       if (response.status === 200 || response.status === 201) {
         const responseData = response.data
@@ -139,18 +118,12 @@ export const siweConfig = createSIWEConfig({
         store.setSession(responseData.session)
         store.setUserProfile(responseData.user_settings)
 
-        console.log("verifyMessage: Authentication successful")
         return true
       }
 
-      console.log("verifyMessage: Authentication failed - unexpected status")
       return false
     } catch (error) {
-      console.error('verifyMessage: Failed to verify message:', error)
-      if (axios.isAxiosError(error)) {
-        console.error('verifyMessage: Response data:', error.response?.data)
-        console.error('verifyMessage: Response status:', error.response?.status)
-      }
+      console.error('Failed to verify message:', error)
       toast.error('An error occurred during authentication')
       return false
     }
