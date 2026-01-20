@@ -5,9 +5,17 @@ import Logger from "./logger";
 import { Prisma } from '@prisma/client';
 
 export interface TxtRecord {
-  wallet: string;
-  timestamp: string;
-  expiration: string;
+  // New format fields
+  id?: string;
+  itime?: string;
+  etime?: string;
+
+  // Old format fields (keep for backward compatibility)
+  wallet?: string;
+  timestamp?: string;
+  expiration?: string;
+
+  // Common
   sig: string;
 }
 
@@ -189,9 +197,17 @@ function checkRateLimit(identifier: string): boolean {
 function parseTxtRecord(txt: string): TxtRecord {
   const params = new URLSearchParams(txt);
   return {
-    wallet: params.get('wallet') || '',
-    timestamp: params.get('timestamp') || '',
-    expiration: params.get('expiration') || '',
+    // New format
+    id: params.get('id') || undefined,
+    itime: params.get('itime') || undefined,
+    etime: params.get('etime') || undefined,
+
+    // Old format (backward compatibility)
+    wallet: params.get('wallet') || undefined,
+    timestamp: params.get('timestamp') || undefined,
+    expiration: params.get('expiration') || undefined,
+
+    // Common
     sig: params.get('sig') || ''
   };
 }
@@ -203,7 +219,8 @@ async function verifySingleRecord(
   recordName: string,
   recordIndex: number,
   dnssecValidated: boolean,
-  logs: LogEntry[]
+  logs: LogEntry[],
+  claimData?: { wallet: string; secret?: string; uniqueId?: string }
 ): Promise<VerificationResult> {
 
   logs.push({
@@ -221,107 +238,110 @@ async function verifySingleRecord(
     recordIndex
   };
 
-  // Test 1: Wallet Record Format
-  totalTests++;
-  logs.push({ level: 'info', message: `Test 1/7: Wallet Record Format` });
+  // Parse record first to detect format
+  const parsedRecord = parseTxtRecord(txtRecord);
 
-  let isLegacyFormat = false;
-  let hasValidFormat = txtRecord.includes('wallet=') &&
-    txtRecord.includes('timestamp=') &&
-    txtRecord.includes('expiration=') &&
-    txtRecord.includes('sig=');
+  // Detect format
+  const isNewFormat = !!(parsedRecord.id && parsedRecord.itime && parsedRecord.etime);
+  const isOldFormat = !!(parsedRecord.wallet && parsedRecord.timestamp);
 
-  if (!hasValidFormat) {
-    hasValidFormat = txtRecord.includes('wallet=') &&
-      txtRecord.includes('timestamp=') &&
-      txtRecord.includes('sig=');
-    if (hasValidFormat) {
-      isLegacyFormat = true;
-      logs.push({
-        level: 'warning',
-        message: 'Legacy format detected (no expiration field)',
-        details: { recommendation: 'Please regenerate your signature for enhanced security' }
-      });
-    }
-  }
-
-  if (!hasValidFormat) {
+  if (!isNewFormat && !isOldFormat) {
     logs.push({
       level: 'error',
-      message: 'Invalid wallet record format',
-      details: {
-        expected: 'wallet=...&timestamp=...&expiration=...&sig=...',
-        found: txtRecord
-      }
+      message: 'Invalid record format - neither new nor old format detected',
+      details: { record: txtRecord }
     });
     return result;
   }
 
-  logs.push({ level: 'success', message: 'Valid wallet record format found' });
-  testsPassed++;
+  // Variables for verification
+  let messageToVerify: string;
+  let walletAddress: string;
+  let itime: string;
+  let etime: string;
 
-  // Test 2: Field Parsing
-  totalTests++;
-  logs.push({ level: 'info', message: 'Test 2/7: Field Parsing' });
-
-  const parsedRecord = parseTxtRecord(txtRecord);
-  result.walletAddress = parsedRecord.wallet;
-
-  if (isLegacyFormat && parsedRecord.timestamp && !parsedRecord.expiration) {
-    parsedRecord.expiration = (parseInt(parsedRecord.timestamp) + (90 * 24 * 60 * 60)).toString();
+  if (isNewFormat) {
     logs.push({
       level: 'info',
-      message: 'Legacy format: Using default 90-day expiration'
+      message: 'New format detected (privacy-preserving)',
+      details: { id: parsedRecord.id, hasWallet: !!parsedRecord.wallet }
     });
-  }
 
-  if (!parsedRecord.wallet || !parsedRecord.timestamp || !parsedRecord.expiration || !parsedRecord.sig) {
-    logs.push({
-      level: 'error',
-      message: 'Missing required fields after parsing',
-      details: {
-        required: ['wallet', 'timestamp', 'expiration', 'sig'],
-        parsed: parsedRecord
+    // New format verification
+    if (!claimData) {
+      logs.push({
+        level: 'error',
+        message: 'New format detected but no claim data provided'
+      });
+      return result;
+    }
+
+    walletAddress = claimData.wallet;
+    itime = parsedRecord.itime!;
+    etime = parsedRecord.etime!;
+
+    // Check if private or public mode
+    if (parsedRecord.wallet) {
+      // Public mode: wallet in DNS record
+      messageToVerify = `${parsedRecord.wallet}&${itime}&${domain}&${etime}`;
+
+      if (parsedRecord.wallet.toLowerCase() !== walletAddress.toLowerCase()) {
+        logs.push({
+          level: 'error',
+          message: 'Wallet address mismatch between DNS record and claim data',
+          details: {
+            dnsWallet: parsedRecord.wallet,
+            claimWallet: walletAddress
+          }
+        });
+        return result;
       }
+
+      logs.push({
+        level: 'info',
+        message: 'Public mode: Wallet address in DNS record'
+      });
+    } else {
+      // Private mode: secret-based verification
+      if (!claimData.secret) {
+        logs.push({
+          level: 'error',
+          message: 'Private mode claim detected but no secret provided'
+        });
+        return result;
+      }
+      messageToVerify = `${claimData.secret}&${itime}&${domain}&${etime}`;
+
+      logs.push({
+        level: 'info',
+        message: 'Private mode: Wallet address hidden in DNS record'
+      });
+    }
+
+    result.walletAddress = walletAddress;
+    testsPassed++;
+  } else {
+    // Old format verification (backward compatibility)
+    logs.push({
+      level: 'warning',
+      message: 'Legacy format detected (wallet exposed in DNS)',
+      details: { recommendation: 'Please regenerate with new privacy-preserving format' }
     });
-    return result;
+
+    walletAddress = parsedRecord.wallet!;
+    itime = parsedRecord.timestamp!;
+    etime = parsedRecord.expiration || (parseInt(itime) + 90 * 24 * 60 * 60).toString();
+    messageToVerify = `${itime}|${domain}|${etime}`;
+
+    result.walletAddress = walletAddress;
+    testsPassed++;
   }
 
-  logs.push({
-    level: 'success',
-    message: 'All required fields parsed successfully',
-    details: {
-      wallet: parsedRecord.wallet,
-      timestamp: parsedRecord.timestamp,
-      expiration: parsedRecord.expiration,
-      signaturePreview: parsedRecord.sig.substring(0, 20) + '...'
-    }
-  });
-  testsPassed++;
-
-  // Test 3: Message Format & EIP-191 Preparation
+  // Test 3: Timestamp Validity
   totalTests++;
-  logs.push({ level: 'info', message: 'Test 3/7: Message Format & EIP-191 Preparation' });
+  logs.push({ level: 'info', message: 'Test 3/7: Timestamp Validity' });
 
-  const originalMessage = isLegacyFormat
-    ? `${parsedRecord.timestamp}|${domain}`
-    : `${parsedRecord.timestamp}|${domain}|${parsedRecord.expiration}`;
-
-  logs.push({
-    level: 'success',
-    message: 'Message prepared for verification',
-    details: {
-      format: isLegacyFormat ? 'timestamp|domain' : 'timestamp|domain|expiration',
-      message: originalMessage
-    }
-  });
-  testsPassed++;
-
-  // Test 4: Timestamp Validity
-  totalTests++;
-  logs.push({ level: 'info', message: 'Test 4/7: Timestamp Validity' });
-
-  const timestamp = parseInt(parsedRecord.timestamp);
+  const timestamp = parseInt(itime);
   const timestampDate = new Date(timestamp * 1000);
   const now = new Date();
   const ageMs = now.getTime() - timestampDate.getTime();
@@ -333,7 +353,7 @@ async function verifySingleRecord(
       message: 'Invalid timestamp format',
       details: {
         expected: 'Valid Unix timestamp',
-        found: parsedRecord.timestamp
+        found: itime
       }
     });
     return result;
@@ -358,11 +378,11 @@ async function verifySingleRecord(
   });
   testsPassed++;
 
-  // Test 5: Expiration Date Check
+  // Test 4: Expiration Date Check
   totalTests++;
-  logs.push({ level: 'info', message: 'Test 5/7: Expiration Date Validation' });
+  logs.push({ level: 'info', message: 'Test 4/7: Expiration Date Validation' });
 
-  const expiration = parseInt(parsedRecord.expiration);
+  const expiration = parseInt(etime);
   const expirationDate = new Date(expiration * 1000);
   const nowTimestamp = Math.floor(now.getTime() / 1000);
   result.expirationDate = expirationDate;
@@ -373,7 +393,7 @@ async function verifySingleRecord(
       message: 'Invalid expiration format',
       details: {
         expected: 'Valid Unix timestamp',
-        found: parsedRecord.expiration
+        found: etime
       }
     });
     return result;
@@ -414,19 +434,19 @@ async function verifySingleRecord(
   });
   testsPassed++;
 
-  // Test 6: Cryptographic Signature Verification (EIP-191 Compliant)
+  // Test 5: Cryptographic Signature Verification (EIP-191 Compliant)
   totalTests++;
-  logs.push({ level: 'info', message: 'Test 6/7: Cryptographic Signature Verification (EIP-191 Compliant)' });
+  logs.push({ level: 'info', message: 'Test 5/7: Cryptographic Signature Verification (EIP-191 Compliant)' });
 
   try {
-    const recoveredAddress = ethers.verifyMessage(originalMessage, parsedRecord.sig);
+    const recoveredAddress = ethers.verifyMessage(messageToVerify, parsedRecord.sig);
 
-    if (recoveredAddress.toLowerCase() !== parsedRecord.wallet.toLowerCase()) {
+    if (recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
       logs.push({
         level: 'error',
         message: 'Signature verification failed - signature was NOT created by claimed wallet',
         details: {
-          expectedWallet: parsedRecord.wallet,
+          expectedWallet: walletAddress,
           recoveredAddress: recoveredAddress
         }
       });
@@ -437,31 +457,40 @@ async function verifySingleRecord(
       level: 'success',
       message: 'Signature verification successful',
       details: {
-        wallet: parsedRecord.wallet,
-        recoveredAddress: recoveredAddress
+        wallet: walletAddress,
+        recoveredAddress: recoveredAddress,
+        message: messageToVerify
       }
     });
     testsPassed++;
 
-    // Test 7: Domain Consistency Check
+    // Test 6: Domain Consistency Check
     totalTests++;
-    logs.push({ level: 'info', message: 'Test 7/7: Domain Consistency Check' });
+    logs.push({ level: 'info', message: 'Test 6/7: Domain Consistency Check' });
 
-    const messageParts = originalMessage.split('|');
-    const expectedParts = isLegacyFormat ? 2 : 3;
-    if (messageParts.length !== expectedParts) {
+    // Check domain in message (works for both old and new formats)
+    // Old format: itime|domain|etime (separator: |)
+    // New format: prefix&itime&domain&etime (separator: &)
+    const separator = isOldFormat ? '|' : '&';
+    const messageParts = messageToVerify.split(separator);
+
+    // For old format: parts are [itime, domain, etime]
+    // For new format: parts are [prefix, itime, domain, etime]
+    const domainIndex = isOldFormat ? 1 : 2;
+
+    if (messageParts.length < domainIndex + 1) {
       logs.push({
         level: 'error',
-        message: 'Invalid message format',
+        message: 'Invalid message format - not enough parts',
         details: {
-          expected: isLegacyFormat ? 'timestamp|domain' : 'timestamp|domain|expiration',
-          foundParts: messageParts.length
+          message: messageToVerify,
+          parts: messageParts.length
         }
       });
       return result;
     }
 
-    const signedDomain = messageParts[1];
+    const signedDomain = messageParts[domainIndex];
     if (signedDomain !== domain) {
       logs.push({
         level: 'error',
@@ -517,7 +546,7 @@ export function coerceIntoApiResponse(jsonValue: Prisma.JsonValue): ApiResponse 
 }
 
 // Main verification function adapted for API with improved DNS handling
-export async function verifyProofApi(domain: string, lookupKey: string, expectedWallet?: string): Promise<ApiResponse> {
+export async function verifyProofApi(domain: string, lookupKey: string, expectedWallet?: string, claimData?: { wallet: string; secret?: string; uniqueId?: string }): Promise<ApiResponse> {
   const logs: LogEntry[] = [];
   const response: ApiResponse = {
     success: false,
@@ -568,7 +597,6 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
     actualLookupKey = lookupKey;
   }
 
-  const recordName = `aqua._${actualLookupKey}.${actualDomain}`;
   response.domain = actualDomain;
 
   logs.push({
@@ -577,47 +605,75 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
     details: {
       domain: actualDomain,
       lookupKey: actualLookupKey,
-      recordName: recordName,
       expectedWallet: expectedWallet,
       dnsServers: dns.getServers()
     }
   });
 
   try {
-    // DNS Record Existence with improved fallback handling
+    // Try new format first (_aw.domain), fallback to old format (aqua._wallet.domain)
+    const newRecordName = `_aw.${actualDomain}`;
+    const oldRecordName = `aqua._${actualLookupKey}.${actualDomain}`;
+    let txtRecords: string[][];
+    let dnssecValidated = false;
+    let recordName = newRecordName;
+
     logs.push({
       level: 'info',
       message: 'Querying DNS records with multiple fallback methods',
-      details: { recordName: recordName }
+      details: { newFormat: newRecordName, oldFormat: oldRecordName }
     });
 
-    let txtRecords: string[][];
-    let dnssecValidated = false;
-
     try {
-      const result = await resolveTxtWithFallbacks(recordName);
+      const result = await resolveTxtWithFallbacks(newRecordName);
       txtRecords = result.records;
       dnssecValidated = result.dnssecValidated;
       response.dnssecValidated = dnssecValidated;
 
       logs.push({
         level: 'success',
-        message: 'DNS resolution successful',
+        message: 'DNS resolution successful (new format)',
         details: {
+          recordName: newRecordName,
           recordCount: txtRecords.length,
           dnssecValidated: dnssecValidated
         }
       });
-    } catch (dnsError) {
+    } catch (err) {
+      // Fallback to old format
       logs.push({
-        level: 'error',
-        message: 'All DNS resolution methods failed',
-        details: {
-          error: dnsError instanceof Error ? dnsError.message : dnsError,
-          recordName: recordName,
-          dnsServers: dns.getServers()
-        }
+        level: 'info',
+        message: 'New format not found, trying old format',
+        details: { oldRecordName: oldRecordName }
       });
+
+      recordName = oldRecordName;
+
+      try {
+        const result = await resolveTxtWithFallbacks(oldRecordName);
+        txtRecords = result.records;
+        dnssecValidated = result.dnssecValidated;
+        response.dnssecValidated = dnssecValidated;
+
+        logs.push({
+          level: 'success',
+          message: 'DNS resolution successful (old format)',
+          details: {
+            recordName: oldRecordName,
+            recordCount: txtRecords.length,
+            dnssecValidated: dnssecValidated
+          }
+        });
+      } catch (oldErr) {
+        logs.push({
+          level: 'error',
+          message: 'All DNS resolution methods failed for both new and old formats',
+          details: {
+            newFormat: newRecordName,
+            oldFormat: oldRecordName,
+            dnsServers: dns.getServers()
+          }
+        });
       response.message = `DNS lookup failed for ${recordName}. This could be due to network restrictions in the server environment.`;
       return response;
     }
@@ -707,7 +763,7 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
         }
       }
 
-      const result = await verifySingleRecord(record, actualDomain, recordName, i + 1, dnssecValidated, logs);
+      const result = await verifySingleRecord(record, actualDomain, recordName, i + 1, dnssecValidated, logs, claimData);
       response.results.push(result);
 
       if (result.success) {
