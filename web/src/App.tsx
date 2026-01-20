@@ -71,7 +71,7 @@ function startApm(config: APMConfig) {
 }
 
 function App() {
-    const { setBackEndUrl, setWebConfig, webConfig } = useStore(appStore)
+    const { setBackEndUrl, setWebConfig } = useStore(appStore)
 
     const setUpSentry = (config: WebConfig) => {
         // Initialize Sentry for error tracking

@@ -1,6 +1,6 @@
 import { createAppKit } from '@reown/appkit/react'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
-import { mainnet, sepolia, polygon, arbitrum } from '@reown/appkit/networks'
+import { mainnet, sepolia, holesky } from '@reown/appkit/networks'
 import type { AppKitNetwork } from '@reown/appkit/networks'
 import { siweConfig } from './siweConfig'
 import { http } from 'viem'
@@ -27,22 +27,9 @@ console.log('=== AppKit Config Module Loading ===')
 console.log('AppKit Config - projectId:', projectId)
 console.log('Creating WagmiAdapter...')
 
-// Create networks array - must be typed as non-empty tuple
-// export const networks = [
-//   mainnet,
-//   sepolia,
-//   polygon,
-//   arbitrum
-// ] as [AppKitNetwork, ...AppKitNetwork[]]
-
-// // Create Wagmi adapter with explicit configuration
-// const wagmiAdapter = new WagmiAdapter({
-//   projectId,
-//   networks,
-// })
 
 // 3. Set the networks
-export const chains: [AppKitNetwork, ...AppKitNetwork[]] = [mainnet, arbitrum];
+export const chains: [AppKitNetwork, ...AppKitNetwork[]] = [mainnet, sepolia, holesky];
 
 // 4. Create Wagmi Adapter with custom transports
 const wagmiAdapter = new WagmiAdapter({
@@ -57,9 +44,14 @@ const wagmiAdapter = new WagmiAdapter({
         ? `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`
         : 'https://ethereum-rpc.publicnode.com'
     ),
-    [arbitrum.id]: http(
+    [sepolia.id]: http(
       alchemyKey
-        ? `https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`
+        ? `https://eth-sepolia.g.alchemy.com/v2/${alchemyKey}`
+        : 'https://arbitrum-one-rpc.publicnode.com'
+    ),
+    [holesky.id]: http(
+      alchemyKey
+        ? `https://eth-holesky.g.alchemy.com/v2/${alchemyKey}`
         : 'https://arbitrum-one-rpc.publicnode.com'
     ),
   },
@@ -67,9 +59,9 @@ const wagmiAdapter = new WagmiAdapter({
 
 
 // Log the wagmiConfig to verify it has the projectId
-console.log('WagmiAdapter created')
-console.log('WagmiAdapter projectId:', projectId)
-console.log('WagmiConfig:', wagmiAdapter.wagmiConfig)
+// console.log('WagmiAdapter created')
+// console.log('WagmiAdapter projectId:', projectId)
+// console.log('WagmiConfig:', wagmiAdapter.wagmiConfig)
 
 // Metadata configuration
 export const metadata = {
@@ -80,26 +72,6 @@ export const metadata = {
   icons: ['https://avatars.githubusercontent.com/u/179229932']
 }
 
-// Create AppKit instance at module level
-console.log('Creating AppKit with projectId:', projectId)
-// export const appKit = createAppKit({
-//   adapters: [wagmiAdapter],
-//   projectId,
-//   networks,
-//   metadata,
-//   features: {
-//     analytics: false,
-//     email: true,
-//     socials: ['google', 'facebook', 'x', 'discord', 'farcaster'],
-//     emailShowWallets: true
-//   },
-//   themeMode: 'light' as const,
-//   themeVariables: {
-//     '--w3m-accent': '#3b82f6',
-//     '--w3m-border-radius-master': '8px'
-//   },
-//   siweConfig
-// })
 export const appKit = createAppKit({
   adapters: [wagmiAdapter],
   networks: chains,
@@ -120,9 +92,6 @@ export const appKit = createAppKit({
     emailShowWallets: true,
   },
 });
-
-console.log('AppKit created successfully')
-console.log('=== AppKit Config Module Loaded ===')
 
 // Export the wagmi adapter and config for use in other components
 export { wagmiAdapter, siweConfig }
