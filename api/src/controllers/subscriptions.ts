@@ -126,11 +126,48 @@ export default async function subscriptionsController(fastify: FastifyInstance) 
         });
 
         if (!subscription) {
-          // User has no subscription, return free plan info
+          // User has no subscription, create them a new free plan subscription to close the loop
+          const freePlanId = process.env.DEFAULT_FREE_PLAN_ID || '';
           const freePlan = await prisma.subscriptionPlan.findUnique({
-            where: { id: process.env.DEFAULT_FREE_PLAN_ID || '' },
+            where: { id: freePlanId },
           });
 
+          if (freePlan) {
+            const now = new Date();
+            const periodEnd = new Date(now);
+            periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+            const newSubscription = await prisma.subscription.create({
+              data: {
+                user_address: userAddress,
+                plan_id: freePlan.id,
+                status: 'ACTIVE',
+                payment_method: 'CRYPTO',
+                billing_period: 'MONTHLY',
+                current_period_start: now,
+                current_period_end: periodEnd,
+              },
+              include: {
+                Plan: true,
+              },
+            });
+
+            Logger.info(`Auto-created free subscription for user ${userAddress}`, {
+              subscription_id: newSubscription.id,
+              plan_id: freePlan.id,
+            });
+
+            return reply.code(200).send({
+              success: true,
+              data: {
+                subscription: newSubscription,
+                plan: newSubscription.Plan,
+                is_free_tier: true,
+              },
+            });
+          }
+
+          // Fallback if free plan not found (return null subscription but keep existing response format)
           return reply.code(200).send({
             success: true,
             data: {
