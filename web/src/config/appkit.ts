@@ -6,7 +6,7 @@ import { siweConfig } from './siweConfig'
 import { http } from 'viem'
 
 // Get projectId from environment or use default
-const HARDCODED_ID = '80d7707d71e3502f8635b00e56173cdf'
+const HARDCODED_ID = '9ed78593f9e1f84e3151ea58cfeea38b'
 export const projectId = import.meta.env.VITE_PROJECT_ID || HARDCODED_ID
 
 if (!projectId || projectId.trim() === '') {
