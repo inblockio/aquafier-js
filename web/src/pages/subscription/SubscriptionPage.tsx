@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Calendar, AlertCircle, X, HardDrive, FileText, File, Layout } from 'lucide-react';
+import { CreditCard, Calendar, AlertCircle, X, HardDrive, FileText, File, Layout, RefreshCcw } from 'lucide-react';
 import { useSubscriptionStore } from '../../stores/subscriptionStore';
 import {
   fetchCurrentSubscription,
   cancelSubscription,
   createStripePortal,
+  reFetchUsageStats,
 } from '../../api/subscriptionApi';
 import UsageMetrics from '@/components/subscription/UsageMetrics';
+import { Button } from '@/components/ui/button';
 
 export default function SubscriptionPage() {
   const navigate = useNavigate();
@@ -33,6 +35,18 @@ export default function SubscriptionPage() {
       setCurrentSubscription(data.subscription, data.is_free_tier);
     } catch (error: any) {
       setSubscriptionError(error.message);
+    }
+  };
+
+   const reloadSubscription = async () => {
+    try {
+      setSubscriptionLoading(true);
+      await reFetchUsageStats();
+      await loadSubscription()
+      setSubscriptionLoading(false);
+    } catch (error: any) {
+      setSubscriptionError(error.message);
+      setSubscriptionLoading(false);
     }
   };
 
@@ -152,6 +166,12 @@ export default function SubscriptionPage() {
                     /{currentSubscription?.billing_period === 'YEARLY' ? 'year' : 'mo'}
                   </span>
                 </div>
+              </div>
+              <div>
+                <Button onClick={reloadSubscription} className='cursor-pointer'>
+                  <RefreshCcw />
+                  {`${loading ? "Refreshing" : "Refresh"}`}
+                </Button>
               </div>
             </div>
           </div>
