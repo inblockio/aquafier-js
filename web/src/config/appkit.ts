@@ -1,64 +1,98 @@
 import { createAppKit } from '@reown/appkit/react'
-import { EthersAdapter } from '@reown/appkit-adapter-ethers'
-import { mainnet, sepolia, polygon, arbitrum } from '@reown/appkit/networks'
+import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
+import { mainnet, sepolia, holesky } from '@reown/appkit/networks'
+import type { AppKitNetwork } from '@reown/appkit/networks'
 import { siweConfig } from './siweConfig'
+import { http } from 'viem'
 
-// Get projectId from https://cloud.reown.com
-// export const projectId = '80d7707d71e3502f8635b00e56173cdf'
-export const projectId = "9ed78593f9e1f84e3151ea58cfeea38b"
+// Get projectId from environment or use default
+const HARDCODED_ID = '9ed78593f9e1f84e3151ea58cfeea38b'
+export const projectId = import.meta.env.VITE_PROJECT_ID || HARDCODED_ID
 
-// Create networks array
-export const networks = [
-  mainnet,
-  sepolia,
-  polygon, 
-  arbitrum
-]
-
-// Set up metadata
-const metadata = {
-  name: 'Aquafier',
-  description: 'Aquafier - Decentralized Identity and Document Management',
-  url: typeof window !== 'undefined' ? window.location.origin : 'https://aquafier.inblock.io',
-  // url: "http://localhost:5173",
-  // icons: ['https://github.com/inblockio/aquafier-js/blob/pr-438/web/public/images/inblock_logo.png?raw=true']
-  icons: ["/images/ico.png"],
+if (!projectId || projectId.trim() === '') {
+  console.error('CRITICAL: AppKit projectId is empty or undefined!')
+  throw new Error('Project ID is not defined')
 }
 
-// Create Ethers adapter
-const ethersAdapter = new EthersAdapter()
+// Add to window for easy debugging in console
+if (typeof window !== 'undefined') {
+  (window as any).APPKIT_PROJECT_ID = projectId
+}
 
-// Initialize AppKit immediately at module level
-export const appKit = createAppKit({
-  enableReconnect: true,
-  adapters: [ethersAdapter],
-  networks: networks as any,
+// Get Alchemy API key from environment (optional)
+const alchemyKey = import.meta.env.VITE_ALCHEMY_API_KEY
+
+// Debug: Log projectId to verify it's defined
+console.log('=== AppKit Config Module Loading ===')
+console.log('AppKit Config - projectId:', projectId)
+console.log('Creating WagmiAdapter...')
+
+
+// 3. Set the networks
+export const chains: [AppKitNetwork, ...AppKitNetwork[]] = [mainnet, sepolia, holesky];
+
+// 4. Create Wagmi Adapter with custom transports
+const wagmiAdapter = new WagmiAdapter({
+  networks: chains,
   projectId,
+  ssr: true,
+  transports: {
+    // Configure custom RPC transports to avoid CORS issues with WalletConnect's default RPC
+    // Uses Alchemy if key is available, otherwise falls back to publicnode
+    [mainnet.id]: http(
+      alchemyKey
+        ? `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`
+        : 'https://ethereum-rpc.publicnode.com'
+    ),
+    [sepolia.id]: http(
+      alchemyKey
+        ? `https://eth-sepolia.g.alchemy.com/v2/${alchemyKey}`
+        : 'https://arbitrum-one-rpc.publicnode.com'
+    ),
+    [holesky.id]: http(
+      alchemyKey
+        ? `https://eth-holesky.g.alchemy.com/v2/${alchemyKey}`
+        : 'https://arbitrum-one-rpc.publicnode.com'
+    ),
+  },
+});
+
+
+// Log the wagmiConfig to verify it has the projectId
+// console.log('WagmiAdapter created')
+// console.log('WagmiAdapter projectId:', projectId)
+// console.log('WagmiConfig:', wagmiAdapter.wagmiConfig)
+
+// Metadata configuration
+export const metadata = {
+  name: 'Aquafier',
+  description: 'Aquafier - Decentralized Identity and Document Management',
+  // url: "https://reown.com", // 'http://localhost:5173',
+  url: "http://localhost:5173",
+  icons: ['https://avatars.githubusercontent.com/u/179229932']
+}
+
+export const appKit = createAppKit({
+  adapters: [wagmiAdapter],
+  networks: chains,
+  projectId,
+  siweConfig,
   metadata,
   features: {
-    analytics: false,
-    email: false,
-    socials: false,
-    swaps: false,
-    onramp: false
+    email: true,
+    socials: [
+      "google",
+      "x",
+      "github",
+      "discord",
+      "apple",
+      "facebook",
+      "farcaster",
+    ],
+    emailShowWallets: true,
   },
-  themeMode: 'light',
-  themeVariables: {
-    '--w3m-accent': '#3b82f6',
-    '--w3m-border-radius-master': '8px'
-  },
-  siweConfig,
-  includeWalletIds: [
-    // Configure more wallet here: https://docs.reown.com/cloud/wallets/wallet-list
-    "c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96", // Metamask
-    "f323633c1f67055a45aac84e321af6ffe46322da677ffdd32f9bc1e33bafe29c", // Core wallet
-    "a797aa35c0fadbfc1a53e7f675162ed5226968b44a19ee3d24385c64d1d3c393", // Phantom
-    "1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369", // Rainbow
-    "e0c2e199712878ed272e2c170b585baa0ff0eb50b07521ca586ebf7aeeffc598", // Talisman
-    "4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0", // Trust Wallet
-    "9ce87712b99b3eb57396cc8621db8900ac983c712236f48fb70ad28760be3f6a", // Subwallet 
-  ]
-})
+});
 
-// Export the ethers adapter for use in other components
-export { ethersAdapter }
+// Export the wagmi adapter and config for use in other components
+export { wagmiAdapter, siweConfig }
+export const wagmiConfig = wagmiAdapter.wagmiConfig

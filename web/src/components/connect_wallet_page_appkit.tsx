@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useAppKit, useAppKitAccount, useAppKitState, useDisconnect } from '@reown/appkit/react'
+import { useEffect, useState } from 'react'
+import { useAppKit, useAppKitAccount, useAppKitState } from '@reown/appkit/react'
 import { useStore } from 'zustand'
 import appStore from '../store'
 import { Alert, AlertDescription } from './ui/alert'
 import { toast } from 'sonner'
 import { generateAvatar, fetchFiles } from '../utils/functions'
 import { ethers } from 'ethers'
-  
+
 export const ConnectWalletPageAppKit = () => {
   const { open } = useAppKit()
   const { address, isConnected, status } = useAppKitAccount()
@@ -23,7 +23,7 @@ export const ConnectWalletPageAppKit = () => {
   const [isConnecting, setIsConnecting] = useState(false)
   const [error, setError] = useState('')
   const [hasTriggeredSiwe, setHasTriggeredSiwe] = useState(false)
-  const { disconnect } = useDisconnect()
+  // const { disconnect } = useDisconnect()
 
   // Handle wallet connection state changes
   useEffect(() => {
@@ -37,16 +37,11 @@ export const ConnectWalletPageAppKit = () => {
     }
   }, [isConnected, address, setMetamaskAddress, setAvatar])
 
-  
-  useEffect(() => {
-    if (isConnected && address && session == null) {
 
-      console.log("Session is null after connection, signing out to reset state.")
-      handleSignOut()
-    }
-  }, [])
+  // Removed auto-signout logic that was causing premature disconnection
+  // Social login needs time to establish session after wallet connection
 
-  
+
   // Monitor modal state changes
   useEffect(() => {
     if (modalOpen) {
@@ -74,26 +69,26 @@ export const ConnectWalletPageAppKit = () => {
     }
   }, [isConnected])
 
-  const handleSignOut = useCallback(async () => {
-    try {
-      await disconnect()
-      toast.success('Signed out successfully.')
+  // const handleSignOut = useCallback(async () => {
+  //   try {
+  //     await disconnect()
+  //     toast.success('Signed out successfully.')
 
-    } catch (error: any) {
-      // Check if it's the permission revocation error
-      const isPermissionError = error?.message?.includes('revoke permissions') ||
-        error?.message?.includes('Internal JSON-RPC error')
+  //   } catch (error: any) {
+  //     // Check if it's the permission revocation error
+  //     const isPermissionError = error?.message?.includes('revoke permissions') ||
+  //       error?.message?.includes('Internal JSON-RPC error')
 
-      if (isPermissionError) {
-        // Still consider it a success since wallet disconnects anyway
-        console.warn('Permission revocation failed, but wallet disconnected:', error)
-      } else {
-        // Only show error for other types of failures
-        console.error('Sign out error:', error)
-        toast.error('Error signing out')
-      }
-    }
-  }, [disconnect])  // Handle SIWE success - files are fetched automatically in siweConfig
+  //     if (isPermissionError) {
+  //       // Still consider it a success since wallet disconnects anyway
+  //       console.warn('Permission revocation failed, but wallet disconnected:', error)
+  //     } else {
+  //       // Only show error for other types of failures
+  //       console.error('Sign out error:', error)
+  //       toast.error('Error signing out')
+  //     }
+  //   }
+  // }, [disconnect])  // Handle SIWE success - files are fetched automatically in siweConfig
 
   const handleSiweSuccess = async () => {
     if (session?.address) {

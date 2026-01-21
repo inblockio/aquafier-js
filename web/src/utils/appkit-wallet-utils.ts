@@ -11,13 +11,13 @@ export async function getAppKitProvider() {
     return null
   }
   return walletProvider as any
-} 
+}
 
 // Get the current signer from AppKit
 export async function getAppKitSigner() {
   const provider = await getAppKitProvider()
   if (!provider) throw new Error('No provider available')
-  
+
   const ethersProvider = new ethers.BrowserProvider(provider)
   return await ethersProvider.getSigner()
 }
@@ -30,7 +30,7 @@ export async function getCurrentNetwork() {
       console.error('AppKit provider not available')
       return null
     }
-    
+
     const chainId = await provider.request({
       method: 'eth_chainId',
     })
@@ -49,7 +49,7 @@ export async function switchNetworkWalletConnect(chainId: string) {
       console.error('AppKit provider not available')
       return false
     }
-    
+
     await provider.request({
       method: 'wallet_switchEthereumChain',
       params: [{ chainId }],
@@ -71,7 +71,7 @@ export async function isWalletConnected() {
   try {
     const provider = await getAppKitProvider()
     if (!provider) return false
-    
+
     const accounts = await provider.request({ method: 'eth_accounts' })
     return accounts && accounts.length > 0
   } catch (error) {
@@ -90,6 +90,51 @@ export async function getConnectedAddress() {
     return null
   }
 }
+
+/**
+ * Normalizes a SIWE message to a single line.
+ */
+export const normalizeSiweMessage = (message: string): string => {
+  return message.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+/**
+ * Manually constructs a SIWE-like message to bypass library validation for custom formats.
+ */
+// export const createSiweMessage = (address: string, statement: string, args?: any): string => {
+//   const domain = args?.domain || window.location.host
+//   const origin = args?.uri || window.location.origin
+//   const nonce = args?.nonce || generateNonce()
+
+//   let chainId = args?.chainId
+//   if (typeof chainId === 'string' && chainId.startsWith('0x')) {
+//     chainId = parseInt(chainId, 16)
+//   }
+//   if (!chainId || isNaN(Number(chainId))) {
+//     const network = appStore.getState().user_profile?.witness_network || "mainnet"
+//     chainId = ETH_CHAINID_MAP_NUMBERS[network] || 1
+//   }
+
+//   const expiry = args?.expirationTime || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+//   const issuedAt = args?.issuedAt || new Date().toISOString()
+
+//   // Build standard multi-line message first
+//   const header = `${domain} wants you to sign in with your Ethereum account:`
+//   const section1 = `${address}`
+//   const section2 = `${statement}`
+//   const section3 = [
+//     `URI: ${origin}`,
+//     `Version: 1`,
+//     `Chain ID: ${chainId}`,
+//     `Nonce: ${nonce}`,
+//     `Issued At: ${issuedAt}`
+//   ].join('\n')
+
+//   const fullMessage = `${header}\n${section1}\n\n${section2}\n\n${section3}`
+
+//   console.log("Created Manual SIWE Message:\n", fullMessage)
+//   return fullMessage
+// }
 
 export const createSiweMessage = (address: string, statement: string): string => {
   const domain = window.location.host

@@ -19,7 +19,7 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
   const { open } = useAppKit()
   const { address, isConnected, status } = useAppKitAccount()
   const { disconnect } = useDisconnect()
-  
+
   const { setMetamaskAddress, session, setFiles, setAvatar, backend_url, webConfig } = useStore(appStore)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [hasHandledSiwe, setHasHandledSiwe] = useState(false)
@@ -36,7 +36,7 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
       setAvatar(undefined)
     }
 
-    if(isConnected== false && session != null  && webConfig.AUTH_PROVIDER=="wallet_connect"){
+    if (isConnected == false && session != null && webConfig.AUTH_PROVIDER == "wallet_connect") {
       handleSignOut()
     }
   }, [isConnected, address, setMetamaskAddress, setAvatar])
@@ -59,93 +59,93 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
   // Handle post-authentication tasks
   const handlePostAuthentication = async () => {
     if (session?.address) {
-     const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-      setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+      const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+      setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
     }
   }
 
   const handleConnect = () => {
 
-    if ( webConfig.AUTH_PROVIDER=="wallet_connect"){
+    if (webConfig.AUTH_PROVIDER == "wallet_connect") {
 
       if (!isConnected) {
         open()
       } else {
         setIsProfileOpen(true)
       }
-    }else{
-      if(!session){
+    } else {
+      if (!session) {
         handleSignOut()
-      } else{
+      } else {
         setIsProfileOpen(true)
-      } 
+      }
     }
   }
 
   const handleSignOut = async () => {
-  setIsSigningOut(true)
- let id= toast.info('Signing out...')
-  
-  try {
-    await disconnect()
-    toast.dismiss(id)
-    toast.success('Signed out successfully.')
-    setIsProfileOpen(false)
+    setIsSigningOut(true)
+    let id = toast.info('Signing out...')
 
-    
-  } catch (error: any) {
-    // Check if it's the permission revocation error
-    const isPermissionError = error?.message?.includes('revoke permissions') || 
-                              error?.message?.includes('Internal JSON-RPC error')
-    
-    if (isPermissionError) {
-      // Still consider it a success since wallet disconnects anyway
-      console.warn('Permission revocation failed, but wallet disconnected:', error)
+    try {
+      await disconnect()
+      toast.dismiss(id)
       toast.success('Signed out successfully.')
       setIsProfileOpen(false)
-    } else {
-      // Only show error for other types of failures
-      console.error('Sign out error:', error)
-      toast.error('Error signing out')
-    }
-   
-  } finally {
-    try {
-        const nonce = getCookie(SESSION_COOKIE_NAME)
-      
-     if (nonce) {
-        const backend_url = appStore.getState().backend_url
-        const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
-        await axios.delete(url, {
-          params: { nonce },
-        })
+
+
+    } catch (error: any) {
+      // Check if it's the permission revocation error
+      const isPermissionError = error?.message?.includes('revoke permissions') ||
+        error?.message?.includes('Internal JSON-RPC error')
+
+      if (isPermissionError) {
+        // Still consider it a success since wallet disconnects anyway
+        console.warn('Permission revocation failed, but wallet disconnected:', error)
+        toast.success('Signed out successfully.')
+        setIsProfileOpen(false)
+      } else {
+        // Only show error for other types of failures
+        console.error('Sign out error:', error)
+        toast.error('Error signing out')
       }
 
-      // Clear cookie
-      setCookie(SESSION_COOKIE_NAME, '', new Date('1970-01-01T00:00:00Z'))
+    } finally {
+      try {
+        const nonce = getCookie(SESSION_COOKIE_NAME)
 
-      // Clear store
-      const store = appStore.getState()
-      store.setMetamaskAddress(null)
-      store.setAvatar(undefined)
-      store.setUserProfile(USER_PROFILE_DEFAULT)
-      store.setSession(null)
-      store.setFiles({
-        fileData: [],
-        status: 'idle',
-      })
+        if (nonce) {
+          const backend_url = appStore.getState().backend_url
+          const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
+          await axios.delete(url, {
+            params: { nonce },
+          })
+        }
 
-      await ContactsService.getInstance().clear()
-    } catch (error) {
-      console.error('Failed to sign out:', error)
-      // Clear local state even if backend fails
-      setCookie(SESSION_COOKIE_NAME, '', new Date('1970-01-01T00:00:00Z'))
+        // Clear cookie
+        setCookie(SESSION_COOKIE_NAME, '', new Date('1970-01-01T00:00:00Z'))
+
+        // Clear store
+        const store = appStore.getState()
+        store.setMetamaskAddress(null)
+        store.setAvatar(undefined)
+        store.setUserProfile(USER_PROFILE_DEFAULT)
+        store.setSession(null)
+        store.setFiles({
+          fileData: [],
+          status: 'idle',
+        })
+
+        await ContactsService.getInstance().clear()
+      } catch (error) {
+        console.error('Failed to sign out:', error)
+        // Clear local state even if backend fails
+        setCookie(SESSION_COOKIE_NAME, '', new Date('1970-01-01T00:00:00Z'))
+      }
+      setIsSigningOut(false)
+
+      window.location.href = '/'  // Force reload to clear state
     }
-    setIsSigningOut(false)
-
-     window.location.href = '/'  // Force reload to clear state
   }
-}
 
 
   return (
@@ -158,18 +158,18 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
         disabled={status === 'connecting'}
       >
         {
-          webConfig.AUTH_PROVIDER=="wallet_connect" ? <>
+          webConfig.AUTH_PROVIDER == "wallet_connect" ? <>
             <LuWallet />
-        {status === 'connecting' ? 'Connecting...' : 
-         isConnected && session ? formatCryptoAddress(session.address, 3, 3) : 
-         'Sign In '}
+            {status === 'connecting' ? 'Connecting...' :
+              isConnected && session ? formatCryptoAddress(session.address, 3, 3) :
+                'Sign In '}
           </> : <>
-          
-           <LuWallet />
-                              {session ? formatCryptoAddress(session?.address, 3, 3) : 'Sign In'}
+
+            <LuWallet />
+            {session ? formatCryptoAddress(session?.address, 3, 3) : 'Sign In'}
           </>
         }
-      
+
       </Button>
 
       {/* Profile Dialog for authenticated users */}
@@ -182,10 +182,10 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
             {session ? (
               <div className="flex flex-col gap-5 items-center">
                 <Suspense fallback={<div>Loading...</div>}>
-                  <WalletAddressProfile 
-                    walletAddress={session.address} 
-                    callBack={() => setIsProfileOpen(false)} 
-                    showAvatar={false} 
+                  <WalletAddressProfile
+                    walletAddress={session.address}
+                    callBack={() => setIsProfileOpen(false)}
+                    showAvatar={false}
                   />
                 </Suspense>
 

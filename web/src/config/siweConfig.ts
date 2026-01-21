@@ -1,15 +1,14 @@
-import { createSIWEConfig } from '@reown/appkit-siwe'
+import { createSIWEConfig, formatMessage } from '@reown/appkit-siwe'
 import type { SIWECreateMessageArgs, SIWESession, SIWEVerifyMessageArgs } from '@reown/appkit-siwe'
 import axios from 'axios'
 import { getCookie, setCookie, ensureDomainUrlHasSSL } from '../utils/functions'
 import { ETH_CHAINID_MAP_NUMBERS, SESSION_COOKIE_NAME } from '../utils/constants'
 import appStore from '../store'
 import { toast } from 'sonner'
-import { createSiweMessage } from '@/utils/appkit-wallet-utils'
 import { ethers } from 'ethers'
 
 // Helper function to extract Ethereum address from DID or return as-is if already an address
-const extractEthereumAddress = (addressOrDid: string): string => {
+export const extractEthereumAddress = (addressOrDid: string): string => {
   // Check if it's a DID format: did:pkh:eip155:1:0x...
   if (addressOrDid.startsWith('did:pkh:eip155:')) {
     const parts = addressOrDid.split(':')
@@ -23,12 +22,9 @@ const extractEthereumAddress = (addressOrDid: string): string => {
 
 export const siweConfig = createSIWEConfig({
 
-  
-  createMessage: ({ address }: SIWECreateMessageArgs) => {
-    // Extract the actual Ethereum address from DID format if necessary
-    const ethAddress = extractEthereumAddress(address)
 
-    return createSiweMessage(ethAddress, "Sign in with Ethereum to the app")
+  createMessage: ({ address, ...args }: SIWECreateMessageArgs) => {
+    return formatMessage(args, address)
   },
 
   getNonce: async () => {
@@ -73,7 +69,7 @@ export const siweConfig = createSIWEConfig({
           address: ethers.getAddress(response.data.session.address),
           // TODO: fix this. Find a way to return the connected chain id from the backend to avoid issues in which it asks the user to reconnect
           // For now, I read the user settings to get chainID
-          chainId: response.data.session.chain_id || chainId, 
+          chainId: response.data.session.chain_id || chainId,
         } as SIWESession
 
         // console.log("getSession : Retrieved session data:", JSON.stringify(data))
@@ -86,18 +82,16 @@ export const siweConfig = createSIWEConfig({
     return null
   },
 
-  enabled:true,
+  enabled: true,
   required: true,
-  
+
 
   signOutOnDisconnect: false,        // ADD
-    signOutOnAccountChange: false,     // ADD
-    signOutOnNetworkChange: false,     // ADD
-  
+  signOutOnAccountChange: false,     // ADD
+  signOutOnNetworkChange: false,     // ADD
+
 
   verifyMessage: async ({ message, signature }: SIWEVerifyMessageArgs) => {
-    // console.log("Message: ", message)
-    // console.log("Signature: ", signature)
     try {
       const backend_url = appStore.getState().backend_url
       const url = ensureDomainUrlHasSSL(`${backend_url}/session`)

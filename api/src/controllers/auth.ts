@@ -83,6 +83,15 @@ export default async function authController(fastify: FastifyInstance) {
     }
 
     try {
+      // Check if session exists before deleting
+      const session = await prisma.siweSession.findUnique({
+        where: { nonce }
+      });
+
+      if (!session) {
+        return { success: true, message: "Session already deleted or does not exist" };
+      }
+
       await prisma.siweSession.delete({
         where: { nonce }
       });
@@ -299,4 +308,3 @@ export default async function authController(fastify: FastifyInstance) {
   });
 
 }
-
