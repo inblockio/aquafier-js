@@ -9,8 +9,6 @@ import {
       estimateFileSize,
       fetchSystemFiles,
       formatDate,
-      formatTxtRecord,
-      generateProofFromSignature,
       generateDNSClaim,
       getAquaTreeFileObject,
       getGenesisHash,
@@ -694,7 +692,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             }
 
             const account = session?.address
-            const domain = domainParams.trim()
 
             if (webConfig.AUTH_PROVIDER == "metamask") {
                   if (typeof window.ethereum == 'undefined') {
@@ -835,12 +832,12 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   const publicAssociation = completeFormData['public_association'] === 'true'
 
                   let dataGen = async (message: string) => {
-                              return await domainTemplateSignMessageFunction(domain, message)
+                        const signature = await domainTemplateSignMessageFunction(domain, message)
+                        if (!signature) {
+                              throw new Error("Failed to sign message")
                         }
-
-                        if(!dataGen){
-                              alert(`a critical error occurred, try again`)
-                        }
+                        return signature
+                  }
                   // Generate DNS claim using new format
                   const dnsClaim = await generateDNSClaim(
                         domain,
