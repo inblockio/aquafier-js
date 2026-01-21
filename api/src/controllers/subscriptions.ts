@@ -577,7 +577,6 @@ export default async function subscriptionsController(fastify: FastifyInstance) 
           });
         }
 
-        const { usageService } = await import('../services/usageService');
         const stats = await usageService.recalculateUserUsage(userAddress);
 
         // Get subscription/plan info to calculate limits/percentages
