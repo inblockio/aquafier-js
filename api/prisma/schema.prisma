@@ -24,8 +24,21 @@ model Users {
   Settings      Settings?
   UserAddresses UserAttestationAddresses[]
   Subscriptions Subscription[]
+  UserUsage     UserUsage?
 
   @@map("users")
+}
+
+model UserUsage {
+  user_address    String   @id
+  storage_usage_bytes BigInt @default(0)
+  files_count     Int      @default(0)
+  contracts_count Int      @default(0)
+  templates_count Int      @default(0)
+  updated_at      DateTime @updatedAt
+
+  User            Users    @relation(fields: [user_address], references: [address])
+  @@map("user_usage")
 }
 
 model AquaTemplate {
@@ -157,6 +170,7 @@ model Revision {
 model File {
   file_hash     String   @id
   file_location String
+  file_size     Int      @default(0)
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 

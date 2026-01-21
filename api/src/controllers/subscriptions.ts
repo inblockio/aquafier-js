@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyReply } from 'fastify';
 import { prisma } from '../database/db';
 import { AuthenticatedRequest, authenticate } from '../middleware/auth_middleware';
 import Logger from '../utils/logger';
+import { calculateStorageUsage } from '../utils/stats';
 
 export default async function subscriptionsController(fastify: FastifyInstance) {
 
@@ -457,21 +458,67 @@ export default async function subscriptionsController(fastify: FastifyInstance) 
           });
         }
 
-        // Calculate current usage
-        const filesCount = await prisma.latest.count({
-          where: { user: userAddress },
+        // Check for cached usage stats
+        let userUsage = await prisma.userUsage.findUnique({
+          where: { user_address: userAddress }
         });
 
-        const contractsCount = await prisma.contract.count({
-          where: { sender: userAddress },
-        });
+        // If usage stats don't exist, calculate and save them (healing)
+        if (!userUsage) {
+          const { usageService } = await import('../services/usageService');
+          const stats = await usageService.recalculateUserUsage(userAddress);
+          userUsage = {
+            user_address: userAddress,
+            storage_usage_bytes: BigInt(stats.storage_usage_bytes),
+            files_count: stats.files_count,
+            contracts_count: stats.contracts_count,
+            templates_count: stats.templates_count,
+            updated_at: new Date()
+          };
+        }
 
-        const templatesCount = await prisma.aquaTemplate.count({
-          where: { owner: userAddress },
-        });
 
-        // TODO: Calculate storage usage from files
-        const storage_used_bytes = 0; // Placeholder
+        // Sync with UsageRecord for the active subscription
+        let usageRecord = null;
+        if (subscription) {
+          usageRecord = await prisma.usageRecord.findFirst({
+            where: {
+              subscription_id: subscription.id,
+              period_start: { lte: new Date() },
+              period_end: { gte: new Date() }
+            }
+          });
+
+          const usageData = {
+            storage_used_bytes: userUsage.storage_usage_bytes,
+            files_count: userUsage.files_count,
+            contracts_count: userUsage.contracts_count,
+            templates_count: userUsage.templates_count,
+            updatedAt: new Date()
+          };
+
+          if (usageRecord) {
+            usageRecord = await prisma.usageRecord.update({
+              where: { id: usageRecord.id },
+              data: usageData
+            });
+          } else {
+            usageRecord = await prisma.usageRecord.create({
+              data: {
+                subscription_id: subscription.id,
+                user_address: userAddress,
+                period_start: subscription.current_period_start,
+                period_end: subscription.current_period_end,
+                ...usageData
+              }
+            });
+          }
+        }
+
+        const filesCount = userUsage.files_count;
+        const templatesCount = userUsage.templates_count;
+        const storage_used_bytes = Number(userUsage.storage_usage_bytes);
+        const contractsCount = userUsage.contracts_count;
 
         return reply.code(200).send({
           success: true,
@@ -488,6 +535,12 @@ export default async function subscriptionsController(fastify: FastifyInstance) 
               max_templates: plan.max_templates,
               max_storage_gb: plan.max_storage_gb,
             },
+            remaining: {
+              files: plan.max_files - filesCount,
+              contracts: plan.max_contracts - contractsCount,
+              templates: plan.max_templates - templatesCount,
+              storage_gb: plan.max_storage_gb - (storage_used_bytes / (1024 * 1024 * 1024))
+            },
             percentage_used: {
               files: (filesCount / plan.max_files) * 100,
               contracts: (contractsCount / plan.max_contracts) * 100,
@@ -501,6 +554,88 @@ export default async function subscriptionsController(fastify: FastifyInstance) 
         return reply.code(500).send({
           success: false,
           error: 'Failed to fetch usage statistics',
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /subscriptions/usage/recalculate
+   * Force recalculation of user's usage statistics
+   */
+  fastify.post(
+    '/subscriptions/usage/recalculate',
+    { preHandler: authenticate },
+    async (request: AuthenticatedRequest, reply: FastifyReply) => {
+      try {
+        const userAddress = request.user?.address;
+
+        if (!userAddress) {
+          return reply.code(401).send({
+            success: false,
+            error: 'Unauthorized',
+          });
+        }
+
+        const { usageService } = await import('../services/usageService');
+        const stats = await usageService.recalculateUserUsage(userAddress);
+
+        // Get subscription/plan info to calculate limits/percentages
+        const subscription = await prisma.subscription.findFirst({
+          where: {
+            user_address: userAddress,
+            status: { in: ['ACTIVE', 'TRIALING', 'PAST_DUE'] },
+          },
+          include: { Plan: true },
+        });
+
+        const plan = subscription?.Plan || await prisma.subscriptionPlan.findUnique({
+          where: { id: process.env.DEFAULT_FREE_PLAN_ID || '' },
+        });
+
+        if (!plan) throw new Error('Plan not found for user');
+
+        const filesCount = stats.files_count;
+        const templatesCount = stats.templates_count;
+        const storage_used_bytes = Number(stats.storage_usage_bytes);
+        const contractsCount = stats.contracts_count;
+
+        return reply.code(200).send({
+          success: true,
+          data: {
+            usage: {
+              files_count: filesCount,
+              contracts_count: contractsCount,
+              templates_count: templatesCount,
+              storage_used_gb: storage_used_bytes / (1024 * 1024 * 1024),
+            },
+            limits: {
+              max_files: plan.max_files,
+              max_contracts: plan.max_contracts,
+              max_templates: plan.max_templates,
+              max_storage_gb: plan.max_storage_gb,
+            },
+            remaining: {
+              files: plan.max_files - filesCount,
+              contracts: plan.max_contracts - contractsCount,
+              templates: plan.max_templates - templatesCount,
+              storage_gb: plan.max_storage_gb - (storage_used_bytes / (1024 * 1024 * 1024))
+            },
+            percentage_used: {
+              files: (filesCount / plan.max_files) * 100,
+              contracts: (contractsCount / plan.max_contracts) * 100,
+              templates: (templatesCount / plan.max_templates) * 100,
+              storage: (storage_used_bytes / (plan.max_storage_gb * 1024 * 1024 * 1024)) * 100,
+            },
+          },
+          message: 'Usage statistics recalculated successfully'
+        });
+
+      } catch (error) {
+        Logger.error('Error recalculating usage:', error);
+        return reply.code(500).send({
+          success: false,
+          error: 'Failed to recalculate usage statistics'
         });
       }
     }

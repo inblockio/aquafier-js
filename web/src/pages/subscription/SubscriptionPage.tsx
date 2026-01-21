@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Calendar, AlertCircle, Check, X } from 'lucide-react';
+import { CreditCard, Calendar, AlertCircle, X, HardDrive, FileText, File, Layout } from 'lucide-react';
 import { useSubscriptionStore } from '../../stores/subscriptionStore';
 import {
   fetchCurrentSubscription,
   cancelSubscription,
   createStripePortal,
 } from '../../api/subscriptionApi';
+import UsageMetrics from '@/components/subscription/UsageMetrics';
 
 export default function SubscriptionPage() {
   const navigate = useNavigate();
@@ -77,20 +78,20 @@ export default function SubscriptionPage() {
     });
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'text-green-600 bg-green-100';
-      case 'TRIALING':
-        return 'text-blue-600 bg-blue-100';
-      case 'PAST_DUE':
-        return 'text-yellow-600 bg-yellow-100';
-      case 'CANCELED':
-        return 'text-red-600 bg-red-100';
-      default:
-        return 'text-gray-600 bg-gray-100';
-    }
-  };
+  // const getStatusColor = (status: string) => {
+  //   switch (status) {
+  //     case 'ACTIVE':
+  //       return 'text-green-600 bg-green-100';
+  //     case 'TRIALING':
+  //       return 'text-blue-600 bg-blue-100';
+  //     case 'PAST_DUE':
+  //       return 'text-yellow-600 bg-yellow-100';
+  //     case 'CANCELED':
+  //       return 'text-red-600 bg-red-100';
+  //     default:
+  //       return 'text-gray-600 bg-gray-100';
+  //   }
+  // };
 
   if (!currentSubscription && !isFreeTier) {
     return (
@@ -117,105 +118,132 @@ export default function SubscriptionPage() {
       </div>
 
       {/* Current Plan Card */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              {plan?.display_name || 'Free Plan'}
-            </h2>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {/* Card Header with Plan Info & Price */}
+        <div className="p-8 border-b border-gray-100 bg-gray-50/50">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {plan?.display_name || 'Free Plan'}
+                </h2>
+                {currentSubscription && (
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${currentSubscription.status === 'ACTIVE' ? 'bg-green-50 text-green-700 border-green-200' :
+                      currentSubscription.status === 'TRIALING' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                        currentSubscription.status === 'PAST_DUE' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                          'bg-red-50 text-red-700 border-red-200'
+                      }`}
+                  >
+                    {currentSubscription.status}
+                  </span>
+                )}
+              </div>
+              <p className="text-gray-500 text-sm">
+                Next billing date: <span className="font-medium text-gray-900">{currentSubscription ? formatDate(currentSubscription.current_period_end) : 'N/A'}</span>
+              </p>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <div className="text-3xl font-bold text-gray-900 dark:text-white leading-none">
+                  ${plan?.price_monthly_usd || 0}
+                  <span className="text-base font-normal text-gray-500 ml-1">
+                    /{currentSubscription?.billing_period === 'YEARLY' ? 'year' : 'mo'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-8">
+          <div className="mb-8">
+            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Resource Usage</h3>
+            <UsageMetrics />
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Plan Features */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Plan Limits</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                  <span className="text-gray-600 dark:text-gray-400 text-sm flex items-center">
+                    <HardDrive className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" />
+                    Storage Limit
+                  </span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{plan?.max_storage_gb} GB</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                  <span className="text-gray-600 dark:text-gray-400 text-sm flex items-center">
+                    <FileText className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" />
+                    File Limit
+                  </span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{plan?.max_files}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                  <span className="text-gray-600 dark:text-gray-400 text-sm flex items-center">
+                    <File className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" />
+                    Contract Limit
+                  </span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{plan?.max_contracts}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                  <span className="text-gray-600 dark:text-gray-400 text-sm flex items-center">
+                    <Layout className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" />
+                    Template Limit
+                  </span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{plan?.max_templates}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Billing Details */}
             {currentSubscription && (
-              <span
-                className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                  currentSubscription.status
-                )}`}
-              >
-                {currentSubscription.status}
-              </span>
-            )}
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold text-gray-900 dark:text-white">
-              ${plan?.price_monthly_usd || 0}
-              <span className="text-base font-normal text-gray-600 dark:text-gray-400">
-                /month
-              </span>
-            </div>
-            {currentSubscription?.billing_period === 'YEARLY' && (
-              <p className="text-sm text-gray-500">Billed annually</p>
-            )}
-          </div>
-        </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Billing Information</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <span className="text-gray-600 dark:text-gray-400 text-sm flex items-center">
+                      <Calendar className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" />
+                      Billing Cycle
+                    </span>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {formatDate(currentSubscription.current_period_start)} - {formatDate(currentSubscription.current_period_end)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <span className="text-gray-600 dark:text-gray-400 text-sm flex items-center">
+                      <CreditCard className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" />
+                      Payment Method
+                    </span>
+                    <span className="font-semibold text-gray-900 dark:text-white inline-flex items-center">
+                      {currentSubscription.payment_method === 'STRIPE' ? 'Credit Card' : 'Crypto'}
+                    </span>
+                  </div>
 
-        {/* Plan Features */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="flex items-center">
-            <Check className="w-5 h-5 text-green-500 mr-2" />
-            <span className="text-gray-700 dark:text-gray-300">
-              {plan?.max_storage_gb} GB Storage
-            </span>
-          </div>
-          <div className="flex items-center">
-            <Check className="w-5 h-5 text-green-500 mr-2" />
-            <span className="text-gray-700 dark:text-gray-300">
-              {plan?.max_files} Files
-            </span>
-          </div>
-          <div className="flex items-center">
-            <Check className="w-5 h-5 text-green-500 mr-2" />
-            <span className="text-gray-700 dark:text-gray-300">
-              {plan?.max_contracts} Contracts
-            </span>
-          </div>
-          <div className="flex items-center">
-            <Check className="w-5 h-5 text-green-500 mr-2" />
-            <span className="text-gray-700 dark:text-gray-300">
-              {plan?.max_templates} Templates
-            </span>
-          </div>
-        </div>
-
-        {/* Billing Info */}
-        {currentSubscription && (
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400 flex items-center">
-                <Calendar className="w-4 h-4 mr-2" />
-                Current period
-              </span>
-              <span className="text-gray-900 dark:text-white font-medium">
-                {formatDate(currentSubscription.current_period_start)} -{' '}
-                {formatDate(currentSubscription.current_period_end)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400 flex items-center">
-                <CreditCard className="w-4 h-4 mr-2" />
-                Payment method
-              </span>
-              <span className="text-gray-900 dark:text-white font-medium">
-                {currentSubscription.payment_method === 'STRIPE' ? 'Credit Card' : 'Crypto'}
-              </span>
-            </div>
-            {currentSubscription.cancel_at_period_end && (
-              <div className="flex items-start p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                <AlertCircle className="w-5 h-5 text-yellow-600 mr-2 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                    Subscription will be canceled
-                  </p>
-                  <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                    Your subscription will end on {formatDate(currentSubscription.current_period_end)}
-                  </p>
+                  {currentSubscription.cancel_at_period_end && (
+                    <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-lg flex items-start">
+                      <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-500 mr-3 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-amber-900 dark:text-amber-200">Subscription Canceled</p>
+                        <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+                          Your access will end on {formatDate(currentSubscription.current_period_end)}.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Actions */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
           Manage Subscription
         </h3>
         <div className="space-y-3">
@@ -223,7 +251,7 @@ export default function SubscriptionPage() {
             <button
               onClick={handleManagePayment}
               disabled={loading}
-              className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+              className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50"
             >
               <CreditCard className="w-5 h-5 mr-2" />
               Manage Payment Methods
@@ -232,7 +260,7 @@ export default function SubscriptionPage() {
 
           <button
             onClick={handleUpgrade}
-            className="w-full flex items-center justify-center px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg font-medium transition-colors"
+            className="w-full flex items-center justify-center px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-xl font-medium transition-colors"
           >
             {isFreeTier ? 'Upgrade to Pro' : 'Change Plan'}
           </button>
@@ -241,7 +269,7 @@ export default function SubscriptionPage() {
             <button
               onClick={handleCancelSubscription}
               disabled={cancelLoading}
-              className="w-full flex items-center justify-center px-4 py-3 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg font-medium transition-colors disabled:opacity-50"
+              className="w-full flex items-center justify-center px-4 py-3 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl font-medium transition-colors disabled:opacity-50"
             >
               <X className="w-5 h-5 mr-2" />
               {cancelLoading ? 'Canceling...' : 'Cancel Subscription'}
@@ -251,8 +279,8 @@ export default function SubscriptionPage() {
       </div>
 
       {/* FAQ */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
           Frequently Asked Questions
         </h3>
         <div className="space-y-4">

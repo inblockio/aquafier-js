@@ -296,7 +296,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     // let existingFileIndex = await prisma.fileIndex.findFirst({
                     //     where: { file_hash: fileHash },
                     // });
-                    
+
                     console.log(cliRedify("This was called"))
                     let fileName = assetFilename;
                     await saveFileAndCreateOrUpdateFileIndex(
@@ -869,10 +869,12 @@ export default async function explorerController(fastify: FastifyInstance) {
                         create: {
                             file_hash: fileHash,
                             file_location: filePath,
+                            file_size: fileBuffer.length
                         },
                         update: {
                             file_hash: fileHash,
                             file_location: filePath,
+                            file_size: fileBuffer.length
                         }
                     })
 
