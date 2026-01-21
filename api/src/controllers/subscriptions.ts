@@ -3,6 +3,7 @@ import { prisma } from '../database/db';
 import { AuthenticatedRequest, authenticate } from '../middleware/auth_middleware';
 import Logger from '../utils/logger';
 import { calculateStorageUsage } from '../utils/stats';
+import { usageService } from '../services/usageService';
 
 export default async function subscriptionsController(fastify: FastifyInstance) {
 
@@ -465,7 +466,6 @@ export default async function subscriptionsController(fastify: FastifyInstance) 
 
         // If usage stats don't exist, calculate and save them (healing)
         if (!userUsage) {
-          const { usageService } = await import('../services/usageService');
           const stats = await usageService.recalculateUserUsage(userAddress);
           userUsage = {
             user_address: userAddress,
