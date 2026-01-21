@@ -8,9 +8,15 @@ generator client {
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
+enum EnsNameType {
+  ALIAS
+  ENS_NAME
+}
+
 model Users {
   address       String                     @id
   ens_name      String?
+  ens_name_type EnsNameType @default(ENS_NAME) 
   email         String?
   auth_provider String?                    @default("wallet") // "wallet", "google", "facebook", or "hybrid"
   createdAt     DateTime                   @default(now()) @map("created_at")
@@ -19,8 +25,22 @@ model Users {
   Settings      Settings?
   UserAddresses UserAttestationAddresses[]
   OAuthAccounts OAuthAccount[]
+  Subscriptions Subscription[]
+  UserUsage     UserUsage?
 
   @@map("users")
+}
+
+model UserUsage {
+  user_address    String   @id
+  storage_usage_bytes BigInt @default(0)
+  files_count     Int      @default(0)
+  contracts_count Int      @default(0)
+  templates_count Int      @default(0)
+  updated_at      DateTime @updatedAt
+
+  User            Users    @relation(fields: [user_address], references: [address])
+  @@map("user_usage")
 }
 
 model AquaTemplate {
@@ -173,6 +193,7 @@ model Revision {
 model File {
   file_hash     String   @id
   file_location String
+  file_size     Int      @default(0)
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
@@ -338,8 +359,223 @@ model ENSName {
   id             String   @id @default(uuid())
   wallet_address String
   ens_name       String
+  // ens_expiry
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@index([wallet_address, ens_name], name: "wallet_address_ens_name")
+}
+
+// ============================================================================
+// PAYMENT SYSTEM MODELS
+// ============================================================================
+
+model SubscriptionPlan {
+  id                   String         @id
+  name                 String         @unique // "Free", "Pro", "Enterprise"
+  display_name         String // "Free Plan", "Professional Plan"
+  description          String?
+  price_monthly_usd    Decimal        @default(0) @db.Decimal(10, 2)
+  price_yearly_usd     Decimal        @default(0) @db.Decimal(10, 2)
+  stripe_monthly_price_id String?     @unique // Stripe Price ID for monthly billing
+  stripe_yearly_price_id  String?     @unique // Stripe Price ID for yearly billing
+  crypto_monthly_price_usd Decimal?   @db.Decimal(10, 2)
+  crypto_yearly_price_usd  Decimal?   @db.Decimal(10, 2)
+
+  // Plan limits and features
+  max_storage_gb       Int            @default(1) // Storage limit in GB
+  max_files            Int            @default(100) // File count limit
+  max_contracts        Int            @default(10) // Contract limit
+  max_templates        Int            @default(5) // Template limit
+  features             Json           @default("{}") // Feature flags JSON
+
+  // Plan ordering and visibility
+  sort_order           Int            @default(0) // For display ordering
+  is_active            Boolean        @default(true)
+  is_public            Boolean        @default(true) // Show in pricing page
+
+  createdAt            DateTime       @default(now()) @map("created_at")
+  updatedAt            DateTime       @updatedAt @map("updated_at")
+
+  subscriptions        Subscription[]
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id                      String             @id @default(uuid())
+  user_address            String
+  plan_id                 String
+  status                  SubscriptionStatus @default(ACTIVE)
+  payment_method          PaymentMethod      // STRIPE or CRYPTO
+  billing_period          BillingPeriod      @default(MONTHLY) // MONTHLY or YEARLY
+
+  // Stripe fields
+  stripe_customer_id      String?
+  stripe_subscription_id  String?            @unique
+  stripe_payment_method_id String?
+
+  // Crypto fields
+  crypto_payment_id       String?
+  crypto_currency         String? // "BTC", "ETH", "USDT", etc.
+  crypto_last_payment_hash String? // Last successful transaction hash
+
+  // Subscription period
+  current_period_start    DateTime
+  current_period_end      DateTime
+  cancel_at_period_end    Boolean            @default(false)
+  canceled_at             DateTime?
+  trial_start             DateTime?
+  trial_end               DateTime?
+
+  // Metadata
+  metadata                Json?              @default("{}")
+
+  createdAt               DateTime           @default(now()) @map("created_at")
+  updatedAt               DateTime           @updatedAt @map("updated_at")
+
+  User                    Users              @relation(fields: [user_address], references: [address], onDelete: Cascade)
+  Plan                    SubscriptionPlan   @relation(fields: [plan_id], references: [id])
+  payments                Payment[]
+  usageRecords            UsageRecord[]
+
+  @@index([user_address])
+  @@index([stripe_customer_id])
+  @@index([status])
+  @@index([current_period_end])
+  @@map("subscriptions")
+}
+
+model Payment {
+  id                       String        @id @default(uuid())
+  subscription_id          String
+  amount                   Decimal       @db.Decimal(10, 2)
+  currency                 String        // "USD", "BTC", "ETH", "USDT", etc.
+  payment_method           PaymentMethod
+  status                   PaymentStatus @default(PENDING)
+
+  // Stripe fields
+  stripe_payment_intent_id String?       @unique
+  stripe_invoice_id        String?
+  stripe_charge_id         String?
+
+  // Crypto (NOWPayments) fields
+  crypto_transaction_hash  String?
+  crypto_payment_address   String? // Payment address provided to user
+  nowpayments_payment_id   String?       @unique // NOWPayments payment ID
+  nowpayments_order_id     String? // Merchant order ID
+  crypto_amount            Decimal?      @db.Decimal(20, 8) // Actual crypto amount
+  crypto_network           String? // "BTC", "ETH", "TRX", etc.
+
+  // Payment timing
+  paid_at                  DateTime?
+  failed_at                DateTime?
+  refunded_at              DateTime?
+
+  // Error tracking
+  failure_code             String?
+  failure_message          String?
+
+  // Receipt and invoice
+  receipt_url              String?
+  invoice_pdf_url          String?
+
+  // Metadata
+  metadata                 Json?         @default("{}")
+
+  createdAt                DateTime      @default(now()) @map("created_at")
+  updatedAt                DateTime      @updatedAt @map("updated_at")
+
+  Subscription             Subscription  @relation(fields: [subscription_id], references: [id], onDelete: Cascade)
+
+  @@index([subscription_id])
+  @@index([status])
+  @@index([payment_method])
+  @@index([createdAt])
+  @@index([stripe_payment_intent_id])
+  @@index([nowpayments_payment_id])
+  @@map("payments")
+}
+
+model UsageRecord {
+  id              String       @id @default(uuid())
+  subscription_id String
+  user_address    String
+
+  // Usage metrics
+  storage_used_bytes BigInt    @default(0) // Storage in bytes
+  files_count        Int       @default(0)
+  contracts_count    Int       @default(0)
+  templates_count    Int       @default(0)
+
+  // Timestamp for tracking
+  recorded_at     DateTime     @default(now())
+  period_start    DateTime
+  period_end      DateTime
+
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  Subscription    Subscription @relation(fields: [subscription_id], references: [id], onDelete: Cascade)
+
+  @@index([subscription_id])
+  @@index([user_address])
+  @@index([recorded_at])
+  @@map("usage_records")
+}
+
+model WebhookEvent {
+  id              String        @id @default(uuid())
+  source          WebhookSource // STRIPE or NOWPAYMENTS
+  event_type      String // e.g., "payment_intent.succeeded", "invoice.paid"
+  event_id        String        @unique // External event ID
+  payload         Json // Full webhook payload
+  processed       Boolean       @default(false)
+  processed_at    DateTime?
+  error_message   String?
+  retry_count     Int           @default(0)
+
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  @@index([source, event_type])
+  @@index([processed])
+  @@index([createdAt])
+  @@map("webhook_events")
+}
+
+// Enums for payment system
+enum SubscriptionStatus {
+  ACTIVE        // Subscription is active
+  PAST_DUE      // Payment failed, grace period
+  CANCELED      // Canceled by user or admin
+  TRIALING      // In trial period
+  INCOMPLETE    // Initial payment pending
+  PAUSED        // Temporarily paused
+  EXPIRED       // Trial or subscription expired
+}
+
+enum PaymentMethod {
+  STRIPE        // Credit/debit card via Stripe
+  CRYPTO        // Cryptocurrency via NOWPayments
+}
+
+enum PaymentStatus {
+  PENDING       // Payment initiated, awaiting confirmation
+  PROCESSING    // Payment being processed
+  SUCCEEDED     // Payment successful
+  FAILED        // Payment failed
+  CANCELED      // Payment canceled
+  REFUNDED      // Payment refunded
+  PARTIALLY_PAID // Crypto payment partially received
+}
+
+enum BillingPeriod {
+  MONTHLY
+  YEARLY
+}
+
+enum WebhookSource {
+  STRIPE
+  NOWPAYMENTS
 }

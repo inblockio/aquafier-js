@@ -4,6 +4,8 @@ import { useStore } from 'zustand'
 import FilesList from './files_list'
 import { AlertCircle, CheckCircle, FileText, FolderPlus, Loader2, Minimize2, Plus, Upload, X } from 'lucide-react'
 import { emptyUserStats, FileItemWrapper, IUserStats, UploadStatus } from '@/types/types'
+import { useSubscriptionStore } from '../../stores/subscriptionStore'
+import { fetchUsageStats } from '../../api/subscriptionApi'
 import {
       checkIfFileExistInUserFiles,
       isAquaTree,
@@ -21,6 +23,11 @@ import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import {
+      Tooltip,
+      TooltipContent,
+      TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 import FileDropZone from '@/components/dropzone_file_actions'
 import { LuTrash2, LuUpload } from 'react-icons/lu'
@@ -43,6 +50,35 @@ const FilesPage = () => {
       const fileInputRef = React.useRef<HTMLInputElement>(null)
       const [filesListForUpload, setFilesListForUpload] = useState<FileItemWrapper[]>([])
 
+      const {
+            usage,
+            limits,
+            setUsage,
+            setUsageLoading
+      } = useSubscriptionStore()
+
+      useEffect(() => {
+            const loadUsage = async () => {
+                  if (!usage || !limits) {
+                        try {
+                              setUsageLoading(true)
+                              const data = await fetchUsageStats()
+                              setUsage(data.usage, data.limits, data.percentage_used)
+                        } catch (error) {
+                              console.error('Failed to load usage stats:', error)
+                        } finally {
+                              setUsageLoading(false)
+                        }
+                  }
+            }
+            loadUsage()
+      }, [])
+
+      // Calculate remaining limits
+      const filesRemaining = (limits?.max_files || 0) - (usage?.files_count || 0)
+      const contractsRemaining = (limits?.max_contracts || 0) - (usage?.contracts_count || 0)
+      const templatesRemaining = (limits?.max_templates || 0) - (usage?.templates_count || 0)
+
       // Upload popup state
       const [uploadQueue, setUploadQueue] = useState<UploadStatus[]>([])
       const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
@@ -50,7 +86,7 @@ const FilesPage = () => {
       const [stats, setStats] = useState<IUserStats>(emptyUserStats)
       const [loading, setLoading] = useState(false)
       // const [isSelectedFileDialogOpen, setIsSelectedFileDialogOpen] = useState(false)
- 
+
       // Helper function to clear file input
       const clearFileInput = () => {
             if (fileInputRef.current) {
@@ -63,7 +99,7 @@ const FilesPage = () => {
             if (!session?.nonce || !session?.address) return
 
             try {
-                  if(stats.filesCount === 0){
+                  if (stats.filesCount === 0) {
                         setLoading(true)
                   }
                   const result = await axios.get(`${backend_url}/${API_ENDPOINTS.USER_STATS}`, {
@@ -455,8 +491,8 @@ const FilesPage = () => {
                         }}
                   />
             }
- 
- 
+
+
             return (
                   <FilesList
                         selectedFiles={[]}
@@ -476,40 +512,77 @@ const FilesPage = () => {
                   <div className="border-b border-gray-100 px-0 sm:px-4 pt-2 max-w-full">
                         <div className="w-full">
                               <div className="pb-2 flex items-center gap-2 sm:gap-4 px-2 flex-nowrap w-full overflow-x-auto">
-                                    <Button
-                                          data-testid="file-upload-dropzone"
-                                          className="flex items-center gap-1 sm:gap-2 text-white px-3 sm:px-5 py-2 sm:py-3 rounded-md text-xs sm:text-sm font-medium hover:brightness-90 transition-all cursor-pointer whitespace-nowrap shadow-sm"
-                                          style={{ backgroundColor: '#E55B1F' }}
-                                          onClick={handleUploadClick}
-                                    >
-                                          <Upload className="w-4 h-4" />
-                                          <span>Upload a File</span>
-                                    </Button>
+                                    <Tooltip>
+                                          <TooltipTrigger asChild>
+                                                <div className="inline-block">
+                                                      <Button
+                                                            data-testid="file-upload-dropzone"
+                                                            disabled={filesRemaining < 0}
+                                                            className="flex items-center gap-1 sm:gap-2 text-white px-3 sm:px-5 py-2 sm:py-3 rounded-md text-xs sm:text-sm font-medium hover:brightness-90 transition-all cursor-pointer whitespace-nowrap shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            style={{ backgroundColor: '#E55B1F' }}
+                                                            onClick={handleUploadClick}
+                                                      >
+                                                            <Upload className="w-4 h-4" />
+                                                            <span>Upload a File</span>
+                                                      </Button>
+                                                </div>
+                                          </TooltipTrigger>
+                                          {filesRemaining < 0 && (
+                                                <TooltipContent>
+                                                      <p>Usage limit reached. Upgrade to Pro to upload more files.</p>
+                                                </TooltipContent>
+                                          )}
+                                    </Tooltip>
+
                                     <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileChange} />
-                                    <Button
-                                          data-testid="create-document-signature"
-                                          className="flex items-center gap-1 sm:gap-2 text-white px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium hover:bg-gray-700 transition-colors cursor-pointer whitespace-nowrap shadow-sm"
-                                          style={{ backgroundColor: '#394150' }}
-                                          onClick={() => {
-                                                //,
-                                                // setOpenCreateAquaSignPopUp(true)
-                                                setOpenDialog({ dialogType: 'aqua_sign', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
-                                          }}
-                                    >
-                                          <Plus className="w-4 h-4" />
-                                          <span>Document Signature </span>
-                                    </Button>
+
+                                    <Tooltip>
+                                          <TooltipTrigger asChild>
+                                                <div className="inline-block">
+                                                      <Button
+                                                            data-testid="create-document-signature"
+                                                            disabled={filesRemaining < 0 || contractsRemaining <= 0}
+                                                            className="flex items-center gap-1 sm:gap-2 text-white px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium hover:bg-gray-700 transition-colors cursor-pointer whitespace-nowrap shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            style={{ backgroundColor: '#394150' }}
+                                                            onClick={() => {
+                                                                  setOpenDialog({ dialogType: 'aqua_sign', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
+                                                            }}
+                                                      >
+                                                            <Plus className="w-4 h-4" />
+                                                            <span>Document Signature </span>
+                                                      </Button>
+                                                </div>
+                                          </TooltipTrigger>
+                                          {(filesRemaining < 0 || contractsRemaining <= 0) && (
+                                                <TooltipContent>
+                                                      <p>Usage limit reached. Upgrade to Pro to create more contracts.</p>
+                                                </TooltipContent>
+                                          )}
+                                    </Tooltip>
+
                                     <ClaimTypesDropdownButton />
-                                    <Button
-                                          className="flex items-center gap-1 sm:gap-2 text-gray-700 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer whitespace-nowrap shadow-sm"
-                                          onClick={() => {
-                                                // setOpenCreateTemplatePopUp(true)
-                                                setOpenDialog({ dialogType: 'form_template_editor', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
-                                          }}
-                                    >
-                                          <FolderPlus className="w-4 h-4" />
-                                          <span>Create Template</span>
-                                    </Button>
+
+                                    <Tooltip>
+                                          <TooltipTrigger asChild>
+                                                <div className="inline-block">
+                                                      <Button
+                                                            disabled={filesRemaining < 0 || templatesRemaining <= 0}
+                                                            className="flex items-center gap-1 sm:gap-2 text-gray-700 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer whitespace-nowrap shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            onClick={() => {
+                                                                  setOpenDialog({ dialogType: 'form_template_editor', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
+                                                            }}
+                                                      >
+                                                            <FolderPlus className="w-4 h-4" />
+                                                            <span>Create Template</span>
+                                                      </Button>
+                                                </div>
+                                          </TooltipTrigger>
+                                          {(filesRemaining < 0 || templatesRemaining <= 0) && (
+                                                <TooltipContent>
+                                                      <p>Usage limit reached. Upgrade to Pro to create more templates.</p>
+                                                </TooltipContent>
+                                          )}
+                                    </Tooltip>
 
 
                               </div>

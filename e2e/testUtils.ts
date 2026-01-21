@@ -552,9 +552,13 @@ export async function createAndSaveSignature(page: Page, context: BrowserContext
 
 // Helper function to add signature to document
 export async function addSignatureToDocument(page: Page, context: BrowserContext): Promise<void> {
-    await page.getByText("Add Signature to document").waitFor({ state: 'visible' });
-    await page.getByText("Add Signature to document").click();
-    console.log("Add Signature to document");
+    // await page.getByText("Add Signature to document").waitFor({ state: 'visible' });
+    // await page.getByText("Add Signature to document").click();
+    // console.log("Add Signature to document");
+
+     await page.getByText("Sign Document / Place Signature").waitFor({ state: 'visible' });
+    await page.getByText("Sign Document / Place Signature").click();
+    console.log("Sign Document / Place Signature");
 
     // await page.waitForSelector('[data-testid="pdf-canvas"]', { state: 'visible' });
     await page.click('[data-testid="pdf-canvas-wrapper"]');

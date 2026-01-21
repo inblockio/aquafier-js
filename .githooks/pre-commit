@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Colors for output
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+echo "Running pre-commit checks..."
+
+# Note: Spelling check has been moved to commit-msg hook
+# Add other pre-commit checks here if needed (e.g., linting, formatting)
+
+echo -e "${GREEN}✓ Pre-commit checks passed!${NC}"
+exit 0

@@ -1,17 +1,53 @@
+
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, Globe, Mail, Phone, Plus, Scale, Signature, UserLock } from 'lucide-react';
+import { ChevronDown, Globe, Mail, Phone, Plus, Scale, Signature, UserLock, Blinds } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import { useSubscriptionStore } from '../stores/subscriptionStore';
+import { fetchUsageStats } from '../api/subscriptionApi';
 import appStore from '../store'
 import { useStore } from 'zustand'
 import { Button } from './ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from './ui/tooltip';
 
 export default function ClaimTypesDropdownButton() {
   const { setOpenDialog, user_profile } = useStore(appStore)
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+
+  const {
+    usage,
+    limits,
+    setUsage,
+    setUsageLoading
+  } = useSubscriptionStore()
+
+  useEffect(() => {
+    const loadUsage = async () => {
+      if (!usage || !limits) {
+        try {
+          setUsageLoading(true)
+          const data = await fetchUsageStats()
+          setUsage(data.usage, data.limits, data.percentage_used)
+        } catch (error) {
+          console.error('Failed to load usage stats:', error)
+        } finally {
+          setUsageLoading(false)
+        }
+      }
+    }
+    loadUsage()
+  }, [])
+
+  // Calculate remaining limits (using existing files remaining logic for claims as requested)
+  // For claims (files <= 0), we use the same remaining logic but stricter check
+  const filesRemaining = (limits?.max_files || 0) - (usage?.files_count || 0)
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const handleItemClick = (item: 'identity_claim' | 'dns_claim' | 'user_signature' | 'email_claim' | 'phone_number_claim' | 'dba_claim') => {
+  const handleItemClick = (item: 'identity_claim' | 'dns_claim' | 'user_signature' | 'email_claim' | 'phone_number_claim' | 'dba_claim' | 'identity_card') => {
     setIsOpen(false);
 
     setOpenDialog({ dialogType: item, isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
@@ -85,8 +121,8 @@ export default function ClaimTypesDropdownButton() {
       <div
         className="fixed z-[10000] w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
         style={{
-          top: `${dropdownPosition.top}px`,
-          left: `${dropdownPosition.left}px`
+          top: `${dropdownPosition.top} px`,
+          left: `${dropdownPosition.left} px`
         }}
       >
         <div className="py-1">
@@ -148,6 +184,16 @@ export default function ClaimTypesDropdownButton() {
             <Phone className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
             Create Phone Number claim
           </button>
+
+
+          <button
+            data-testid="create-phone-number-claim-dropdown-button-item"
+            onClick={() => handleItemClick('identity_card')}
+            className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+          >
+            <Blinds className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
+            Create Identity card
+          </button>
         </div>
       </div>
     </>
@@ -156,23 +202,34 @@ export default function ClaimTypesDropdownButton() {
   return (
     <>
       <div className="relative inline-block text-left">
-        <Button
-          ref={buttonRef}
-          type="button"
-          className="flex items-center gap-1 sm:gap-2 text-white px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium hover:bg-gray-700 transition-colors cursor-pointer whitespace-nowrap shadow-sm"
-          onClick={handleToggle}
-          style={{ backgroundColor: '#3A5BF8' }}
-          aria-expanded={isOpen}
-          aria-haspopup="true"
-          data-testid="create-claim-dropdown-button"
-        >
-          <Plus className="w-4 h-4" />
-          Create Claim
-          <ChevronDown
-            className={`h-4 w-4 text-white transition-transform duration-200 ${isOpen ? 'rotate-180' : ''
-              }`}
-          />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="inline-block">
+              <Button
+                ref={buttonRef}
+                type="button"
+                disabled={filesRemaining <= 0}
+                className="flex items-center gap-1 sm:gap-2 text-white px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium hover:bg-gray-700 transition-colors cursor-pointer whitespace-nowrap shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleToggle}
+                style={{ backgroundColor: '#3A5BF8' }}
+                aria-expanded={isOpen}
+                aria-haspopup="true"
+                data-testid="create-claim-dropdown-button"
+              >
+                <Plus className="w-4 h-4" />
+                Create Claim
+                <ChevronDown
+                  className={`h-4 w-4 text-white transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                />
+              </Button>
+            </div>
+          </TooltipTrigger>
+          {filesRemaining <= 0 && (
+            <TooltipContent>
+              <p>Usage limit reached. Upgrade to Pro to create more claims.</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
       </div>
 
       {typeof document !== 'undefined' && createPortal(dropdownContent, document.body)}

@@ -1,14 +1,14 @@
-import Aquafier, {AquaTree} from "aqua-js-sdk"
-import {prisma} from "../database/db"
-import {SYSTEM_WALLET_ADDRESS} from "../models/constants"
-import {ethers} from "ethers"
-import {saveAquaTree} from "./revisions_utils"
-import {getAquaAssetDirectory, getFileUploadDirectory} from "./file_utils"
-import {randomUUID} from 'crypto';
-import {AquaTemplatesFields} from "../models/types"
+import Aquafier, { AquaTree } from "aqua-js-sdk"
+import { prisma } from "../database/db"
+import { SYSTEM_WALLET_ADDRESS } from "../models/constants"
+import { ethers } from "ethers"
+import { saveAquaTree } from "./revisions_utils"
+import { getAquaAssetDirectory, getFileUploadDirectory } from "./file_utils"
+import { randomUUID } from 'crypto';
+import { AquaTemplatesFields } from "../models/types"
 import * as fs from "fs"
 import path from 'path';
-import {getGenesisHash} from "./aqua_tree_utils"
+import { getGenesisHash } from "./aqua_tree_utils"
 import Logger from "./logger";
 
 const getHost = (): string => {
@@ -21,14 +21,15 @@ const getPort = (): number => {
     return Number(process.env.PORT) || 3000
 }
 
-const fetchEnsName = async (walletAddress: string, infuraKey: string): Promise<string> => {
+const fetchEnsName = async (walletAddress: string, alchemyProjectKey: string): Promise<string> => {
     let ensName = "";
     try {
         // Create an Ethereum provider
         // const provider = new ethers.JsonRpcProvider(
-        //     `https://mainnet.infura.io/v3/${infuraKey}`
+        //     `https://mainnet.infura.io/v3/${alchemyProjectKey}`
         // );
-        const provider = new ethers.JsonRpcProvider(`https://eth-mainnet.g.alchemy.com/v2/${infuraKey}`);
+        console.log(`Using Alchemy for ENS lookup ${alchemyProjectKey}`);
+        const provider = new ethers.JsonRpcProvider(`https://eth-mainnet.g.alchemy.com/v2/${alchemyProjectKey}`);
 
         // Look up ENS name for the address
         ensName = await provider.lookupAddress(walletAddress) ?? "";
@@ -60,7 +61,7 @@ export function getAquaTreeFileName(aquaTree: AquaTree): string {
     //     //     }
     //     // }
     // }
-    
+
     let genesisHash = getGenesisHash(aquaTree);
     if (!genesisHash) {
         throw Error(`Genesis hash not found in aqua tree ${JSON.stringify(aquaTree)}`)
@@ -224,7 +225,9 @@ const setUpSystemTemplates = async () => {
         "domain_claim",
         "email_claim",
         "phone_number_claim",
-        "user_profile"
+        "user_profile",
+        "identity_card",
+        "ens_claim"
     ]
     for (let index = 0; index < templates.length; index++) {
         const templateItem = templates[index];
@@ -234,7 +237,8 @@ const setUpSystemTemplates = async () => {
 
         let subtitles: Map<string, string> = new Map();
         subtitles.set("access_agreement", "Create a new access agreement workflow");
-        subtitles.set("aqua_sign", "Create a new aquasign workflow");   
+        subtitles.set("aqua_sign", "Create new PDF signing workflow");
+        subtitles.set("aqua_sign", "Create an Identity Card based on a subset of identity");
 
         // template
         await prisma.aquaTemplate.upsert({
@@ -308,4 +312,121 @@ const convertNameToLabel = (name: string) => {
         .join(' ');
 }
 
-export {getHost, getPort, fetchEnsName, setUpSystemTemplates}
+
+async function setupPaymentPlans() {
+    console.log('Starting database seed...');
+
+    // Create subscription plans
+    const freePlan = await prisma.subscriptionPlan.upsert({
+        where: { name: 'free' },
+        update: {},
+        create: {
+            id: "dd60e70d-2f85-4512-8d29-87e4c69ac8df",
+            name: 'free',
+            display_name: 'Free Plan',
+            description: 'Perfect for getting started with basic features',
+            price_monthly_usd: 0,
+            price_yearly_usd: 0,
+            crypto_monthly_price_usd: 0,
+            crypto_yearly_price_usd: 0,
+            max_storage_gb: 1,
+            max_files: 50,
+            max_contracts: 10,
+            max_templates: 3,
+            features: {
+                cloud_storage: true,
+                file_versioning: false,
+                advanced_templates: false,
+                priority_support: false,
+                custom_branding: false,
+                api_access: false,
+                team_collaboration: false,
+                analytics_dashboard: false,
+            },
+            sort_order: 1,
+            is_active: true,
+            is_public: true,
+        },
+    });
+
+    const proPlan = await prisma.subscriptionPlan.upsert({
+        where: { name: 'pro' },
+        update: {},
+        create: {
+            id: "6a262c61-7506-4b63-baa2-eabe65c6384c",
+            name: 'pro',
+            display_name: 'Professional Plan',
+            description: 'Advanced features for professionals and small teams',
+            price_monthly_usd: 29.99,
+            price_yearly_usd: 299.99, // ~16% discount
+            crypto_monthly_price_usd: 29.99,
+            crypto_yearly_price_usd: 299.99,
+            stripe_monthly_price_id: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || null,
+            stripe_yearly_price_id: process.env.STRIPE_PRO_YEARLY_PRICE_ID || null,
+            max_storage_gb: 50,
+            max_files: 1000,
+            max_contracts: 100,
+            max_templates: 25,
+            features: {
+                cloud_storage: true,
+                file_versioning: true,
+                advanced_templates: true,
+                priority_support: true,
+                custom_branding: false,
+                api_access: true,
+                team_collaboration: false,
+                analytics_dashboard: true,
+            },
+            sort_order: 2,
+            is_active: true,
+            is_public: true,
+        },
+    });
+
+    const enterprisePlan = await prisma.subscriptionPlan.upsert({
+        where: { name: 'enterprise' },
+        update: {},
+        create: {
+            id: "67a8539d-f95b-4058-98a8-17400d2a0db6",
+            name: 'enterprise',
+            display_name: 'Enterprise Plan',
+            description: 'Full-featured solution for large teams and organizations',
+            price_monthly_usd: 99.99,
+            price_yearly_usd: 999.99, // ~17% discount
+            crypto_monthly_price_usd: 99.99,
+            crypto_yearly_price_usd: 999.99,
+            stripe_monthly_price_id: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || null,
+            stripe_yearly_price_id: process.env.STRIPE_ENTERPRISE_YEARLY_PRICE_ID || null,
+            max_storage_gb: 500,
+            max_files: 10000,
+            max_contracts: 1000,
+            max_templates: 100,
+            features: {
+                cloud_storage: true,
+                file_versioning: true,
+                advanced_templates: true,
+                priority_support: true,
+                custom_branding: true,
+                api_access: true,
+                team_collaboration: true,
+                analytics_dashboard: true,
+            },
+            sort_order: 3,
+            is_active: true,
+            is_public: true,
+        },
+    });
+
+    console.log('Subscription plans created:', {
+        free: freePlan.id,
+        pro: proPlan.id,
+        enterprise: enterprisePlan.id,
+    });
+
+    // Save the free plan ID to .env file (for reference)
+    console.log('\n⚠️  IMPORTANT: Add the following to your .env file:');
+    console.log(`DEFAULT_FREE_PLAN_ID=${freePlan.id}`);
+    console.log('\n✅ Database seeding completed successfully!');
+}
+
+export { getHost, getPort, fetchEnsName, setUpSystemTemplates, setupPaymentPlans }

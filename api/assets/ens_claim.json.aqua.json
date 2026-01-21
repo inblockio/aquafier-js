@@ -1,0 +1,41 @@
+{
+  "revisions": {
+    "0x421c9bf06117814badfba270092c8b1070eb2d0968a27dd267fd3c2bc0249193": {
+      "file_hash": "8c38185ec5a990634174ba739ea6bc24bd7e3975822c73b6369d758336611899",
+      "file_nonce": "3b65fb3a922953246c012727e2cbdbc6caa7077c55a8bcfd28fe3a1e031168a3",
+      "forms_ens_name": "0x...",
+      "forms_expiry": "",
+      "forms_wallet_address": "0x...",
+      "leaves": [
+        "09f9b79f82754bee95a76907467960ab29a79b7ac9ca9f1f6c0d21fa4e0ef318",
+        "ae7deae904455830f246320f6f06148660c4139ec498a1711dc71a6576abe429",
+        "e897d11d0114526d84dbffdeb0e964d72cc995ec7f40402bfbed6fdcb6dc63ea",
+        "baffc5f8b8695de128cc56a2c4b675cfc704dcbb6f65242179317ee44d34659e",
+        "8c2051988af52e279955446bfbc852be66b3b7f42f4dc2d4a969266c25c9d4b4",
+        "eea469264eebfd545160f5c1c4ea4263aa2a898c9e6742b8f76aaa5069dd5ba2",
+        "d781acf7ba880ecae581ffd8debcb4f5cb430bc2f237e27a6098471a9f7ffa60",
+        "43fcaef3dc4b2a2d0550543b638048edcfb710da9276da109a9e011ed1a53ed1",
+        "39ccd407bb105ed3be74df4a546d9b10c4f6c80e48b559102b04fa2b29aa83b4"
+      ],
+      "local_timestamp": "20260113112914",
+      "previous_verification_hash": "",
+      "revision_type": "form",
+      "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: tree"
+    }
+  },
+  "file_index": {
+    "0x421c9bf06117814badfba270092c8b1070eb2d0968a27dd267fd3c2bc0249193": "ens_claim.json"
+  },
+  "tree": {
+    "children": [],
+    "hash": "0x421c9bf06117814badfba270092c8b1070eb2d0968a27dd267fd3c2bc0249193"
+  },
+  "treeMapping": {
+    "paths": {
+      "0x421c9bf06117814badfba270092c8b1070eb2d0968a27dd267fd3c2bc0249193": [
+        "0x421c9bf06117814badfba270092c8b1070eb2d0968a27dd267fd3c2bc0249193"
+      ]
+    },
+    "latestHash": "0x421c9bf06117814badfba270092c8b1070eb2d0968a27dd267fd3c2bc0249193"
+  }
+}

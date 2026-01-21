@@ -3,72 +3,47 @@ import { useState } from 'react'
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, useSidebar } from '@/components/ui/sidebar'
 import CustomNavLink from './ui/CustomNavLink'
-import { Contact, FileText, LayoutDashboard, LayoutTemplate, Link, Link2, Settings, Share2, Star, User, Workflow } from 'lucide-react'
+import { Contact, FileText, LayoutDashboard, LayoutTemplate, Link, Link2, Settings, Share2, Star, User, Workflow, CreditCard, Receipt, DollarSign, Shield } from 'lucide-react'
 import { maxUserFileSizeForUpload } from '@/utils/constants'
 import { formatBytes } from '@/utils/functions'
 import { useStore } from 'zustand'
 import appStore from '@/store'
 import { WebConfig } from '@/types/types'
+import { useSubscriptionStore } from '@/stores/subscriptionStore'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-      const { setOpenDialog, webConfig, session , filesStats} = useStore(appStore)
+      const { webConfig, session, filesStats, isAdmin } = useStore(appStore)
 
       const [webConfigData, setWebConfigData] = useState<WebConfig>(webConfig)
-      // const [usedStorage, _setUsedStorage] = useState<number>(0)
-      // const [totalStorage, _setTotalStorage] = useState<number>(maxUserFileSizeForUpload)
-      const [usagePercentage, setUsagePercentage] = useState<number>(0)
-      // let usedStorage =0; // GB
-      // const totalStorage = maxUserFileSizeForUpload //5; // GB
-      // const usagePercentage = (usedStorage / totalStorage) * 100;
-
       const { toggleSidebar } = useSidebar()
 
-      // const calcukateStorage = () => {
-      //       if (files.fileData.length == 0) {
-      //             return
-      //       }
-      //       let usedStorageByUser = 0
-      //       for (const item of files.fileData) {
-      //             const mainFileObject = getAquaTreeFileObject(item)
-      //             usedStorageByUser += mainFileObject?.fileSize ?? 0
-      //       }
-      //       setUsedStorage(usedStorageByUser)
+      const { usage, limits, percentageUsed, setUsage } = useSubscriptionStore()
 
-      //       const usagePercentage = (usedStorageByUser / totalStorage) * 100
-      //       setUsagePercentage(usagePercentage)
-      // }
-      // React.useEffect(() => {
-      //       calcukateStorage()
-
-      //       if (!webConfig.BACKEND_URL || webConfig.BACKEND_URL == "BACKEND_URL_PLACEHOLDER") {
-      //             (async () => {
-      //                   const config: WebConfig = await fetch('/config.json').then(res => res.json())
-      //                   setWebConfig(config)
-      //                   setWebConfigData(config)
-      //             })()
-      //       }
-      // }, [])
-
-      // React.useEffect(() => {
-      //       calcukateStorage()
-      // }, [files])
+      // Load usage stats on mount if not already loaded
+      React.useEffect(() => {
+            const loadUsage = async () => {
+                  try {
+                        // Dynamically import API to avoid circular deps if any, or just import at top
+                        const { fetchUsageStats } = await import('@/api/subscriptionApi');
+                        const data = await fetchUsageStats();
+                        setUsage(data.usage, data.limits, data.percentage_used);
+                  } catch (error) {
+                        console.error('Failed to load usage stats for sidebar:', error);
+                  }
+            };
+            loadUsage();
+      }, []);
 
       React.useEffect(() => {
             if (webConfig.BACKEND_URL) {
                   setWebConfigData(webConfig)
             }
-
-         
       }, [webConfig.BACKEND_URL])
 
-
-         React.useEffect(() => {
-           
-            const totalStorage = maxUserFileSizeForUpload //5; // GB
-      const usagePercentage = (filesStats.storageUsed / totalStorage) * 100;
-
-      setUsagePercentage(usagePercentage)
-      }, [filesStats.filesCount, JSON.stringify(filesStats)])
+      // Derive values for the storage card
+      const currentStorageUsed = usage?.storage_used_gb || 0;
+      const currentStorageLimit = limits?.max_storage_gb || maxUserFileSizeForUpload;
+      const currentUsagePercentage = percentageUsed?.storage || 0;
 
       const sidebarItems = [
             // { icon: FaHome, label: 'Home', id: "/home" },
@@ -81,6 +56,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const quickAccessItems = [
             { label: 'Info', icon: Star, id: '/info' },
             { label: 'Settings', icon: Settings, id: '/settings' },
+      ]
+
+      const billingItems = [
+            { label: 'Subscription', icon: CreditCard, id: '/subscription' },
+            { label: 'Payment History', icon: Receipt, id: '/billing/history' },
+            { label: 'Pricing', icon: DollarSign, id: '/pricing' },
       ]
 
       const applicationsItems = [
@@ -106,7 +87,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   id: '/ens_resolver',
             },
             {
-                  label: 'Dashboard',
+                  label: 'User Dashboard',
                   icon: LayoutDashboard,
                   id: '/dashboard',
             },
@@ -205,6 +186,49 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                     </div>
                               </div>
 
+                              {/* Admin Section */}
+                              {isAdmin && (
+                                    <div className="mt-8">
+                                          <div className="flex items-center justify-between mb-3">
+                                                <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Admin</h3>
+                                          </div>
+                                          <div className="space-y-2">
+                                                <CustomNavLink
+                                                      item={{ label: 'Admin Dashboard', icon: Shield, id: '/app/admin/dashboard' }}
+                                                      index={20}
+                                                      callBack={() => {
+                                                            const isMobileView = window.innerWidth < 768
+                                                            if (isMobileView) {
+                                                                  toggleSidebar()
+                                                            }
+                                                      }}
+                                                />
+                                          </div>
+                                    </div>
+                              )}
+
+                              {/* Billing & Subscription */}
+                              <div className="mt-8">
+                                    <div className="flex items-center justify-between mb-3">
+                                          <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Billing</h3>
+                                    </div>
+                                    <div className="space-y-2">
+                                          {billingItems.map((item, index) => (
+                                                <CustomNavLink
+                                                      key={`billing_${index}`}
+                                                      item={{ ...item, id: `/app${item.id}` }}
+                                                      index={index}
+                                                      callBack={() => {
+                                                            const isMobileView = window.innerWidth < 768 // md breakpoint is 768px
+                                                            if (isMobileView) {
+                                                                  toggleSidebar()
+                                                            }
+                                                      }}
+                                                />
+                                          ))}
+                                    </div>
+                              </div>
+
                               {/* General */}
                               <div className="mt-8">
                                     <div className="flex items-center justify-between mb-3">
@@ -231,44 +255,43 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
                   {/* Bottom section */}
                   <SidebarFooter>
-                        <div className="p-4 border-t border-gray-200" onClick={() => {
-                              setOpenDialog({
-                                    dialogType: 'early_bird_offer',
-                                    isOpen: true,
-                                    onClose: () => setOpenDialog(null),
-                                    onConfirm: () => {
-                                          // Handle confirmation logic here
-                                    }
-                              })
-                        }}>
-                              {filesStats.filesCount > 0 ? (
-                                    <>
-                                          <div className="bg-gray-50 p-4 rounded-lg">
-                                                {/* Storage Header */}
-                                                <h3 className="text-sm font-medium text-gray-900 mb-3">Storage</h3>
+                        <div className="p-4 border-t border-gray-200">
+                              {/* Always show if we have limits loaded, otherwise fallback to filesStats > 0 check */}
+                              {(limits || filesStats.filesCount > 0) && (
+                                    <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md">
+                                          <div className="mb-3 flex items-center justify-between">
+                                                <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Storage</span>
+                                                <span className="text-xs font-medium text-gray-900">{Math.round(currentUsagePercentage)}%</span>
+                                          </div>
 
-                                                {/* Progress Bar */}
-                                                <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                                                      <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: `${usagePercentage}%` }}></div>
+                                          <div className="mb-3 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                                                <div
+                                                      className={`h-full rounded-full transition-all duration-500 ease-out ${currentUsagePercentage < 60
+                                                            ? 'bg-emerald-500'
+                                                            : currentUsagePercentage < 85
+                                                                  ? 'bg-amber-500'
+                                                                  : 'bg-rose-500'
+                                                            }`}
+                                                      style={{ width: `${Math.min(currentUsagePercentage, 100)}%` }}
+                                                />
+                                          </div>
+
+                                          <div className="flex items-end justify-between text-xs">
+                                                <div className="flex flex-col">
+                                                      <span className="font-semibold text-gray-900">
+                                                            {formatBytes(currentStorageUsed * 1024 * 1024 * 1024, 2, true)}
+                                                      </span>
+                                                      <span className="text-xs text-gray-400">Used</span>
                                                 </div>
-
-                                                {/* Storage Details */}
-                                                <div className="text-sm text-gray-600">
-                                                      <span className="text-blue-600 underline">{formatBytes(filesStats.storageUsed, 2, true)} </span> used of {formatBytes(maxUserFileSizeForUpload, 2, true)} ({Math.round(usagePercentage)}%)
+                                                <div className="flex flex-col items-end">
+                                                      <span className="font-medium text-gray-600">
+                                                            {formatBytes(currentStorageLimit * 1024 * 1024 * 1024, 2, true)}
+                                                      </span>
+                                                      <span className="text-xs text-gray-400">Limit</span>
                                                 </div>
                                           </div>
-                                    </>
-                              ) : (
-                                    <></>
-                              )}
-
-                              {/* <div className="bg-gray-900 text-white p-3 rounded-md" >
-                                    <div className="flex items-center justify-between mb-2">
-                                          <span className="text-sm font-medium">Get started</span>
-                                          <span className="text-xs bg-gray-700 px-2 py-1 rounded">25% off</span>
                                     </div>
-                                    <p className="text-xs text-gray-300">Give it a try today,</p>
-                              </div> */}
+                              )}
                         </div>
                   </SidebarFooter>
 

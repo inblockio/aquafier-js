@@ -18,12 +18,24 @@ type AppStoreState = {
             ens_name: string
             enable_dba_claim: boolean
             witness_contract_address: string | null
+            User?: {
+                  address: string
+                  ens_name: string
+                  email: string
+            }
       }
       session: Session | null
+      isAdmin: boolean
       files: ApiFileInfoState,
       filesStats: IUserStats,
       workflows: ApiFileInfoState,
       webConfig: WebConfig,
+      workSpaceDowload: {
+            fileName: string,
+            fileIndex: number,
+            totalFiles: number
+      },
+      
       apiFileData: ApiFileData[]
       systemFileInfo: ApiFileInfo[]
       formTemplates: FormTemplate[]
@@ -43,12 +55,14 @@ type AppStoreState = {
 type AppStoreActions = {
       setUserProfile: (config: AppStoreState['user_profile']) => void
       setSession: (config: AppStoreState['session']) => void
+      setIsAdmin: (isAdmin: boolean) => void
       setMetamaskAddress: (address: AppStoreState['metamaskAddress']) => void
       setAvatar: (avatar: AppStoreState['avatar']) => void
       setFiles: (files: AppStoreState['files']) => void
       setFilesStats: (files: AppStoreState['filesStats']) => void
       setWorkflows: (workflows: AppStoreState['workflows']) => void
       setWebConfig: (config: AppStoreState['webConfig']) => void
+      setWorkSpaceDowload: (config: AppStoreState['workSpaceDowload']) => void
       setSelectedFileInfo: (file: ApiFileInfo | null) => void
 
       setOpenDialog: (state: OpenDialog | null) => void
@@ -139,6 +153,7 @@ const appStore = createStore<TAppStore>()(
                   // Initial state
                   user_profile: USER_PROFILE_DEFAULT,
                   session: null,
+                  isAdmin: false,
                   files: {
                         fileData: [],
                         status: 'idle',
@@ -154,7 +169,16 @@ const appStore = createStore<TAppStore>()(
                         CUSTOM_LOGO_URL: false,
                         SENTRY_DSN: undefined,
                         BACKEND_URL: undefined,
-                        AUTH_PROVIDER: undefined
+                        AUTH_PROVIDER: undefined,
+                        DEFAULT_PAYMENT_METHOD: "CRYPTO",
+                        ENABLE_CRYPTO_PAYMENTS: true,
+                        ENABLE_STRIPE_PAYMENTS: false,
+                  },
+
+                  workSpaceDowload: {
+                        fileName: '',
+                        fileIndex: 0,
+                        totalFiles: 0
                   },
                   openDialog: null, // Initialize openDialog state
                   // openFilesDetailsPopUp: false,
@@ -173,6 +197,7 @@ const appStore = createStore<TAppStore>()(
                   // Actions
                   setUserProfile: config => set({ user_profile: config }),
                   setSession: session => set({ session: session }),
+                  setIsAdmin: (isAdmin: boolean) => set({ isAdmin: isAdmin }),
                   setMetamaskAddress: (address: AppStoreState['metamaskAddress']) => set({ metamaskAddress: address }),
                   setAvatar: (avatar: AppStoreState['avatar']) => set({ avatar: avatar }),
                   setFiles: (files: AppStoreState['files']) => set({ files: files }),
@@ -193,6 +218,9 @@ const appStore = createStore<TAppStore>()(
                   setContracts: (contractData: any[]) => set({ contracts: contractData }),
                   setWebConfig(config) {
                         set({ webConfig: config })
+                  },
+                  setWorkSpaceDowload(config) {
+                        set({ workSpaceDowload: config })
                   },
                   addFile: (file: ApiFileInfo) => {
                         const { files } = appStore.getState()

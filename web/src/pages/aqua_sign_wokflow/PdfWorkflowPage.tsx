@@ -7,18 +7,20 @@ import {
       convertTemplateNameToTitle,
       getFileName,
       getHighestFormIndex,
-      isAquaTree
+      isAquaTree,
+      parseAquaTreeContent
 } from '../../utils/functions'
 import { ContractDocumentView } from './ContractDocument/ContractDocument'
 import { ContractSummaryView } from './ContractSummary/ContractSummary'
 import { AquaTree, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk/web'
 import { Button } from '../../components/ui/button'
 import { LuArrowLeft } from 'react-icons/lu'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { HiDocumentText } from 'react-icons/hi'
 import { FaCircleInfo } from 'react-icons/fa6'
 import { Check } from 'lucide-react'
 import { ApiFileInfo } from '@/models/FileInfo'
+import { toast } from 'sonner'
 
 export default function PdfWorkflowPage() {
       const [activeStep, setActiveStep] = useState(1)
@@ -29,6 +31,8 @@ export default function PdfWorkflowPage() {
       const { selectedFileInfo, setSelectedFileInfo } = useStore(appStore)
 
       const navigate = useNavigate()
+
+      const { page } = useParams();
 
       const getSignatureRevionHashes = (hashesToLoopPar: Array<string>): Array<SummaryDetailsDisplayData> => {
             const signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
@@ -48,10 +52,14 @@ export default function PdfWorkflowPage() {
                         const hashSigPositionHashString = selectedFileInfo!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0]
 
                         if (allAquaTrees) {
-                              for (const anAquaTree of allAquaTrees) {
-                                    const allHashes = Object.keys(anAquaTree)
+                              for (const anAquaTreeFileObject of allAquaTrees) {
+                                    const aquaTreeData = parseAquaTreeContent(anAquaTreeFileObject.fileContent) as AquaTree
+                                    if (!aquaTreeData || !aquaTreeData.revisions) {
+                                          toast.error("Error parsing AquaTree from file object.");
+                                          continue
+                                    }
+                                    const allHashes = Object.keys(aquaTreeData.revisions)
                                     if (allHashes.includes(hashSigPositionHashString)) {
-                                          const aquaTreeData = anAquaTree.fileContent as AquaTree
                                           const revData = aquaTreeData.revisions[hashSigPositionHashString]
                                           signaturePositionCount = getHighestFormIndex(revData)
 
@@ -122,7 +130,7 @@ export default function PdfWorkflowPage() {
       function loadTimeline() {
             const items: Array<WorkFlowTimeLine> = []
 
-            if(!fileInfo){
+            if (!fileInfo) {
                   return items
             }
 
@@ -175,8 +183,25 @@ export default function PdfWorkflowPage() {
             }
       }
 
+      const updateStepOnPageParam = () => {
+            if (page && timeLineItems.length > 0) {
+                  let pageNumber = parseInt(page);
+                  if (isNaN(pageNumber) || pageNumber < 1 || pageNumber > timeLineItems.length) {
+                        pageNumber = 1; // Default to 1 if invalid
+                  }
+                  setActiveStep(pageNumber);
+            }
+      }
+
+
       useEffect(() => {
-            if(selectedFileInfo){
+            if (page && timeLineItems.length > 0) {
+                  updateStepOnPageParam()
+            }
+      }, [page, timeLineItems.length])
+
+      useEffect(() => {
+            if (selectedFileInfo) {
                   setFileInfo(selectedFileInfo)
             }
 
@@ -187,7 +212,9 @@ export default function PdfWorkflowPage() {
       }, [JSON.stringify(fileInfo)])
 
       // Find the currently active content
-      const activeContent = () => timeLineItems.find(item => item.id === activeStep)?.content
+      const activeContent = () => {
+            return timeLineItems.find(item => item.id === activeStep)?.content
+      }
 
       const aquaTreeTimeLine = () => {
             return (
@@ -223,10 +250,10 @@ export default function PdfWorkflowPage() {
                                                       key={tab.id}
                                                       onClick={() => setActiveStep(tab.id)}
                                                       className={`relative p-6 rounded-xl transition-all duration-200 text-left cursor-pointer ${isActive
-                                                                  ? 'bg-blue-500 shadow-lg shadow-blue-500/30'
-                                                                  : false
-                                                                        ? 'bg-white shadow-md hover:shadow-lg border-2 border-green-500'
-                                                                        : 'bg-white shadow-md hover:shadow-lg'
+                                                            ? 'bg-blue-500 shadow-lg shadow-blue-500/30'
+                                                            : false
+                                                                  ? 'bg-white shadow-md hover:shadow-lg border-2 border-green-500'
+                                                                  : 'bg-white shadow-md hover:shadow-lg'
                                                             }`}
                                                 >
                                                       {/* Completion Badge */}
@@ -240,18 +267,18 @@ export default function PdfWorkflowPage() {
                                                             {/* Icon */}
                                                             <div
                                                                   className={`w-14 h-14 rounded-lg flex items-center justify-center shrink-0 ${isActive
-                                                                              ? 'bg-blue-600'
-                                                                              : isCompleted
-                                                                                    ? 'bg-green-50'
-                                                                                    : 'bg-gray-100'
+                                                                        ? 'bg-blue-600'
+                                                                        : isCompleted
+                                                                              ? 'bg-green-50'
+                                                                              : 'bg-gray-100'
                                                                         }`}
                                                             >
                                                                   <Icon
                                                                         className={`w-7 h-7 ${isActive
-                                                                                    ? 'text-white'
-                                                                                    : isCompleted
-                                                                                          ? 'text-green-600'
-                                                                                          : 'text-gray-600'
+                                                                              ? 'text-white'
+                                                                              : isCompleted
+                                                                                    ? 'text-green-600'
+                                                                                    : 'text-gray-600'
                                                                               }`}
                                                                   />
                                                             </div>

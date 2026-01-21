@@ -25,7 +25,6 @@ import TermsAndConditions from './pages/legal/TermsAndConditions'
 import PrivacyPolicy from './pages/legal/PrivacyPolicy'
 import ClaimsAndAttestationPage from './pages/claim_and_attestation'
 import ClaimsWorkflowPageV2 from './pages/v2_claims_workflow/claimsWorkflowPage'
-
 import { WebConfig } from './types/types'
 // Import AppKit config at module level (like Reown example)
 // AppKit is initialized in appkit.ts when this module is imported
@@ -37,7 +36,12 @@ import ContactsPageV2 from './pages/contacts/contactsV2'
 import ContactsLoader from './pages/contacts/ContactsLoader'
 import { NotificationWebSocketProvider } from './contexts/NotificationWebSocketContext'
 import UserStats from './pages/user_settings/UserStats'
+import Dashboard from './pages/dashboard/Dashboard'
+import AdminEntityList from './pages/dashboard/AdminEntityList'
 import EnsResolverPage from './pages/ens_resolver.page'
+import PricingPage from './pages/pricing/PricingPage'
+import SubscriptionPage from './pages/subscription/SubscriptionPage'
+import PaymentHistoryPage from './pages/billing/PaymentHistoryPage'
 
 // Initialize AppKit
 if (appKit) {
@@ -151,14 +155,21 @@ function App() {
                         <Route path="contact_list" element={<ContactsPageV2 />} />
                         <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2 />} />
                         <Route path="dashboard" element={<UserStats />} />
+                        <Route path="admin/dashboard" element={<Dashboard />} />
+                        <Route path="admin/list/:type" element={<AdminEntityList />} />
 
-                        <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
+                        <Route path="pdf/workflow/:page?" element={<PdfWorkflowPage />} />
                         <Route path="files_workflows" element={<FilesPage />} />
 
 
                         <Route path="ens_resolver" element={<EnsResolverPage />} />
                         <Route path="info" element={<InfoPage />} />
                         <Route path="settings" element={<SettingsPage />} />
+
+                        {/* Billing Routes */}
+                        <Route path="pricing" element={<PricingPage />} />
+                        <Route path="subscription" element={<SubscriptionPage />} />
+                        <Route path="billing/history" element={<PaymentHistoryPage />} />
 
                         <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
                         <Route path="loading" element={<Loading />} />

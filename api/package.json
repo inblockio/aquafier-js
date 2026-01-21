@@ -10,7 +10,8 @@
     "start": "node dist/index.js",
     "test": "npx tap",
     "migrate-reset": "npx prisma migrate reset",
-    "migrate-dev": "npx prisma migrate dev"
+    "migrate-dev": "npx prisma migrate dev",
+    "seed": "tsx prisma/seed.ts"
   },
   "keywords": [],
   "author": "",
@@ -23,7 +24,7 @@
     "@fastify/multipart": "^9.3.0",
     "@fastify/oauth2": "^8.1.2",
     "@fastify/rate-limit": "^10.3.0",
-    "@fastify/static": "^8.3.0",
+    "@fastify/static": "^9.0.0",
     "@fastify/websocket": "^11.2.0",
     "@prisma/client": "^6.4.1",
     "@sentry/node": "^10.27.0",
@@ -39,7 +40,9 @@
     "jszip": "^3.10.1",
     "minio": "^8.0.6",
     "prisma": "^6.4.1",
+    "puppeteer": "^24.34.0",
     "siwe": "^3.0.0",
+    "stripe": "^20.1.1",
     "tap": "^21.1.3",
     "ts-mock-imports": "^1.3.19",
     "twilio": "^5.10.5",

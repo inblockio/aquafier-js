@@ -9,8 +9,7 @@ import {
       estimateFileSize,
       fetchSystemFiles,
       formatDate,
-      formatTxtRecord,
-      generateProofFromSignature,
+      generateDNSClaim,
       getAquaTreeFileObject,
       getGenesisHash,
       getLastRevisionVerificationHash,
@@ -685,7 +684,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             return completeFormData
       }
 
-      async function domainTemplateSignMessageFunction(domainParams: string | undefined, timestamp: string, expiration: string): Promise<string | undefined> {
+      async function domainTemplateSignMessageFunction(domainParams: string | undefined, messageToSign: string): Promise<string | undefined> {
             let signature: string | undefined = undefined
             if (!domainParams) {
                   alert('Please enter a domain name')
@@ -693,10 +692,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             }
 
             const account = session?.address
-
-
-
-            const domain = domainParams.trim()
 
             if (webConfig.AUTH_PROVIDER == "metamask") {
                   if (typeof window.ethereum == 'undefined') {
@@ -713,17 +708,15 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                     </>
                               ),
                         })
+                        return
                   }
 
-                  const domain = domainParams.trim()
                   try {
-                        const message = `${timestamp}|${domain}|${expiration}`
                         signature = await (window.ethereum as any).request({
                               method: 'personal_sign',
-                              params: [message, account],
+                              params: [messageToSign, account],
                         })
                   } catch (error: any) {
-                        // alert('Failed to sign: ' + error.message);
                         console.error('Error signing domain claim:' + error)
                         setDialogOpen(true)
                         setDialogData({
@@ -761,8 +754,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   }
 
                   try {
-                        const messageToSign = `${timestamp}|${domain}|${expiration}`
-
                         const messageHex = stringToHex(messageToSign)
                         try {
                               signature = await provider.request({
@@ -777,7 +768,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                               })
                         }
                   } catch (error: any) {
-                        // alert('Failed to sign: ' + error.message);
                         console.error('Error signing domain claim:' + error)
                         setDialogOpen(true)
                         setDialogData({
@@ -834,23 +824,41 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   }
             })
 
-            // for domain_claim show pop up
+            // for domain_claim - NEW PRIVACY-PRESERVING IMPLEMENTATION
             if (selectedTemplate.name === 'domain_claim') {
-                  // we sign the
                   const domain = completeFormData['domain'] as string
                   const walletAddress = session?.address!
-                  const timestamp = Math.floor(Date.now() / 1000).toString()
-                  const expiration = Math.floor(Date.now() / 1000 + 90 * 24 * 60 * 60).toString() // 90 days default
+                  const expirationDays = 90
+                  const publicAssociation = completeFormData['public_association'] === 'true'
 
-                  let signature = await domainTemplateSignMessageFunction(domain, timestamp, expiration)
-                  if (!signature) {
-                        return null
+                  let dataGen = async (message: string) => {
+                        const signature = await domainTemplateSignMessageFunction(domain, message)
+                        if (!signature) {
+                              throw new Error("Failed to sign message")
+                        }
+                        return signature
                   }
+                  // Generate DNS claim using new format
+                  const dnsClaim = await generateDNSClaim(
+                        domain,
+                        walletAddress,
+                        dataGen,
+                        expirationDays,
+                        publicAssociation
+                  )
 
+                  // Store ALL claim data in form fields (no separate file)
+                  filteredData['txt_record'] = dnsClaim.forms_txt_record
+                  filteredData['unique_id'] = dnsClaim.forms_unique_id
+                  filteredData['claim_secret'] = dnsClaim.forms_claim_secret
+                  filteredData['txt_name'] = dnsClaim.forms_txt_name
+                  filteredData['signature_type'] = dnsClaim.signature_type
+                  filteredData['public_association'] = publicAssociation.toString()
+                  filteredData['itime'] = dnsClaim.itime
+                  filteredData['etime'] = dnsClaim.etime
 
-                  //domain: string, walletAddress: string, timestamp: string, expiration: string, signature: string
-                  const proof = generateProofFromSignature(domain, walletAddress, timestamp, expiration, signature)
-                  filteredData['txt_record'] = formatTxtRecord(proof)//signature
+                  // Store complete claim as JSON string for easy download
+                  // filteredData['claim_json'] = JSON.stringify(dnsClaim, null, 2)
             }
             return { filteredData }
       }
@@ -858,7 +866,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       // Function to create genesis aqua tree
       const createGenesisAquaTree = async (completeFormData: Record<string, string | File | number>, fileName: string, aquafier: Aquafier) => {
             const estimateSize = estimateFileSize(JSON.stringify(completeFormData))
-            const jsonString = JSON.stringify(completeFormData, null, 4)
+            const jsonString = JSON.stringify(completeFormData)
             const fileObject: FileObject = {
                   fileContent: jsonString,
                   fileName: fileName,
@@ -956,7 +964,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         throw new Error('Error creating aqua tree for file')
                   }
 
-                  await saveAquaTree(aquaTreeResponse.data.aquaTree!, item, false, true)
+                  await saveAquaTree(aquaTreeResponse.data.aquaTree!, item, true, true)
 
                   const aquaTreeWrapper: AquaTreeWrapper = {
                         aquaTree: currentAquaTreeData,
@@ -1147,12 +1155,32 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   await triggerWorkflowReload(RELOAD_KEYS.contacts);
             }
 
-            // Do navigation here
+            // Do navigation here for aqua_sign
             if (selectedTemplate.name === "aqua_sign") {
                   let apiFileInfoFromSystem = await loadThisTreeFromSystem(signedAquaTree)
-                  if(apiFileInfoFromSystem){
+                  if (apiFileInfoFromSystem) {
                         setSelectedFileInfo(apiFileInfoFromSystem)
-                        navigate('/app/pdf/workflow')
+                        // navigate('/app/pdf/workflow')
+                        try {
+                              let genesisHash = getGenesisHash(signedAquaTree)
+                              if (genesisHash && session?.address) {
+                                    let genesisRevision = signedAquaTree.revisions[genesisHash]
+                                    let signers = genesisRevision?.forms_signers
+                                    if (signers) {
+                                          let signersArray = signers.split(",").map((item: string) => item.trim().toLocaleLowerCase())
+                                          let activeUserAddress = session.address.toLocaleLowerCase()
+                                          let isUserSigner = signersArray.find((signer: string) => signer === activeUserAddress)
+                                          if (isUserSigner) {
+                                                navigate('/app/pdf/workflow/2')
+                                          }
+                                    } else {
+
+                                          navigate('/app/pdf/workflow')
+                                    }
+                              }
+                        } catch (error: any) {
+                              navigate('/app/pdf/workflow')
+                        }
                   }
             }
       }
@@ -1175,15 +1203,29 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             // Clear the canvas first
             signatureRef.current.clear()
 
-            // Configure text style
-            const fontSize = isInitials ? Math.min(canvas.height * 0.6, 80) : Math.min(canvas.height * 0.4, 50)
+            // Configure text style - use larger font to fill the signature box
+            const displayText = isInitials ? text.split(' ').map(n => n.charAt(0).toUpperCase()).join('') : text
+
+            // Calculate font size based on canvas dimensions and text length
+            // Start with height-based sizing, then adjust for width if neededz
+            let fontSize = isInitials ? canvas.height * 0.7 : canvas.height * 0.6
+
+            // Set font to measure text width
             ctx.font = `italic ${fontSize}px "Brush Script MT", "Segoe Script", "Bradley Hand", cursive`
+            let textWidth = ctx.measureText(displayText).width
+
+            // If text is too wide, scale down to fit within 90% of canvas width
+            const maxWidth = canvas.width * 0.9
+            if (textWidth > maxWidth) {
+                  fontSize = fontSize * (maxWidth / textWidth)
+                  ctx.font = `italic ${fontSize}px "Brush Script MT", "Segoe Script", "Bradley Hand", cursive`
+            }
+
             ctx.fillStyle = '#000000'
             ctx.textAlign = 'center'
             ctx.textBaseline = 'middle'
 
             // Draw the text centered
-            const displayText = isInitials ? text.split(' ').map(n => n.charAt(0).toUpperCase()).join('') : text
             ctx.fillText(displayText, canvas.width / 2, canvas.height / 2)
       }, [])
 
@@ -1358,14 +1400,22 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         aquafier
                   )
 
-                  // Step 11: Sign aqua tree
-                  const signedAquaTree = await signAquaTree(aquaTreeData, fileObject, aquafier)
 
 
-                  clearSignature()
+                  if (selectedTemplate?.name !== 'aqua_sign') {
+                        // Step 11: Sign aqua tree
+                        const signedAquaTree = await signAquaTree(aquaTreeData, fileObject, aquafier)
+                        clearSignature()
 
-                  // Step 12: Handle post-signing actions
-                  await handlePostSigning(signedAquaTree, fileObject, finalFormDataFiltered, selectedTemplate, session, selectedFileInfo)
+                        // Step 12: Handle post-signing actions
+                        await handlePostSigning(signedAquaTree, fileObject, finalFormDataFiltered, selectedTemplate, session, selectedFileInfo)
+                  } else {
+                        await handlePostSigning(aquaTreeData, fileObject, finalFormDataFiltered, selectedTemplate, session, selectedFileInfo)
+
+                  }
+                  // aqua sign signing happen in the server 
+
+
 
 
             } catch (error: any) {
@@ -1742,9 +1792,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             const fields = reorderInputFields(selectedTemplate!.fields)
             const documentField = fields.find(f => f.type === 'document')
             const otherFields = fields.filter(f => f.type !== 'document')
-            
+
             // Check if user has added themselves to signers
-            const userInSigners = multipleAddresses.some(addr => 
+            const userInSigners = multipleAddresses.some(addr =>
                   addr.toLowerCase() === session?.address?.toLowerCase()
             )
 
@@ -1753,22 +1803,20 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         {/* Step indicator */}
                         <div className="flex items-center justify-center mb-6">
                               <div className="flex items-center gap-2">
-                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                                          aquaSignStep === 1 
-                                                ? 'bg-blue-600 text-white' 
-                                                : 'bg-green-500 text-white'
-                                    }`}>
+                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${aquaSignStep === 1
+                                          ? 'bg-blue-600 text-white'
+                                          : 'bg-green-500 text-white'
+                                          }`}>
                                           {aquaSignStep === 1 ? '1' : '✓'}
                                     </div>
                                     <span className={`text-sm ${aquaSignStep === 1 ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
                                           Select Document
                                     </span>
                                     <div className="w-12 h-0.5 bg-gray-300 mx-2" />
-                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                                          aquaSignStep === 2 
-                                                ? 'bg-blue-600 text-white' 
-                                                : 'bg-gray-300 text-gray-600'
-                                    }`}>
+                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${aquaSignStep === 2
+                                          ? 'bg-blue-600 text-white'
+                                          : 'bg-gray-300 text-gray-600'
+                                          }`}>
                                           2
                                     </div>
                                     <span className={`text-sm ${aquaSignStep === 2 ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
@@ -1785,7 +1833,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           <p className="text-sm text-gray-500 mt-1">Upload the document that requires signatures</p>
                                     </div>
                                     {renderSingleField(documentField, 0)}
-                                    
+
                                     <div className="flex justify-end pt-4">
                                           <Button
                                                 type="button"
@@ -1799,7 +1847,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                 }}
                                                 className="bg-blue-600 hover:bg-blue-700 text-white px-6"
                                                 disabled={!formData['document']}
-                                         >
+                                          >
                                                 Go to Add signers
                                           </Button>
                                     </div>
@@ -1818,22 +1866,22 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           <Alert className="border-amber-200 bg-amber-50">
                                                 <AlertCircle className="h-4 w-4 text-amber-600" />
                                                 <AlertDescription className="text-amber-800">
-                                                      
+
                                                       You haven't added yourself as a signer. If you need to sign this document, add your wallet address to the signers list.
-                                               <Button onClick={() => {
-                                                if(session){
-                                                      setMultipleAddresses( curr => [...curr, session?.address])
-                                                }
-                                               }}>
-                                                      Add Yourself
-                                                </Button>
+                                                      <Button onClick={() => {
+                                                            if (session) {
+                                                                  setMultipleAddresses(curr => [...curr, session?.address])
+                                                            }
+                                                      }}>
+                                                            Add Yourself
+                                                      </Button>
                                                 </AlertDescription>
                                           </Alert>
                                     )}
 
                                     {otherFields.map((field, idx) => renderSingleField(field, idx))}
                                     {/* Warning if user hasn't added themselves */}
-                                    
+
                                     <div className="flex justify-between pt-4">
                                           <Button
                                                 type="button"
@@ -2046,15 +2094,46 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
                                           <div className="space-y-4 sm:space-y-6">
                                                 {/* Use multi-step form for aqua_sign, default rendering for others */}
-                                                {isAquaSignTemplate 
+                                                {isAquaSignTemplate
                                                       ? renderAquaSignForm()
                                                       : selectedTemplate
-                                                            ? reorderInputFields(selectedTemplate.fields).map((field, fieldIndex) => 
+                                                            ? reorderInputFields(selectedTemplate.fields).map((field, fieldIndex) =>
                                                                   renderSingleField(field, fieldIndex)
                                                             )
                                                             : null
                                                 }
                                           </div>
+
+                                          {/* Privacy mode toggle for domain_claim */}
+                                          {selectedTemplate.name === 'domain_claim' && (
+                                                <div className="space-y-3 bg-blue-50 border border-blue-200 rounded-lg p-4 my-6">
+                                                      <div className="flex items-start gap-3">
+                                                            <input
+                                                                  type="checkbox"
+                                                                  id="public_association"
+                                                                  data-testid="input-public_association"
+                                                                  className="mt-1 h-4 w-4 rounded border-gray-300"
+                                                                  onChange={(e) => {
+                                                                        setFormData({
+                                                                              ...formData,
+                                                                              public_association: e.target.checked ? 'true' : 'false'
+                                                                        })
+                                                                  }}
+                                                            />
+                                                            <div className="flex-1">
+                                                                  <Label htmlFor="public_association" className="text-base font-medium cursor-pointer">
+                                                                        Make association public (wallet visible in DNS)
+                                                                  </Label>
+                                                                  <p className="text-sm text-gray-600 mt-1">
+                                                                        <strong>Private mode (default):</strong> Wallet address hidden in DNS record. Only parties with the claim file can verify the association. Recommended for privacy.
+                                                                  </p>
+                                                                  <p className="text-sm text-gray-600 mt-1">
+                                                                        <strong>Public mode:</strong> Wallet address visible in DNS record. Anyone can verify the association without the claim file.
+                                                                  </p>
+                                                            </div>
+                                                      </div>
+                                                </div>
+                                          )}
 
                                           {/* Hide separator for aqua_sign step 1 */}
                                           {(!isAquaSignTemplate || aquaSignStep === 2) && <Separator className="my-8" />}
@@ -2068,7 +2147,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                                         <li>Sign with metamask to generate a TXT record.</li>
                                                                         <li>Second metamask signature for self signed identity claim.</li>
                                                                         <li>Open details of the DNS Claim and copy the TXT record into to your DNS
-                                                                              records under the following subdomain <em>aqua._wallet.[domain filled
+                                                                              records under the following subdomain <em>_aw.[domain filled
                                                                                     above]</em></li>
                                                                   </ol>
                                                             </div>

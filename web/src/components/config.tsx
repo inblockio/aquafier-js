@@ -9,7 +9,7 @@ import { FormTemplate } from './aqua_forms'
 import { SESSION_COOKIE_NAME } from '@/utils/constants'
 
 const LoadConfiguration = () => {
-      const { setMetamaskAddress, setUserProfile, setFiles, setAvatar, setSystemFileInfo, backend_url, setSession, setFormTemplate, session } = useStore(appStore)
+      const { setMetamaskAddress, setUserProfile, setFiles, setAvatar, setSystemFileInfo, backend_url, setSession, setFormTemplate, setIsAdmin, session } = useStore(appStore)
 
       const fetchAddressGivenANonce = async (nonce: string) => {
             if (!backend_url.includes('0.0.0.0') && !session?.address) {
@@ -140,9 +140,37 @@ const LoadConfiguration = () => {
             }
       }
 
+      const checkAdminStatus = async () => {
+            if (!session?.nonce || !backend_url) {
+                  setIsAdmin(false)
+                  return
+            }
+
+            try {
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/admin/check`)
+                  const response = await axios.get(url, {
+                        headers: {
+                              nonce: session.nonce,
+                        },
+                  })
+
+                  if (response.status === 200 && response.data?.isAdmin) {
+                        setIsAdmin(true)
+                  } else {
+                        setIsAdmin(false)
+                  }
+            } catch (error) {
+                  // If the endpoint returns 403 or any other error, user is not an admin
+                  setIsAdmin(false)
+            }
+      }
+
       useEffect(() => {
             if (session?.nonce) {
                   loadTemplates()
+                  checkAdminStatus()
+            } else {
+                  setIsAdmin(false)
             }
       }, [session?.nonce])
 

@@ -10,9 +10,10 @@ import {
       getHighestFormIndex,
       isAquaTree,
       isArrayBufferText,
-      timeToHumanFriendly
+      timeToHumanFriendly,
+      parseAquaTreeContent
 } from '../../../utils/functions'
-
+import {toast} from 'sonner'
 import { ApiFileInfo } from '../../../models/FileInfo'
 import { IDrawerStatus, VerificationHashAndResult } from '../../../models/AquaTreeDetails'
 import ContractSummaryDetails from './ContractSummaryDetails'
@@ -50,7 +51,12 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
 
                         if (allAquaTrees) {
                               for (const anAquaTreeFileObject of allAquaTrees) {
-                                    const anAquaTree: AquaTree = anAquaTreeFileObject.fileContent as AquaTree
+                                 
+                                    const anAquaTree: AquaTree = parseAquaTreeContent(anAquaTreeFileObject.fileContent) as AquaTree
+                                    if (!anAquaTree || !anAquaTree.revisions) {
+                                          toast.error("Error parsing AquaTree from file object.");
+                                          continue
+                                    }
                                     const allHashes = Object.keys(anAquaTree.revisions)
                                     if (allHashes.includes(hashSigPositionHashString)) {
                                           // let aquaTreeData = anAquaTree.fileContent as AquaTree

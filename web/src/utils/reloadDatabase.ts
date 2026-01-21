@@ -87,6 +87,7 @@ export const RELOAD_KEYS = {
     claims_and_attestations: "claims_and_attestations",
     user_stats: "user_stats",
     contacts: "contacts",
+    identity_card: "identity_card",
 };
 
 /**
@@ -95,7 +96,7 @@ export const RELOAD_KEYS = {
  */
 export const triggerWorkflowReload = async (workflowType: string, watchAll?: boolean) => {
     try {
-        console.log("Workflow type: ", workflowType)
+        // console.log("Workflow type: ", workflowType)
         if (workflowType === 'all') {
             await triggerReload(RELOAD_KEYS.all_files);
             await triggerReload(RELOAD_KEYS.contacts);

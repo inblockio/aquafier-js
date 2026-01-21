@@ -22,7 +22,7 @@ import revisionsController from './controllers/revisions';
 import shareController from './controllers/share';
 import fetchChainController from './controllers/fetch-chain';
 import templatesController from './controllers/templates';
-import {setUpSystemTemplates} from './utils/api_utils';
+import {setupPaymentPlans, setUpSystemTemplates} from './utils/api_utils';
 import systemController from './controllers/system';
 import webSocketController from './controllers/websocketController';
 import notificationsController from './controllers/notifications';
@@ -35,6 +35,9 @@ import DNSClaimVerificationController from './controllers/dns_claim_verification
 import metricsController from './controllers/metrics';
 import workflowsController from './controllers/workflow';
 import enhancedWebSocketController from './controllers/websocketController2';
+import adminController from './controllers/admin';
+import subscriptionsController from './controllers/subscriptions';
+import paymentsController from './controllers/payments';
 import { prisma } from './database/db';
 import logger from './utils/logger';
 
@@ -85,6 +88,9 @@ function buildServer() {
 
     // reister system templates ie cheque, identity and attestation
     setUpSystemTemplates();
+
+    // Setup payment plans
+    setupPaymentPlans()
 
 
     let corsAllowedOrigins = process.env.ALLOWED_CORS ? [process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()), ...ensureDomainViewForCors(process.env.FRONTEND_URL)] : [
@@ -165,6 +171,9 @@ function buildServer() {
     fastify.register(DNSClaimVerificationController);
     fastify.register(metricsController);
     fastify.register(workflowsController);
+    fastify.register(adminController);
+    fastify.register(subscriptionsController);
+    fastify.register(paymentsController);
 
     // Hook to add wallet address to labels when user is authenticated
     fastify.addHook("onRequest", async function (request, reply) {

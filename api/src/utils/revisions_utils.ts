@@ -21,6 +21,7 @@ import path from 'path';
 import { systemTemplateHashes } from '../models/constants';
 import Logger from './logger';
 import { orderUserChain } from './quick_revision_utils';
+import { usageService } from '../services/usageService';
 
 // import { PrismaClient } from '@prisma/client';
 
@@ -160,6 +161,7 @@ export async function getUserApiFileInfo(
         }
     });
 
+
     if (totalItems === 0) {
         return {
             data: [],
@@ -294,7 +296,7 @@ export async function transferRevisionChainData(
     chainData: {
         aquaTree: AquaTree; fileObject: FileObject[]
     },
-    
+
     templateId: string | null = null, isWorkFlow: boolean = false): Promise<{ success: boolean, message: string }> {
 
     try {
@@ -841,6 +843,34 @@ async function deleteRelatedTableEntries(tx: any, revisionHashes: string[]) {
     Logger.info(`Deleting related entries for ${revisionHashes.length} revisions`);
 
     // Delete AquaForms entries
+    // Check if any of these are contracts (aqua_sign)
+    const formsToDelete = await tx.aquaForms.findMany({
+        where: {
+            hash: { in: revisionHashes }
+        }
+    });
+
+    let contractsCountToDelete = 0;
+    let formsSignerCount = 0;
+
+    // Check if we can identify the user. This function signature doesn't pass userAddress directly.
+    // However, the caller usually knows. We might need to fetch it or rely on the caller decrementing.
+    // But deleteAquaTreeFromSystem calls this. 
+
+    // Wait, deleteAquaTreeFromSystem has walletAddress.
+    // Maybe it's better to return the counts and let the caller decrement?
+    // Or we update this function to take userAddress.
+
+    // Let's modify the signature of deleteRelatedTableEntries to take userAddress?
+    // Or just count here and return, and let caller handle.
+    // The previous implementation returned counts of deleted items.
+
+    for (const form of formsToDelete) {
+        if (form.key === 'forms_signers') {
+            contractsCountToDelete++;
+        }
+    }
+
     const deletedAquaForms = await tx.aquaForms.deleteMany({
         where: {
             hash: { in: revisionHashes }
@@ -867,7 +897,8 @@ async function deleteRelatedTableEntries(tx: any, revisionHashes: string[]) {
     return {
         aquaForms: deletedAquaForms.count,
         signatures: deletedSignatures.count,
-        links: deletedLinks.count
+        links: deletedLinks.count,
+        contracts: contractsCountToDelete
     };
 }
 
@@ -935,6 +966,16 @@ async function handleSingleFileCleanup(tx: any, pubkeyHash: string) {
                 where: { file_hash: fileIndex.file_hash }
             });
 
+            // Decrement usage logic
+            const userAddress = pubkeyHash.split('_')[0];
+            const fileToDelete = await tx.file.findUnique({ where: { file_hash: fileIndex.file_hash } });
+            if (userAddress && fileToDelete) {
+                await usageService.decrementFiles(userAddress, 1);
+                if (fileToDelete.file_size) {
+                    await usageService.decrementStorage(userAddress, fileToDelete.file_size);
+                }
+            }
+
             // Delete corresponding file
             const file = await tx.file.findFirst({
                 where: { file_hash: fileIndex.file_hash }
@@ -951,6 +992,15 @@ async function handleSingleFileCleanup(tx: any, pubkeyHash: string) {
                 await tx.file.delete({
                     where: { file_hash: file.file_hash }
                 });
+
+                // Decrement usage logic
+                const userAddress = pubkeyHash.split('_')[0];
+                if (userAddress) {
+                    await usageService.decrementFiles(userAddress, 1);
+                    if (file.file_size) {
+                        await usageService.decrementStorage(userAddress, file.file_size);
+                    }
+                }
             }
         } else {
             // Update FileIndex
@@ -958,6 +1008,16 @@ async function handleSingleFileCleanup(tx: any, pubkeyHash: string) {
                 where: { file_hash: fileIndex.file_hash },
                 data: { pubkey_hash: updatedPubkeyHashes }
             });
+
+            // Decrement usage for the user who was removed
+            const userAddress = pubkeyHash.split('_')[0];
+            if (userAddress) {
+                const fileRecord = await tx.file.findUnique({ where: { file_hash: fileIndex.file_hash } });
+                await usageService.decrementFiles(userAddress, 1);
+                if (fileRecord && fileRecord.file_size) {
+                    await usageService.decrementStorage(userAddress, fileRecord.file_size);
+                }
+            }
         }
     }
 }
@@ -1178,11 +1238,16 @@ export async function deleteAquaTreeFromSystem(walletAddress: string, hash: stri
             const revisionPubkeyHashes = revisionData.map(rev => rev.pubkey_hash);
             // Logger.info(`Revisions to delete: ${revisionPubkeyHashes.join(', ')}`);
 
-            // Delete related table entries
-            await deleteRelatedTableEntries(tx, revisionPubkeyHashes);
+            // Delete related tables (creates recursion effectively)
+            const deletedRelated = await deleteRelatedTableEntries(tx, revisionPubkeyHashes);
 
             // Handle witness cleanup
             await handleWitnessCleanup(tx, revisionPubkeyHashes);
+
+            // Decrement usage
+            if (deletedRelated.contracts > 0) {
+                await usageService.decrementContracts(walletAddress, deletedRelated.contracts);
+            }
 
             // Handle complex file cleanup
             await handleMultipleFileCleanup(tx, revisionPubkeyHashes);
@@ -1485,6 +1550,12 @@ async function processFileRevision(revisionData: AquaTreeRevision, pubKeyHash: s
             data: { pubkey_hash: existingFileIndex.pubkey_hash },
             where: { file_hash: existingFileIndex.file_hash }
         });
+
+        // Increment usage
+        await usageService.incrementFiles(userAddress, 1);
+        if (fileResult.file_size) {
+            await usageService.incrementStorage(userAddress, fileResult.file_size);
+        }
     } else {
         throw new Error(`File index data should be in database but is not found.`);
     }
@@ -1588,7 +1659,7 @@ export async function saveAquaTree(
     const lastPubKeyHash = `${userAddress}_${latestHash}`;
 
     // Only register the latest hash for the user
-    let inserRes = await prisma.latest.upsert({
+    let insertRes = await prisma.latest.upsert({
         where: { hash: lastPubKeyHash },
         create: {
             hash: lastPubKeyHash,
@@ -1616,10 +1687,10 @@ export async function saveAquaTree(
 
         const revisionChildren = []
 
-        for(let a = i + 1; a < allHash.length; a++){
+        for (let a = i + 1; a < allHash.length; a++) {
             const childHash = allHash[a];
             const childData = aquaTreeWithOrderdRevision.revisions[childHash];
-            if(childData.previous_verification_hash.includes(revisionHash)){
+            if (childData.previous_verification_hash.includes(revisionHash)) {
                 const childPubKeyHash = `${userAddress}_${childHash}`;
                 revisionChildren.push(childPubKeyHash);
             }
@@ -1721,16 +1792,16 @@ export function isAquaTree(content: any): boolean {
     let json = null
     let isJsonAlready = true
     if (typeof content === 'string') {
-          isJsonAlready = false
+        isJsonAlready = false
     }
     if (isJsonAlready) {
-          json = content
-    }else {
-          try {
-                json = JSON.parse(content)
-          } catch (e) {
-                return false
-          }
+        json = content
+    } else {
+        try {
+            json = JSON.parse(content)
+        } catch (e) {
+            return false
+        }
     }
     // Check if content has the properties of an AquaTree
     return json && typeof json === 'object' && 'revisions' in json && 'file_index' in json
@@ -1740,8 +1811,8 @@ export function isAquaTree(content: any): boolean {
 export function getAquatreeObject(content: any): AquaTree {
     let isJsonAlready = true
     if (typeof content === 'string') {
-          isJsonAlready = false
-          return JSON.parse(content)
+        isJsonAlready = false
+        return JSON.parse(content)
     }
     return content
 }
@@ -1831,7 +1902,7 @@ export async function processAquaFiles(
         Logger.error('Error processing aqua files:', error);
 
         const aquaFiles = getAquaFiles(zipData);
-        await processRegularFiles(aquaFiles, userAddress, templateId, isWorkFlow.isWorkFlow);
+        await processRegularFiles(aquaFiles, userAddress, templateId);
     }
 }
 
@@ -1963,7 +2034,7 @@ async function deletLatestIfExistsForAquaTree(aquaTree: AquaTree, userAddress: s
     }
 }
 
-async function processAllAquaFiles(
+export async function processAllAquaFiles(
     zipData: JSZip,
     userAddress: string,
     templateId: string | null,
@@ -1982,11 +2053,11 @@ async function processAllAquaFiles(
     } else {
 
         // Process regular files
-        await processRegularFiles(aquaFiles, userAddress, templateId, isWorkFlow);
+        await processRegularFiles(aquaFiles, userAddress, templateId);
     }
 }
 
-async function processWorkflowFiles(
+export async function processWorkflowFiles(
     aquaFiles: Array<{ fileName: string; file: JSZip.JSZipObject }>,
     genesisFileName: string,
     userAddress: string,
@@ -2007,11 +2078,11 @@ async function processWorkflowFiles(
     }
 }
 
-async function processRegularFiles(
+export async function processRegularFiles(
     aquaFiles: Array<{ fileName: string; file: JSZip.JSZipObject }>,
     userAddress: string,
     templateId: string | null,
-    isWorkFlow: boolean
+
 ) {
     for (const { file } of aquaFiles) {
         const aquaTree = await parseAquaFile(file);
@@ -2030,13 +2101,13 @@ async function processRegularFiles(
 
 
 
-function getAquaFiles(zipData: JSZip): Array<{ fileName: string; file: JSZip.JSZipObject }> {
+export function getAquaFiles(zipData: JSZip): Array<{ fileName: string; file: JSZip.JSZipObject }> {
     return Object.entries(zipData.files)
         .filter(([fileName]) => fileName.endsWith(".aqua.json") && fileName !== 'aqua.json')
         .map(([fileName, file]) => ({ fileName, file }));
 }
 
-async function parseAquaFile(file: JSZip.JSZipObject): Promise<AquaTree> {
+export async function parseAquaFile(file: JSZip.JSZipObject): Promise<AquaTree> {
     const fileContent = await file.async('text');
     return JSON.parse(fileContent);
 }

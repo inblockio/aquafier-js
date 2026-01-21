@@ -3,7 +3,6 @@ import { LuSettings, LuSun, LuUser, LuWallet, LuKey, LuNetwork, LuSave } from 'r
 import { FaEthereum, FaFileContract } from 'react-icons/fa6'
 import appStore from '@/store'
 import { useStore } from 'zustand'
-import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import axios from 'axios'
 import { Button } from '@/components/ui/button'
@@ -46,8 +45,6 @@ export function ConfirmDeleteDialog({ children, deleteFunc, title, description, 
 const DeleteUserData = () => {
       const [_deleting, setDeleting] = useState(false)
 
-      const navigate = useNavigate()
-
       const { setUserProfile, setFiles, setSession, setMetamaskAddress, setAvatar, backend_url, session } = useStore(appStore)
 
       const deleteUserData = async () => {
@@ -83,18 +80,20 @@ const DeleteUserData = () => {
                         setMetamaskAddress(null)
                         setAvatar(undefined)
                         // Reset local dexie dbs we have created
-                        ContactsService.getInstance().clear()
-                        AquaSystemNamesService.getInstance().clear()
+                        await ContactsService.getInstance().clear()
+                        await AquaSystemNamesService.getInstance().clear()
 
                         // Remove cookie
                         document.cookie = 'pkc_nonce=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
 
                         toast('User data cleared successfully. You have been logged out.')
 
+
                         if (window.location.pathname == '/') {
                               window.location.reload()
                         } else {
-                              navigate('/app')
+                              // navigate('/app')
+                              window.location.href = '/'  // Force reload to clear state
                         }
                   }
 

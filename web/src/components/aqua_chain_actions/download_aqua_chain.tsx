@@ -10,6 +10,7 @@ import JSZip from 'jszip'
 import { AquaJsonInZip, AquaNameWithHash } from '../../models/Aqua'
 // import { toaster } from "@/components/ui/use-toast"
 import { toast } from 'sonner'
+import { getCorrectUTF8JSONString } from '@/lib/utils'
 
 // Helper function to get MIME type based on file extension
 const getMimeType = (filename: string): string => {
@@ -202,19 +203,22 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                         let fileName: string
                         // console.log("Handling arbitrary file", fileObj)
                         if (isAquaTreeData) {
+                              console.log("ONE: ", fileObj.fileName)
                               // It's an AquaTree, so stringify it as JSON
-                              const jsonContent = JSON.stringify(getAquatreeObject(fileObj.fileContent))
-                              // Only add .json extension if it doesn't already have one
+                              const jsonContent = getAquatreeObject(fileObj.fileContent)
+                              
                               fileName = fileObj.fileName.endsWith('.aqua.json') ? fileObj.fileName : `${fileObj.fileName}.aqua.json`
-                              zip.file(fileName, jsonContent)
-                              hashData = aquafier.getFileHash(jsonContent)
+                              zip.file(fileName, getCorrectUTF8JSONString(jsonContent))
+                              hashData = aquafier.getFileHash(JSON.stringify(jsonContent))
                         } else if (typeof fileObj.fileContent === 'string') {
+                              console.log("TWO: ", fileObj.fileName)
                               fileName = fileObj.fileName
                               // It's a plain text file, so add it directly without JSON.stringify
                               zip.file(fileName, fileObj.fileContent)
                               hashData = aquafier.getFileHash(fileObj.fileContent)
                         } else if (fileObj.fileContent instanceof Uint8Array || fileObj.fileContent instanceof ArrayBuffer) {
                               // Handle binary data
+                              console.log("THREE: ", fileObj.fileName)
                               fileName = fileObj.fileName
                               zip.file(fileName, fileObj.fileContent, {
                                     binary: true,
@@ -224,12 +228,14 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                               const dataForHash = fileObj.fileContent instanceof ArrayBuffer ? new Uint8Array(fileObj.fileContent) : fileObj.fileContent
                               hashData = aquafier.getFileHash(dataForHash)
                         } else {
+                              console.log("FOUR: ", fileObj.fileName)
                               // For other types, use JSON.stringify (objects, etc.)
+                              // Explicitly encode as UTF-8 to preserve special characters
                               const jsonContent = JSON.stringify(fileObj.fileContent)
                               // Only add .json extension if it doesn't already have one and it's not a known binary file
                               fileName = fileObj.fileName
-                              zip.file(fileName, jsonContent)
-                              hashData = aquafier.getFileHash(jsonContent)
+                              zip.file(fileName, getCorrectUTF8JSONString(jsonContent))
+                              hashData = aquafier.getFileHash(JSON.stringify(jsonContent))
                         }
 
                         // nameWithHashes.push({
@@ -244,7 +250,11 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
             const aquaObject: AquaJsonInZip = {
                   genesis: mainAquaFileName,
                   name_with_hash: nameWithHashes,
+                  createdAt: new Date().toISOString(),
+                  type: 'aqua_file_backup',
+                  version: '1.0.0',
             }
+            
             zip.file('aqua.json', JSON.stringify(aquaObject))
 
             const nameWithoutExtension = mainAquaFileName.replace(/\.[^/.]+$/, '')
