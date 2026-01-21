@@ -1,7 +1,8 @@
  {
     "permissions": {
       "additionalDirectories": [
-        "C:\\Users\\ADMIN\\Desktop\\Development\\Typescript\\aqua-js-sdk"
+        "/home/kamau/Development/Typescript/aqua-js-sdk",
+        "/home/kamau/Development/Typescript/ethereum_wallet_dns_bridge"
       ]
     }
   }

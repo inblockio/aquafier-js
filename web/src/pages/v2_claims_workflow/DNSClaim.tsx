@@ -75,7 +75,28 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
       const urlHash = useLocation().hash
 
       const { backend_url } = useStore(appStore)
-      const genesisRevisionHash = getGenesisHash(apiFileInfo.aquaTree!) 
+      const genesisRevisionHash = getGenesisHash(apiFileInfo.aquaTree!)
+
+      // Helper function to download claim file
+      const downloadClaimFile = () => {
+            const claimJson = claimInfo['forms_claim_json']
+            const uniqueId = claimInfo['forms_unique_id']
+
+            if (!claimJson || !uniqueId) {
+                  console.error('No claim data available for download')
+                  return
+            }
+
+            const blob = new Blob([claimJson], { type: 'application/json' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `claim_${uniqueId}.json`
+            document.body.appendChild(a)
+            a.click()
+            document.body.removeChild(a)
+            URL.revokeObjectURL(url)
+      } 
 
       // Extract relevant information from claimInfo
       const claimName = 'DNS Claim'
@@ -330,6 +351,38 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
                                                             </p>
                                                       )}
                                                 </div>
+                                          </div>
+                                    )}
+
+                                    {/* Claim File Download Section */}
+                                    {claimInfo['forms_unique_id'] && claimInfo['forms_claim_json'] && (
+                                          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                                <h4 className="text-sm font-semibold text-blue-900 mb-2">Claim File</h4>
+                                                {claimInfo['forms_public_association'] === 'true' ? (
+                                                      <div className="space-y-2">
+                                                            <p className="text-xs text-blue-700">
+                                                                  <strong>Public mode:</strong> Claim file optional. Wallet address is visible in DNS record.
+                                                            </p>
+                                                            <button
+                                                                  onClick={downloadClaimFile}
+                                                                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors"
+                                                            >
+                                                                  Download claim_{claimInfo['forms_unique_id']}.json (Optional)
+                                                            </button>
+                                                      </div>
+                                                ) : (
+                                                      <div className="space-y-2">
+                                                            <p className="text-xs text-blue-700 mb-2">
+                                                                  <strong>Private mode:</strong> Download and store this claim file securely. It's required for verification.
+                                                            </p>
+                                                            <button
+                                                                  onClick={downloadClaimFile}
+                                                                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors"
+                                                            >
+                                                                  Download claim_{claimInfo['forms_unique_id']}.json
+                                                            </button>
+                                                      </div>
+                                                )}
                                           </div>
                                     )}
                               </div>

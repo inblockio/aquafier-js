@@ -11,6 +11,7 @@ import {
       formatDate,
       formatTxtRecord,
       generateProofFromSignature,
+      generateDNSClaim,
       getAquaTreeFileObject,
       getGenesisHash,
       getLastRevisionVerificationHash,
@@ -685,7 +686,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             return completeFormData
       }
 
-      async function domainTemplateSignMessageFunction(domainParams: string | undefined, timestamp: string, expiration: string): Promise<string | undefined> {
+      async function domainTemplateSignMessageFunction(domainParams: string | undefined, messageToSign: string): Promise<string | undefined> {
             let signature: string | undefined = undefined
             if (!domainParams) {
                   alert('Please enter a domain name')
@@ -693,9 +694,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             }
 
             const account = session?.address
-
-
-
             const domain = domainParams.trim()
 
             if (webConfig.AUTH_PROVIDER == "metamask") {
@@ -713,17 +711,15 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                     </>
                               ),
                         })
+                        return
                   }
 
-                  const domain = domainParams.trim()
                   try {
-                        const message = `${timestamp}|${domain}|${expiration}`
                         signature = await (window.ethereum as any).request({
                               method: 'personal_sign',
-                              params: [message, account],
+                              params: [messageToSign, account],
                         })
                   } catch (error: any) {
-                        // alert('Failed to sign: ' + error.message);
                         console.error('Error signing domain claim:' + error)
                         setDialogOpen(true)
                         setDialogData({
@@ -761,8 +757,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   }
 
                   try {
-                        const messageToSign = `${timestamp}|${domain}|${expiration}`
-
                         const messageHex = stringToHex(messageToSign)
                         try {
                               signature = await provider.request({
@@ -777,7 +771,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                               })
                         }
                   } catch (error: any) {
-                        // alert('Failed to sign: ' + error.message);
                         console.error('Error signing domain claim:' + error)
                         setDialogOpen(true)
                         setDialogData({
@@ -834,23 +827,41 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   }
             })
 
-            // for domain_claim show pop up
+            // for domain_claim - NEW PRIVACY-PRESERVING IMPLEMENTATION
             if (selectedTemplate.name === 'domain_claim') {
-                  // we sign the
                   const domain = completeFormData['domain'] as string
                   const walletAddress = session?.address!
-                  const timestamp = Math.floor(Date.now() / 1000).toString()
-                  const expiration = Math.floor(Date.now() / 1000 + 90 * 24 * 60 * 60).toString() // 90 days default
+                  const expirationDays = 90
+                  const publicAssociation = completeFormData['public_association'] === 'true'
 
-                  let signature = await domainTemplateSignMessageFunction(domain, timestamp, expiration)
-                  if (!signature) {
-                        return null
-                  }
+                  let dataGen = async (message: string) => {
+                              return await domainTemplateSignMessageFunction(domain, message)
+                        }
 
+                        if(!dataGen){
+                              alert(`a critical error occurred, try again`)
+                        }
+                  // Generate DNS claim using new format
+                  const dnsClaim = await generateDNSClaim(
+                        domain,
+                        walletAddress,
+                        dataGen,
+                        expirationDays,
+                        publicAssociation
+                  )
 
-                  //domain: string, walletAddress: string, timestamp: string, expiration: string, signature: string
-                  const proof = generateProofFromSignature(domain, walletAddress, timestamp, expiration, signature)
-                  filteredData['txt_record'] = formatTxtRecord(proof)//signature
+                  // Store ALL claim data in form fields (no separate file)
+                  filteredData['txt_record'] = dnsClaim.forms_txt_record
+                  filteredData['unique_id'] = dnsClaim.forms_unique_id
+                  filteredData['claim_secret'] = dnsClaim.forms_claim_secret
+                  filteredData['txt_name'] = dnsClaim.forms_txt_name
+                  filteredData['signature_type'] = dnsClaim.signature_type
+                  filteredData['public_association'] = publicAssociation.toString()
+                  filteredData['itime'] = dnsClaim.itime
+                  filteredData['etime'] = dnsClaim.etime
+
+                  // Store complete claim as JSON string for easy download
+                  // filteredData['claim_json'] = JSON.stringify(dnsClaim, null, 2)
             }
             return { filteredData }
       }
@@ -2096,6 +2107,37 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                 }
                                           </div>
 
+                                          {/* Privacy mode toggle for domain_claim */}
+                                          {selectedTemplate.name === 'domain_claim' && (
+                                                <div className="space-y-3 bg-blue-50 border border-blue-200 rounded-lg p-4 my-6">
+                                                      <div className="flex items-start gap-3">
+                                                            <input
+                                                                  type="checkbox"
+                                                                  id="public_association"
+                                                                  data-testid="input-public_association"
+                                                                  className="mt-1 h-4 w-4 rounded border-gray-300"
+                                                                  onChange={(e) => {
+                                                                        setFormData({
+                                                                              ...formData,
+                                                                              public_association: e.target.checked ? 'true' : 'false'
+                                                                        })
+                                                                  }}
+                                                            />
+                                                            <div className="flex-1">
+                                                                  <Label htmlFor="public_association" className="text-base font-medium cursor-pointer">
+                                                                        Make association public (wallet visible in DNS)
+                                                                  </Label>
+                                                                  <p className="text-sm text-gray-600 mt-1">
+                                                                        <strong>Private mode (default):</strong> Wallet address hidden in DNS record. Only parties with the claim file can verify the association. Recommended for privacy.
+                                                                  </p>
+                                                                  <p className="text-sm text-gray-600 mt-1">
+                                                                        <strong>Public mode:</strong> Wallet address visible in DNS record. Anyone can verify the association without the claim file.
+                                                                  </p>
+                                                            </div>
+                                                      </div>
+                                                </div>
+                                          )}
+
                                           {/* Hide separator for aqua_sign step 1 */}
                                           {(!isAquaSignTemplate || aquaSignStep === 2) && <Separator className="my-8" />}
                                           {
@@ -2108,7 +2150,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                                         <li>Sign with metamask to generate a TXT record.</li>
                                                                         <li>Second metamask signature for self signed identity claim.</li>
                                                                         <li>Open details of the DNS Claim and copy the TXT record into to your DNS
-                                                                              records under the following subdomain <em>aqua._wallet.[domain filled
+                                                                              records under the following subdomain <em>_aw.[domain filled
                                                                                     above]</em></li>
                                                                   </ol>
                                                             </div>
