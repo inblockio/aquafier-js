@@ -253,8 +253,41 @@ const appStore = createStore<TAppStore>()(
                         backend_url: state.backend_url,
                         // selectedFileInfo & setApiFileData is intentionally omitted
                   }),
+                  onRehydrateStorage: () => (state) => {
+                        // Transform backend_url after loading from persistence
+                        if (state && state.backend_url) {
+                              const transformedUrl = ensureDomainUrlHasSSL(state.backend_url);
+                              if (transformedUrl !== state.backend_url) {
+                                    state.setBackEndUrl(transformedUrl);
+                              }
+                        }
+                  },
             }
       )
 )
 
 export default appStore
+
+/**
+ * Helper function to get the backend URL with proper transformation.
+ * Use this instead of directly accessing appStore.getState().backend_url
+ * to ensure the URL is always correctly transformed for the current environment.
+ */
+export function getBackendUrl(): string {
+      const backend_url = appStore.getState().backend_url;
+      return ensureDomainUrlHasSSL(backend_url);
+}
+
+/**
+ * Helper function to build a full API URL with the correct backend host.
+ * @param path - The API path (e.g., '/templates', '/explorer_files')
+ * @returns The full URL with the correct backend host
+ */
+export function getApiUrl(path: string): string {
+      const backend_url = getBackendUrl();
+      // Ensure path starts with /
+      const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+      // Avoid double slashes
+      const baseUrl = backend_url.endsWith('/') ? backend_url.slice(0, -1) : backend_url;
+      return `${baseUrl}${normalizedPath}`;
+}

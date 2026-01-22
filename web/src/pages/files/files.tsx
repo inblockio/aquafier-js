@@ -8,6 +8,7 @@ import { useSubscriptionStore } from '../../stores/subscriptionStore'
 import { fetchUsageStats } from '../../api/subscriptionApi'
 import {
       checkIfFileExistInUserFiles,
+      ensureDomainUrlHasSSL,
       isAquaTree,
       isJSONFile,
       isJSONKeyValueStringContent,
@@ -102,7 +103,7 @@ const FilesPage = () => {
                   if (stats.filesCount === 0) {
                         setLoading(true)
                   }
-                  const result = await axios.get(`${backend_url}/${API_ENDPOINTS.USER_STATS}`, {
+                  const result = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.USER_STATS}`), {
                         headers: {
                               'nonce': session.nonce,
                               'metamask_address': session.address
@@ -166,7 +167,7 @@ const FilesPage = () => {
                   formData.append('file', fileData.file)
                   formData.append('account', `${metamaskAddress}`)
 
-                  const url = `${backend_url}/explorer_files`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
                   await axios.post(url, formData, {
                         headers: {
                               'Content-Type': 'multipart/form-data',
@@ -411,7 +412,7 @@ const FilesPage = () => {
             formData.append('file', upload.file)
             formData.append('account', `${metamaskAddress}`)
 
-            const url = `${backend_url}/explorer_files`
+            const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
             await axios.post(url, formData, {
                   headers: {
                         'Content-Type': 'multipart/form-data',

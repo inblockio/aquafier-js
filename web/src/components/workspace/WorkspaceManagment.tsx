@@ -48,7 +48,7 @@ const WorkspaceManagment = () => {
             // setOperationFileName("")
 
             // Fetch list of all files (limit=1000000)
-            const listResponse = await axios.get(`${backend_url}/explorer_files?limit=1000000`, {
+            const listResponse = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/explorer_files?limit=1000000`), {
                 headers: {
                     'nonce': session.nonce
                 }
@@ -459,7 +459,7 @@ const WorkspaceManagment = () => {
             // setOperationProgress(0)
             // setOperationFileName(file.name) // Set filename for display
 
-            const response = await axios.post(`${backend_url}/explorer_workspace_upload`, formData, {
+            const response = await axios.post(ensureDomainUrlHasSSL(`${backend_url}/explorer_workspace_upload`), formData, {
                 headers: {
                     'nonce': session.nonce,
                     'Content-Type': 'multipart/form-data'

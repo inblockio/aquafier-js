@@ -2285,27 +2285,30 @@ export function ensureDomainUrlHasSSL(url: string): string {
             }
 
             if (apiHost) {
-                  // Extract the path from the original URL
+                  // Extract the path from the original URL (exclude "/" as it's the default)
                   let path = '';
                   try {
                         const urlObj = new URL(url);
-                        path = urlObj.pathname + urlObj.search;
+                        // Only include path if it's not just "/"
+                        if (urlObj.pathname !== '/') {
+                              path = urlObj.pathname;
+                        }
+                        path += urlObj.search;
                   } catch {
                         // Fallback: extract path manually
                         const pathMatch = url.match(/https?:\/\/[^\/]+(\/.*)?$/);
-                        path = pathMatch ? (pathMatch[1] || '') : '';
+                        if (pathMatch && pathMatch[1] && pathMatch[1] !== '/') {
+                              path = pathMatch[1];
+                        }
                   }
 
                   return apiHost + path;
             }
       }
 
-      // For non-localhost URLs or when on localhost, just ensure HTTPS for inblock.io domains
-      if (!url.includes('localhost') || !url.includes('127.0.0.1')  || !url.includes('0.0.0.0')) {
-
-            if (url.startsWith('http://')) {
-                  url = url.replace('http://', 'https://');
-            }
+      // For non-localhost URLs, ensure HTTPS for inblock.io domains
+      if (url.includes('inblock.io') && url.startsWith('http://')) {
+            url = url.replace('http://', 'https://');
       }
 
       // For local development, normalize 0.0.0.0 to localhost

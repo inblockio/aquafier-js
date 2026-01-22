@@ -120,7 +120,7 @@ const LoadConfiguration = () => {
 
       const loadTemplates = async () => {
             try {
-                  const url = `${backend_url}/templates`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/templates`)
                   const response = await axios.get(url, {
                         headers: {
                               nonce: session?.nonce,
