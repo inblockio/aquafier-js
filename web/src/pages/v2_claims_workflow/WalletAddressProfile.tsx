@@ -501,8 +501,9 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                   if (response.status === 200 || response.status === 201) {
                         if (isFinal) {
 
-
-                              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+const urlPath = `${backend_url}/explorer_files`
+const url2 = ensureDomainUrlHasSSL(urlPath)
+                              const filesApi = await fetchFiles(session!.address, url2, session!.nonce)
                               setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
                               toast.success('Profile Aqua tree created successfully')
@@ -783,7 +784,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                   toast.warning("It seems you are not logged in!")
                   return
             }
-            const createENSClaimUrl = `${backend_url}/${API_ENDPOINTS.CREATE_ENS_CLAIM}`
+            //`${backend_url}/${API_ENDPOINTS.CREATE_ENS_CLAIM}`
+            const createENSClaimUrl = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.CREATE_ENS_CLAIM}`)
             const res = await axios.post(createENSClaimUrl, {}, {
                   headers: {
                         metamask_address: session.address,

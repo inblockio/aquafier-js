@@ -6,7 +6,7 @@ import {useState} from 'react'
 import {IDropzoneAction} from '../../types/types'
 import {Button} from '@/components/ui/button'
 import {toast} from 'sonner'
-import {fetchFiles} from '@/utils/functions'
+import {ensureDomainUrlHasSSL, fetchFiles} from '@/utils/functions'
 
 // export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
 export const ImportAquaChainFromFile = ({ file, filesWrapper, removeFilesListForUpload}: IDropzoneAction) => {
@@ -32,7 +32,7 @@ export const ImportAquaChainFromFile = ({ file, filesWrapper, removeFilesListFor
             formData.append('account', 'example')
             setUploading(true)
             try {
-                  const url = `${backend_url}/explorer_aqua_file_upload`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_aqua_file_upload`)
                    await axios.post(url, formData, {
                         headers: {
                               'Content-Type': 'multipart/form-data',
@@ -40,11 +40,9 @@ export const ImportAquaChainFromFile = ({ file, filesWrapper, removeFilesListFor
                         },
                   })
 
-                  //  const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                  //                                     setFiles({ fileData: files, status: 'loaded' })
-
-
-                  const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                const urlPath = `${backend_url}/explorer_files`
+                const url2 = ensureDomainUrlHasSSL(urlPath)
+                  const filesApi = await fetchFiles(session!.address, url2, session!.nonce)
                               setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
 
                               

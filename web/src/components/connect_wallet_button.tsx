@@ -2,7 +2,7 @@ import { useEffect, lazy, Suspense, useState } from 'react'
 import { useAppKit, useAppKitAccount, useDisconnect } from '@reown/appkit/react'
 import { Button } from './ui/button'
 import { LuWallet, LuLogOut, LuLoaderCircle } from 'react-icons/lu'
-import { formatCryptoAddress, generateAvatar, fetchFiles, setCookie } from '../utils/functions'
+import { formatCryptoAddress, generateAvatar, fetchFiles, setCookie, ensureDomainUrlHasSSL } from '../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../store'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog'
@@ -61,7 +61,10 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
   // Handle post-authentication tasks
   const handlePostAuthentication = async () => {
     if (session?.address) {
-      const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+
+      const urlPath = `${backend_url}/explorer_files`
+      const url2 = ensureDomainUrlHasSSL(urlPath)
+      const filesApi = await fetchFiles(session!.address, url2, session!.nonce)
       setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
     }
   }

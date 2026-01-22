@@ -5,7 +5,7 @@ import appStore from '@/store';
 import { ContactProfile } from '@/types/types';
 import { ApiFileInfo } from '@/models/FileInfo';
 import { API_ENDPOINTS, IDENTITY_CLAIMS } from '@/utils/constants';
-import { getGenesisHash, isWorkFlowData } from '@/utils/functions';
+import { ensureDomainUrlHasSSL, getGenesisHash, isWorkFlowData } from '@/utils/functions';
 // import { OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { ContactsService } from '@/storage/databases/contactsDb';
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames';
@@ -49,7 +49,7 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
       }
 
       // Always fetch fresh data from backend and update cache
-      const response = await axios.get(`${localBackendUrl}/${API_ENDPOINTS.SYSTEM_AQUA_FILES_NAMES}`, {
+      const response = await axios.get(ensureDomainUrlHasSSL(`${localBackendUrl}/${API_ENDPOINTS.SYSTEM_AQUA_FILES_NAMES}`), {
         headers: {
           'nonce': localSession.nonce,
           'metamask_address': localSession.address
@@ -87,7 +87,7 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
         claim_types: JSON.stringify(IDENTITY_CLAIMS),
       };
 
-      const filesDataQuery = await axios.get(`${localBackendUrl}/${API_ENDPOINTS.GET_PER_TYPE}`, {
+      const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${localBackendUrl}/${API_ENDPOINTS.GET_PER_TYPE}`), {
         headers: {
           'Content-Type': 'application/json',
           'nonce': `${localSession!.nonce}`

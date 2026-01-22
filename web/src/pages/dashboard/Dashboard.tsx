@@ -18,6 +18,7 @@ import {
 import { MetricsResponse, AdvancedMetricsResponse } from '@/types/types';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { ensureDomainUrlHasSSL } from '@/utils/functions';
 
 const StatCard = ({ title, value, subValue, icon: Icon, colorClass, description, onClick }: any) => (
     <div 
@@ -61,9 +62,11 @@ const Dashboard = () => {
                 'nonce': session.nonce,
             };
 
+            let url1 = ensureDomainUrlHasSSL(`${backend_url}/metrics`)
+            let url2 = ensureDomainUrlHasSSL(`${backend_url}/metrics/range?startDate=${new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()}`)
             const [metricsRes, advancedRes] = await Promise.all([
-                axios.get(`${backend_url}/metrics`, { headers }),
-                axios.get(`${backend_url}/metrics/range?startDate=${new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()}`, { headers })
+                axios.get(url1, { headers }),
+                axios.get(url2, { headers })
             ]);
 
             setMetrics(metricsRes.data.data);

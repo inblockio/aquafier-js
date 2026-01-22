@@ -8,6 +8,7 @@ import type {
   PercentageUsed,
 } from '../stores/subscriptionStore';
 import appStore from '../store';
+import { ensureDomainUrlHasSSL } from '@/utils/functions';
 
 const getBackendUrl = () => {
   const { backend_url } = appStore.getState();
@@ -28,7 +29,8 @@ const getHeaders = () => {
 
 export async function fetchSubscriptionPlans(): Promise<SubscriptionPlan[]> {
   const backendUrl = getBackendUrl();
-  const response = await axios.get(`${backendUrl}/subscriptions/plans`);
+  const url = ensureDomainUrlHasSSL(`${backendUrl}/subscriptions/plans`);
+  const response = await axios.get(url);
 
   if (response.data.success) {
     return response.data.data;
@@ -48,8 +50,9 @@ export async function fetchCurrentSubscription(): Promise<{
 }> {
   const backendUrl = getBackendUrl();
   const headers = getHeaders();
+  const url = ensureDomainUrlHasSSL(`${backendUrl}/subscriptions/current`);
 
-  const response = await axios.get(`${backendUrl}/subscriptions/current`, {
+  const response = await axios.get(url, {
     headers,
   });
 
@@ -71,9 +74,10 @@ export async function createSubscription(data: {
 }): Promise<Subscription> {
   const backendUrl = getBackendUrl();
   const headers = getHeaders();
+  const url = ensureDomainUrlHasSSL(`${backendUrl}/subscriptions/create`);
 
   const response = await axios.post(
-    `${backendUrl}/subscriptions/create`,
+    url,
     data,
     { headers }
   );
@@ -94,9 +98,10 @@ export async function cancelSubscription(data?: {
 }): Promise<Subscription> {
   const backendUrl = getBackendUrl();
   const headers = getHeaders();
+  const url = ensureDomainUrlHasSSL(`${backendUrl}/subscriptions/cancel`);
 
   const response = await axios.put(
-    `${backendUrl}/subscriptions/cancel`,
+    url,
     data || {},
     { headers }
   );
@@ -117,9 +122,10 @@ export async function changePlan(data: {
 }): Promise<Subscription> {
   const backendUrl = getBackendUrl();
   const headers = getHeaders();
+  const url = ensureDomainUrlHasSSL(`${backendUrl}/subscriptions/change-plan`);
 
   const response = await axios.put(
-    `${backendUrl}/subscriptions/change-plan`,
+    url,
     data,
     { headers }
   );
@@ -142,8 +148,9 @@ export async function fetchUsageStats(): Promise<{
 }> {
   const backendUrl = getBackendUrl();
   const headers = getHeaders();
+  const url = ensureDomainUrlHasSSL(`${backendUrl}/subscriptions/usage`);
 
-  const response = await axios.get(`${backendUrl}/subscriptions/usage`, {
+  const response = await axios.get(url, {
     headers,
   });
 
@@ -161,8 +168,9 @@ export async function reFetchUsageStats(): Promise<{
 }> {
   const backendUrl = getBackendUrl();
   const headers = getHeaders();
+  const url = ensureDomainUrlHasSSL(`${backendUrl}/subscriptions/usage/recalculate`);
 
-  const response = await axios.post(`${backendUrl}/subscriptions/usage/recalculate`, {}, {
+  const response = await axios.post(url, {}, {
     headers,
   });
 
@@ -185,9 +193,10 @@ export async function createStripeCheckout(data: {
 }): Promise<{ session_id: string; url: string }> {
   const backendUrl = getBackendUrl();
   const headers = getHeaders();
+  const url = ensureDomainUrlHasSSL(`${backendUrl}/payments/stripe/create-checkout`);
 
   const response = await axios.post(
-    `${backendUrl}/payments/stripe/create-checkout`,
+    url,
     data,
     { headers }
   );
@@ -204,9 +213,10 @@ export async function createStripePortal(data: {
 }): Promise<{ url: string }> {
   const backendUrl = getBackendUrl();
   const headers = getHeaders();
+  const url = ensureDomainUrlHasSSL(`${backendUrl}/payments/stripe/create-portal`);
 
   const response = await axios.post(
-    `${backendUrl}/payments/stripe/create-portal`,
+    url,
     data,
     { headers }
   );
@@ -240,9 +250,10 @@ export async function fetchPaymentHistory(params?: {
   const queryParams = new URLSearchParams();
   if (params?.limit) queryParams.append('limit', params.limit.toString());
   if (params?.offset) queryParams.append('offset', params.offset.toString());
+  const url = ensureDomainUrlHasSSL(`${backendUrl}/payments/history?${queryParams.toString()}`);
 
   const response = await axios.get(
-    `${backendUrl}/payments/history?${queryParams.toString()}`,
+    url,
     { headers }
   );
 
@@ -256,8 +267,9 @@ export async function fetchPaymentHistory(params?: {
 export async function fetchPaymentDetails(paymentId: string): Promise<Payment> {
   const backendUrl = getBackendUrl();
   const headers = getHeaders();
+  const url = ensureDomainUrlHasSSL(`${backendUrl}/payments/${paymentId}`);
 
-  const response = await axios.get(`${backendUrl}/payments/${paymentId}`, {
+  const response = await axios.get(url, {
     headers,
   });
 
@@ -287,9 +299,10 @@ export async function createCryptoPayment(data: {
 }> {
   const backendUrl = getBackendUrl();
   const headers = getHeaders();
+  const url = ensureDomainUrlHasSSL(`${backendUrl}/payments/crypto/create-payment`);
 
   const response = await axios.post(
-    `${backendUrl}/payments/crypto/create-payment`,
+    url,
     data,
     { headers }
   );
@@ -304,9 +317,10 @@ export async function createCryptoPayment(data: {
 export async function getCryptoPaymentStatus(paymentId: string): Promise<any> {
   const backendUrl = getBackendUrl();
   const headers = getHeaders();
+  const url = ensureDomainUrlHasSSL(`${backendUrl}/payments/crypto/status/${paymentId}`);
 
   const response = await axios.get(
-    `${backendUrl}/payments/crypto/status/${paymentId}`,
+    url,
     { headers }
   );
 

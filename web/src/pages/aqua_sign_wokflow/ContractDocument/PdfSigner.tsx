@@ -414,7 +414,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   // Get ordered revision hashes from genesis to latest
                   const orderedRevisionHashes = reorderRevisionsInAquaTree(selectedFileInfo!.aquaTree!)
 
-                  const url = `${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`)
                   const res = await axios.post(url, {
                         revisionHashes: orderedRevisionHashes
                   }, {
@@ -449,30 +449,10 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
       // Helper function to update UI after success
       const updateUIAfterSuccess = async () => {
             try {
-                  // Fetch updated files
-                  // const url2 = `${backend_url}/explorer_files`
-                  // const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`)
-                  // setFiles({
-                  //       fileData: files,
-                  //       status: 'loaded',
-                  // })
-
-                  // const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                  // setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
-
+          
                   updateSelectedFileInfo()
 
-                  // Find and update selected file
-                  // const selectedFileGenesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
-                  // const selectedFile = filesApi.files.find(data => getGenesisHash(data.aquaTree!) === selectedFileGenesisHash)
-
-                  // if (selectedFile) {
-                  //       setSelectedFileInfo(selectedFile)
-                  //       toast.success(`Document signed successfully`)
-                  //       setActiveStep(1)
-                  // } else {
-                  //       throw new Error('Updated file not found')
-                  // }
+                
             } catch (error) {
                   toast.error(`An error occurred, redirecting to home`)
 
@@ -618,7 +598,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         formData.append('has_asset', 'false')
                   }
 
-                  const url = `${backend_url}/explorer_aqua_file_upload`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_aqua_file_upload`)
                   await axios.post(url, formData, {
                         headers: {
                               nonce: session?.nonce,
@@ -729,7 +709,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
             // proceed as url and session is set
             // const url = `${backend_url}/tree/user_signatures`
-            const url = `${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`
+            const url = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`)
             try {
                   const params = {
                         page: 1,

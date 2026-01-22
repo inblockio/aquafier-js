@@ -4,7 +4,7 @@ import { useStore } from 'zustand'
 import appStore from '../../store'
 import { useEffect, useState } from 'react'
 import { ApiFileInfo } from '../../models/FileInfo'
-import { formatCryptoAddress, isWorkFlowData, reorderRevisionsInAquaTree } from '../../utils/functions'
+import { ensureDomainUrlHasSSL, formatCryptoAddress, isWorkFlowData, reorderRevisionsInAquaTree } from '../../utils/functions'
 import { analyzeAndMergeRevisions } from '../../utils/aqua_funcs'
 import { RevisionsComparisonResult } from '../../models/revision_merge'
 import { OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk'
@@ -105,7 +105,8 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
             setUploading(true)
 
             try {
-                  const url = `${backend_url}/transfer_chain`
+                  //`${backend_url}/transfer_chain`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/transfer_chain`)
                   const reorderedRevisions = OrderRevisionInAquaTree(fileInfo.aquaTree!)
                   const revisions = reorderedRevisions.revisions
                   const revisionHashes = Object.keys(revisions)
@@ -168,7 +169,8 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
             }
 
             try {
-                  const url = `${backend_url}/merge_chain`
+                  //`${backend_url}/merge_chain`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/merge_chain`)
                   const reorderedRevisions = OrderRevisionInAquaTree(fileInfo.aquaTree!)
                   // const revisions = reorderedRevisions.revisions
                   const revisionHashes = Object.keys(reorderedRevisions.revisions)
@@ -228,7 +230,7 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                   // Get ordered revision hashes from genesis to latest
                   const orderedRevisionHashes = reorderRevisionsInAquaTree(fileInfo.aquaTree!)
                   setUploading(true)
-                  const url = `${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`)
                   const res = await axios.post(url, {
                         revisionHashes: orderedRevisionHashes
                   }, {

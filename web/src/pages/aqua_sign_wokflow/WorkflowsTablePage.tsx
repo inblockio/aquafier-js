@@ -29,6 +29,7 @@ import appStore from '@/store'
 import { useStore } from 'zustand'
 import {
       displayTime,
+      ensureDomainUrlHasSSL,
       getAquaTreeFileName,
       getAquaTreeFileObject,
       getGenesisHash,
@@ -164,7 +165,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
             try {
                   const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!)
                   const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
-                  const url = `${backend_url}/explorer_delete_file`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_delete_file`)
                   const response = await axios.post(
                         url,
                         { revisionHash: lastRevisionHash },
@@ -356,7 +357,7 @@ export default function WorkflowsTablePage() {
                         limit: 10,
                         claim_types: JSON.stringify(['aqua_sign'])
                   }
-                  const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
+                  const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
                         headers: {
                               'Content-Type': 'application/json',
                               'nonce': `${session!.nonce}`

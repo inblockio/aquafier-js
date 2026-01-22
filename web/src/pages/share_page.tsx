@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert'
 import { CompleteChainView } from '../components/files_chain_details'
+import { ensureDomainUrlHasSSL } from '@/utils/functions'
 
 const SharePage = () => {  
       const { backend_url, metamaskAddress, session } = useStore(appStore)
@@ -36,7 +37,7 @@ const SharePage = () => {
             if (!backend_url.includes('0.0.0.0')) {
                   try {
                         setLoading(true)
-                        const url = `${backend_url}/share_data/${params.identifier}`
+                        const url = ensureDomainUrlHasSSL(`${backend_url}/share_data/${params.identifier}`)
                         const response = await axios.get(url, {
                               headers: {
                                     'Content-Type': 'application/x-www-form-urlencoded',

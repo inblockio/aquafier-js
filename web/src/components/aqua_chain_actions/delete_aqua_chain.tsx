@@ -6,29 +6,29 @@ import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import axios from 'axios'
-import { getGenesisHash } from '@/utils/functions'
+import { ensureDomainUrlHasSSL, getGenesisHash } from '@/utils/functions'
 import { useStore } from 'zustand'
 import appStore from '@/store'
 import { API_ENDPOINTS } from '@/utils/constants'
 
 // Separate dialog component for use at parent level
-export const DeleteAquaChainDialog = ({ 
-      open, 
-      onOpenChange, 
-      onConfirm, 
-      isLoading 
-}: { 
+export const DeleteAquaChainDialog = ({
+      open,
+      onOpenChange,
+      onConfirm,
+      isLoading
+}: {
       open: boolean
       onOpenChange: (open: boolean) => void
       onConfirm: () => void
-      isLoading?: boolean 
+      isLoading?: boolean
 }) => {
       return (
-            <AlertDialog 
-                  open={open} 
+            <AlertDialog
+                  open={open}
                   onOpenChange={onOpenChange}
             >
-                  <AlertDialogContent 
+                  <AlertDialogContent
                         onOpenAutoFocus={(e) => {
                               // Prevent auto-focus if there's already a focused element in background
                               // This helps prevent the aria-hidden accessibility issue
@@ -49,8 +49,8 @@ export const DeleteAquaChainDialog = ({
                               >
                                     Cancel
                               </Button>
-                              <AlertDialogAction 
-                                    onClick={onConfirm} 
+                              <AlertDialogAction
+                                    onClick={onConfirm}
                                     disabled={isLoading}
                               >
                                     {isLoading ? 'Deleting...' : 'Delete'}
@@ -70,9 +70,9 @@ const LoadLinkedFiles = ({ genesisHash }: { genesisHash: string | null }) => {
 
       const loadLinkedFiles = () => {
             // We hit the backend with the genesis hash, and query for files which include this in its link option.
-            if(!genesisHash || !backend_url || !session) return
+            if (!genesisHash || !backend_url || !session) return
             setIsLoading(true)
-            const url = `${backend_url}${API_ENDPOINTS.LINKED_FILES}`
+            const url = ensureDomainUrlHasSSL(`${backend_url}${API_ENDPOINTS.LINKED_FILES}`)
             axios.get(url, {
                   params: {
                         genesis_hash: genesisHash,
@@ -81,16 +81,16 @@ const LoadLinkedFiles = ({ genesisHash }: { genesisHash: string | null }) => {
                         nonce: session.nonce,
                   },
             })
-            .then(response => {
-                  // data.fileNames = ["file1.json", "file2.png", "file3.pdf"]
-                  setLinkedFiles(response.data.fileNames)
-            })
-            .catch(error => {
-                  console.error('Error fetching linked files:', error)
-            })
-            .finally(() => {
-                  setIsLoading(false)
-            })
+                  .then(response => {
+                        // data.fileNames = ["file1.json", "file2.png", "file3.pdf"]
+                        setLinkedFiles(response.data.fileNames)
+                  })
+                  .catch(error => {
+                        console.error('Error fetching linked files:', error)
+                  })
+                  .finally(() => {
+                        setIsLoading(false)
+                  })
       }
 
       useEffect(() => {
@@ -123,8 +123,8 @@ const LoadLinkedFiles = ({ genesisHash }: { genesisHash: string | null }) => {
                   </p>
                   <ul className="space-y-1 max-h-32 overflow-y-auto">
                         {linkedFiles.map((fileName, index) => (
-                              <li 
-                                    key={index} 
+                              <li
+                                    key={index}
                                     className="text-sm text-muted-foreground flex items-center gap-2 px-2 py-1 bg-muted/50 rounded"
                               >
                                     <span className="w-1.5 h-1.5 rounded-full bg-destructive/60" />
@@ -151,7 +151,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
             try {
                   const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!)
                   const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
-                  const url = `${backendUrl}/explorer_delete_file`
+                  const url = ensureDomainUrlHasSSL(`${backendUrl}/explorer_delete_file`)
                   const response = await axios.post(
                         url,
                         {
@@ -242,7 +242,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                               )}
                         </button>
                   )}
-                  
+
                   <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
                         <AlertDialogContent>
                               <AlertDialogHeader>

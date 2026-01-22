@@ -1,18 +1,18 @@
-import {LuUpload} from 'react-icons/lu'
+import { LuUpload } from 'react-icons/lu'
 import axios from 'axios'
-import {useStore} from 'zustand'
+import { useStore } from 'zustand'
 import appStore from '../../store'
-import {useEffect, useRef, useState} from 'react'
-import {ApiFileInfo} from '../../models/FileInfo'
-import {checkIfFileExistInUserFiles} from '../../utils/functions'
-import {maxFileSizeForUpload} from '../../utils/constants'
-import {IDropzoneAction} from '../../types/types'
-import {toast} from 'sonner'
-import {Button} from '@/components/ui/button'
-import {Loader2} from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ApiFileInfo } from '../../models/FileInfo'
+import { checkIfFileExistInUserFiles, ensureDomainUrlHasSSL } from '../../utils/functions'
+import { maxFileSizeForUpload } from '../../utils/constants'
+import { IDropzoneAction } from '../../types/types'
+import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import { Loader2 } from 'lucide-react'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 // export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex, autoUpload }: IDropzoneAction) => {
-export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload , autoUpload}: IDropzoneAction) => {
+export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload, autoUpload }: IDropzoneAction) => {
       const [uploading, setUploading] = useState(false)
       // const [uploaded, setUploaded] = useState(false)
 
@@ -23,10 +23,10 @@ export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload , auto
             // let fileContent = await  readFileContent()
             // const existingChainFile = files.find(_file => _file.fileObject.find((e) => e.fileName == file.name) != undefined)
 
-             if(uploading){
-                              toast.info(`Wait for upload to complete`)
-                              return
-                        }  
+            if (uploading) {
+                  toast.info(`Wait for upload to complete`)
+                  return
+            }
             if (!file) {
                   toast.info('No file selected!')
                   return
@@ -52,7 +52,9 @@ export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload , auto
 
             setUploading(true)
             try {
-                  const url = `${backend_url}/explorer_files`
+
+                  
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
                   const response = await axios.post(url, formData, {
                         headers: {
                               'Content-Type': 'multipart/form-data',
@@ -75,15 +77,15 @@ export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload , auto
                   // setUploaded(true)
                   setUploading(false)
                   toast.success('File uploaded successfuly')
-                  
+
                   // Trigger reload for all files and stats
-                  await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true); 
+                  await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
                   await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
                   await triggerWorkflowReload(RELOAD_KEYS.user_stats, true);
-                   
-                  
+
+
                   // updateUploadedIndex(fileIndex)
-                   removeFilesListForUpload(filesWrapper)
+                  removeFilesListForUpload(filesWrapper)
                   return
             } catch (error) {
                   setUploading(false)
@@ -112,7 +114,7 @@ export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload , auto
                   variant="secondary"
                   className="w-[80px] bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300"
                   onClick={uploadFile}
-                  // disabled={uploadedIndexes.includes(fileIndex) || uploaded}
+            // disabled={uploadedIndexes.includes(fileIndex) || uploaded}
             >
                   {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <LuUpload className="h-4 w-4 mr-2" />}
                   Upload

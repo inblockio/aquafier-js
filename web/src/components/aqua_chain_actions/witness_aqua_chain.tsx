@@ -1,5 +1,5 @@
 import { LuGlasses } from 'react-icons/lu'
-import { dummyCredential, fetchFiles, getGenesisHash, getLastRevisionVerificationHash } from '../../utils/functions'
+import { dummyCredential, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash, getLastRevisionVerificationHash } from '../../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import axios from 'axios'
@@ -52,7 +52,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                                     const lastHash = revisionHashes[revisionHashes.length - 1]
                                     const lastRevision = result.data.aquaTree?.revisions[lastHash]
                                     // send to server
-                                    const url = `${backendUrl}/tree`
+                                    const url = ensureDomainUrlHasSSL(`${backendUrl}/tree`)
 
                                     const response = await axios.post(
                                           url,
@@ -69,16 +69,10 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                                     )
 
                                     if (response.status === 200 || response.status === 201) {
-                                          // const newFiles: ApiFileInfo[] = response.data.data
-                                          // setFiles({ fileData: newFiles, status: 'loaded' })
+                                         const urlPath = `${backend_url}/explorer_files`
+                                         const url2 = ensureDomainUrlHasSSL(urlPath)
 
-                                          // const files = await fetchFiles(session!.address!, `${backend_url}/explorer_files`, session!.nonce)
-                                          // setFiles({
-                                          //       fileData: files, status: 'loaded'
-                                          // })
-
-
-                                          const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                                          const filesApi = await fetchFiles(session!.address, url2, session!.nonce)
                                           setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
 
@@ -153,7 +147,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                               }]
                         });
 
-                        
+
 
                         // const transaction_hash = ""
 
@@ -173,7 +167,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                               const lastHash = revisionHashes[revisionHashes.length - 1]
                               const lastRevision = result.data.aquaTree?.revisions[lastHash]
                               // send to server
-                              const url = `${backendUrl}/tree`
+                              const url = ensureDomainUrlHasSSL(`${backendUrl}/tree`)
 
                               const response = await axios.post(
                                     url,
@@ -190,16 +184,12 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                               )
 
                               if (response.status === 200 || response.status === 201) {
-                                    // const newFiles: ApiFileInfo[] = response.data.data
-                                    // setFiles({ fileData: newFiles, status: 'loaded' })
+                                 
 
-                                    // const files = await fetchFiles(session!.address!, `${backend_url}/explorer_files`, session!.nonce)
-                                    // setFiles({
-                                    //       fileData: files, status: 'loaded'
-                                    // })
+                                    const urlPath = `${backend_url}/explorer_files`
+                                    const url2 = ensureDomainUrlHasSSL(urlPath)
 
-
-                                    const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                                    const filesApi = await fetchFiles(session!.address, url2, session!.nonce)
                                     setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
 

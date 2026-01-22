@@ -3,7 +3,7 @@ import { useLocation, useParams } from 'react-router-dom'
 import appStore from '../../store'
 import { useStore } from 'zustand'
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
-import { getGenesisHash, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
+import { ensureDomainUrlHasSSL, getGenesisHash, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
 import { ClipLoader } from 'react-spinners'
 import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileInfo'
 import axios from 'axios'
@@ -43,7 +43,8 @@ export default function ClaimsWorkflowPage() {
 
       const loadSharedContractsData = async (_latestRevisionHash: string) => {
             try {
-                  const url = `${backend_url}/contracts`
+                  //`${backend_url}/contracts`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/contracts`)
                   const response = await axios.get(url, {
                         params: {
                               sender: session?.address,

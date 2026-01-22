@@ -167,16 +167,7 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
 
       if (response.status === 200 || response.status === 201) {
         if (isFinal) {
-          // const filesApi = await fetchFiles(
-          //   session!.address,
-          //   `${backend_url}/explorer_files`,
-          //   session!.nonce
-          // )
-          // setFiles({
-          //   fileData: filesApi.files,
-          //   pagination: filesApi.pagination,
-          //   status: 'loaded'
-          // })
+          
 
           toast.success('Identity card created successfully')
 

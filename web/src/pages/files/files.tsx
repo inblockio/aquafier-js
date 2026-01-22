@@ -179,14 +179,7 @@ const FilesPage = () => {
                   setFilesListForUpload(prev => prev.filter((_, i) => i !== index))
                   clearFileInput()
 
-                  // Refresh files list
-                  // const url2 = `${backend_url}/explorer_files`
-                  // const updatedFiles = await fetchFiles(session?.address!, url2, session?.nonce!)
-                  // setFiles({ fileData: updatedFiles, status: 'loaded' })
-
-                  // const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                  // setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
-                  await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                    await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
                   await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
 
 
@@ -412,8 +405,10 @@ const FilesPage = () => {
             formData.append('file', upload.file)
             formData.append('account', `${metamaskAddress}`)
 
-            const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
-            await axios.post(url, formData, {
+
+            const urlPath = `${backend_url}/explorer_files`
+            const url2 = ensureDomainUrlHasSSL(urlPath)
+            await axios.post(url2, formData, {
                   headers: {
                         'Content-Type': 'multipart/form-data',
                         nonce: session?.nonce,

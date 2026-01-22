@@ -17,6 +17,7 @@ import {Switch} from '@/components/ui/switch'
 import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {AlertCircle} from 'lucide-react'
+import { ensureDomainUrlHasSSL } from '@/utils/functions'
 
 const fieldTypes = [
       { label: 'Text', value: 'text' },
@@ -129,7 +130,7 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
                   }
 
                   // send to server
-                  let url = `${backend_url}/templates`
+                  let url = ensureDomainUrlHasSSL(`${backend_url}/templates`)
                   let method = 'post'
                   if (updating || initialTemplate) {
                         url += `/${initialTemplate?.id}`

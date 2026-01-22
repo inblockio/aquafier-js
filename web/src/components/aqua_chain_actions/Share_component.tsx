@@ -1,7 +1,7 @@
 import appStore from '@/store'
 import { Contract } from '@/types/types'
 import { SYSTEM_WALLET_ADDRESS } from '@/utils/constants'
-import { fetchFiles, getGenesisHash, isValidEthereumAddress, timeToHumanFriendly } from '@/utils/functions'
+import { ensureDomainUrlHasSSL, fetchFiles, getGenesisHash, isValidEthereumAddress, timeToHumanFriendly } from '@/utils/functions'
 import { getAquaTreeFileObject } from 'aqua-js-sdk'
 import axios from 'axios'
 import { Share2, X, Users, ExternalLink, Check, Copy, Lock, Trash2, Plus } from 'lucide-react'
@@ -119,7 +119,7 @@ const ShareComponent = () => {
             setSharing(true)
 
             const unique_identifier = `${Date.now()}_${generateNonce()}`
-            const url = `${backend_url}/share_data`
+            const url = ensureDomainUrlHasSSL(`${backend_url}/share_data`)
 
             const allHashes = Object.keys(selectedFileInfo!.aquaTree!.revisions!)
             const latest = allHashes[allHashes.length - 1]
@@ -181,7 +181,7 @@ const ShareComponent = () => {
                         return
                   }
 
-                  const response = await axios.get(`${backend_url}/contracts`, {
+                  const response = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/contracts`), {
                         params: {
                               genesis_hash: getGenesisHash(selectedFileInfo.aquaTree!),
                               sender: session?.address
