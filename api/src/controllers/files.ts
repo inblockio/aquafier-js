@@ -37,7 +37,7 @@ export default async function filesController(fastify: FastifyInstance) {
             }
         })
 
-        console.log(cliRedify(JSON.stringify(file, null, 4)))
+        // console.log(cliRedify(JSON.stringify(file, null, 4)))
 
         if (file == null) {
             return reply.code(500).send({ success: false, message: `Error file  not found ` });

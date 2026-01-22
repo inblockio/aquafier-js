@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import { SESSION_COOKIE_NAME, USER_PROFILE_DEFAULT } from '../utils/constants'
 import axios from 'axios'
 import { ContactsService } from '@/storage/databases/contactsDb'
+import { useNavigate } from 'react-router-dom'
 
 // Lazy load the WalletAddressProfile component
 const WalletAddressProfile = lazy(() => import('@/pages/v2_claims_workflow/WalletAddressProfile'))
@@ -24,6 +25,8 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [hasHandledSiwe, setHasHandledSiwe] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
+
+  const navigate = useNavigate()
 
   // Handle wallet connection state changes
   useEffect(() => {
@@ -111,29 +114,31 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
 
     } finally {
       try {
-        const nonce = getCookie(SESSION_COOKIE_NAME)
 
-        if (nonce) {
-          const backend_url = appStore.getState().backend_url
-          const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
-          await axios.delete(url, {
-            params: { nonce },
-          })
-        }
+        // WE CALL THIS ENDPOINT ON SIGNOUT METHOD OF SIWECONFIG, WE DON'T REALLY NEED THIS
+        // const nonce = getCookie(SESSION_COOKIE_NAME)
+        // if (nonce) {
+        //   const backend_url = appStore.getState().backend_url
+        //   const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
+        //   await axios.delete(url, {
+        //     params: { nonce },
+        //   })
+        // }
 
         // Clear cookie
         setCookie(SESSION_COOKIE_NAME, '', new Date('1970-01-01T00:00:00Z'))
 
         // Clear store
         const store = appStore.getState()
-        store.setMetamaskAddress(null)
-        store.setAvatar(undefined)
-        store.setUserProfile(USER_PROFILE_DEFAULT)
-        store.setSession(null)
-        store.setFiles({
-          fileData: [],
-          status: 'idle',
-        })
+        // store.setMetamaskAddress(null)
+        // store.setAvatar(undefined)
+        // store.setUserProfile(USER_PROFILE_DEFAULT)
+        // store.setSession(null)
+        // store.setFiles({
+        //   fileData: [],
+        //   status: 'idle',
+        // })
+        store.resetState()
 
         await ContactsService.getInstance().clear()
       } catch (error) {
@@ -143,7 +148,8 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
       }
       setIsSigningOut(false)
 
-      window.location.href = '/'  // Force reload to clear state
+      // window.location.href = '/'  // Force reload to clear state
+      // navigate("/app")
     }
   }
 

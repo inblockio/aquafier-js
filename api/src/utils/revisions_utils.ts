@@ -1831,7 +1831,7 @@ export async function processAquaMetadataOperation(nameHash: AquaNameWithHash, f
         const aquaFile = zipData.files[aquaFileOriginalKey];
         const aquaFileDataText = await aquaFile.async('text');
         const aquaTreeData: AquaTree = getAquatreeObject(aquaFileDataText);
-        console.log(cliRedify(JSON.stringify(aquaTreeData, null, 4)))
+        // console.log(cliRedify(JSON.stringify(aquaTreeData, null, 4)))
         const genesisHash = getGenesisHash(aquaTreeData);
         if (!genesisHash) {
             throw new Error(`Genesis hash cannot be null`);
@@ -1882,9 +1882,9 @@ export async function processAquaFiles(
 
 ) {
     const aquaConfig = await getAquaConfiguration(zipData);
-    Logger.info(`config Aqua Tree: ${JSON.stringify(aquaConfig, null, 2)}`);
+    // Logger.info(`config Aqua Tree: ${JSON.stringify(aquaConfig, null, 2)}`);
     const mainAquaTree = await getMainAquaTree(zipData, aquaConfig);
-    Logger.info(`Main Aqua Tree: ${JSON.stringify(mainAquaTree, null, 2)}`);
+    // Logger.info(`Main Aqua Tree: ${JSON.stringify(mainAquaTree, null, 2)}`);
 
 
 
@@ -1893,7 +1893,7 @@ export async function processAquaFiles(
         workFlow: string;
     } = isWorkFlowData(mainAquaTree!, systemTemplateHashes)
 
-    Logger.info(`actualIsWorkFlow: ${JSON.stringify(isWorkFlow)}`);
+    // Logger.info(`actualIsWorkFlow: ${JSON.stringify(isWorkFlow)}`);
     try {
 
 
