@@ -2325,7 +2325,15 @@ export function ensureDomainUrlHasSSL(url: string): string {
                   }
             }
             // Remove port numbers and path from the replaced URL if they exist
-            url = url.replace(/:\d+/g, '').replace(/\/.*$/, '');
+            // Use URL parsing to safely extract protocol and hostname
+            url = url.replace(/:\d+/g, '');
+            try {
+                  const urlObj = new URL(url);
+                  url = `${urlObj.protocol}//${urlObj.hostname}`;
+            } catch {
+                  // If URL parsing fails, try a more careful regex that preserves protocol://hostname
+                  url = url.replace(/^(https?:\/\/[^\/]+)\/.*$/, '$1');
+            }
             return url;
       }
 

@@ -67,8 +67,7 @@ const wagmiAdapter = new WagmiAdapter({
 export const metadata = {
   name: 'Aquafier',
   description: 'Aquafier - Decentralized Identity and Document Management',
-  // url: "https://reown.com", // 'http://localhost:5173',
-  url: "http://localhost:5173",
+  url: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173',
   icons: ['https://avatars.githubusercontent.com/u/179229932']
 }
 
