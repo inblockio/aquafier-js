@@ -2303,25 +2303,22 @@ export function ensureDomainUrlHasSSL(url: string): string {
 
             (`ensureDomainUrlHasSSL isLocalhost: ${isLocalhost}, windowHost: ${windowHost}`)
             // Replace localhost/localhost based on window host
+            // Use regex to match both http:// and https:// variants
             if (windowHost === 'https://dev.inblock.io') {
-                  url = url.replace('https://localhost', 'https://dev-api.inblock.io')
-                        .replace('https://localhost', 'https://dev-api.inblock.io')
-                        .replace('https://0.0.0.0', 'https://dev-api.inblock.io');
+                  url = url.replace(/https?:\/\/localhost/g, 'https://dev-api.inblock.io')
+                        .replace(/https?:\/\/0\.0\.0\.0/g, 'https://dev-api.inblock.io');
 
             } else if (windowHost === 'https://aquafier.inblock.io') {
-                  url = url.replace('https://localhost', 'https://aquafier-api.inblock.io')
-                        .replace('https://localhost', 'https://aquafier-api.inblock.io')
-                        .replace('https://0.0.0.0', 'https://aquafier-api.inblock.io');
+                  url = url.replace(/https?:\/\/localhost/g, 'https://aquafier-api.inblock.io')
+                        .replace(/https?:\/\/0\.0\.0\.0/g, 'https://aquafier-api.inblock.io');
             } else {
                   // Extract subdomain and add -api
                   const match = windowHost.match(/https?:\/\/([^.]+)\./);
                   if (match) {
                         const subdomain = match[1];
                         const baseHost = windowHost.replace(/https?:\/\/[^.]+\./, `https://${subdomain}-api.`);
-                        // url = url.replace(/https?:\/\/(127\.0\.0\.1|localhost|0\.0\.0\.0)/g, baseHost);
-                        url = url.replace('https://localhost', baseHost)
-                              .replace('https://localhost', baseHost)
-                              .replace('https://0.0.0.0', baseHost);
+                        url = url.replace(/https?:\/\/localhost/g, baseHost)
+                              .replace(/https?:\/\/0\.0\.0\.0/g, baseHost);
                   }
             }
             // Remove port numbers and path from the replaced URL if they exist
