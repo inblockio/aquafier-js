@@ -62,7 +62,7 @@ export default async function chequeApiController(fastify: FastifyInstance) {
         let allHash = Object.keys(aquaTreeWithOrderdRevision)
         let genesisRevision = aquaTreeWithOrderdRevision.revisions[allHash[0]]
 
-        Logger.info(`Genesis revision ${JSON.stringify(genesisRevision, null, 4)}`)
+        // Logger.info(`Genesis revision ${JSON.stringify(genesisRevision, null, 4)}`)
         let chequeAmount = genesisRevision['form_amount']
 
         if (chequeAmount == undefined) {
@@ -132,7 +132,7 @@ export default async function chequeApiController(fastify: FastifyInstance) {
         }
 
 
-        Logger.info(`Aqua tree with new form  revision ${JSON.stringify(aquaTreeWithFormRevision, null, 4)}`)
+        // Logger.info(`Aqua tree with new form  revision ${JSON.stringify(aquaTreeWithFormRevision, null, 4)}`)
 
 
         let aquaTreeWithNewFormRevisionAndOrderdRevision = OrderRevisionInAquaTree(aquaTreeWithFormRevision.data.aquaTree!!);

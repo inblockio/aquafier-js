@@ -90,7 +90,7 @@ export function validateAquaTree(tree: AquaTree): [boolean, string] {
     for (const hash in tree.revisions) {
         const revision = tree.revisions[hash];
 
-        Logger.info(`Revision --  ${JSON.stringify(revision)}`)
+        // Logger.info(`Revision --  ${JSON.stringify(revision)}`)
         // Check required fields for all revisions
         if (revision.previous_verification_hash === undefined || revision.previous_verification_hash === null) {
             return [false, "A revision must contain previous_verification_hash"];

@@ -129,7 +129,7 @@ export default async function templatesController(fastify: FastifyInstance) {
 
             if (results != null) {
 
-                Logger.info(`results.hash --${JSON.stringify(results.hash, null, 4)}`)
+                // Logger.info(`results.hash --${JSON.stringify(results.hash, null, 4)}`)
                 let response = await deleteAquaTreeFromSystem(request.user?.address ?? "-", results.hash)
                 Logger.info("Template delete result", { response })
                 if (response[0] != 200) {

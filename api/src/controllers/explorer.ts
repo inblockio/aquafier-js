@@ -837,7 +837,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                                     type: typeof revisionData[formItem]
                                 }
                             });
-                            Logger.info(`Res ${JSON.stringify(res, null, 2)}`)
+                            // Logger.info(`Res ${JSON.stringify(res, null, 2)}`)
                         }
                     }
                 }

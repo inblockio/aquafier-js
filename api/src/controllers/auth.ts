@@ -154,7 +154,11 @@ export default async function authController(fastify: FastifyInstance) {
         let ensName = null
 
         if (alchemyProjectKey) {
-          ensName = await fetchEnsName(siweData.address!!, alchemyProjectKey)
+          try {
+            ensName = await fetchEnsName(siweData.address!!, alchemyProjectKey)
+          } catch (error) {
+            logger.error(`Unable to fetch ENS name: ${error}`)
+          }
         }
         await prisma.users.create({
           data: {
@@ -180,7 +184,15 @@ export default async function authController(fastify: FastifyInstance) {
 
         if (userData.ens_name == null || userData.ens_name == undefined || userData.ens_name == "") {
           if (alchemyProjectKey && siweData.address) {
-            const ensName = await fetchEnsName(siweData.address, alchemyProjectKey)
+
+            let ensName = ""
+            
+            try {
+              ensName = await fetchEnsName(siweData.address!!, alchemyProjectKey)
+            } catch (error) {
+              logger.error(`Unable to fetch ENS name: ${error}`)
+            }
+
 
             await prisma.users.update({
               where: {

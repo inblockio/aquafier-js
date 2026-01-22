@@ -35,7 +35,7 @@ type AppStoreState = {
             fileIndex: number,
             totalFiles: number
       },
-      
+
       apiFileData: ApiFileData[]
       systemFileInfo: ApiFileInfo[]
       formTemplates: FormTemplate[]
@@ -78,6 +78,7 @@ type AppStoreActions = {
       setFormTemplate: (apiFileData: FormTemplate[]) => void
       setContracts: (contracts: any[]) => void
       setBackEndUrl: (backend_url: AppStoreState['backend_url']) => void
+      resetState: () => void
 }
 
 type TAppStore = AppStoreState & AppStoreActions
@@ -146,53 +147,56 @@ const indexedDBStorage = {
       },
 }
 
+export const INITIAL_STATE: AppStoreState = {
+      user_profile: USER_PROFILE_DEFAULT,
+      session: null,
+      isAdmin: false,
+      files: {
+            fileData: [],
+            status: 'idle',
+      },
+      filesStats: emptyUserStats,
+      workflows: {
+            fileData: [],
+            status: 'idle',
+      },
+      selectedFileInfo: null,
+      webConfig: {
+            CUSTOM_LANDING_PAGE_URL: false,
+            CUSTOM_LOGO_URL: false,
+            SENTRY_DSN: undefined,
+            BACKEND_URL: undefined,
+            AUTH_PROVIDER: undefined,
+            DEFAULT_PAYMENT_METHOD: "CRYPTO",
+            ENABLE_CRYPTO_PAYMENTS: true,
+            ENABLE_STRIPE_PAYMENTS: false,
+      },
+      workSpaceDowload: {
+            fileName: '',
+            fileIndex: 0,
+            totalFiles: 0
+      },
+      openDialog: null, // Initialize openDialog state
+      // openFilesDetailsPopUp: false,
+      // openCreateTemplatePopUp: false,
+      // openCreateAquaSignPopUp: false,
+      // openCreateClaimPopUp: false,
+      // openCreateClaimAttestationPopUp: false,
+      metamaskAddress: null,
+      avatar: '',
+      apiFileData: [],
+      systemFileInfo: [],
+      formTemplates: [],
+      backend_url: 'http://0.0.0.0:3000',
+      contracts: [],
+}
+
 
 const appStore = createStore<TAppStore>()(
       persist(
             set => ({
                   // Initial state
-                  user_profile: USER_PROFILE_DEFAULT,
-                  session: null,
-                  isAdmin: false,
-                  files: {
-                        fileData: [],
-                        status: 'idle',
-                  },
-                  filesStats: emptyUserStats,
-                  workflows: {
-                        fileData: [],
-                        status: 'idle',
-                  },
-                  selectedFileInfo: null,
-                  webConfig: {
-                        CUSTOM_LANDING_PAGE_URL: false,
-                        CUSTOM_LOGO_URL: false,
-                        SENTRY_DSN: undefined,
-                        BACKEND_URL: undefined,
-                        AUTH_PROVIDER: undefined,
-                        DEFAULT_PAYMENT_METHOD: "CRYPTO",
-                        ENABLE_CRYPTO_PAYMENTS: true,
-                        ENABLE_STRIPE_PAYMENTS: false,
-                  },
-
-                  workSpaceDowload: {
-                        fileName: '',
-                        fileIndex: 0,
-                        totalFiles: 0
-                  },
-                  openDialog: null, // Initialize openDialog state
-                  // openFilesDetailsPopUp: false,
-                  // openCreateTemplatePopUp: false,
-                  // openCreateAquaSignPopUp: false,
-                  // openCreateClaimPopUp: false,
-                  // openCreateClaimAttestationPopUp: false,
-                  metamaskAddress: '',
-                  avatar: '',
-                  apiFileData: [],
-                  systemFileInfo: [],
-                  formTemplates: [],
-                  backend_url: 'http://0.0.0.0:3000',
-                  contracts: [],
+                  ...INITIAL_STATE,
 
                   // Actions
                   setUserProfile: config => set({ user_profile: config }),
@@ -231,6 +235,9 @@ const appStore = createStore<TAppStore>()(
                         let urlData = ensureDomainUrlHasSSL(backend_url)
                         set({ backend_url: urlData })
                   },
+                  resetState: () => {
+                        set(INITIAL_STATE)
+                  }
             }),
             {
                   name: 'app-store', // Unique name for storage key

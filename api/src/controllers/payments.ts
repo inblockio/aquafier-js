@@ -381,10 +381,10 @@ export default async function paymentsController(fastify: FastifyInstance) {
           payment_id: payment.payment_id,
         });
 
-        console.log("==================")
-        console.log("Crypto Payment:")
-        console.log(cliRedify(JSON.stringify(payment, null, 4)))
-        console.log("==================")
+        // console.log("==================")
+        // console.log("Crypto Payment:")
+        // console.log(cliRedify(JSON.stringify(payment, null, 4)))
+        // console.log("==================")
 
         return reply.send({
           success: true,
@@ -554,8 +554,8 @@ export default async function paymentsController(fastify: FastifyInstance) {
         // Generate invoice and save it to the user context
         let paymentsCount = await prisma.payment.count();
         let invoiceNumber = `INV-${paymentsCount + 1}`;
-        console.log("Payment:  ", payment)
-        console.log(cliYellowfy(JSON.stringify(payment.Subscription, null, 4)))
+        // console.log("Payment:  ", payment)
+        // console.log(cliYellowfy(JSON.stringify(payment.Subscription, null, 4)))
         let userAddress = payment.Subscription.user_address
         let userDetails = await prisma.users.findUnique({ where: { address: userAddress } })
         let subscriptionPlan = await prisma.subscriptionPlan.findUnique({ where: { id: payment.Subscription.plan_id } })

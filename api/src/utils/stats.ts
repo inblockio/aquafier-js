@@ -82,7 +82,7 @@ export const calculateStorageUsage = async (userAddress: string) => {
         // calculate the file size and sum it up
         for (let i = 0; i < allUserRevisions.length; i++) {
             const revision = allUserRevisions[i];
-            console.log(revision)
+            
             const fileIndex = await prisma.fileIndex.findFirst({
                 where: {
                     pubkey_hash: {
@@ -95,7 +95,6 @@ export const calculateStorageUsage = async (userAddress: string) => {
                 let fileResult = await prisma.file.findFirst({
                     where: {
                         file_hash: fileIndex.file_hash
-
                     }
                 });
                 if (fileResult) {
