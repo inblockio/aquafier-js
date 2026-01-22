@@ -8,6 +8,7 @@ import axios from 'axios';
 import { useStore } from 'zustand';
 import appStore from '@/store';
 import { API_ENDPOINTS, getClaimIcon } from '@/utils/constants';
+import { ensureDomainUrlHasSSL } from '@/utils/functions';
 import { emptyUserStats, IUserStats } from '@/types/types';
 import { useReloadWatcher } from '@/hooks/useReloadWatcher';
 import { RELOAD_KEYS } from '@/utils/reloadDatabase';
@@ -29,7 +30,7 @@ const UserStats = () => {
     const getUserStats = async () => {
         if (session) {
             try {
-                let result = await axios.get(`${backend_url}/${API_ENDPOINTS.USER_STATS}`, {
+                let result = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.USER_STATS}`), {
                     headers: {
                         'nonce': session.nonce,
                         'metamask_address': session.address

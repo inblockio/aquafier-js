@@ -79,7 +79,7 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
     setLoading(true)
     try {
       // Fetch all files with a large limit to get workflows
-      const response = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
+      const response = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
         headers: {
           'nonce': session?.nonce,
         },
@@ -137,7 +137,7 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
     isFinal: boolean = false
   ) => {
     try {
-      const url = `${backend_url}/explorer_aqua_file_upload`
+      const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_aqua_file_upload`)
       const formData = new FormData()
 
       // Add the aquaTree as a JSON file
@@ -399,7 +399,7 @@ setSelectedWorkflows([]);
     let similarWorkFlowExists = false
     try {
       // Fetch all files with a large limit to get workflows
-      const response = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
+      const response = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
         headers: {
           'nonce': session?.nonce,
         },

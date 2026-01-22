@@ -3,6 +3,7 @@ import appStore from '../store'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import VersionDetails from '@/models/VersionDetails'
+import { ensureDomainUrlHasSSL } from '../utils/functions'
 import { toast } from 'sonner'
 import { LuCalendarClock, LuCode, LuExternalLink, LuGithub, LuGlobe, LuShieldCheck, LuTag } from 'react-icons/lu'
 import { FaEthereum } from 'react-icons/fa6'
@@ -25,7 +26,7 @@ const InfoPage = () => {
 
       const fetchVersionDetails = async () => {
             try {
-                  const url = `${backend_url}/version`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/version`)
 
                   const response = await axios.get(url)
 

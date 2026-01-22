@@ -3,7 +3,7 @@ import {Button} from '@/components/ui/button'
 import {toast} from 'sonner'
 import {AquaTreeDetailsData} from '@/models/AquaTreeDetails'
 import appStore from '@/store'
-import {displayTime, fetchFiles, formatCryptoAddress} from '@/utils/functions'
+import {displayTime, ensureDomainUrlHasSSL, fetchFiles, formatCryptoAddress} from '@/utils/functions'
 import {LogTypeEmojis} from 'aqua-js-sdk/web'
 import axios from 'axios'
 import {useCallback, useEffect, useMemo, useState} from 'react'
@@ -119,7 +119,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
             setIsDeleting(true)
 
             try {
-                  const url = `${backend_url}/tree/revisions/${revisionHash}`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/tree/revisions/${revisionHash}`)
 
                     await axios.delete(url, {
                         headers: {
@@ -136,7 +136,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                               window.location.reload()
                         } else {
                               
-                              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                              const filesApi = await fetchFiles(session!.address, ensureDomainUrlHasSSL(`${backend_url}/explorer_files`), session!.nonce)
                               setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
 
 

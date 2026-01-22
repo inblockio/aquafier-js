@@ -46,7 +46,7 @@ const WebsocketFragment = () => {
 
       const checkServerStatus = async () => {
             try {
-                  const response = await axios.get(`${backend_url}`)
+                  const response = await axios.get(ensureDomainUrlHasSSL(`${backend_url}`))
                   if (response.status === 200) {
                         return true
                   }
@@ -164,7 +164,7 @@ const WebsocketFragment = () => {
                               } else if (message.action === WebSocketActions.REFETCH_SHARE_CONTRACTS) {
                                     ; (async () => {
                                           try {
-                                                const url = `${backend_url}/contracts`
+                                                const url = ensureDomainUrlHasSSL(`${backend_url}/contracts`)
                                                 const response = await axios.get(url, {
                                                       params: {
                                                             receiver: session?.address, // walletAddressRef.current

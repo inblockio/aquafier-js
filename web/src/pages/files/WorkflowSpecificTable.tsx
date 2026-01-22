@@ -2,6 +2,7 @@ import { ApiFileInfo } from "@/models/FileInfo"
 import appStore from "@/store"
 import { GlobalPagination } from "@/types"
 import { API_ENDPOINTS } from "@/utils/constants"
+import { ensureDomainUrlHasSSL } from "@/utils/functions"
 import axios from "axios"
 import { useEffect, useState } from "react"
 import { useStore } from "zustand"
@@ -56,7 +57,7 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
                 params.fileType = workflowName
             }
 
-            const filesDataQuery = await axios.get(`${backend_url}/${endpoint}`, {
+            const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${endpoint}`), {
                 headers: {
                     'Content-Type': 'application/json',
                     'nonce': `${session!.nonce}`

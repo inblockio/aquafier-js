@@ -5,6 +5,7 @@ import appStore from '../../store'
 import { toast } from 'sonner'
 import { LuEye, LuPen, LuTrash } from 'react-icons/lu'
 import axios from 'axios'
+import { ensureDomainUrlHasSSL } from '../../utils/functions'
 
 // /components//ui components
 import { Button } from '@/components/ui/button'
@@ -56,7 +57,7 @@ const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
             setIsLoading(true)
 
             try {
-                  const res = await axios.delete(`${backend_url}/templates/${templateToDelete.id}`, {
+                  const res = await axios.delete(ensureDomainUrlHasSSL(`${backend_url}/templates/${templateToDelete.id}`), {
                         headers: {
                               nonce: session?.nonce,
                         },

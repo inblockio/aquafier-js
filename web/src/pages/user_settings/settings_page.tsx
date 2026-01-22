@@ -5,6 +5,7 @@ import appStore from '@/store'
 import { useStore } from 'zustand'
 import { toast } from 'sonner'
 import axios from 'axios'
+import { ensureDomainUrlHasSSL } from '@/utils/functions'
 import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { ContactsService } from '@/storage/databases/contactsDb'
@@ -55,7 +56,7 @@ const DeleteUserData = () => {
                   }
 
                   setDeleting(true)
-                  const url = `${backend_url}/user_data`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/user_data`)
                   const response = await axios.delete(url, {
                         headers: {
                               nonce: session.nonce,
@@ -141,7 +142,7 @@ export default function SettingsPage() {
             // formData.append("user_pub_key", metamaskAddress ?? user_profile.user_pub_key)
             // formData.append('theme', colorMode ?? "light");
 
-            const url = `${backend_url}/explorer_update_user_settings`
+            const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_update_user_settings`)
 
             const response = await axios.post(
                   url,

@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useStore } from 'zustand'
 import appStore from '@/store'
-import { arraysEqualIgnoreOrder, formatCryptoAddress, getGenesisHash, timeToHumanFriendly } from '@/utils/functions'
+import { arraysEqualIgnoreOrder, ensureDomainUrlHasSSL, formatCryptoAddress, getGenesisHash, timeToHumanFriendly } from '@/utils/functions'
 import { Contract } from '@/types/types'
 import WalletAddresClaim from "../v2_claims_workflow/WalletAdrressClaim"
 import { toast } from 'sonner'
@@ -56,7 +56,7 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
       async function deleteContract() {
             setLoading(true)
             try {
-                  const response = await axios.delete(`${backend_url}/contracts/${contract.hash}`, {
+                  const response = await axios.delete(ensureDomainUrlHasSSL(`${backend_url}/contracts/${contract.hash}`), {
                         headers: {
                               nonce: session?.nonce,
                         }
@@ -78,7 +78,7 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
       const loadPageData = async () => {
             try {
                   setLoadingSharedFileData(true)
-                  const url = `${backend_url}/share_data/${contract.hash}`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/share_data/${contract.hash}`)
                   const response = await axios.get(url, {
                         headers: {
                               'Content-Type': 'application/x-www-form-urlencoded',
@@ -101,7 +101,7 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
                         try {
                               // fetch my aqaua tree using gen hash
 
-                              const url = `${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`
+                              const url = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`)
                               const res = await axios.post(url, {
                                     revisionHashes: [contractFileGenHash]
                               }, {

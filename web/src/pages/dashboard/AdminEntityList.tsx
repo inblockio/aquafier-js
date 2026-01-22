@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useStore } from 'zustand';
 import appStore from '@/store';
+import { ensureDomainUrlHasSSL } from '@/utils/functions';
 import { 
     ChevronLeft, 
     ChevronRight, 
@@ -112,7 +113,7 @@ const AdminEntityList = () => {
         
         setLoading(true);
         try {
-            const res = await axios.get(`${backend_url}/admin/data/${type}`, {
+            const res = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/admin/data/${type}`), {
                 headers: { 'nonce': session.nonce },
                 params: { page, limit: pagination.limit }
             });
