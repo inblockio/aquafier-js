@@ -2260,76 +2260,57 @@ export function convertToWebsocketUrl(actualUrlToFetch: string): string {
 }
 
 export function ensureDomainUrlHasSSL(url: string): string {
-      // let url = actualUrlToFetch;
+      const windowHost = typeof window !== 'undefined' ? window.location.origin : '';
+      const isWindowLocalhost = windowHost.includes('localhost') || windowHost.includes('127.0.0.1');
+      const isUrlLocalhost = url.includes('localhost') || url.includes('0.0.0.0') || url.includes('127.0.0.1');
 
-      // Check if actualUrlToFetch is localhost but window host is not localhost
-      const isLocalhost = url.includes('localhost') || url.includes('0.0.0.0') || url.includes('localhost');
-      const windowHost = window.location.origin;
+      // If we're on a production domain but the URL points to localhost/0.0.0.0,
+      // transform the URL to use the production API
+      if (isUrlLocalhost && !isWindowLocalhost && windowHost) {
+            let apiHost = '';
 
-
-
-      // Step 1: Enforce HTTPS for all domains except localhost/development
-      if (!isLocalhost) {
-            // Add https if no protocol specified
-            if (!url.includes('://')) {
-                  url = 'https://' + url;
-            }
-            // Replace http with https if not localhost
-            else if (url.startsWith('http://')) {
-                  url = url.replace('http://', 'https://');
-            }
-
-            //Remove port numbers for non-localhost URLs
-            url = url.replace(/:\d+/g, '');
-      }
-
-      // Step 2: Replace unsafe localhost URLs with safe ones
-      const localhostReplacements = [
-            { from: 'https://0.0.0.0', to: 'http://localhost' },
-            { from: 'http://0.0.0.0', to: 'http://localhost' },
-            { from: 'https://localhost', to: 'http://localhost' },
-            { from: 'https://localhost', to: 'http://localhost' }
-      ];
-
-      for (const replacement of localhostReplacements) {
-            if (url.startsWith(replacement.from)) {
-                  url = url.replace(replacement.from, replacement.to);
-            }
-      }
-
-      (`ensureDomainUrlHasSSL url after replacements: ${url}`)
-
-      if (isLocalhost && !(windowHost.includes('localhost') || windowHost.includes('localhost'))) {
-
-            (`ensureDomainUrlHasSSL isLocalhost: ${isLocalhost}, windowHost: ${windowHost}`)
-            // Replace localhost/localhost based on window host
-            // Use regex to match both http:// and https:// variants
+            // Determine the API host based on the current window host
             if (windowHost === 'https://dev.inblock.io') {
-                  url = url.replace(/https?:\/\/localhost/g, 'https://dev-api.inblock.io')
-                        .replace(/https?:\/\/0\.0\.0\.0/g, 'https://dev-api.inblock.io');
-
+                  apiHost = 'https://dev-api.inblock.io';
             } else if (windowHost === 'https://aquafier.inblock.io') {
-                  url = url.replace(/https?:\/\/localhost/g, 'https://aquafier-api.inblock.io')
-                        .replace(/https?:\/\/0\.0\.0\.0/g, 'https://aquafier-api.inblock.io');
+                  apiHost = 'https://aquafier-api.inblock.io';
             } else {
-                  // Extract subdomain and add -api
-                  const match = windowHost.match(/https?:\/\/([^.]+)\./);
+                  // Extract subdomain and create API host (e.g., https://foo.inblock.io -> https://foo-api.inblock.io)
+                  const match = windowHost.match(/https?:\/\/([^.]+)\.(.*)/);
                   if (match) {
                         const subdomain = match[1];
-                        const baseHost = windowHost.replace(/https?:\/\/[^.]+\./, `https://${subdomain}-api.`);
-                        url = url.replace(/https?:\/\/localhost/g, baseHost)
-                              .replace(/https?:\/\/0\.0\.0\.0/g, baseHost);
+                        const domain = match[2];
+                        apiHost = `https://${subdomain}-api.${domain}`;
                   }
             }
-            // Remove port numbers but preserve the path
-            try {
-                  const urlObj = new URL(url);
-                  url = `${urlObj.protocol}//${urlObj.hostname}${urlObj.pathname}${urlObj.search}`;
-            } catch {
-                  // If URL parsing fails, just remove port numbers with regex
-                  url = url.replace(/:\d+/g, '');
+
+            if (apiHost) {
+                  // Extract the path from the original URL
+                  let path = '';
+                  try {
+                        const urlObj = new URL(url);
+                        path = urlObj.pathname + urlObj.search;
+                  } catch {
+                        // Fallback: extract path manually
+                        const pathMatch = url.match(/https?:\/\/[^\/]+(\/.*)?$/);
+                        path = pathMatch ? (pathMatch[1] || '') : '';
+                  }
+
+                  return apiHost + path;
             }
-            return url;
+      }
+
+      // For non-localhost URLs or when on localhost, just ensure HTTPS for inblock.io domains
+      if (!url.includes('localhost') || !url.includes('127.0.0.1')  || !url.includes('0.0.0.0')) {
+
+            if (url.startsWith('http://')) {
+                  url = url.replace('http://', 'https://');
+            }
+      }
+
+      // For local development, normalize 0.0.0.0 to localhost
+      if (isWindowLocalhost && url.includes('0.0.0.0')) {
+            url = url.replace('0.0.0.0', 'localhost');
       }
 
       return url;
