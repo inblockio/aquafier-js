@@ -2,16 +2,15 @@ import { useEffect, lazy, Suspense, useState } from 'react'
 import { useAppKit, useAppKitAccount, useDisconnect } from '@reown/appkit/react'
 import { Button } from './ui/button'
 import { LuWallet, LuLogOut, LuLoaderCircle } from 'react-icons/lu'
-import { formatCryptoAddress, generateAvatar, fetchFiles, getCookie, ensureDomainUrlHasSSL, setCookie } from '../utils/functions'
+import { formatCryptoAddress, generateAvatar, fetchFiles, setCookie } from '../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../store'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog'
 import { ethers } from 'ethers'
 import { toast } from 'sonner'
-import { SESSION_COOKIE_NAME, USER_PROFILE_DEFAULT } from '../utils/constants'
-import axios from 'axios'
+import { SESSION_COOKIE_NAME } from '../utils/constants'
 import { ContactsService } from '@/storage/databases/contactsDb'
-import { useNavigate } from 'react-router-dom'
+// import { useNavigate } from 'react-router-dom'
 
 // Lazy load the WalletAddressProfile component
 const WalletAddressProfile = lazy(() => import('@/pages/v2_claims_workflow/WalletAddressProfile'))
@@ -26,7 +25,7 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
   const [hasHandledSiwe, setHasHandledSiwe] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
 
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
 
   // Handle wallet connection state changes
   useEffect(() => {
