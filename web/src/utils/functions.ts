@@ -2321,15 +2321,13 @@ export function ensureDomainUrlHasSSL(url: string): string {
                               .replace(/https?:\/\/0\.0\.0\.0/g, baseHost);
                   }
             }
-            // Remove port numbers and path from the replaced URL if they exist
-            // Use URL parsing to safely extract protocol and hostname
-            url = url.replace(/:\d+/g, '');
+            // Remove port numbers but preserve the path
             try {
                   const urlObj = new URL(url);
-                  url = `${urlObj.protocol}//${urlObj.hostname}`;
+                  url = `${urlObj.protocol}//${urlObj.hostname}${urlObj.pathname}${urlObj.search}`;
             } catch {
-                  // If URL parsing fails, try a more careful regex that preserves protocol://hostname
-                  url = url.replace(/^(https?:\/\/[^\/]+)\/.*$/, '$1');
+                  // If URL parsing fails, just remove port numbers with regex
+                  url = url.replace(/:\d+/g, '');
             }
             return url;
       }

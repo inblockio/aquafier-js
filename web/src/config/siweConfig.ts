@@ -51,6 +51,7 @@ export const siweConfig = createSIWEConfig({
 
     try {
       const backend_url = appStore.getState().backend_url
+      
       const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
       const response = await axios.get(url, {
         params: { nonce },
