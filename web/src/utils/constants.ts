@@ -10,6 +10,7 @@ export const maxUserFileSizeForUpload = 1024 * 1024 * 1024 // 1 GB in bytes
 export const maxFileSizeForUpload = 200 * 1024 * 1024 // 200MB in bytes
 
 export const SESSION_COOKIE_NAME = 'pkc_nonce'
+export const BACKEND_URL_STORAGE_KEY = 'aquafier_backend_url'
 export const ERROR_TEXT = '--error--'
 export const ERROR_UKNOWN = '--unknown--'
 export const ETH_CHAINID_MAP: Record<string, string> = {
@@ -106,6 +107,14 @@ export const initializeBackendUrl = async (): Promise<{
             console.error('Error reading config:', err)
       }
 
+      // Sync to localStorage for synchronous access (needed for SIWE getSession before IndexedDB rehydrates)
+      try {
+            console.log('[SIWE DEBUG] initializeBackendUrl - saving to localStorage:', BACKEND_URL)
+            localStorage.setItem(BACKEND_URL_STORAGE_KEY, BACKEND_URL)
+      } catch (e) {
+            console.warn('Failed to sync backend_url to localStorage:', e)
+      }
+
       return { backend_url: BACKEND_URL, config: configObj, apmConfig: apmConfig }
 }
 
@@ -145,7 +154,7 @@ export const testWitness = {
             '1220c828259c0c516bfe3bbf3d67027eae72ddd3cba24286a41db24c8a835b197e9c',
       ],
 }
-
+ 
 export const API_ENDPOINTS = {
       NOTIFICATIONS: '/notifications',
       NOTIFICATIONS_READ_ALL: '/notifications/read-all',
@@ -153,7 +162,7 @@ export const API_ENDPOINTS = {
       GET_PER_TYPE: 'tree/per_type',
       USER_STATS: 'user_data_stats',
       ALL_USER_FILES: 'tree/all_files',
-      USER_AQUA_FILES: 'tree/aqua_files',
+      USER_FILES: 'tree/user_files',
       SORTED_FILES: 'tree/sorted_files',
       SYSTEM_AQUA_FILES: 'system/aqua_tree',
       SYSTEM_AQUA_FILES_NAMES: 'system/aqua_tree/names',

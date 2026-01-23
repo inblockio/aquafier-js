@@ -81,7 +81,7 @@ export const RELOAD_KEYS = {
     email_claim: "email_claim",
     phone_number_claim: "phone_number_claim",
     user_profile: "user_profile",
-    aqua_files: "aqua_files",
+    user_files: "user_files",
     all_files: "all_files",
     notifications: "notifications",
     claims_and_attestations: "claims_and_attestations",
@@ -103,9 +103,9 @@ export const triggerWorkflowReload = async (workflowType: string, watchAll?: boo
             await triggerReload(RELOAD_KEYS.contacts);
             return;
         }
-
-        if (workflowType === 'aqua_files') {
-            await triggerReload(RELOAD_KEYS.aqua_files);
+        
+        if (workflowType === 'user_files') {
+            await triggerReload(RELOAD_KEYS.user_files);
             return;
         }
 

@@ -511,7 +511,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
 
                               // trigger file reloads 
-                              await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                              await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
                               await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
 
 
@@ -794,7 +794,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             })
 
             if (res.status === 200 || res.status === 201) {
-                  await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                  await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
                   await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
                   await triggerWorkflowReload(RELOAD_KEYS.ens_claim, true);
                   await triggerWorkflowReload(RELOAD_KEYS.contacts, true);

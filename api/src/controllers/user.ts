@@ -822,7 +822,32 @@ export default async function userController(fastify: FastifyInstance) {
         }
     });
 
-    // Get user data stats
+    // Get user data stats 
+    // fastify.get('/user_data_stats', {
+    //     preHandler: authenticate
+    // }, async (request: AuthenticatedRequest, reply) => {
+    //     const userAddress = request.user?.address;
+
+    //     if (!userAddress) {
+    //         return reply.code(401).send({ error: 'User not authenticated' });
+    //     }
+
+        // let stats = await calculateStorageUsage(userAddress)
+
+        // return reply.code(200).send({
+        //     filesCount: stats.totalFiles,
+        //     storageUsed: stats.storageUsage,
+        //     // totalRevisions: allUserRevisions.length,
+        //     // linkRevisionsCount: linkRevisions.length,
+        //     claimTypeCounts: {
+        //         ...stats.formTypesToTrack,
+        //         user_files: aquaFiles
+        //     }
+        // })
+
+    // });
+
+     // Get user data stats
     fastify.get('/user_data_stats', {
         preHandler: authenticate
     }, async (request: AuthenticatedRequest, reply) => {
@@ -832,16 +857,231 @@ export default async function userController(fastify: FastifyInstance) {
             return reply.code(401).send({ error: 'User not authenticated' });
         }
 
-        let stats = await calculateStorageUsage(userAddress)
+        /**
+         * We query through Revisions and count the user's revisions since genesis in one way or the other has the user address
+         * And besides that we can filter through the pubkey_hash field to sort of map out the all information regarding to the user from revisions 
+         * before building the user stats object
+         * 1. Query all genesis revision
+         * 2. Get link revisions with genesis as previous
+         * 3. Do a counter on them based on type (form type)
+         * 
+         */
+        // 1. All user revisions
+        // const queryStart = performance.now()
+
+        // TODO do not delete
+        // const revisionsInDB = await prisma.revision.findMany({
+        //     select: {
+        //         pubkey_hash: true,
+        //         // revision_type: true,
+        //         previous: true,
+        //         // Link: {
+        //         //     select: {
+        //         //         link_verification_hashes: true
+        //         //     }
+        //         // }
+        //         AquaForms: {
+        //             select: {
+        //                 key: true
+        //             }
+        //         }
+        //     },
+        //     where: {
+        //         pubkey_hash: {
+        //             startsWith: userAddress
+        //         },
+        //         previous: {
+        //             equals: ""
+        //         },
+        //     }
+        // });
+
+
+        let allUserRevisions: {
+            pubkey_hash: string;
+            previous: string | null;
+            AquaForms: {
+                key: string | null;
+            }[] 
+        }[]= [];
+
+
+        
+         const latestRecords = await prisma.latest.findMany({
+                where: {
+                    AND: {
+                        user: userAddress,
+                        template_id: null,
+                        is_workflow: false
+                    }
+                },
+                select: {
+                    hash: true
+                },
+                
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            });
+
+            for (let index = 0; index < latestRecords.length; index++) {
+                const element = latestRecords[index];
+                
+                let revision = await prisma.revision.findFirst({
+                    where: {
+                        pubkey_hash: element.hash
+                    },  
+                });
+
+                // get genesis 
+                if(revision){
+                    let aquaTreeRevisions = await findAquaTreeRevision(revision?.pubkey_hash)
+                    
+                    let genesisRevision = aquaTreeRevisions.find((e)=>e.previous==null || e.previous=="")
+
+                    if(genesisRevision){
+
+                        let aquaForms = await prisma.aquaForms.findMany({
+                            where: {
+                                hash: genesisRevision.pubkey_hash
+                            },  
+                        });
+                        allUserRevisions.push({
+                            pubkey_hash: genesisRevision.pubkey_hash,
+                            previous: genesisRevision.previous,    
+                            AquaForms: aquaForms
+                        });
+                    }
+                }  
+            }
+
+
+
+
+
+        let allFilesSizes = 0
+        // loop through all genesis revisions,
+        //  find the file hash from file index table
+        // use file has to find file path
+        // calculate the file size and sum it up
+        for (let i = 0; i < allUserRevisions.length; i++) {
+            const revision = allUserRevisions[i];
+            const fileIndex = await prisma.fileIndex.findFirst({
+                where: {
+                    pubkey_hash: {
+                        has: revision.pubkey_hash
+                    }
+                }
+            });
+            if (fileIndex) {
+                let fileResult = await prisma.file.findFirst({
+                    where: {
+                        file_hash: fileIndex.file_hash
+
+                    }
+                });
+                if (fileResult) {
+                    try {
+                        const stats = fs.statSync(fileResult.file_location!!);
+                        allFilesSizes += stats.size;
+                    } catch (err) {
+                        Logger.error(`Error getting file size for ${fileResult.file_location}: ${err}`);
+                    }
+
+
+                }
+
+
+            }
+        }
+        // const queryEnd = performance.now()
+        // console.log(cliGreenify(`Genesis revisions query took ${(queryEnd - queryStart).toFixed(2)}ms`))
+
+        // Filter out revisions that contain aqua_sign fields (forms_signers)
+        const filteredUserRevisions = allUserRevisions.filter(revision => {
+            // Check if any AquaForms has the key "forms_signers"
+            const hasFormsSigners = revision.AquaForms.some(form => form.key === "forms_signers")
+            return !hasFormsSigners // Return true if it doesn't have forms_signers (keep it)
+        })
+
+        const allRevisionHashes = allUserRevisions.map(revision => revision.pubkey_hash)
+
+        // const linkQueryStart = performance.now()
+        const linkRevisions = await prisma.revision.findMany({
+            select: {
+                pubkey_hash: true,
+                revision_type: true,
+                previous: true,
+                Link: {
+                    select: {
+                        link_verification_hashes: true
+                    }
+                }
+            },
+            where: {
+                previous: {
+                    in: allRevisionHashes
+                },
+                revision_type: {
+                    equals: "link"
+                }
+            }
+        })
+        // const linkQueryEnd = performance.now()
+        // console.log(cliGreenify(`Link revisions query took ${(linkQueryEnd - linkQueryStart).toFixed(2)}ms`))
+
+        // const linkRevisionHashes = linkRevisions.map(revision => revision.pubkey_hash)
+        // const aquaFilesRevisionHashes = filteredUserRevisions.filter(revision => !linkRevisionHashes.includes(revision.pubkey_hash))
+
+        // We create an object of the items we want to track differently and or separately
+        const formTypesToTrack: Record<string, number> = {}
+        for (let i = 0; i < Object.keys(TEMPLATE_HASHES).length; i++) {
+            const formType = Object.keys(TEMPLATE_HASHES)[i]
+            formTypesToTrack[formType] = 0
+        }
+
+        const formTypesToTrackKeys = Object.keys(formTypesToTrack)
+
+        // Loop through each link revision
+        for (let j = 0; j < linkRevisions.length; j++) {
+            const linkRevision = linkRevisions[j]
+
+            // Loop through each Link in the revision (it's an array)
+            for (let k = 0; k < linkRevision.Link.length; k++) {
+                const link = linkRevision.Link[k]
+
+                // Loop through each verification hash in the link
+                for (let l = 0; l < link.link_verification_hashes.length; l++) {
+                    const verificationHash = link.link_verification_hashes[l]
+
+                    // Check which template this hash matches
+                    for (let i = 0; i < formTypesToTrackKeys.length; i++) {
+                        const formType = formTypesToTrackKeys[i]
+                        const templateHash = TEMPLATE_HASHES[formType as keyof typeof TEMPLATE_HASHES]
+
+                        if (verificationHash === templateHash) {
+                            formTypesToTrack[formType]++
+                            break; // Found match, no need to check other templates
+                        }
+                    }
+                }
+            }
+        }
+
+        const totalFiles = latestRecords.length
+        const aquaFiles = totalFiles - Object.values(formTypesToTrack).reduce((a, b) => a + b, 0)
+
+
+         let stats = await calculateStorageUsage(userAddress)
 
         return reply.code(200).send({
-            filesCount: stats.totalFiles,
-            storageUsed: stats.storageUsage,
+            filesCount: totalFiles,
+            storageUsed: allFilesSizes,
             // totalRevisions: allUserRevisions.length,
             // linkRevisionsCount: linkRevisions.length,
             claimTypeCounts: {
-                ...stats.formTypesToTrack,
-                // aqua_files: aquaFiles
+                 ...stats.formTypesToTrack,
+                user_files: aquaFiles
             }
         })
 
@@ -849,6 +1089,8 @@ export default async function userController(fastify: FastifyInstance) {
 
 
 
+
+     
     // Helper function to handle files deletion
     async function handleFilesDeletion(
         tx: Omit<PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">,

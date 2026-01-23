@@ -5,7 +5,7 @@ import { ApiFileInfo } from './models/FileInfo'
 import { ApiFileData, ApiFileInfoState, emptyUserStats, IUserStats, OpenDialog, Session, WebConfig } from './types/types'
 import { FormTemplate } from './components/aqua_forms/types'
 import { ensureDomainUrlHasSSL } from './utils/functions'
-import { USER_PROFILE_DEFAULT } from './utils/constants'
+import { USER_PROFILE_DEFAULT, BACKEND_URL_STORAGE_KEY } from './utils/constants'
 
 type AppStoreState = {
       user_profile: {
@@ -233,7 +233,14 @@ const appStore = createStore<TAppStore>()(
                   },
                   setBackEndUrl: (backend_url: AppStoreState['backend_url']) => {
                         let urlData = ensureDomainUrlHasSSL(backend_url)
+                        console.log('[SIWE DEBUG] store.setBackEndUrl called with:', urlData)
                         set({ backend_url: urlData })
+                        // Sync to localStorage for synchronous access (needed for SIWE getSession before IndexedDB rehydrates)
+                        try {
+                              localStorage.setItem(BACKEND_URL_STORAGE_KEY, urlData)
+                        } catch (e) {
+                              console.warn('Failed to sync backend_url to localStorage:', e)
+                        }
                   },
                   resetState: () => {
                         set(INITIAL_STATE)
@@ -254,11 +261,20 @@ const appStore = createStore<TAppStore>()(
                         // selectedFileInfo & setApiFileData is intentionally omitted
                   }),
                   onRehydrateStorage: () => (state) => {
+                        console.log('[SIWE DEBUG] store.onRehydrateStorage called, state:', state ? 'exists' : 'null')
                         // Transform backend_url after loading from persistence
                         if (state && state.backend_url) {
+                              console.log('[SIWE DEBUG] store.onRehydrateStorage - backend_url from IndexedDB:', state.backend_url)
                               const transformedUrl = ensureDomainUrlHasSSL(state.backend_url);
                               if (transformedUrl !== state.backend_url) {
                                     state.setBackEndUrl(transformedUrl);
+                              }
+                              // Sync to localStorage for synchronous access (needed for SIWE getSession)
+                              try {
+                                    console.log('[SIWE DEBUG] store.onRehydrateStorage - syncing to localStorage:', transformedUrl)
+                                    localStorage.setItem(BACKEND_URL_STORAGE_KEY, transformedUrl);
+                              } catch (e) {
+                                    console.warn('Failed to sync backend_url to localStorage on rehydrate:', e);
                               }
                         }
                   },

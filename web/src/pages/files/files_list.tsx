@@ -20,7 +20,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [isSmallScreen, setIsSmallScreen] = useState(false)
       const [uniqueWorkflows, setUniqueWorkflows] = useState<{ name: string, count: number }[]>([])
       const [selectedWorkflow, setSelectedWorkflow] = useState<string>(
-            filesListProps.hideAllFilesAndAquaFiles ? '' : 'all'
+            filesListProps.hideAllFilesAndUserAquaFiles ? '' : 'all'
       )
       const [stats, setStats] = useState<IUserStats>(emptyUserStats)
       const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date')
@@ -106,7 +106,7 @@ export default function FilesList(filesListProps: FilesListProps) {
 
       // Set initial selected workflow when filtering workflows
       useEffect(() => {
-            if ((filesListProps.hideAllFilesAndAquaFiles || filesListProps.allowedWorkflows) && uniqueWorkflows.length > 0) {
+            if ((filesListProps.hideAllFilesAndUserAquaFiles || filesListProps.allowedWorkflows) && uniqueWorkflows.length > 0) {
                   // Apply the same filtering logic as renderWorkflowTabs
                   let filteredWorkflows = uniqueWorkflows
 
@@ -117,16 +117,16 @@ export default function FilesList(filesListProps: FilesListProps) {
                         )
                   }
 
-                  // If hideAllFilesAndAquaFiles is true, filter out aqua_files
-                  if (filesListProps.hideAllFilesAndAquaFiles) {
-                        filteredWorkflows = filteredWorkflows.filter(w => w.name !== 'aqua_files')
+                  // If hideAllFilesAndUserFiles is true, filter out user_files
+                  if (filesListProps.hideAllFilesAndUserAquaFiles) {
+                        filteredWorkflows = filteredWorkflows.filter(w => w.name !== 'user_files')
                   }
 
                   if (filteredWorkflows.length > 0 && !selectedWorkflow) {
                         setSelectedWorkflow(filteredWorkflows[0].name)
                   }
             }
-      }, [uniqueWorkflows, filesListProps.hideAllFilesAndAquaFiles, filesListProps.allowedWorkflows])
+      }, [uniqueWorkflows, filesListProps.hideAllFilesAndUserAquaFiles, filesListProps.allowedWorkflows])
 
       // Watch for stats reload triggers
       useReloadWatcher({
@@ -167,7 +167,7 @@ export default function FilesList(filesListProps: FilesListProps) {
             //                   if (workFlow.isWorkFlow && workFlow.workFlow) {
             //                         return selectedFilters.includes(workFlow.workFlow)
             //                   } else {
-            //                         return selectedFilters.includes('aqua_files')
+            //                         return selectedFilters.includes('user_files')
             //                   }
             //             } catch (e) {
             //                   return false
@@ -188,7 +188,7 @@ export default function FilesList(filesListProps: FilesListProps) {
             //             try {
             //                   const workFlow = isWorkFlowData(file.aquaTree!, someData)
 
-            //                   if (selectedWorkflow === 'aqua_files') {
+            //                   if (selectedWorkflow === 'user_files') {
             //                         return !workFlow.isWorkFlow
             //                   }
 
@@ -211,7 +211,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const getFilterOptions = () => {
             const options = [
                   { value: 'all', label: 'All Files .', count: 0 },
-                  // { value: 'aqua_files', label: 'Aqua Files (Non worklows)', count: 0 }
+                  { value: 'user_files', label: 'User Aqua Files', count: 0 }
             ]
 
 
@@ -300,8 +300,8 @@ export default function FilesList(filesListProps: FilesListProps) {
 
             if (selectedFilters.length === 1) {
                   const filter = selectedFilters[0]
-                  if (filter === 'aqua_files') {
-                        return 'Aqua Files (Non workflow)'
+                  if (filter === 'user_files') {
+                        return 'User Aqua Files'
                   }
                   return `${capitalizeWords(filter.replace(/_/g, ' '))} Files`
             }
@@ -312,7 +312,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const getWorkflowStat = (workflowName: string) => {
             if (!stats) return 0
             if (workflowName === 'all') return stats.filesCount
-            if (workflowName === 'aqua_files') return stats.claimTypeCounts.aqua_files
+            if (workflowName === 'user_files') return stats.claimTypeCounts.user_files
             return stats.claimTypeCounts[workflowName as keyof typeof stats.claimTypeCounts] || 0
       }
 
@@ -331,9 +331,9 @@ export default function FilesList(filesListProps: FilesListProps) {
                   )
             }
 
-            // If hideAllFilesAndAquaFiles is true, filter out aqua_files
-            if (filesListProps.hideAllFilesAndAquaFiles) {
-                  workflowsToShow = workflowsToShow.filter(w => w.name !== 'aqua_files')
+            // If hideAllFilesAndUserFiles is true, filter out user_files
+            if (filesListProps.hideAllFilesAndUserAquaFiles) {
+                  workflowsToShow = workflowsToShow.filter(w => w.name !== 'user_files')
             }
 
             return (
@@ -341,8 +341,8 @@ export default function FilesList(filesListProps: FilesListProps) {
                         <div className="border-b border-gray-200">
                               <nav className="-mb-px flex space-x-8 overflow-x-auto">
 
-                                    {/* Only show "All Files" if hideAllFilesAndAquaFiles is false */}
-                                    {!filesListProps.hideAllFilesAndAquaFiles && (
+                                    {/* Only show "All Files" if hideAllFilesAndUserAquaFiles is false */}
+                                    {!filesListProps.hideAllFilesAndUserAquaFiles && (
                                           <button
                                                 onClick={() => setSelectedWorkflow('all')}
                                                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${selectedWorkflow === 'all'
@@ -366,7 +366,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                                                                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                                                   }`}
                                                       >
-                                                            {capitalizeWords(workflow.name.replace(/_/g, ' '))} { workflow.name === 'aqua_files' ? '' : `(${workflow.count ?? 0})`}
+                                                            {capitalizeWords(workflow.name.replace(/_/g, ' '))} { workflow.name === 'user_files' ? '' : `(${workflow.count ?? 0})`}
                                                       </button>
                                                 )
                                           })
