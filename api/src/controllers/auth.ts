@@ -143,8 +143,15 @@ export default async function authController(fastify: FastifyInstance) {
         console.log('[AUTH DEBUG] Using expiration time from SIWE message:', expirationTime);
       }
 
-      const session = await prisma.siweSession.create({
-        data: {
+      const session = await prisma.siweSession.upsert({
+        where: {
+          nonce: siweData.nonce!!,
+        },
+        update: {
+          issuedAt: new Date(),
+          expirationTime: expirationTime
+        },
+        create: {
           address: siweData.address!!,
           nonce: siweData.nonce!!,
           issuedAt: new Date(),
