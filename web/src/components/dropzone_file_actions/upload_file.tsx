@@ -79,7 +79,7 @@ export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload, autoU
                   toast.success('File uploaded successfuly')
 
                   // Trigger reload for all files and stats
-                  await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                  await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
                   await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
                   await triggerWorkflowReload(RELOAD_KEYS.user_stats, true);
 

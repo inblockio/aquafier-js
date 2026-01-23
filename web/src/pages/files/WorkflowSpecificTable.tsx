@@ -49,11 +49,11 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
             }
 
             // For specific workflow types (claims), use the old endpoint
-            if (workflowName !== 'all' && workflowName !== 'aqua_files') {
+            if (workflowName !== 'all' && workflowName !== 'user_files') {
                 endpoint = API_ENDPOINTS.GET_PER_TYPE
                 params.claim_types = JSON.stringify([workflowName])
             } else {
-                // For 'all' and 'aqua_files', use the new sorted endpoint
+                // For 'all' and 'user_files', use the new sorted endpoint
                 params.fileType = workflowName
             }
 
@@ -90,8 +90,8 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
         if (workflowName === 'all') {
             return RELOAD_KEYS.all_files;
         }
-        if (workflowName === 'aqua_files') {
-            return RELOAD_KEYS.aqua_files;
+        if (workflowName === 'user_files') {
+            return RELOAD_KEYS.user_files;
         }
 
         // For specific workflow types, use the workflow name as key if it exists in RELOAD_KEYS

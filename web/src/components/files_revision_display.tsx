@@ -152,7 +152,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                               deleteRevision(revisionHash)
                         }
 
-                         await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                         await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
                                     await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
                  
             } catch (error) {

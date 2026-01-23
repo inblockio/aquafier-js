@@ -43,7 +43,7 @@ const UserStats = () => {
         }
     }
 
-    const totalClaims = Object.values(stats.claimTypeCounts).reduce((sum, count) => sum + count, 0) - (stats.claimTypeCounts.aqua_files || 0);
+    const totalClaims = Object.values(stats.claimTypeCounts).reduce((sum, count) => sum + count, 0) - (stats.claimTypeCounts.user_files || 0);
     const activeClaims = Object.entries(stats.claimTypeCounts).filter(([_, count]) => count > 0).length;
 
     useEffect(() => {

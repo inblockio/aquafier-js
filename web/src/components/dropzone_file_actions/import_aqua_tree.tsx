@@ -65,7 +65,7 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }:
             removeFilesListForUpload(filesWrapper)
 
             // Trigger reload for all files and stats
-            await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+            await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
             await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
 
             return
@@ -123,7 +123,7 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }:
         }
         
         // Trigger reload for all files and stats
-        await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+        await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
         await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
     }
 

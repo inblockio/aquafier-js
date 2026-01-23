@@ -179,7 +179,7 @@ const FilesPage = () => {
                   setFilesListForUpload(prev => prev.filter((_, i) => i !== index))
                   clearFileInput()
 
-                    await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                    await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
                   await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
 
 
@@ -335,7 +335,7 @@ const FilesPage = () => {
             // const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
             // setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
             // Trigger reload for all files and stats
-            await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+            await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
             await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
 
       }

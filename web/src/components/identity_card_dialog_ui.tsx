@@ -172,7 +172,7 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
           toast.success('Identity card created successfully')
 
           // Trigger file reloads
-          await triggerWorkflowReload(RELOAD_KEYS.aqua_files, false)
+          await triggerWorkflowReload(RELOAD_KEYS.user_files, false)
           await triggerWorkflowReload(RELOAD_KEYS.all_files, false)
           await triggerWorkflowReload(RELOAD_KEYS.identity_card, true)
 
@@ -599,7 +599,7 @@ setSelectedWorkflows([]);
                     showHeader={false}
                     onFileDeSelected={handleFileDeselected}
                     onFileSelected={handleFileSelected}
-                    hideAllFilesAndAquaFiles={true}
+                    hideAllFilesAndUserAquaFiles={true}
                     allowedWorkflows={allowedWorkflowsForIdentityCard}
                   />
                 </div>

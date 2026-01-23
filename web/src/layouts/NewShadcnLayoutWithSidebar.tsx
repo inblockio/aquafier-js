@@ -224,7 +224,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                                 callBack={async function (): Promise<void> {
                                                       await triggerWorkflowReload(RELOAD_KEYS.aqua_sign, true);
                                                       await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
-                                                      await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
                                                       setOpenDialog(null)
                                                 }}
                                                 openCreateTemplatePopUp={false}
@@ -237,7 +237,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                                 callBack={async function (): Promise<void> {
                                                       await triggerWorkflowReload(RELOAD_KEYS.user_signature, true);
                                                       await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
-                                                      await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
                                                       setOpenDialog(null)
                                                 }}
                                                 openCreateTemplatePopUp={false}
@@ -250,7 +250,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                                 callBack={async function (): Promise<void> {
                                                       await triggerWorkflowReload(RELOAD_KEYS.identity_claim, true);
                                                       await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
-                                                      await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
                                                       setOpenDialog(null)
                                                 }}
                                                 openCreateTemplatePopUp={false}
@@ -265,7 +265,7 @@ export default function NewShadcnLayoutWithSidebar() {
 
                                                       await triggerWorkflowReload(RELOAD_KEYS.dba_claim, true);
                                                       await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
-                                                      await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
 
                                                       setOpenDialog(null)
                                                 }}
@@ -280,7 +280,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                                 callBack={async function (): Promise<void> {
                                                       await triggerWorkflowReload(RELOAD_KEYS.domain_claim, true);
                                                       await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
-                                                      await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
 
                                                       setOpenDialog(null)
                                                 }}
@@ -294,7 +294,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                                 callBack={async function (): Promise<void> {
                                                       await triggerWorkflowReload(RELOAD_KEYS.identity_attestation, true);
                                                       await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
-                                                      await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
                                                       setOpenDialog(null)
                                                 }}
                                                 openCreateTemplatePopUp={false}
@@ -308,7 +308,7 @@ export default function NewShadcnLayoutWithSidebar() {
 
                                                       await triggerWorkflowReload(RELOAD_KEYS.email_claim, true);
                                                       await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
-                                                      await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
 
                                                       setOpenDialog(null)
                                                 }}
@@ -322,7 +322,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                                 callBack={async function (): Promise<void> {
                                                       await triggerWorkflowReload(RELOAD_KEYS.phone_number_claim, true);
                                                       await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
-                                                      await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
 
                                                       setOpenDialog(null)
                                                 }}

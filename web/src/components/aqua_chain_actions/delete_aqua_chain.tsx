@@ -182,7 +182,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
       const refetchAllUserFiles = () => {
             // triggerWorkflowReload(RELOAD_KEYS.user_stats)
             triggerWorkflowReload(RELOAD_KEYS.all_files, true)
-            triggerWorkflowReload(RELOAD_KEYS.aqua_files, true)
+            triggerWorkflowReload(RELOAD_KEYS.user_files, true)
       }
 
       // If used inside dropdown, use callback pattern

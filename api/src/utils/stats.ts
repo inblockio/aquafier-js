@@ -4,7 +4,7 @@ import logger from "./logger";
 import { findAquaTreeRevision } from "./revisions_operations_utils";
 import fs from "fs"
 
-
+ 
 
 export const calculateStorageUsage = async (userAddress: string) => {
 

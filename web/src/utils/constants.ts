@@ -145,7 +145,7 @@ export const testWitness = {
             '1220c828259c0c516bfe3bbf3d67027eae72ddd3cba24286a41db24c8a835b197e9c',
       ],
 }
-
+ 
 export const API_ENDPOINTS = {
       NOTIFICATIONS: '/notifications',
       NOTIFICATIONS_READ_ALL: '/notifications/read-all',
@@ -153,7 +153,7 @@ export const API_ENDPOINTS = {
       GET_PER_TYPE: 'tree/per_type',
       USER_STATS: 'user_data_stats',
       ALL_USER_FILES: 'tree/all_files',
-      USER_AQUA_FILES: 'tree/aqua_files',
+      USER_FILES: 'tree/user_files',
       SORTED_FILES: 'tree/sorted_files',
       SYSTEM_AQUA_FILES: 'system/aqua_tree',
       SYSTEM_AQUA_FILES_NAMES: 'system/aqua_tree/names',
