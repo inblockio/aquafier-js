@@ -359,7 +359,7 @@ model ENSName {
   id             String   @id @default(uuid())
   wallet_address String
   ens_name       String
-  // ens_expiry
+  ens_expiry     DateTime?
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 

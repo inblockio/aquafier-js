@@ -501,8 +501,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                   if (response.status === 200 || response.status === 201) {
                         if (isFinal) {
 
-const urlPath = `${backend_url}/explorer_files`
-const url2 = ensureDomainUrlHasSSL(urlPath)
+                              const urlPath = `${backend_url}/explorer_files`
+                              const url2 = ensureDomainUrlHasSSL(urlPath)
                               const filesApi = await fetchFiles(session!.address, url2, session!.nonce)
                               setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
@@ -794,8 +794,9 @@ const url2 = ensureDomainUrlHasSSL(urlPath)
             })
 
             if (res.status === 200 || res.status === 201) {
-                  await triggerWorkflowReload(RELOAD_KEYS.aqua_files, false);
-                  await triggerWorkflowReload(RELOAD_KEYS.all_files, false);
+                  await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                  await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
+                  await triggerWorkflowReload(RELOAD_KEYS.ens_claim, true);
                   await triggerWorkflowReload(RELOAD_KEYS.contacts, true);
                   toast.success("You have successfully created your ENS Claim")
             } else {
@@ -814,6 +815,7 @@ const url2 = ensureDomainUrlHasSSL(urlPath)
       }
 
       const loadEnsName = async () => {
+            console.log("Loading ens name: ")
             if (!session && !backend_url) {
                   return
             }
@@ -837,7 +839,7 @@ const url2 = ensureDomainUrlHasSSL(urlPath)
             }
 
       }
-      // console.log("Claims: ", claims)
+      console.log("ENS Claim: ", walletAddress === session?.address, ensName, claims.length > 0, !isLoading, !loading, !hasEnsClaim())
 
       useEffect(() => {
             if (walletAddress && session?.nonce) {
@@ -846,8 +848,9 @@ const url2 = ensureDomainUrlHasSSL(urlPath)
       }, [walletAddress, session?.nonce, files])
 
       useEffect(() => {
+            console.log(session, backend_url)
             if (session?.address && session.nonce && backend_url) {
-                  loadEnsName
+                  loadEnsName()
             }
       }, [session, backend_url])
 
