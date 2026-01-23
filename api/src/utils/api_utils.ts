@@ -1,7 +1,9 @@
-import Aquafier, { AquaTree } from "aqua-js-sdk"
+import Aquafier, { AquaTree, cliGreenify, cliRedify, cliYellowfy } from "aqua-js-sdk"
 import { prisma } from "../database/db"
 import { SYSTEM_WALLET_ADDRESS } from "../models/constants"
 import { ethers } from "ethers"
+import { createPublicClient, http, labelhash } from "viem"
+import { mainnet } from "viem/chains"
 import { saveAquaTree } from "./revisions_utils"
 import { getAquaAssetDirectory, getFileUploadDirectory } from "./file_utils"
 import { randomUUID } from 'crypto';
@@ -23,23 +25,101 @@ const getPort = (): number => {
 
 const fetchEnsName = async (walletAddress: string, alchemyProjectKey: string): Promise<string> => {
     let ensName = "";
-    try {
-        // Create an Ethereum provider
-        // const provider = new ethers.JsonRpcProvider(
-        //     `https://mainnet.infura.io/v3/${alchemyProjectKey}`
-        // );
-        console.log(`Using Alchemy for ENS lookup ${alchemyProjectKey}`);
-        const provider = new ethers.JsonRpcProvider(`https://eth-mainnet.g.alchemy.com/v2/${alchemyProjectKey}`);
 
-        // Look up ENS name for the address
-        ensName = await provider.lookupAddress(walletAddress) ?? "";
+    // Normalize address
+    let normalizedAddress = walletAddress.trim();
+    if (!normalizedAddress.startsWith("0x")) {
+        Logger.error(`Invalid address provided to fetchEnsName: ${walletAddress}`);
+        return "";
+    }
+
+    try {
+        // Attempt 1: Alchemy via Viem
+        const sources = [];
+        if (alchemyProjectKey) {
+            sources.push({ url: `https://eth-mainnet.g.alchemy.com/v2/${alchemyProjectKey}`, name: "Alchemy" });
+        }
+        sources.push({ url: "https://ethereum-rpc.publicnode.com", name: "Public Node" });
+
+        for (const source of sources) {
+            try {
+                console.log(`Attempting ENS lookup via ${source.name}...`);
+                const client = createPublicClient({
+                    chain: mainnet,
+                    transport: http(source.url)
+                });
+
+                const res = await client.getEnsName({ address: normalizedAddress as `0x${string}` });
+                if (res) {
+                    ensName = res;
+                    console.log(cliGreenify(`Successfully resolved ENS Name via ${source.name}: ${ensName}`));
+                    break;
+                }
+            } catch (error) {
+                Logger.warn(`ENS lookup failed via ${source.name}:`, error);
+            }
+        }
+
+        if (!ensName) {
+            console.log(cliYellowfy(`No primary ENS name found for ${normalizedAddress}`));
+        }
 
     } catch (error: any) {
+        console.log(cliRedify(`Error in fetchEnsName: ${error}`));
         Logger.error('Error fetching ENS name:', error);
-        // Continue with creation without ENS name
     }
 
     return ensName
+}
+
+const fetchEnsExpiry = async (domainName: string, alchemyProjectKey: string): Promise<Date | null> => {
+    // Only works for .eth names on mainnet
+    if (!domainName.endsWith(".eth")) {
+        return null;
+    }
+
+    const label = domainName.split(".")[0];
+    const tokenId = BigInt(labelhash(label));
+
+    // Correct registrar address: 0x57f18818A2B92251d52207707a215774a228318b
+    const baseRegistrarAddress = "0x57f1887a8bf19b14fc0df6fd9b2acc9af147ea85";
+    const abi = [{
+        name: 'nameExpires',
+        type: 'function',
+        stateMutability: 'view',
+        inputs: [{ name: 'id', type: 'uint256' }],
+        outputs: [{ name: '', type: 'uint256' }],
+    }] as const;
+
+    const sources = [];
+    if (alchemyProjectKey) {
+        sources.push({ url: `https://eth-mainnet.g.alchemy.com/v2/${alchemyProjectKey}`, name: "Alchemy" });
+    }
+    sources.push({ url: "https://ethereum-rpc.publicnode.com", name: "Public Node" });
+
+    for (const source of sources) {
+        try {
+            const client = createPublicClient({
+                chain: mainnet,
+                transport: http(source.url)
+            });
+
+            const expiry = await client.readContract({
+                address: baseRegistrarAddress,
+                abi,
+                functionName: 'nameExpires',
+                args: [tokenId],
+            });
+
+            if (expiry && expiry > 0n) {
+                return new Date(Number(expiry) * 1000);
+            }
+        } catch (error) {
+            Logger.warn(`ENS expiry lookup failed via ${source.name}:`, error);
+        }
+    }
+
+    return null;
 }
 
 
@@ -429,4 +509,4 @@ async function setupPaymentPlans() {
     console.log('\n✅ Database seeding completed successfully!');
 }
 
-export { getHost, getPort, fetchEnsName, setUpSystemTemplates, setupPaymentPlans }
+export { getHost, getPort, fetchEnsName, fetchEnsExpiry, setUpSystemTemplates, setupPaymentPlans }

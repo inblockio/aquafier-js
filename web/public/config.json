@@ -7,7 +7,7 @@
   "APM_ENABLED": true,
   "APM_SERVER_URL": "https://b9b5fdeede1d43c5ae69211b244715c6.apm.europe-west3.gcp.cloud.es.io:443",
   "APM_SERVICE_NAME": "aquafier-frontend",
-  "AUTH_PROVIDER":"wallet_connect",
+  "AUTH_PROVIDER":"metamask",
   "DEFAULT_WITNESS_NETWORK":"mainnet",
   "STRIPE_PUBLISHABLE_KEY": "pk_test_YOUR_STRIPE_PUBLISHABLE_KEY",
   "DEFAULT_PAYMENT_METHOD": "CRYPTO",

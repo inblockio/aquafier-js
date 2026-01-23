@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyRequest } from 'fastify';
 import { prisma } from '../database/db';
 import { SessionQuery, SiweRequest } from '../models/request_models';
 import { verifySiweMessage } from '../utils/auth_utils';
-import { fetchEnsName } from '../utils/api_utils';
+import { fetchEnsExpiry, fetchEnsName } from '../utils/api_utils';
 import Logger, { EventCategory, EventOutcome, EventType } from "../utils/logger";
 import logger from '../utils/logger';
 
@@ -201,11 +201,15 @@ export default async function authController(fastify: FastifyInstance) {
           if (alchemyProjectKey && siweData.address) {
 
             let ensName = ""
-            
+            let ensExpiry: Date | null = null
+
             try {
               ensName = await fetchEnsName(siweData.address!!, alchemyProjectKey)
+              if (ensName) {
+                ensExpiry = await fetchEnsExpiry(ensName, alchemyProjectKey)
+              }
             } catch (error) {
-              logger.error(`Unable to fetch ENS name: ${error}`)
+              logger.error(`Unable to fetch ENS data: ${error}`)
             }
 
 
@@ -228,7 +232,8 @@ export default async function authController(fastify: FastifyInstance) {
               await prisma.eNSName.update({
                 data: {
                   wallet_address: siweData.address,
-                  ens_name: ensName
+                  ens_name: ensName,
+                  ens_expiry: ensExpiry
                 },
                 where: {
                   id: existingEnsEntry.id
@@ -238,7 +243,8 @@ export default async function authController(fastify: FastifyInstance) {
               await prisma.eNSName.create({
                 data: {
                   wallet_address: siweData.address,
-                  ens_name: ensName
+                  ens_name: ensName,
+                  ens_expiry: ensExpiry
                 },
               })
             }

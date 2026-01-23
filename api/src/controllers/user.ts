@@ -4,7 +4,7 @@ import { prisma } from '../database/db';
 // import { Settings } from '@prisma/client';
 import { SettingsRequest, UserAttestationAddressesRequest } from '../models/request_models';
 // import { verifySiweMessage } from '../utils/auth_utils';
-import { fetchEnsName } from '../utils/api_utils';
+import { fetchEnsExpiry, fetchEnsName } from '../utils/api_utils';
 import { getAddressGivenEnsName, isEnsNameOrAddrss } from '../utils/server_utils';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
 import { Prisma, PrismaClient, UserAttestationAddresses } from '@prisma/client';
@@ -125,6 +125,7 @@ export default async function userController(fastify: FastifyInstance) {
         }
 
         const ensName = await fetchEnsName(address, alchemyProjectKey);
+        console.log(cliRedify(`Found ENS NAME: ${ensName}`))
         if (ensName) {
             // Save to database
             await saveEnsToDatabase(address, ensName, useEns);
@@ -199,6 +200,9 @@ export default async function userController(fastify: FastifyInstance) {
 
     // Helper function to save ENS data to database
     async function saveEnsToDatabase(address: string, ensName: string, useEns: string | undefined) {
+        const alchemyProjectKey = process.env.ALCHEMY_API_KEY || "";
+        const ensExpiry = ensName ? await fetchEnsExpiry(ensName, alchemyProjectKey) : null;
+
         if (useEns === 'true') {
             // First, try to find existing record with case-insensitive search
             const existingEnsRecord = await prisma.eNSName.findFirst({
@@ -214,12 +218,12 @@ export default async function userController(fastify: FastifyInstance) {
                 // Update existing record using its ID
                 await prisma.eNSName.update({
                     where: { id: existingEnsRecord.id },
-                    data: { ens_name: ensName, wallet_address: address }
+                    data: { ens_name: ensName, wallet_address: address, ens_expiry: ensExpiry }
                 });
             } else {
                 // Create new record
                 await prisma.eNSName.create({
-                    data: { wallet_address: address, ens_name: ensName }
+                    data: { wallet_address: address, ens_name: ensName, ens_expiry: ensExpiry }
                 });
             }
         }
@@ -277,7 +281,7 @@ export default async function userController(fastify: FastifyInstance) {
 
         try {
 
-            let ensAquaClaim = await generateENSClaim(userEns, new Date().toString(), userAddress)
+            let ensAquaClaim = await generateENSClaim(userEns, ensEntry.ens_expiry?.toDateString() ?? new Date().toString(), userAddress)
             let ensClaimAquaTree = ensAquaClaim?.aquaTree
             let ensFiledata = ensAquaClaim?.ensJSONfileData
             let ensFileName = ensAquaClaim?.ensJSONfileName

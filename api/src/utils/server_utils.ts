@@ -306,11 +306,9 @@ export async function getAddressGivenEnsName(ensName: string): Promise<string | 
             Logger.error('ALCHEMY_API_KEY not found in environment variables');
             return null;
         }
-
-       
-
         // Create an Ethereum provider
-        const provider = new ethers.JsonRpcProvider(`https://eth-mainnet.g.alchemy.com/v2/${alchemyProjectKey}`);
+        // const provider = new ethers.JsonRpcProvider(`https://eth-mainnet.g.alchemy.com/v2/${alchemyProjectKey}`);
+        const provider = new ethers.JsonRpcProvider(`https://ethereum-rpc.publicnode.com`);
 
         // Resolve ENS name to address
         const address = await provider.resolveName(ensName);
