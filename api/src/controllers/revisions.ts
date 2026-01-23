@@ -6,6 +6,7 @@ import {
     deleteAquaTree,
     getSignatureAquaTrees,
     getUserApiFileInfo,
+    isWorkFlowData,
     saveARevisionInAquaTree
 } from '../utils/revisions_utils';
 import { AquaTree, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
@@ -15,7 +16,7 @@ import WebSocketActions from '../constants/constants';
 import { createAquaTreeFromRevisions, deleteChildrenFieldFromAquaTrees } from '../utils/revisions_operations_utils';
 import Logger from "../utils/logger";
 import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
-import { TEMPLATE_HASHES } from '../models/constants';
+import { systemTemplateHashes, TEMPLATE_HASHES } from '../models/constants';
 import { ethers } from 'ethers';
 import * as fs from 'fs';
 
@@ -1022,7 +1023,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
 
     // Get aqua files only, files that are not part of any workflow
-    fastify.get('/tree/aqua_files', {
+    fastify.get('/tree/user_files', {
         preHandler: authenticate
     }, async (request: AuthenticatedRequest, reply) => {
         const userAddress = request.user?.address;
@@ -1264,7 +1265,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 const filteredFileNames = fileNameRecords.filter(fn => fileRevisionHashes.has(fn.pubkey_hash));
 
                 // Filter out workflow files if needed
-                if (fileType === 'aqua_files') {
+                if (fileType === 'user_files') {
                     const workflowLatestRecords = await prisma.latest.findMany({
                         where: {
                             AND: {
@@ -1362,7 +1363,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 }));
 
                 // Filter out workflow files if needed
-                if (fileType === 'aqua_files') {
+                if (fileType === 'user_files') {
                     const workflowLatestRecords = await prisma.latest.findMany({
                         where: {
                             AND: {
@@ -1395,7 +1396,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                     AND: {
                         user: userAddress,
                         template_id: null,
-                        is_workflow: fileType === 'all' || fileType == "aqua_files" ? false : undefined
+                        is_workflow: fileType === 'all' || fileType == "user_files" ? false : undefined
                     }
                 };
 
@@ -1438,6 +1439,24 @@ export default async function revisionsController(fastify: FastifyInstance) {
             });
 
             displayData = await Promise.all(displayDataPromises);
+
+            if(fileType === 'user_files'){
+                // Filter out any workflow files that might have slipped through
+                let filteredDisplayData: Array<{
+                    aquaTree: AquaTree,
+                    fileObject: FileObject[]
+                }> = []
+
+                for(const dataItem of displayData){
+                    let isWorkflow = isWorkFlowData(dataItem.aquaTree, systemTemplateHashes);
+                    if(!isWorkflow || isWorkflow.isWorkFlow === false){
+                        filteredDisplayData.push(dataItem);
+                    }
+
+                }
+                displayData = filteredDisplayData;
+                totalCount = displayData.length;
+            }
 
             const queryEnd = performance.now()
             const queryDuration = (queryEnd - queryStart) / 1000

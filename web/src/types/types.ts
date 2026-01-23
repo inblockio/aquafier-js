@@ -107,7 +107,7 @@ export interface FilesListProps {
       selectedFiles: Array<ApiFileInfo>
       onFileDeSelected: (file: ApiFileInfo) => void
       onFileSelected: (file: ApiFileInfo) => void
-      hideAllFilesAndAquaFiles?: boolean // Hide "All Files" and "Aqua files" tabs
+      hideAllFilesAndUserAquaFiles?: boolean // Hide "All Files" and "User Aqua files" tabs
       allowedWorkflows?: string[] // Only show these specific workflow tabs (if provided, filters all workflows)
 }
 
@@ -392,7 +392,7 @@ export interface IUserStats {
       filesCount: number,
       storageUsed: number,
       claimTypeCounts: {
-            aqua_files: number,
+            user_files: number,
             access_agreement: number,
             aqua_sign: number,
             cheque: number,
@@ -411,7 +411,7 @@ export const emptyUserStats: IUserStats = {
       filesCount: 0,
       storageUsed: 0,
       claimTypeCounts: {
-            aqua_files: 0,
+            user_files: 0,
             access_agreement: 0,
             aqua_sign: 0,
             cheque: 0,

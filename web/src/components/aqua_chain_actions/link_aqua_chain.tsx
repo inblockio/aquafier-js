@@ -121,7 +121,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
             setLinking(false)
 
             // Trigger actions
-            await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true)
+            await triggerWorkflowReload(RELOAD_KEYS.user_files, true)
             await triggerWorkflowReload(RELOAD_KEYS.all_files, true)
       }
 

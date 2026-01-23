@@ -75,7 +75,7 @@ useReloadWatcher({
 // In WorkflowSpecificTable component
 const getReloadKey = (workflowName: string): string => {
   if (workflowName === 'all') return RELOAD_KEYS.all_files;
-  if (workflowName === 'aqua_files') return RELOAD_KEYS.aqua_files;
+  if (workflowName === 'user_files') return RELOAD_KEYS.user_files;
   
   // Use workflow name as key if it exists in RELOAD_KEYS
   const reloadKey = (RELOAD_KEYS as any)[workflowName];
@@ -103,7 +103,7 @@ export const RELOAD_KEYS = {
   email_claim: "email_claim",
   phone_number_claim: "phone_number_claim",
   user_profile: "user_profile",
-  aqua_files: "aqua_files",        // Custom: all aqua files
+  user_files: "user_files",        // Custom: all aqua files
   all_files: "all_files",          // Custom: all user files
   notifications: "notifications",
   claims_and_attestations: "claims_and_attestations",
@@ -113,7 +113,7 @@ export const RELOAD_KEYS = {
 
 ## Special Cases
 
-- **aqua_files** and **all_files**: Custom file views that don't correspond to specific workflow types
+- **user_files** and **all_files**: Custom file views that don't correspond to specific workflow types
 - **Identity Claims**: When identity claims are created, both the specific claim type and `claims_and_attestations` are triggered
 - **Automatic Stats Reload**: When `watchAll: true` is used, `user_stats` is automatically triggered
 - **Automatic Grouping**: The system automatically handles related reloads (e.g., identity claims also trigger the claims page)

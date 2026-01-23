@@ -511,7 +511,7 @@ const url2 = ensureDomainUrlHasSSL(urlPath)
 
 
                               // trigger file reloads 
-                              await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                              await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
                               await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
 
 
@@ -794,7 +794,7 @@ const url2 = ensureDomainUrlHasSSL(urlPath)
             })
 
             if (res.status === 200 || res.status === 201) {
-                  await triggerWorkflowReload(RELOAD_KEYS.aqua_files, false);
+                  await triggerWorkflowReload(RELOAD_KEYS.user_files, false);
                   await triggerWorkflowReload(RELOAD_KEYS.all_files, false);
                   await triggerWorkflowReload(RELOAD_KEYS.contacts, true);
                   toast.success("You have successfully created your ENS Claim")
