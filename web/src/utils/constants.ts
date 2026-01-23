@@ -10,6 +10,7 @@ export const maxUserFileSizeForUpload = 1024 * 1024 * 1024 // 1 GB in bytes
 export const maxFileSizeForUpload = 200 * 1024 * 1024 // 200MB in bytes
 
 export const SESSION_COOKIE_NAME = 'pkc_nonce'
+export const BACKEND_URL_STORAGE_KEY = 'aquafier_backend_url'
 export const ERROR_TEXT = '--error--'
 export const ERROR_UKNOWN = '--unknown--'
 export const ETH_CHAINID_MAP: Record<string, string> = {
@@ -104,6 +105,14 @@ export const initializeBackendUrl = async (): Promise<{
       } catch (err) {
             // If there's an error, it will use the default URL
             console.error('Error reading config:', err)
+      }
+
+      // Sync to localStorage for synchronous access (needed for SIWE getSession before IndexedDB rehydrates)
+      try {
+            console.log('[SIWE DEBUG] initializeBackendUrl - saving to localStorage:', BACKEND_URL)
+            localStorage.setItem(BACKEND_URL_STORAGE_KEY, BACKEND_URL)
+      } catch (e) {
+            console.warn('Failed to sync backend_url to localStorage:', e)
       }
 
       return { backend_url: BACKEND_URL, config: configObj, apmConfig: apmConfig }
