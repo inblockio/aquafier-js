@@ -45,7 +45,7 @@ export default function ClaimTypesDropdownButton() {
   // Calculate remaining limits (using existing files remaining logic for claims as requested)
   // For claims (files <= 0), we use the same remaining logic but stricter check
   const filesRemaining = (limits?.max_files || 0) - (usage?.files_count || 0)
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const buttonRef = useRef<HTMLDivElement>(null);
 
   const handleItemClick = (item: 'identity_claim' | 'dns_claim' | 'user_signature' | 'email_claim' | 'phone_number_claim' | 'dba_claim' | 'identity_card') => {
     setIsOpen(false);
@@ -121,8 +121,8 @@ export default function ClaimTypesDropdownButton() {
       <div
         className="fixed z-[10000] w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
         style={{
-          top: `${dropdownPosition.top} px`,
-          left: `${dropdownPosition.left} px`
+          top: `${dropdownPosition.top}px`,
+          left: `${dropdownPosition.left}px`
         }}
       >
         <div className="py-1">
@@ -204,9 +204,8 @@ export default function ClaimTypesDropdownButton() {
       <div className="relative inline-block text-left">
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="inline-block">
+            <div className="inline-block" ref={buttonRef}>
               <Button
-                ref={buttonRef}
                 type="button"
                 disabled={filesRemaining <= 0}
                 className="flex items-center gap-1 sm:gap-2 text-white px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium hover:bg-gray-700 transition-colors cursor-pointer whitespace-nowrap shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
