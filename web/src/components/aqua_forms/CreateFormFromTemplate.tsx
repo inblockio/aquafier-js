@@ -87,6 +87,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useNavigate } from 'react-router-dom'
 import { API_ENDPOINTS } from '@/utils/constants'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { useAquaSystemNames } from '@/hooks/useAquaSystemNames'
 
 /** Props for the SortableSignerItem component */
 interface SortableSignerItemProps {
@@ -188,6 +189,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 }) => {
       const [submittingTemplateData, setSubmittingTemplateData] = useState(false)
       const [modalFormErorMessae, setModalFormErorMessae] = useState('')
+      const { systemNames: systemAquaFileNames } = useAquaSystemNames()
 
       const {
             session,
@@ -223,7 +225,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
       const fetchInfoDetails = async () => {
             try {
-                  const url = `${backend_url}/app_info`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/app_info`);
 
                   const response = await axios.get(url)
 
@@ -603,7 +605,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   const url3 = `${backend_url}/system/aqua_tree`
                   const systemFiles = await fetchSystemFiles(url3, sessionAddress)
                   allSystemFiles = systemFiles
-            }else {
+            } else {
                   console.log(`Using cached system files`)
                   console.log(`systemFileInfo length: ${systemFileInfo.length} : ${JSON.stringify(systemFileInfo, null, 2)}`)
             }
@@ -670,9 +672,20 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             if (genHash) {
                   completeFormData[`identity_claim_id`] = genHash
 
-                  if(completeFormData['claim_type'] == undefined){
-                        //  const { workFlow } = isWorkFlowData(selectedFileInfo.aquaTree!, systemAquaFileNames)
-                        completeFormData[`claim_type`] =  'aqua_certificate'; //////////
+                  const { isWorkFlow, workFlow } = isWorkFlowData(selectedFileInfo.aquaTree!, systemAquaFileNames)
+
+                  if (completeFormData['claim_type'] == undefined && isWorkFlow && workFlow == 'aqua_certificate') {
+                        
+                              let genesisRevision = selectedFileInfo.aquaTree!.revisions[genHash] as Revision
+                              if (!genesisRevision) {
+                                    alert(`Error: The aqua tree selected does not contain a genesis revision, please report this issue.`)
+                                    throw new Error('Identity claim genesis id not found in selected file')
+
+                              }
+                              let creator = genRevision['forms_creator'] as string
+                              completeFormData[`claim_wallet_address`] = creator ?? '';
+             
+                        completeFormData[`claim_type`] = 'aqua_certificate';
                   }
                   completeFormData[`attestion_type`] = 'user'
             } else {
@@ -1604,7 +1617,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
                   {otherFieldsExist && (
                         <>
-                       
+
                               {((formData[field.name] as string) ?? '')?.toLocaleLowerCase() === 'other' && otherFieldsExist && (
                                     <Label htmlFor={`input-options-other`} className="text-sm font-medium text-gray-900">
                                           Please specify
