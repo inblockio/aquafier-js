@@ -57,14 +57,14 @@ export default function UsageMetrics() {
       unit: '',
       percentage: percentageUsed?.contracts || 0,
     },
-    {
-      icon: Layout,
-      label: 'Templates',
-      used: usage?.templates_count || 0,
-      limit: limits?.max_templates || 0,
-      unit: '',
-      percentage: percentageUsed?.templates || 0,
-    },
+    // {
+    //   icon: Layout,
+    //   label: 'Templates',
+    //   used: usage?.templates_count || 0,
+    //   limit: limits?.max_templates || 0,
+    //   unit: '',
+    //   percentage: percentageUsed?.templates || 0,
+    // },
   ];
 
   return (
