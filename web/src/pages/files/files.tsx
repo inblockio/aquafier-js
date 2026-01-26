@@ -78,7 +78,7 @@ const FilesPage = () => {
       // Calculate remaining limits
       const filesRemaining = (limits?.max_files || 0) - (usage?.files_count || 0)
       const contractsRemaining = (limits?.max_contracts || 0) - (usage?.contracts_count || 0)
-      const templatesRemaining = (limits?.max_templates || 0) - (usage?.templates_count || 0)
+      // const templatesRemaining = (limits?.max_templates || 0) - (usage?.templates_count || 0)
 
       // Upload popup state
       const [uploadQueue, setUploadQueue] = useState<UploadStatus[]>([])

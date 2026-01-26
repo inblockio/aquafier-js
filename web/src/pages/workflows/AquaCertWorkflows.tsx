@@ -413,7 +413,7 @@ export default function AquaCertWorkflows() {
                                                 onClick={() => {
                                                       // setOpenCreateAquaSignPopUp(true)
                                                       setOpenDialog({
-                                                            dialogType: 'aqua_sign',
+                                                            dialogType: 'aqua_certificate',
                                                             isOpen: true,
                                                             onClose: () => setOpenDialog(null),
                                                             onConfirm: () => {

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { HardDrive, FileText, Layout, File } from 'lucide-react';
+import { HardDrive, FileText, File } from 'lucide-react';
 import { useSubscriptionStore } from '../../stores/subscriptionStore';
 import { fetchUsageStats, reFetchUsageStats } from '../../api/subscriptionApi';
 
