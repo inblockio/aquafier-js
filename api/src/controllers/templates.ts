@@ -75,9 +75,16 @@ export default async function templatesController(fastify: FastifyInstance) {
                             equals: template.id,
                             mode: 'insensitive'
                         }
+                    },
+                    include: {
+                        options: true
                     }
                 });
-                
+
+
+
+               
+
                 let subtitle = template.subtitle
                 if (template.name === "aqua_sign") {
                     subtitle = "Create new PDF signing workflow"

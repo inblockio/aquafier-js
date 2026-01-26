@@ -112,7 +112,7 @@ export interface FilesListProps {
 }
 
 export interface OpenDialog {
-      dialogType: 'share_dialog' | 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'dba_claim' | 'aqua_sign' | 'identity_attestation' | 'early_bird_offer' | 'user_signature' | 'email_claim' | 'phone_number_claim' | 'explorer_workspace_download' | 'identity_card',//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'
+      dialogType: 'share_dialog' | 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'dba_claim' | 'aqua_sign' | 'identity_attestation' | 'early_bird_offer' | 'user_signature' | 'email_claim' | 'phone_number_claim' | 'explorer_workspace_download' | 'identity_card' | 'aqua_certificate',//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'
       isOpen: boolean
       onClose: () => void
       onConfirm: (data: any) => void

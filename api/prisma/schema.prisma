@@ -86,12 +86,28 @@ model AquaTemplateFields {
   placeholder   String?
   support_text  String?
   default_value String?
+  depend_on_field String?
+  depend_on_value String?
+
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
   AquaForm AquaTemplate @relation(fields: [aqua_form_id], references: [id])
-
+ options         AquaTemplateFieldOptions[]
+ 
   @@map("aqua_templates_fields")
+}
+
+model AquaTemplateFieldOptions {
+  id            String   @id @default(uuid())
+  field_id      String
+  value         String
+  label         String
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  AquaTemplateFieldOption AquaTemplateFields @relation(fields: [field_id], references: [id])
+  @@map("aqua_template_field_options")
 }
 
 model UserAttestationAddresses {

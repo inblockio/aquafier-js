@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, Globe, Mail, Phone, Plus, Scale, Signature, UserLock, Blinds } from 'lucide-react';
+import { ChevronDown, Globe, Mail, Phone, Plus, Scale, Signature, UserLock, Blinds, FileCheck } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useSubscriptionStore } from '../stores/subscriptionStore';
 import { fetchUsageStats } from '../api/subscriptionApi';
@@ -47,7 +47,7 @@ export default function ClaimTypesDropdownButton() {
   const filesRemaining = (limits?.max_files || 0) - (usage?.files_count || 0)
   const buttonRef = useRef<HTMLDivElement>(null);
 
-  const handleItemClick = (item: 'identity_claim' | 'dns_claim' | 'user_signature' | 'email_claim' | 'phone_number_claim' | 'dba_claim' | 'identity_card') => {
+  const handleItemClick = (item: 'identity_claim' | 'dns_claim' | 'user_signature' | 'email_claim' | 'phone_number_claim' | 'dba_claim' | 'identity_card' | 'aqua_certificate') => {
     setIsOpen(false);
 
     setOpenDialog({ dialogType: item, isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
@@ -184,6 +184,18 @@ export default function ClaimTypesDropdownButton() {
             <Phone className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
             Create Phone Number claim
           </button>
+
+
+
+          <button
+            data-testid="create-phone-number-claim-dropdown-button-item"
+            onClick={() => handleItemClick('aqua_certificate')}
+            className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+          >
+            <FileCheck className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+            Create certificate/proof claim
+          </button>
+
 
 
           <button
