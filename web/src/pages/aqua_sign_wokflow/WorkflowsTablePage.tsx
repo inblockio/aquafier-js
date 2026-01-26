@@ -48,7 +48,7 @@ import axios from 'axios'
 import { API_ENDPOINTS } from '@/utils/constants'
 import { GlobalPagination } from '@/types'
 import CustomPagination from '@/components/common/CustomPagination'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 import { OpenSelectedFileDetailsButton } from '@/components/aqua_chain_actions/details_button'
 import { RELOAD_KEYS } from '@/utils/reloadDatabase'
@@ -330,6 +330,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
 }
 
 export default function WorkflowsTablePage() {
+       const { workflowType } = useParams<{ workflowType: string }>();
       const { session, backend_url, setOpenDialog } = useStore(appStore)
       const [pagination, setPagination] = useState<GlobalPagination | null>(null)
 
@@ -355,7 +356,7 @@ export default function WorkflowsTablePage() {
                   const params = {
                         page,
                         limit: 10,
-                        claim_types: JSON.stringify(['aqua_sign'])
+                        claim_types: workflowType ? JSON.stringify([workflowType]) : JSON.stringify(['aqua_sign']) //default to aqua_sign if no type provided
                   }
                   const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
                         headers: {
