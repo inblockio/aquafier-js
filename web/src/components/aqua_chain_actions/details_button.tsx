@@ -32,7 +32,7 @@ export const OpenSelectedFileDetailsButton = ({ file, children, index }: { file:
                               }}
                         >
                               <LuEye className="w-4 h-4" />
-                              <span className="break-words break-all overflow-hidden">Details</span>
+                              <span className="wrap-break-word break-all overflow-hidden">Details</span>
                         </Button>
                   )}
             </>

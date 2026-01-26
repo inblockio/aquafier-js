@@ -3,29 +3,29 @@ import { WebSocket as WSWebSocket } from 'ws';
 
 
 export interface DateRangeQuery {
-    startDate?: string;
-    endDate?: string;
-    tables?: string; // comma-separated list of table names
+  startDate?: string;
+  endDate?: string;
+  tables?: string; // comma-separated list of table names
 }
 
 export interface TableMetrics {
-    tableName: string;
-    total: number;
-    inRange: number;
-    percentage: string;
+  tableName: string;
+  total: number;
+  inRange: number;
+  percentage: string;
 }
 
 export interface AdvancedMetricsResponse {
-    dateRange: {
-        start: string;
-        end: string;
-    };
-    tables: TableMetrics[];
-    summary: {
-        totalRecordsAcrossAllTables: number;
-        totalRecordsInRange: number;
-    };
-    timestamp: string;
+  dateRange: {
+    start: string;
+    end: string;
+  };
+  tables: TableMetrics[];
+  summary: {
+    totalRecordsAcrossAllTables: number;
+    totalRecordsInRange: number;
+  };
+  timestamp: string;
 }
 
 export interface MetricsResponse {
@@ -104,10 +104,16 @@ export interface AquaTemplatesFields {
   isHidden: boolean,
   isEditable: boolean,
   isVerifiable: boolean,
-  description : string,
-  placeholder : string
-  supportText : string
-  defaultValue? : string
+  description: string,
+  placeholder: string,
+  supportText: string,
+  defaultValue?: string,
+  dependsOn?: {
+    field: string,
+    value: string
+  },
+
+  options?: Array<{ value: string, label: string }>
 }
 
 
@@ -119,8 +125,8 @@ export interface ClientConnection {
 }
 
 export interface LinkedRevisionResult {
-    aquaTree: AquaTree;
-    fileObjects: FileObject[];
+  aquaTree: AquaTree;
+  fileObjects: FileObject[];
 }
 
 // Fixed interfaces to match the actual implementation
@@ -153,43 +159,43 @@ export interface UpdateGenesisResult {
 }
 // Return type for processRevision function
 export interface ProcessRevisionResult {
-    aquaTree: AquaTree;
-    fileObjects: FileObject[];
+  aquaTree: AquaTree;
+  fileObjects: FileObject[];
 }
 
 export interface ServerWalletInformation {
-    mnemonic: string;
-    walletAddress: string;
-    privateKey: string;
-    publicKey: string;
+  mnemonic: string;
+  walletAddress: string;
+  privateKey: string;
+  publicKey: string;
 }
 
 export interface ScrapedData {
-    title: string;
-    headings: string[];
-    links: Array<{ text: string; href: string }>;
-    paragraphs: string[];
-    images: Array<{ src: string; alt: string }>;
-    tradeNameDetails?: TradeNameDetails;
+  title: string;
+  headings: string[];
+  links: Array<{ text: string; href: string }>;
+  paragraphs: string[];
+  images: Array<{ src: string; alt: string }>;
+  tradeNameDetails?: TradeNameDetails;
 }
 
 export interface TradeNameDetails {
-    county: string;
-    status: string;
-    trade_name: string;
-    file_number: string;
-    formation_date: string;
-    filed_date: string;
-    address_1: string;
-    address_2: string;
-    city: string;
-    state: string;
-    zip_code: string;
-    phone: string;
-    affiant: string;
-    affiant_title: string;
-    parent_company: string;
-    nature_of_business: string;
-    termination_date: string;
-    last_updated_on: string;
+  county: string;
+  status: string;
+  trade_name: string;
+  file_number: string;
+  formation_date: string;
+  filed_date: string;
+  address_1: string;
+  address_2: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  phone: string;
+  affiant: string;
+  affiant_title: string;
+  parent_company: string;
+  nature_of_business: string;
+  termination_date: string;
+  last_updated_on: string;
 }

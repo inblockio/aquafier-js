@@ -112,7 +112,7 @@ export interface FilesListProps {
 }
 
 export interface OpenDialog {
-      dialogType: 'share_dialog' | 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'dba_claim' | 'aqua_sign' | 'identity_attestation' | 'early_bird_offer' | 'user_signature' | 'email_claim' | 'phone_number_claim' | 'explorer_workspace_download' | 'identity_card',//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'
+      dialogType: 'share_dialog' | 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'dba_claim' | 'aqua_sign' | 'identity_attestation' | 'early_bird_offer' | 'user_signature' | 'email_claim' | 'phone_number_claim' | 'explorer_workspace_download' | 'identity_card' | 'aqua_certificate',//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'
       isOpen: boolean
       onClose: () => void
       onConfirm: (data: any) => void
@@ -279,101 +279,102 @@ export interface ContractDocumentViewProps {
 }
 
 export interface DateRangeQuery {
-    startDate?: string;
-    endDate?: string;
-    tables?: string; // comma-separated list of table names
+      startDate?: string;
+      endDate?: string;
+      tables?: string; // comma-separated list of table names
 }
 
 export interface TableMetrics {
-    tableName: string;
-    total: number;
-    inRange: number;
-    percentage: string;
+      tableName: string;
+      total: number;
+      inRange: number;
+      percentage: string;
 }
 
 export interface AdvancedMetricsResponse {
-    dateRange: {
-        start: string;
-        end: string;
-    };
-    tables: TableMetrics[];
-    summary: {
-        totalRecordsAcrossAllTables: number;
-        totalRecordsInRange: number;
-    };
-    timestamp: string;
+      dateRange: {
+            start: string;
+            end: string;
+      };
+      tables: TableMetrics[];
+      summary: {
+            totalRecordsAcrossAllTables: number;
+            totalRecordsInRange: number;
+      };
+      timestamp: string;
 }
 
 export interface MetricsResponse {
-  users: {
-    total: number;
-    newToday: number;
-    growth: string;
-  };
-  contracts: {
-    total: number;
-    newToday: number;
-    growth: string;
-  };
-  revisions: {
-    total: number;
-    newToday: number;
-    growth: string;
-    breakdown: Array<{ type: string | null; count: number }>;
-  };
-  files: {
-    total: number;
-    newToday: number;
-    growth: string;
-  };
-  payments: {
-    total: number;
-    totalAmount: string;
-    newToday: number;
-    growth: string;
-    breakdown: Array<{ status: string; count: number }>;
-  };
-  additionalMetrics: {
-    activeUsers: {
-      last24Hours: number;
-      last7Days: number;
-      last30Days: number;
-    };
-    templates: {
-      total: number;
-      publicTemplates: number;
-    };
-    signatures: {
-      total: number;
-      newToday: number;
-    };
-    witnesses: {
-      total: number;
-      newToday: number;
-    };
-    notifications: {
-      total: number;
-      unread: number;
-      newToday: number;
-    };
-    revisionStats: {
-      form: { total: number; newToday: number };
-      link: { total: number; newToday: number };
-      file: { total: number; newToday: number };
-    };
-    averages: {
-      revisionsPerContract: string;
-      filesPerRevision: string;
-      contractsPerUser: string;
-    };
-  };
-  timestamp: string;
+      users: {
+            total: number;
+            newToday: number;
+            growth: string;
+      };
+      contracts: {
+            total: number;
+            newToday: number;
+            growth: string;
+      };
+      revisions: {
+            total: number;
+            newToday: number;
+            growth: string;
+            breakdown: Array<{ type: string | null; count: number }>;
+      };
+      files: {
+            total: number;
+            newToday: number;
+            growth: string;
+      };
+      payments: {
+            total: number;
+            totalAmount: string;
+            newToday: number;
+            growth: string;
+            breakdown: Array<{ status: string; count: number }>;
+      };
+      additionalMetrics: {
+            activeUsers: {
+                  last24Hours: number;
+                  last7Days: number;
+                  last30Days: number;
+            };
+            templates: {
+                  total: number;
+                  publicTemplates: number;
+            };
+            signatures: {
+                  total: number;
+                  newToday: number;
+            };
+            witnesses: {
+                  total: number;
+                  newToday: number;
+            };
+            notifications: {
+                  total: number;
+                  unread: number;
+                  newToday: number;
+            };
+            revisionStats: {
+                  form: { total: number; newToday: number };
+                  link: { total: number; newToday: number };
+                  file: { total: number; newToday: number };
+            };
+            averages: {
+                  revisionsPerContract: string;
+                  filesPerRevision: string;
+                  contractsPerUser: string;
+            };
+      };
+      timestamp: string;
 }
 
 export interface IWorkflowItem {
       workflowName: string
       apiFileInfo: ApiFileInfo
       index?: number
+      openDrawer?: (fileInfo: ApiFileInfo, attestors: ICertificateAttestor[]) => void
 }
 
 
@@ -424,4 +425,17 @@ export const emptyUserStats: IUserStats = {
             phone_number_claim: 0,
             user_profile: 0
       }
+}
+
+
+export interface ICertificateAttestor {
+      context: string
+      walletAddress: string
+}
+
+export interface IAquaCertWorkflowDrawer {
+      open: boolean
+      onClose?: () => void
+      attestors: ICertificateAttestor[]
+      fileInfo?: ApiFileInfo
 }

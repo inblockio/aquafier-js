@@ -89,6 +89,7 @@ export const RELOAD_KEYS = {
     contacts: "contacts",
     identity_card: "identity_card",
     ens_claim: "ens_claim",
+    aqua_certificate: "aqua_certificate",
 };
 
 /**

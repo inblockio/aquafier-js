@@ -1,0 +1,78 @@
+[
+  {
+    "name": "document",
+    "label": "Document",
+    "type": "document",
+    "required": true,
+    "isArray": false,
+    "isHidden": false
+  },
+  {
+    "name": "creator",
+    "label": "Creator",
+    "type": "wallet_address",
+    "required": true,
+    "isArray": false,
+    "isEditable": false,
+    "isHidden": true,
+    "supportText": "The sender is the person who initiates the document signing process. This field is auto-filled with your wallet address.",
+    "random": "This will be used as the sender email for the document workflow"
+  },
+  {
+    "name": "cert_type",
+    "label": "Certificate Type",
+    "type": "options",
+    "options": [
+       {
+        "label": "Birth Certificate",
+        "value": "birth_certificate"
+      },
+      {
+        "label": "Proof of Personhood",
+        "value": "proof_of_personhood"
+      },
+      {
+        "label": "Marriage Certificate", 
+        "value": "marriage_certificate"
+      },
+      {
+        "label": "Death Certificate",
+        "value": "death_certificate"
+      },
+      {
+        "label": "Completion Certificate",
+        "value": "completion_certificate"
+      },
+      {
+        "label": "Excellence Certificate",
+        "value": "excellence_certificate"
+      },
+      {
+        "label": "Participation Certificate",
+        "value": "participation_certificate"
+      },
+       {
+        "label": "Other",
+        "value": "other"
+      }
+    ],
+    "isHidden": false,
+    "required": true,
+    "isArray": false,
+    "description": "Select the type of certificate to be issued"
+  },
+  {
+      "name": "custom_cert_name",
+      "label": "Custom Certificate Name",
+      "type": "text",
+      
+      "dependsOn": {
+        "field": "cert_type",
+        "value": "other"
+      },
+      "isHidden": true,
+      "required": false,
+      "isArray": false
+    }
+  
+]

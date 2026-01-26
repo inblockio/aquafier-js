@@ -1,7 +1,7 @@
 import Aquafier, { AquaTree, cliGreenify, cliRedify, cliYellowfy } from "aqua-js-sdk"
 import { prisma } from "../database/db"
-import { SYSTEM_WALLET_ADDRESS } from "../models/constants"
-import { ethers } from "ethers"
+import { SYSTEM_WALLET_ADDRESS, TEMPLATE_HASHES } from "../models/constants"
+import { ethers, N } from "ethers"
 import { createPublicClient, http, labelhash } from "viem"
 import { mainnet } from "viem/chains"
 import { saveAquaTree } from "./revisions_utils"
@@ -294,21 +294,24 @@ const setUpSystemTemplates = async () => {
     }
 
 
-    let templates = [
-        "access_agreement",
-        "aqua_sign",
-        "dba_claim",
-        "cheque",
-        "identity_attestation",
-        "identity_claim",
-        "user_signature",
-        "domain_claim",
-        "email_claim",
-        "phone_number_claim",
-        "user_profile",
-        "identity_card",
-        "ens_claim"
-    ]
+    // let templates = [
+    //     "access_agreement",
+    //     "aqua_sign",
+    //     "dba_claim",
+    //     "cheque",
+    //     "identity_attestation",
+    //     "identity_claim",
+    //     "user_signature",
+    //     "domain_claim",
+    //     "email_claim",
+    //     "phone_number_claim",
+    //     "user_profile",
+    //     "identity_card",
+    //     "ens_claim",
+    //     "aqua_certificate",
+    // ]
+
+     let templates = Object.keys(TEMPLATE_HASHES)
     for (let index = 0; index < templates.length; index++) {
         const templateItem = templates[index];
         let templateData = path.join(assetsPath, `${templateItem}.json`);
@@ -343,7 +346,9 @@ const setUpSystemTemplates = async () => {
         let documentContractFields: Array<AquaTemplatesFields> = JSON.parse(fieldsFileData)
         documentContractFields.forEach(async (fieldData, fieldIndex) => {
 
-            await prisma.aquaTemplateFields.upsert({
+
+            
+         await prisma.aquaTemplateFields.upsert({
                 where: {
                     id: `${index}${fieldIndex}`,
                 },
@@ -361,11 +366,52 @@ const setUpSystemTemplates = async () => {
                     support_text: fieldData.supportText,
                     default_value: fieldData.defaultValue,
                     is_verifiable: fieldData.isVerifiable || false,
-
+                    depend_on_field: fieldData.dependsOn?.field,
+                    depend_on_value: fieldData.dependsOn?.value,
+                   
                     is_editable: fieldData.isEditable == null ? true : fieldData.isEditable,
+
                 },
                 update: {},
             })
+
+
+            // if(templateItem=="aqua_certificate"){
+            //     Logger.info(`Field Data Options for aqua_certificate field ${fieldData.name} : ${JSON.stringify(fieldData.options)}`)
+            //     throw new Error(`Options type field must have options defined ${JSON.stringify(fieldData, null, 2)}`)
+            // }
+
+
+            // console.log(`🫠🫠🫠 Field Data Type for field ${fieldData.name} : ${fieldData.type} \n data : ${JSON.stringify(fieldData, null, 2)} \n options ${fieldData.options}`)
+            
+            if(fieldData.type.trim() == 'options' && fieldData.options){
+                // throw new Error(`Options type field must have options defined ${JSON.stringify(fieldData)}`)
+                //save options
+                for(let optionIndex = 0; optionIndex < fieldData.options.length; optionIndex++){
+                    let optionValue = fieldData.options[optionIndex];
+                    await prisma.aquaTemplateFieldOptions.upsert({
+                        where: {
+                            id: `${index}${fieldIndex}${optionIndex}`,
+                        },
+                        create: {
+                            id: `${index}${fieldIndex}${optionIndex}`,
+                            // aqua_template_field_id: `${index}${fieldIndex}`,
+                            label: optionValue.label,
+                            value: optionValue.value,
+                            field_id: `${index}${fieldIndex}`,
+                            // sort_order: optionIndex,
+                        },
+                        update: {
+                            label: optionValue.label,
+                            value: optionValue.value,
+                            field_id: `${index}${fieldIndex}`,
+                        },
+                    })
+                }
+            }
+        
+
+
         })
 
 

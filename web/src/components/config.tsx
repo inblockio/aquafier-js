@@ -31,7 +31,7 @@ const LoadConfiguration = () => {
                                     setMetamaskAddress(address)
                                     const avatar = generateAvatar(address)
                                     setAvatar(avatar)
-   fetchUserProfile(_address, nonce)
+                                    fetchUserProfile(_address, nonce)
                                     setSession(response.data?.session)
                                     //`${backend_url}/system/aqua_tree`
                                     const url3 = ensureDomainUrlHasSSL(`${backend_url}/system/aqua_tree`)

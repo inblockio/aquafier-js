@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, useSidebar } from '@/components/ui/sidebar'
 import CustomNavLink from './ui/CustomNavLink'
-import { Contact, FileText, LayoutDashboard, LayoutTemplate, Link, Link2, Settings, Share2, Star, User, Workflow, CreditCard, Receipt, DollarSign, Shield } from 'lucide-react'
+import { Contact, FileText, LayoutDashboard, LayoutTemplate, Link, Link2, Settings, Share2, Star, User, Workflow, CreditCard, Receipt, DollarSign, Shield, FileCheck } from 'lucide-react'
 import { maxUserFileSizeForUpload } from '@/utils/constants'
 import { formatBytes } from '@/utils/functions'
 import { useStore } from 'zustand'
@@ -69,7 +69,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             {
                   label: 'AquaSign - PDF Signature',
                   icon: Workflow,
-                  id: '/workflows'
+                  id: '/workflows/aqua_sign'
+            },
+            {
+                  label: 'AquaCerts - Digital Certificates',
+                  icon: FileCheck,
+                  id: '/workflows/aqua_certificate'
             },
             {
                   label: 'AquaID - Claims & Attestation',

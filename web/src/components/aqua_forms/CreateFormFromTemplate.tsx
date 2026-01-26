@@ -15,6 +15,7 @@ import {
       getLastRevisionVerificationHash,
       getRandomNumber,
       isValidEthereumAddress,
+      isWorkFlowData,
       reorderRevisionsInAquaTree,
       stringToHex
 } from '@/utils/functions'
@@ -85,6 +86,8 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useNavigate } from 'react-router-dom'
 import { API_ENDPOINTS } from '@/utils/constants'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { useAquaSystemNames } from '@/hooks/useAquaSystemNames'
 
 /** Props for the SortableSignerItem component */
 interface SortableSignerItemProps {
@@ -186,6 +189,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 }) => {
       const [submittingTemplateData, setSubmittingTemplateData] = useState(false)
       const [modalFormErorMessae, setModalFormErorMessae] = useState('')
+      const { systemNames: systemAquaFileNames } = useAquaSystemNames()
 
       const {
             session,
@@ -221,7 +225,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
       const fetchInfoDetails = async () => {
             try {
-                  const url = `${backend_url}/app_info`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/app_info`);
 
                   const response = await axios.get(url)
 
@@ -449,7 +453,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   if (response.status === 200 || response.status === 201) {
                         if (isFinal) {
 
-                            
+
 
                               if (account == session?.address) {
                                     // show success toast only if saving to own account
@@ -601,6 +605,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   const url3 = `${backend_url}/system/aqua_tree`
                   const systemFiles = await fetchSystemFiles(url3, sessionAddress)
                   allSystemFiles = systemFiles
+            } else {
+                  console.log(`Using cached system files`)
+                  console.log(`systemFileInfo length: ${systemFileInfo.length} : ${JSON.stringify(systemFileInfo, null, 2)}`)
             }
 
             if (allSystemFiles.length === 0) {
@@ -664,6 +671,22 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             const genHash = getGenesisHash(selectedFileInfo.aquaTree!)
             if (genHash) {
                   completeFormData[`identity_claim_id`] = genHash
+
+                  const { isWorkFlow, workFlow } = isWorkFlowData(selectedFileInfo.aquaTree!, systemAquaFileNames)
+
+                  if (completeFormData['claim_type'] == undefined && isWorkFlow && workFlow == 'aqua_certificate') {
+                        
+                              let genesisRevision = selectedFileInfo.aquaTree!.revisions[genHash] as Revision
+                              if (!genesisRevision) {
+                                    alert(`Error: The aqua tree selected does not contain a genesis revision, please report this issue.`)
+                                    throw new Error('Identity claim genesis id not found in selected file')
+
+                              }
+                              let creator = genRevision['forms_creator'] as string
+                              completeFormData[`claim_wallet_address`] = creator ?? '';
+             
+                        completeFormData[`claim_type`] = 'aqua_certificate';
+                  }
                   completeFormData[`attestion_type`] = 'user'
             } else {
                   throw new Error('Identity claim genesis id not found in selected file')
@@ -1561,6 +1584,57 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             )
       }
 
+      /**Render options field if others show the input text */
+
+      const renderOptionsField = (field: FormField, fieldIndex: number) => {
+
+            let otherFieldsExist = selectedTemplate.fields.find((f: FormField) => f.depend_on_field === field.name && f.depend_on_value?.toLocaleLowerCase() === 'other' && f.is_hidden === true)
+            if (!otherFieldsExist) {
+                  console.warn(`No dependent 'Other' field found for options field: ${field.name}`)
+            }
+
+            return <div className="space-y-2" key={`fieldKey_${fieldIndex}`}>
+                  <Select
+                        onValueChange={(value) => {
+                              let fieldName = field.name
+                              setFormData(prev => ({ ...prev, [fieldName]: value }))
+                        }}
+                  >
+                        <SelectTrigger id={`input-options-${field.name}`} data-testid={`input-options-${field.name}`} className="w-full">
+                              <SelectValue placeholder="Select an option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                              {field.options?.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                              ))}
+
+                        </SelectContent>
+                  </Select>
+
+                  {otherFieldsExist && (
+                        <>
+
+                              {((formData[field.name] as string) ?? '')?.toLocaleLowerCase() === 'other' && otherFieldsExist && (
+                                    <Label htmlFor={`input-options-other`} className="text-sm font-medium text-gray-900">
+                                          Please specify
+                                    </Label>
+                              )}
+                              {((formData[field.name] as string) ?? '').toLocaleLowerCase() === 'other' && otherFieldsExist && (
+                                    <Input
+                                          id={`input-options-other`}
+                                          data-testid={`input-options-other`}
+                                          className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
+                                          placeholder="Please specify"
+                                          onChange={(e) => {
+                                                let fieldName = otherFieldsExist!.name
+                                                setFormData(prev => ({ ...prev, [fieldName]: e.target.value }))
+                                          }}
+                                    />
+                              )}
+                        </>
+                  )}
+            </div>
+      }
       /** Renders the signature/scratchpad field with Reset, Generate from Name, and Initials buttons */
       const renderScratchpadField = () => (
             <div className="space-y-3">
@@ -1712,6 +1786,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
                         {/* Signature/Scratchpad field with Reset, Generate from Name, Initials */}
                         {field.type === 'scratchpad' && renderScratchpadField()}
+
+
+                        {/* option field with Reset, Generate from Name, Initials */}
+                        {field.type === 'options' && renderOptionsField(field, fieldIndex)}
+
+
+
 
                         {/* Wallet address field */}
                         {field.type === 'wallet_address' && (

@@ -3,7 +3,7 @@ import fastifyRateLimit from '@fastify/rate-limit';
 import { prisma } from '../database/db';
 import { checkFolderExists, getAquaTreeFileName, getHost, getPort } from '../utils/api_utils';
 import { fetchAquatreeFoUser } from '../utils/revisions_utils';
-import { SYSTEM_WALLET_ADDRESS } from '../models/constants';
+import { SYSTEM_WALLET_ADDRESS, TEMPLATE_HASHES } from '../models/constants';
 import path from 'path';
 import * as fs from "fs"
 import { getAquaAssetDirectory } from '../utils/file_utils';
@@ -200,21 +200,25 @@ export default async function systemController(fastify: FastifyInstance) {
         //         }
         //   })
 
-        const systemAquaTreeFileNames = [
-            "access_agreement.json",
-            "aqua_sign.json",
-            "cheque.json",
-            "dba_claim.json",
-            "domain_claim.json",
-            "email_claim.json",
-            "identity_attestation.json",
-            "identity_claim.json",
-            "phone_number_claim.json",
-            "user_profile.json",
-            "user_signature.json",
-            "identity_card.json",
-            "ens_claim.json"
-        ]
+        // const systemAquaTreeFileNames = [
+        //     "access_agreement.json",
+        //     "aqua_sign.json",
+        //     "cheque.json",
+        //     "dba_claim.json",
+        //     "domain_claim.json",
+        //     "email_claim.json",
+        //     "identity_attestation.json",
+        //     "identity_claim.json",
+        //     "phone_number_claim.json",
+        //     "user_profile.json",
+        //     "user_signature.json",
+        //     "identity_card.json",
+        //     "ens_claim.json",
+        //     "aqua_certificate.json"
+        // ]
+
+         let templates = Object.keys(TEMPLATE_HASHES);
+         const systemAquaTreeFileNames = templates.map(templateName => `${templateName}.json`);
 
 
         return reply.code(200).send({ data: systemAquaTreeFileNames })

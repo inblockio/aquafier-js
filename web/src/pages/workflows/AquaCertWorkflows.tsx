@@ -1,10 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Progress } from '@/components/ui/progress'
 import {
       DropdownMenu,
       DropdownMenuContent,
@@ -14,9 +12,6 @@ import {
       DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import {
-      AlertCircle,
-      CheckCircle,
-      Clock,
       Download,
       Eye,
       FileText,
@@ -32,15 +27,11 @@ import {
       ensureDomainUrlHasSSL,
       getAquaTreeFileName,
       getAquaTreeFileObject,
-      getGenesisHash,
-      processContractInformation
-} from '@/utils/functions'
+      getGenesisHash} from '@/utils/functions'
 import { FileObject } from 'aqua-js-sdk'
-import { IContractInformation } from '@/types/contract_workflow'
 import { DownloadAquaChain } from '../../components/aqua_chain_actions/download_aqua_chain'
-import { OpenAquaSignWorkFlowButton } from '../../components/aqua_chain_actions/open_aqua_sign_workflow'
 import { DeleteAquaChain, DeleteAquaChainDialog } from '../../components/aqua_chain_actions/delete_aqua_chain'
-import { IWorkflowItem } from '@/types/types'
+import { IAquaCertWorkflowDrawer, ICertificateAttestor, IWorkflowItem } from '@/types/types'
 import WalletAdrressClaim from '../v2_claims_workflow/WalletAdrressClaim'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { toast } from 'sonner'
@@ -48,51 +39,17 @@ import axios from 'axios'
 import { API_ENDPOINTS } from '@/utils/constants'
 import { GlobalPagination } from '@/types'
 import CustomPagination from '@/components/common/CustomPagination'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 import { OpenSelectedFileDetailsButton } from '@/components/aqua_chain_actions/details_button'
 import { RELOAD_KEYS } from '@/utils/reloadDatabase'
+import AquaCertWorkflowDrawer from './AquaCertWorkflowDrawer'
 
-const getStatusIcon = (status: string) => {
-      switch (status) {
-            case 'completed':
-                  return <CheckCircle className="h-4 w-4" />
-            case 'pending':
-                  return <Clock className="h-4 w-4" />
-            case 'overdue':
-                  return <AlertCircle className="h-4 w-4" />
-            case 'draft':
-                  return <FileText className="h-4 w-4" />
-            default:
-                  return <Clock className="h-4 w-4" />
-      }
-}
-
-const getStatusColor = (status: string) => {
-      switch (status) {
-            case 'completed':
-                  return 'bg-green-100 text-green-800 border-green-200'
-            case 'pending':
-                  return 'bg-blue-100 text-blue-800 border-blue-200'
-            case 'overdue':
-                  return 'bg-red-100 text-red-800 border-red-200'
-            case 'draft':
-                  return 'bg-gray-100 text-gray-800 border-gray-200'
-            default:
-                  return 'bg-gray-100 text-gray-800 border-gray-200'
-      }
-}
-
-const getProgressPercentage = (total: number, remaining: number) => {
-      if (total === 0) return 0 // Avoid division by zero
-      return ((total - remaining) / total) * 100
-}
-
-const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowItem) => {
-      const { setSelectedFileInfo } = useStore(appStore)
-      const navigate = useNavigate()
+const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer }: IWorkflowItem) => {
+     
       const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined)
-      const [contractInformation, setContractInformation] = useState<IContractInformation | undefined>(undefined)
+      // const [attestations, setAttestations] = useState<ApiFileInfo[]>([])
+      const [attesters, setAttesters] = useState<ICertificateAttestor[]>([])
       const { session, backend_url } = useStore(appStore)
       const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
       const [isDeleting, setIsDeleting] = useState(false)
@@ -115,51 +72,76 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
             }
       }
 
-      const getSigners = () => {
+      const getCertType = () => {
             const genRevision = getGenesisHash(apiFileInfo.aquaTree!)
             if (genRevision) {
-                  const signers = apiFileInfo.aquaTree?.revisions?.[genRevision]?.forms_signers
-                  if (signers) {
-                        return signers.split(',')
-                  }
+                  const certType = apiFileInfo.aquaTree?.revisions?.[genRevision]?.forms_cert_type
+                  const cleanedUpType = certType.split("_").join(" ")
+                  return cleanedUpType
             } else {
-                  return 'Not available'
+                  return 'UNKNOWN'
             }
       }
 
-      const getSignersStatus = () => {
-            let signersStatus: Array<{ address: string; status: string }> = []
-            if (contractInformation) {
-                  signersStatus = contractInformation.firstRevisionData?.forms_signers.split(',').map((signer: string) => {
-                        const item = contractInformation.signatureRevisionHashes.find(e => e.walletAddress.toLowerCase().trim() == signer.toLowerCase().trim())
+      const getCreator = () => {
+            const genRevision = getGenesisHash(apiFileInfo.aquaTree!)
+            if (genRevision) {
+                  const creator = apiFileInfo.aquaTree?.revisions?.[genRevision]?.forms_creator
 
-                        if (item) {
-                              return {
-                                    address: signer,
-                                    status: 'signed',
-                              }
-                        } else {
-                              // if isWorkFlowComplete is empty show green check mark
-                              // this experiemntal,
-                              if (contractInformation.isWorkFlowComplete.length === 0) {
-                                    return {
-                                          address: signer,
-                                          status: 'signed',
-                                    }
-                              }
-                              return {
-                                    address: signer,
-                                    status: 'pending',
-                              }
-                        }
+                  return creator
+            } else {
+                  return null
+            }
+      }
+
+      const loadCertAttestations = async () => {
+            setIsDeleting(true)
+            try {
+                  // const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!)
+                  // const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
+                  const certGenRevisionHash = getGenesisHash(apiFileInfo.aquaTree!)
+                  const params = {
+                        page: 1,
+                        limit: 200,
+                        claim_types: JSON.stringify(["identity_attestation"]) //default to aqua_sign if no type provided
+                  }
+                  const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
+                        headers: {
+                              'Content-Type': 'application/json',
+                              'nonce': `${session!.nonce}`
+                        },
+                        params
                   })
+                  const response = filesDataQuery.data
+                  const apiFileInfos: ApiFileInfo[] = response.aquaTrees
+
+                  // We track attestors wallet addresses
+                  let foundAttestors: ICertificateAttestor[] = []
+
+                  // setAttestations(apiFileInfos)
+                  // Get attesters
+                  for (let i = 0; i < apiFileInfos.length; i++) {
+                        const apiFileInfo = apiFileInfos[i];
+                        const aquaTree = apiFileInfo.aquaTree
+                        const genesisHash = getGenesisHash(aquaTree!)
+                        const genesisRevision = aquaTree!.revisions[genesisHash!]
+                        // Check if the genesis revision claim_id matches the current certificate genesis revision hash
+                        if (genesisRevision.forms_identity_claim_id === certGenRevisionHash) {
+                              const attestor = genesisRevision.forms_wallet_address
+                              const context = genesisRevision.forms_context
+                              foundAttestors.push({ walletAddress: attestor, context })
+                        }
+                  }
+                  setAttesters(foundAttestors)
+            } catch (e) {
+                  console.log("Error: ", e)
+                  setDeleteDialogOpen(false)
             }
-            return signersStatus
+            setIsDeleting(false)
       }
 
-      const signers = getSigners()
-      const signersStatus = getSignersStatus()
-
+      const certType = getCertType()
+      const creator = getCreator()
       const handleDeleteFile = async () => {
             setIsDeleting(true)
             try {
@@ -187,78 +169,73 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
 
       useEffect(() => {
             getCurrentFileObject()
-            const contractInformation = processContractInformation(apiFileInfo)
-            setContractInformation(contractInformation)
+            // const contractInformation = processContractInformation(apiFileInfo)
+            // setContractInformation(contractInformation)
+            loadCertAttestations()
       }, [apiFileInfo])
 
       return (
             <>
                   <TableRow key={`${workflowName}-${index}`} className="hover:bg-muted/50 h-fit cursor-pointer" onClick={e => {
                         e.preventDefault()
-                        setSelectedFileInfo(apiFileInfo)
-                        navigate('/app/pdf/workflow')
+                        // setSelectedFileInfo(apiFileInfo)
+                        // navigate('/app/pdf/workflow')
                   }}>
-                        <TableCell className="font-medium w-[300px] max-w-[300px] min-w-[300px]">
-                              <div className="w-full flex items-center gap-3">
-                                    <div className="shrink-0">
-                                          <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                                                <FileText className="h-5 w-5 text-blue-600" />
+                        <TableCell className="font-medium w-75 max-w-75 min-w-75">
+                              <div className='space-y-1'>
+                                    <div className="w-full flex items-center gap-3">
+                                          <div className="shrink-0">
+                                                <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                                                      <FileText className="h-5 w-5 text-blue-600" />
+                                                </div>
+                                          </div>
+                                          <div className="grow min-w-0">
+                                                <div className="font-medium text-sm wrap-break-word whitespace-normal">{currentFileObject?.fileName}</div>
+                                                <div className="text-xs text-muted-foreground">Created at {getTimeInfo()}</div>
                                           </div>
                                     </div>
-                                    <div className="flex-grow min-w-0">
-                                          <div className="font-medium text-sm break-words whitespace-normal">{currentFileObject?.fileName}</div>
-                                          <div className="text-xs text-muted-foreground">Created at {getTimeInfo()}</div>
+                                    <div>
+                                          {
+                                                creator ? (
+                                                      <WalletAdrressClaim walletAddress={creator} />
+                                                ) : null
+                                          }
                                     </div>
                               </div>
                         </TableCell>
-                        <TableCell className="w-[200px]">
-                              <div className="flex items-center gap-2 w-fit" onClick={e => {
+                        <TableCell className="w-50">
+                              <div className="flex items-center gap-2 w-fit capitalize" onClick={e => {
                                     e.stopPropagation()
                               }}>
-                                    <div className="flex -space-x-2">
-                                          {signers?.slice(0, 3).map((signer: string, index: number) => (
-                                                <WalletAdrressClaim key={index} avatarOnly={true} walletAddress={signer} />
-                                          ))}
-                                          {signers?.length > 3 && (
-                                                <Avatar className="h-8 w-8 border-2 border-background" onClick={e => {
-                                                      e.preventDefault()
-                                                }}>
-                                                      <AvatarFallback className="text-xs">+{signers?.length - 3}</AvatarFallback>
-                                                </Avatar>
-                                          )}
-                                    </div>
-                                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                          <Users className="h-3 w-3" />
-                                          {signers?.length}
-                                    </div>
+                                    {certType}
                               </div>
                         </TableCell>
-                        <TableCell className="w-[150px]">
+                        <TableCell className="w-37.5">
                               <div className="space-y-1">
-                                    <div className="flex items-center justify-between text-sm">
-                                          <span>
-                                                {signersStatus.filter(e => e.status == 'signed').length}/{signers?.length}
-                                          </span>
-                                          <span className="text-muted-foreground">
-                                                {Math.round(getProgressPercentage(signersStatus.length, signersStatus.filter(e => e.status == 'pending').length))}%
-                                          </span>
+                                    {/* attestations/attesters */}
+                                    <div className="flex items-center gap-2 w-fit" onClick={e => {
+                                          e.stopPropagation()
+                                    }}>
+                                          <div className="flex -space-x-2">
+                                                {attesters?.slice(0, 3).map((attester, index: number) => (
+                                                      <WalletAdrressClaim key={index} avatarOnly={true} walletAddress={attester.walletAddress} />
+                                                ))}
+                                                {attesters?.length > 3 && (
+                                                      <Avatar className="h-8 w-8 border-2 border-background" onClick={e => {
+                                                            e.preventDefault()
+                                                      }}>
+                                                            <AvatarFallback className="text-xs">+{attesters?.length - 3}</AvatarFallback>
+                                                      </Avatar>
+                                                )}
+                                          </div>
+                                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                                <Users className="h-3 w-3" />
+                                                {attesters?.length}
+                                          </div>
                                     </div>
-                                    <Progress
-                                          value={getProgressPercentage(signersStatus.length, signersStatus.filter(e => e.status == 'pending').length)}
-                                          className="h-2"
-                                    />
-                                    {signersStatus.filter(e => e.status == 'pending').length > 0 && (
-                                          <div className="text-xs text-muted-foreground">{signersStatus.filter(e => e.status == 'pending').length} remaining</div>
-                                    )}
                               </div>
                         </TableCell>
-                        <TableCell className="w-[100px]">
-                              <Badge variant="outline" className={`${getStatusColor(signersStatus.filter(e => e.status == 'pending').length > 0 ? 'pending' : 'completed')} capitalize`}>
-                                    {getStatusIcon(signersStatus.filter(e => e.status == 'pending').length > 0 ? 'pending' : 'completed')}
-                                    <span className="ml-1">{signersStatus.filter(e => e.status == 'pending').length > 0 ? 'pending' : 'completed'}</span>
-                              </Badge>
-                        </TableCell>
-                        <TableCell className="text-right w-[100px]">
+                        <TableCell className="text-right w-25">
                               <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                           <Button
@@ -272,16 +249,12 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                                     <DropdownMenuContent align="end">
                                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                           <DropdownMenuSeparator />
-                                          <OpenAquaSignWorkFlowButton item={apiFileInfo} nonce={session?.nonce ?? ''}>
-                                                <DropdownMenuItem className='cursor-pointer'>
-                                                      <FileText className="mr-2 h-4 w-4" />
-                                                      View Document
-                                                </DropdownMenuItem>
-                                          </OpenAquaSignWorkFlowButton>
-                                          {/* <DropdownMenuItem disabled>
-                                          <Send className="mr-2 h-4 w-4" />
-                                          Send Reminder
-                                    </DropdownMenuItem> */}
+                                          <DropdownMenuItem className='cursor-pointer' onClick={() => {
+                                                openDrawer && openDrawer(apiFileInfo, attesters)
+                                          }}>
+                                                <FileText className="mr-2 h-4 w-4" />
+                                                View Attestations
+                                          </DropdownMenuItem>
                                           <OpenSelectedFileDetailsButton file={apiFileInfo} index={index}>
                                                 <DropdownMenuItem className='cursor-pointer'>
                                                       <Eye className="mr-2 h-4 w-4" />
@@ -309,8 +282,8 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                                                 }}
                                           >
                                                 <DropdownMenuItem variant='destructive' className="cursor-pointer">
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            Delete
+                                                      <Trash2 className="mr-2 h-4 w-4" />
+                                                      Delete
                                                 </DropdownMenuItem>
                                           </DeleteAquaChain>
                                     </DropdownMenuContent>
@@ -329,14 +302,19 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
       )
 }
 
-export default function WorkflowsTablePage() {
-       const { workflowType } = useParams<{ workflowType: string }>();
+export default function AquaCertWorkflows() {
+      const { workflowType } = useParams<{ workflowType: string }>();
       const { session, backend_url, setOpenDialog } = useStore(appStore)
       const [pagination, setPagination] = useState<GlobalPagination | null>(null)
 
       const [workflowsUi, setWorkflowsUi] = useState<IWorkflowItem[]>([])
       const [isLoading, setIsLoading] = useState<boolean>(false)
       const [currentPage, setCurrentPage] = useState(1)
+
+      const [drawerInfo, setDrawerInfo] = useState<IAquaCertWorkflowDrawer>({
+            open: false,
+            attestors: []
+      })
 
       const processFilesToWorkflowUi = (_files: ApiFileInfo[]) => {
             const newData: IWorkflowItem[] = []
@@ -356,7 +334,7 @@ export default function WorkflowsTablePage() {
                   const params = {
                         page,
                         limit: 10,
-                        claim_types: workflowType ? JSON.stringify([workflowType]) : JSON.stringify(['aqua_sign']) //default to aqua_sign if no type provided
+                        claim_types: workflowType ? JSON.stringify([workflowType]) : JSON.stringify(['aqua_certificate']) //default to aqua_sign if no type provided
                   }
                   const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
                         headers: {
@@ -389,6 +367,8 @@ export default function WorkflowsTablePage() {
             loadWorkflowsData(currentPage);
       }, [currentPage])
 
+      console.log("Drawerinfo: ", drawerInfo)
+
 
       return (
             <>
@@ -413,7 +393,7 @@ export default function WorkflowsTablePage() {
                                           }}
                                     >
                                           <Plus className="w-4 h-4" />
-                                          <span>Create Document Signature </span>
+                                          <span>Create New Certificate </span>
                                     </button>
                               </div>
                         </div>
@@ -425,7 +405,7 @@ export default function WorkflowsTablePage() {
                                     <CardTitle className="flex items-center gap-2 justify-between">
                                           <div className="flex items-center gap-2">
                                                 <FileText className="h-5 w-5" />
-                                                <span>AquaSign - PDF Signature</span>
+                                                <span>AquaCerts - Digital Certificates</span>
                                           </div>
                                           <button
                                                 className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
@@ -443,7 +423,7 @@ export default function WorkflowsTablePage() {
                                                 }}
                                           >
                                                 <Plus className="w-4 h-4" />
-                                                <span>New</span>
+                                                <span>New Cert</span>
                                           </button>
                                     </CardTitle>
                               </CardHeader>
@@ -453,33 +433,44 @@ export default function WorkflowsTablePage() {
                                           <Table>
                                                 <TableHeader>
                                                       <TableRow>
-                                                            <TableHead className="w-[300px] max-w-[300px] min-w-[300px] break-words overflow-hidden">Document</TableHead>
-                                                            {/* <TableHead>Workflow Type</TableHead> */}
-                                                            <TableHead>Signers</TableHead>
-                                                            <TableHead>Progress</TableHead>
-                                                            <TableHead>Status</TableHead>
+                                                            <TableHead className="w-75 max-w-75 min-w-75 wrap-break-word overflow-hidden">Document</TableHead>
+                                                            <TableHead>Certificate Type</TableHead>
+                                                            <TableHead>Attesters</TableHead>
                                                             <TableHead className="text-right">Actions</TableHead>
                                                       </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
                                                       {isLoading ? (
                                                             <TableRow>
-                                                                  <TableCell colSpan={6} className="h-[400px] text-center">
+                                                                  <TableCell colSpan={6} className="h-100 text-center">
                                                                         <div className="flex items-center justify-center gap-2">
                                                                               <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
-                                                                              <span>Loading AquaSign - PDF Signature...</span>
+                                                                              <span>Loading Certificates...</span>
                                                                         </div>
                                                                   </TableCell>
                                                             </TableRow>
                                                       ) : workflowsUi.length === 0 ? (
                                                             <TableRow>
-                                                                  <TableCell colSpan={6} className="h-[400px] text-center">
-                                                                        No workflows found
+                                                                  <TableCell colSpan={6} className="h-100 text-center">
+                                                                        No certificates found
                                                                   </TableCell>
                                                             </TableRow>
                                                       ) : (
                                                             workflowsUi.map((workflow, index: number) => (
-                                                                  <WorkflowTableItem key={`${index}-workflow`} workflowName={workflow.workflowName} apiFileInfo={workflow.apiFileInfo} index={index} />
+                                                                  <CertificateTableItem key={`${index}-workflow`}
+                                                                        workflowName={workflow.workflowName}
+                                                                        apiFileInfo={workflow.apiFileInfo}
+                                                                        index={index}
+                                                                        openDrawer={(fileInfo: ApiFileInfo, attestors: ICertificateAttestor[]) => {
+                                                                              console.log("Attestors: ", attestors)
+                                                                              let info: IAquaCertWorkflowDrawer = {
+                                                                                    open: true,
+                                                                                    attestors: attestors,
+                                                                                    fileInfo: fileInfo,
+                                                                              }
+                                                                              setDrawerInfo(info)
+                                                                        }}
+                                                                  />
                                                             ))
                                                       )}
                                                 </TableBody>
@@ -493,6 +484,25 @@ export default function WorkflowsTablePage() {
                               </CardContent>
                         </Card>
                   </div>
+
+                  {/* Dialog to show active certificate with the rest of the information like attestation */}
+                  {
+                        drawerInfo.fileInfo ? (
+                              <AquaCertWorkflowDrawer
+                                    open={drawerInfo.open}
+                                    attestors={drawerInfo.attestors}
+                                    fileInfo={drawerInfo.fileInfo}
+                                    onClose={() => {
+                                          const resetStatusOfdrawerInfo: IAquaCertWorkflowDrawer = {
+                                                open: false,
+                                                attestors: []
+                                          }
+                                          setDrawerInfo(resetStatusOfdrawerInfo)
+                                    }}
+
+                              />
+                        ) : null
+                  }
             </>
       )
 }

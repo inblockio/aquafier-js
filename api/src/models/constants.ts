@@ -16,6 +16,7 @@ export const systemTemplateHashes = [
     '0x5e339aed4184f012f1ec5e9a084636fb437f535233e20277a63c13d3e4af96e8', // user profile
     '0x5285900dcc1586d6f22bb2a16a15ef7fff78c9c8506d7745a947c50d2545a6d6', // identity card
     '0x421c9bf06117814badfba270092c8b1070eb2d0968a27dd267fd3c2bc0249193', // ens_claim
+    '0x15fb66f5c32ef01f76038b9ed9d9d5202fb44ed479333f3306d1ba1f22e5d76b', // aqua_certificate
 ]
  
 
@@ -34,6 +35,7 @@ export const TEMPLATE_HASHES = {
     user_profile: "0x5e339aed4184f012f1ec5e9a084636fb437f535233e20277a63c13d3e4af96e8",
     identity_card: "0x5285900dcc1586d6f22bb2a16a15ef7fff78c9c8506d7745a947c50d2545a6d6",
     ens_claim: "0x421c9bf06117814badfba270092c8b1070eb2d0968a27dd267fd3c2bc0249193",
+    aqua_certificate: "0x15fb66f5c32ef01f76038b9ed9d9d5202fb44ed479333f3306d1ba1f22e5d76b",
 }
 
 

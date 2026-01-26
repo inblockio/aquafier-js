@@ -161,7 +161,7 @@ export default function NewShadcnLayoutWithSidebar() {
                   )}
 
                   <IdentityCardDialogUi
-                      
+
                         isOpen={openDialog?.isOpen! && openDialog.dialogType === "identity_card"}
                         walletAddress={session?.address!}
                         onClose={function (): void {
@@ -217,6 +217,19 @@ export default function NewShadcnLayoutWithSidebar() {
                                                       setOpenDialog(null)
                                                 }}
                                           />)}
+
+                                    {openDialog?.dialogType === 'aqua_certificate' && (
+                                          <CreateFormFromTemplate
+                                                selectedTemplate={formTemplates.find(template => template.name === 'aqua_certificate')!}
+                                                callBack={async function (): Promise<void> {
+                                                      await triggerWorkflowReload(RELOAD_KEYS.aqua_certificate, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
+                                                      setOpenDialog(null)
+                                                }}
+                                                openCreateTemplatePopUp={false}
+                                          />
+                                    )}
 
                                     {openDialog?.dialogType === 'aqua_sign' && (
                                           <CreateFormFromTemplate
