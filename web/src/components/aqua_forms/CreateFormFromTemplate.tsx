@@ -1593,11 +1593,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   console.warn(`No dependent 'Other' field found for options field: ${field.name}`)
             }
 
-            return <div className="space-y-2">
-                  {/* <Label htmlFor={`input-options`} className="text-base font-medium text-gray-900">
-                        {field.label}
-                  </Label> */}
-                  <> {JSON.stringify(setFormData, null, 2)}</>
+            return <div className="space-y-2" key={`fieldKey_${fieldIndex}`}>
                   <Select
                         onValueChange={(value) => {
                               let fieldName = field.name

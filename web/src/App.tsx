@@ -42,6 +42,7 @@ import EnsResolverPage from './pages/ens_resolver.page'
 import PricingPage from './pages/pricing/PricingPage'
 import SubscriptionPage from './pages/subscription/SubscriptionPage'
 import PaymentHistoryPage from './pages/billing/PaymentHistoryPage'
+import AquaCertWorkflows from './pages/workflows/AquaCertWorkflows'
 
 // Initialize AppKit
 if (appKit) {
@@ -150,7 +151,8 @@ function App() {
                         <Route path="shared-contracts" element={<FilesSharedContracts />} />
                         <Route path="shared-contracts/:identifier" element={<SharePage />} />
 
-                        <Route path="workflows/:workflowType" element={<WorkflowsTablePage />} />
+                        <Route path="workflows/aqua_certificate" element={<AquaCertWorkflows />} />
+                        <Route path="workflows/aqua_sign" element={<WorkflowsTablePage />} />
                         <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage />} />
                         <Route path="contact_list" element={<ContactsPageV2 />} />
                         <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2 />} />
