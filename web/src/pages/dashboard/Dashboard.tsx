@@ -235,11 +235,11 @@ const Dashboard = () => {
                             <p className="text-2xl font-bold text-slate-800">{metrics.additionalMetrics.revisionStats.file.total}</p>
                             <p className="text-xs text-green-600 mt-1">+{metrics.additionalMetrics.revisionStats.file.newToday} today</p>
                         </div>
-                        <div className="p-4 bg-slate-50 rounded-lg">
+                        {/* <div className="p-4 bg-slate-50 rounded-lg">
                             <p className="text-sm text-slate-500 mb-1">Public Templates</p>
                             <p className="text-2xl font-bold text-slate-800">{metrics.additionalMetrics.templates.publicTemplates}</p>
                             <p className="text-xs text-slate-500 mt-1">of {metrics.additionalMetrics.templates.total} total</p>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
 
