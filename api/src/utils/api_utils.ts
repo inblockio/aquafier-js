@@ -186,7 +186,7 @@ export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string,
     let fileName = "";
     let aquaTreeName = await aquafier.getFileByHash(aquaTree, genesisHash);
     if (aquaTreeName.isOk()) {
-        fileName = aquaTreeName.data
+        fileName = path.basename(aquaTreeName.data)
     }
 
     let newUUid = systemUUid.get(fileName) || randomUUID();

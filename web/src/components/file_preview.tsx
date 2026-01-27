@@ -155,7 +155,7 @@ declare global {
       }
 }
 
-const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
+export const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
       const { session } = useStore(appStore)
       const [fileType, setFileType] = useState<string>('')
       const [fileURL, setFileURL] = useState<string>('')

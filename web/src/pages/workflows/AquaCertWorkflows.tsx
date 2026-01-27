@@ -253,7 +253,7 @@ const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer
                                                 openDrawer && openDrawer(apiFileInfo, attesters)
                                           }}>
                                                 <FileText className="mr-2 h-4 w-4" />
-                                                View Attestations
+                                                View Information
                                           </DropdownMenuItem>
                                           <OpenSelectedFileDetailsButton file={apiFileInfo} index={index}>
                                                 <DropdownMenuItem className='cursor-pointer'>
