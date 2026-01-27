@@ -1,3 +1,7 @@
+import { ApiFileInfo } from '@/models/FileInfo'
+import { IAquaCertFileInfoProcessResult } from '@/types/types'
+import { reorderRevisionsInAquaTree } from '@/utils/functions'
+import { Revision } from 'aqua-js-sdk'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
@@ -29,4 +33,38 @@ export function getCorrectUTF8JSONString(fileContent: any, tabs?: number): Uint8
             : JSON.stringify(fileContent)
       const encoder = new TextEncoder()
       return encoder.encode(jsonContent)
+}
+
+
+export function getLinkedFiles(fileInfo: ApiFileInfo): IAquaCertFileInfoProcessResult {
+      const mainAquaTree = fileInfo.aquaTree!
+      let revisionHashes = reorderRevisionsInAquaTree(fileInfo.aquaTree!)
+      let linkedRevisions: Revision[] = []
+      let linkedVerificationHashes: string[] = []
+      let genRevision = mainAquaTree.revisions[revisionHashes[0]]
+
+      let res: IAquaCertFileInfoProcessResult = {
+            data: {
+                  genesisRevision: genRevision,
+                  linkedRevisions,
+                  linkedVerificationHashes,
+            }
+      }
+      
+      for (let i = 2; i < revisionHashes.length; i++) {
+            const revisionHash = revisionHashes[i];
+            const revision = mainAquaTree?.revisions[revisionHash]
+            if (revision?.revision_type === "link") {
+                  linkedRevisions.push(revision)
+                  linkedVerificationHashes = linkedVerificationHashes.concat(revision.link_verification_hashes!)
+            }
+            if(revision.revision_type === "signature"){
+                  break;
+            }
+      }
+
+      res.data.linkedRevisions = linkedRevisions
+      res.data.linkedVerificationHashes = linkedVerificationHashes
+
+      return res
 }

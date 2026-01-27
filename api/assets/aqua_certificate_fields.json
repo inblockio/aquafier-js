@@ -4,7 +4,7 @@
     "label": "Document",
     "type": "document",
     "required": true,
-    "isArray": false,
+    "isArray": true,
     "isHidden": false
   },
   {

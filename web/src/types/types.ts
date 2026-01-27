@@ -439,3 +439,12 @@ export interface IAquaCertWorkflowDrawer {
       attestors: ICertificateAttestor[]
       fileInfo?: ApiFileInfo
 }
+
+
+export interface IAquaCertFileInfoProcessResult {
+      error?: string, data: {
+            genesisRevision: Revision,
+            linkedRevisions: Revision[],
+            linkedVerificationHashes: string[]
+      }
+}
