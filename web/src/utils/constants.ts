@@ -170,7 +170,8 @@ export const API_ENDPOINTS = {
       SEND_NOTIFICATION: 'api/notifications/:wallet_address',
       GET_AQUA_TREE: 'tree/revision_hash',
       TRIGGER_WEBSOCKET: 'trigger/websocket',
-      CREATE_ENS_CLAIM: 'user/create_ens_claim'
+      CREATE_ENS_CLAIM: 'user/create_ens_claim',
+      CREATE_SERVER_ACCOUNT_BACKUP: 'server/backup-aqua-sign' 
 }
 
 

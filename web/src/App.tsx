@@ -43,6 +43,7 @@ import PricingPage from './pages/pricing/PricingPage'
 import SubscriptionPage from './pages/subscription/SubscriptionPage'
 import PaymentHistoryPage from './pages/billing/PaymentHistoryPage'
 import AquaCertWorkflows from './pages/workflows/AquaCertWorkflows'
+import VerifyDocument from './pages/VerifyDocument'
 
 // Initialize AppKit
 if (appKit) {
@@ -143,6 +144,8 @@ function App() {
                         <Route path="terms-and-conditions" element={<TermsAndConditions />} />
                         <Route path="privacy-policy" element={<PrivacyPolicy />} />
                     </Route>
+
+                    <Route path='/app/verify-document' element={<VerifyDocument />} />
 
                     <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
 

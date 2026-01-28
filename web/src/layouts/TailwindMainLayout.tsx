@@ -48,6 +48,12 @@ const Header = () => (
                               >
                                     Contact
                               </a>
+                                 <a
+                                    href="/app/verify-document"
+                                    className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-orange-500 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-gradient-to-r after:from-primary after:to-orange-500 after:transition-all after:duration-300 hover:after:w-full"
+                              >
+                                    Verify Document
+                              </a>
                         </div>
                   </nav>
                   <nav className="flex items-center space-x-2 group md:hidden">

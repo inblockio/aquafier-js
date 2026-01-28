@@ -406,7 +406,7 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                                     name: fileNameData,
                                     creationDate: timeToHumanFriendly(firstRevisionData?.local_timestamp, true),
                                     creatorAddress: contractCreatorAddress,
-                                    documentUrl: '#',
+                                    documentId: '#',
                                     status: isWorkFlowComplete.length === 0 ? 'completed' : 'pending',
                                     pendingSignatures: 0,
                                     signers: [

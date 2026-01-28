@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import fastifyRateLimit from '@fastify/rate-limit';
 import { prisma } from '../database/db';
 import { checkFolderExists, getAquaTreeFileName, getHost, getPort } from '../utils/api_utils';
-import { fetchAquatreeFoUser } from '../utils/revisions_utils';
+import { fetchAquatreeFoUser, transferRevisionChainData } from '../utils/revisions_utils';
 import { SYSTEM_WALLET_ADDRESS, TEMPLATE_HASHES } from '../models/constants';
 import path from 'path';
 import * as fs from "fs"
@@ -10,6 +10,10 @@ import { getAquaAssetDirectory } from '../utils/file_utils';
 import { getTemplateInformation } from '../utils/server_attest';
 import Logger from "../utils/logger";
 import { deleteChildrenFieldFromAquaTrees } from '../utils/revisions_operations_utils';
+import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
+import { fetchCompleteRevisionChain } from '../utils/quick_utils';
+import { getGenesisHash, getLatestVH } from 'aqua-js-sdk';
+import { generateNonce } from 'siwe';
 
 export default async function systemController(fastify: FastifyInstance) {
 
@@ -217,12 +221,101 @@ export default async function systemController(fastify: FastifyInstance) {
         //     "aqua_certificate.json"
         // ]
 
-         let templates = Object.keys(TEMPLATE_HASHES);
-         const systemAquaTreeFileNames = templates.map(templateName => `${templateName}.json`);
+        let templates = Object.keys(TEMPLATE_HASHES);
+        const systemAquaTreeFileNames = templates.map(templateName => `${templateName}.json`);
 
 
         return reply.code(200).send({ data: systemAquaTreeFileNames })
     });
 
+    // Handle backing up an aqua tree to the server
+    fastify.post('/server/backup-aqua-sign', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
+
+        const user = request.user;
+
+        const userAddress = user?.address
+
+        if (!userAddress) {
+            return reply.code(400).send({ error: "You are not logged in!" })
+        }
+
+        // Get body params
+        const params = request.body as { latestRevisionHash: string };
+
+        // Fetch complete aquaTree
+
+        const host = request.headers.host || 'localhost:3000'; // Provide a default host
+        const protocol = request.protocol || 'http';
+        const url = `${protocol}://${host}`;
+
+        // Fetch the entire chain from the source user
+        // const entireChain = await fetchCompleteRevisionChain(latestRevisionHash, userAddress, url);
+        let latest: Array<{
+            hash: string;
+            user: string;
+        }> = [
+                {
+                    hash: `${userAddress}_${params.latestRevisionHash}`,
+                    user: userAddress
+                }
+            ]
+
+        console.log(JSON.stringify(latest, null, 4))
+        const entireChain = await fetchAquatreeFoUser(url, latest)//(latestRevisionHash, userAddress, url);
+
+        if (entireChain.length === 0) {
+            return reply.code(404).send({ success: false, message: "No revisions found for the provided hash" });
+
+        }
+        if (entireChain.length > 1) {
+            return reply.code(400).send({
+                success: false,
+                message: "Multiple revisions found for the provided hash. Please provide a unique revision hash."
+            });
+        }
+
+        console.log("Entire chain: ", entireChain)
+
+        // Transfer the chain to the target user (session.address)
+        const transferResult = await transferRevisionChainData(
+            SYSTEM_WALLET_ADDRESS,
+            entireChain[0],
+        );
+
+        if (transferResult.success) {
+            // We create a public contract URL here
+            let contractIdentifier = `${Date.now()}_${generateNonce()}`
+            try {
+                await prisma.contract.create({
+                    data: {
+                        hash: contractIdentifier,
+                        genesis_hash: getGenesisHash(entireChain[0].aquaTree),
+                        latest: getLatestVH(entireChain[0].aquaTree),
+                        recipients: [SYSTEM_WALLET_ADDRESS].map(item => item.trim().toLowerCase()),
+                        sender: SYSTEM_WALLET_ADDRESS,
+                        option: "latest",
+                        file_name: getAquaTreeFileName(entireChain[0].aquaTree)
+                    }
+                })
+                return reply.code(200).send({
+                    success: true,
+                    backupId: contractIdentifier
+                });
+            } catch (error) {
+                return reply.code(200).send({
+                    success: false,
+                    backupId: null
+                });
+            }
+        }
+
+        return reply.code(200).send({
+            success: false,
+            backupId: null
+        });
+
+
+
+    });
 }
 

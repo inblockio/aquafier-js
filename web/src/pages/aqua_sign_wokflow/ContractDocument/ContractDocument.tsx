@@ -5,6 +5,7 @@ import {ContractDocumentViewProps, SignatureData, SummaryDetailsDisplayData} fro
 import {
     AquaTree,
     getGenesisHash,
+    getLatestVH,
     OrderRevisionInAquaTree,
     Revision
 } from 'aqua-js-sdk/web'
@@ -464,7 +465,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
             return (
                   <div className="grid grid-cols-4">
                         <div className="col-span-12 md:col-span-3">
-                              <PDFDisplayWithJustSimpleOverlay pdfUrl={pdfURLObject!} annotationsInDocument={signatures} signatures={signatures} />
+                              <PDFDisplayWithJustSimpleOverlay pdfUrl={pdfURLObject!} annotationsInDocument={signatures} signatures={signatures} latestRevisionHash={getLatestVH(selectedFileInfo.aquaTree!)} />
                         </div>
                         <div className="col-span-12 md:col-span-1 m-5">
                               <div className="flex flex-col space-y-2">

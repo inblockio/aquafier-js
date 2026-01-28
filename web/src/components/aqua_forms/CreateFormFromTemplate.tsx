@@ -25,6 +25,7 @@ import Aquafier, {
       AquaTreeWrapper,
       FileObject,
       getAquaTreeFileName,
+      getLatestVH,
       Revision
 } from 'aqua-js-sdk'
 import axios from 'axios'
@@ -2313,7 +2314,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                       <div>
                                                             <div className="space-y-4">
                                                                   <h5>Claim To Be attested</h5>
-                                                                  <FilePreview fileInfo={getAquaTreeFileObject(selectedFileInfo!)!} />
+                                                                  <FilePreview fileInfo={getAquaTreeFileObject(selectedFileInfo!)!} latestRevisionHash={getLatestVH(selectedFileInfo?.aquaTree!)} />
                                                             </div>
                                                             <Separator className="my-8" />
                                                       </div>
