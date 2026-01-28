@@ -202,12 +202,14 @@ export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string,
             file_hash: fileHash,
         },
         create: {
-
             file_hash: fileHash,
             file_location: filePath,
 
         },
-        update: {}
+        update: {
+            file_hash: fileHash,
+            file_location: filePath,
+        }
     })
 
     await prisma.fileIndex.upsert({
@@ -215,12 +217,14 @@ export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string,
             file_hash: fileHash,
         },
         create: {
-
             pubkey_hash: [filepubkeyhash],
             file_hash: fileHash,
 
         },
-        update: {}
+        update: {
+            pubkey_hash: [filepubkeyhash],
+            file_hash: fileHash,
+        }
     })
 
     await prisma.fileName.upsert({
@@ -228,7 +232,6 @@ export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string,
             pubkey_hash: filepubkeyhash,
         },
         create: {
-
             pubkey_hash: filepubkeyhash,
             file_name: fileName,
 
@@ -272,7 +275,6 @@ const setUpSystemTemplates = async () => {
 
 
     let assetsPath = getAquaAssetDirectory()
-    Logger.info(`Assets path ${assetsPath}`)
 
     let assetPathExist = await checkFolderExists(assetsPath)
     const assetFiles = [];
@@ -346,8 +348,6 @@ const setUpSystemTemplates = async () => {
         let documentContractFields: Array<AquaTemplatesFields> = JSON.parse(fieldsFileData)
         documentContractFields.forEach(async (fieldData, fieldIndex) => {
 
-
-            
          await prisma.aquaTemplateFields.upsert({
                 where: {
                     id: `${index}${fieldIndex}`,
@@ -372,7 +372,24 @@ const setUpSystemTemplates = async () => {
                     is_editable: fieldData.isEditable == null ? true : fieldData.isEditable,
 
                 },
-                update: {},
+                update: {
+                    aqua_form_id: `${index}`,
+                    name: fieldData.name,
+                    label: fieldData.label,
+                    type: fieldData.type,
+                    required: fieldData.required,
+                    is_array: fieldData.isArray,
+                    is_hidden: fieldData.isHidden || false,
+                    description: fieldData.description,
+                    placeholder: fieldData.placeholder,
+                    support_text: fieldData.supportText,
+                    default_value: fieldData.defaultValue,
+                    is_verifiable: fieldData.isVerifiable || false,
+                    depend_on_field: fieldData.dependsOn?.field,
+                    depend_on_value: fieldData.dependsOn?.value,
+                   
+                    is_editable: fieldData.isEditable == null ? true : fieldData.isEditable,
+                },
             })
 
 
