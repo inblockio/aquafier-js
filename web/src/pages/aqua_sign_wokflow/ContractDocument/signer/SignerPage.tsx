@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useState} from 'react'
-import type {Annotation} from './types'
+import type {Annotation, ImageAnnotation, ProfileAnnotation, TextAnnotation} from './types'
 import PdfViewer from './pdf-viewer'
 import AnnotationSidebar from './annotation-sidebar'
 import {ArrowLeft, ArrowRight, Download, ZoomIn, ZoomOut} from 'lucide-react'
@@ -8,27 +8,29 @@ import {LuInfo} from 'react-icons/lu'
 import {Button} from '../../../../components/ui/button'
 import {Slider} from '../../../../components/ui/slider'
 import {ensureDomainUrlHasSSL} from '@/utils/functions'
+import { toast } from 'sonner'
+import { degrees, PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 // import { ScrollArea } from '@/components/ui/scroll-area';
 
-// const parseFontSizeToPoints = (fontSizeString: string, defaultSize: number = 12): number => {
-//   if (!fontSizeString || typeof fontSizeString !== 'string') return defaultSize;
+const parseFontSizeToPoints = (fontSizeString: string, defaultSize: number = 12): number => {
+  if (!fontSizeString || typeof fontSizeString !== 'string') return defaultSize;
 
-//   const value = parseFloat(fontSizeString);
-//   if (isNaN(value)) return defaultSize;
+  const value = parseFloat(fontSizeString);
+  if (isNaN(value)) return defaultSize;
 
-//   if (fontSizeString.toLowerCase().endsWith('pt')) {
-//     return value;
-//   } else if (fontSizeString.toLowerCase().endsWith('px')) {
-//     // Common conversion: 1px = 0.75pt (for 96 DPI assumption where 1pt = 1/72 inch)
-//     // Or, for pdf-lib, sometimes treating px as pt directly is fine for visual consistency.
-//     // Let's treat px as pt for simplicity here, can be refined.
-//     return value;
-//   } else if (fontSizeString.toLowerCase().endsWith('em')) {
-//     return value * defaultSize; // Assuming 1em = defaultSize (e.g., 12pt)
-//   }
-//   // If no unit, assume points
-//   return value;
-// };
+  if (fontSizeString.toLowerCase().endsWith('pt')) {
+    return value;
+  } else if (fontSizeString.toLowerCase().endsWith('px')) {
+    // Common conversion: 1px = 0.75pt (for 96 DPI assumption where 1pt = 1/72 inch)
+    // Or, for pdf-lib, sometimes treating px as pt directly is fine for visual consistency.
+    // Let's treat px as pt for simplicity here, can be refined.
+    return value;
+  } else if (fontSizeString.toLowerCase().endsWith('em')) {
+    return value * defaultSize; // Assuming 1em = defaultSize (e.g., 12pt)
+  }
+  // If no unit, assume points
+  return value;
+};
 
 interface PdfRendererProps {
       pdfFile: File | null
@@ -41,6 +43,7 @@ interface PdfRendererProps {
       selectedAnnotationId: string | null
       onAnnotationSelect: (id: string | null) => void
       onAnnotationRotate: (direction: 'cw' | 'ccw') => void
+      onDownload?: () => void
 }
 
 function PdfRendererComponent({
@@ -53,20 +56,30 @@ function PdfRendererComponent({
       selectedTool,
       selectedAnnotationId,
       onAnnotationSelect,
+      onDownload,
 }: PdfRendererProps) {
+      console.log("PdfRendererComponent received onDownload:", typeof onDownload)
       const [currentPage, setCurrentPage] = useState(1)
       const [numPages, setNumPages] = useState(0)
       const [scale, setScale] = useState(1.15)
 
       const handleDownload = () => {
-            if (pdfFile) {
-                  const url = URL.createObjectURL(pdfFile)
-                  const link = document.createElement('a')
-                  link.href = url
-                  link.download = 'document.pdf'
-                  link.click()
-                  URL.revokeObjectURL(url)
+            if (onDownload) {
+                  // onDownload()
+                  console.log("Download triggered from PdfRenderer");
+                  onDownload()
+            } else {
+             console.log("No onDownload prop provided to PdfRenderer");
+                  toast.error("Download function not implemented.");
             }
+            // else if (pdfFile) {
+            //       const url = URL.createObjectURL(pdfFile)
+            //       const link = document.createElement('a')
+            //       link.href = url
+            //       link.download = 'document.pdf'
+            //       link.click()
+            //       URL.revokeObjectURL(url)
+            // }
       }
 
       return (
@@ -139,14 +152,248 @@ interface EasyPDFRendererProps {
 }
 
 export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument }: EasyPDFRendererProps) => {
+      const mappedAnnotations = annotations.map((anno: any) => ({
+            ...anno,
+            type: 'signature' as any,
+            dataUrl: anno.dataUrl || anno.imageSrc,
+      }))
+
+      // Helper function for parsing dimensions
+      const parseDimension = (dimension: string | number | undefined, pageDimension: number, defaultPercentage: number): number => {
+            if (dimension === undefined || dimension === null) return (defaultPercentage / 100) * pageDimension;
+
+            // If it's already a number, return it directly
+            if (typeof dimension === 'number') {
+                  return isNaN(dimension) ? (defaultPercentage / 100) * pageDimension : dimension;
+            }
+
+            // Convert to string if needed
+            const dimStr = String(dimension);
+
+            if (dimStr.endsWith('%')) {
+                  const num = parseFloat(dimStr);
+                  return isNaN(num) ? (defaultPercentage / 100) * pageDimension : (num / 100) * pageDimension;
+            } else if (dimStr.endsWith('px') || dimStr.endsWith('pt')) {
+                  const num = parseFloat(dimStr);
+                  return isNaN(num) ? (defaultPercentage / 100) * pageDimension : num;
+            } else if (dimStr.endsWith('em')) {
+                  const num = parseFloat(dimStr);
+                  return isNaN(num) ? (defaultPercentage / 100) * pageDimension : num * 12;
+            } else if (!isNaN(parseFloat(dimStr))) {
+                  return parseFloat(dimStr);
+            }
+            return (defaultPercentage / 100) * pageDimension;
+      };
+
+      const handleDownload = async () => {
+            if (!pdfFile) {
+                  toast.error("No PDF - Please upload or load a PDF file first.");
+                  return;
+            }
+
+            try {
+                  const existingPdfBytes = await pdfFile.arrayBuffer();
+                  const pdfDoc = await PDFDocument.load(existingPdfBytes);
+                  const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+                  const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+                  // Combine mapped annotations with annotationsInDocument for embedding
+                  const allAnnotations = [...mappedAnnotations, ...annotationsInDocument.map((sig: SignatureData) => ({
+                        type: 'profile' as const,
+                        id: sig.id,
+                        x: sig.x,
+                        y: sig.y,
+                        page: typeof sig.page === 'string' ? parseInt(sig.page) : sig.page,
+                        rotation: sig.rotation ?? 0,
+                        imageSrc: sig.dataUrl,
+                        imageWidth: sig.imageWidth ?? '140px',
+                        imageHeight: sig.imageHeight ?? '80px',
+                        imageAlt: sig.name,
+                        name: sig.name,
+                        walletAddress: sig.walletAddress,
+                  }))];
+
+                  for (const anno of allAnnotations) {
+                        const pageIndex = (anno.page || 1) - 1;
+                        if (pageIndex < 0 || pageIndex >= pdfDoc.getPageCount()) continue;
+
+                        const page = pdfDoc.getPage(pageIndex);
+                        const { width: pageWidth, height: pageHeight } = page.getSize();
+
+                        const annoXPercent = anno.x;
+                        const annoYPercent = anno.y;
+                        const annoX = (annoXPercent / 100) * pageWidth;
+
+                        if (anno.type === 'text') {
+                              const textAnno = anno as TextAnnotation;
+                              const colorString = textAnno.color?.startsWith('#') ? textAnno.color.substring(1) : (textAnno.color || '000000');
+                              const r = parseInt(colorString.substring(0, 2), 16) / 255;
+                              const g = parseInt(colorString.substring(2, 4), 16) / 255;
+                              const b = parseInt(colorString.substring(4, 6), 16) / 255;
+
+                              const annoTextWidth = ((textAnno.width || 20) / 100) * pageWidth;
+                              const fontSizeInPoints = parseFontSizeToPoints(textAnno.fontSize, 12);
+                              const textYPdfLib = pageHeight - (annoYPercent / 100 * pageHeight) - fontSizeInPoints;
+
+                              page.drawText(textAnno.text, {
+                                    x: annoX,
+                                    y: textYPdfLib,
+                                    size: fontSizeInPoints,
+                                    font: helveticaFont,
+                                    color: rgb(r, g, b),
+                                    lineHeight: fontSizeInPoints * 1.2,
+                                    maxWidth: annoTextWidth,
+                                    rotate: degrees(anno.rotation || 0),
+                              });
+                        } else if (anno.type === 'image') {
+                              const imgAnno = anno as ImageAnnotation;
+                              const finalAnnoWidthInPoints = parseDimension(imgAnno.width, pageWidth, 25);
+                              const finalAnnoHeightInPoints = parseDimension(imgAnno.height, pageHeight, 15);
+                              const annoImgYPdfLib = pageHeight - (annoYPercent / 100 * pageHeight) - finalAnnoHeightInPoints;
+
+                              try {
+                                    let imageBytes: ArrayBuffer;
+                                    if (imgAnno.src.startsWith('data:image')) {
+                                          const base64Data = imgAnno.src.split(',')[1];
+                                          imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)).buffer;
+                                    } else {
+                                          const response = await fetch(imgAnno.src);
+                                          imageBytes = await response.arrayBuffer();
+                                    }
+
+                                    let pdfImage;
+                                    if (imgAnno.src.includes('png')) {
+                                          pdfImage = await pdfDoc.embedPng(imageBytes);
+                                    } else if (imgAnno.src.includes('jpeg') || imgAnno.src.includes('jpg')) {
+                                          pdfImage = await pdfDoc.embedJpg(imageBytes);
+                                    } else {
+                                          console.warn(`Unsupported image type for annotation ${imgAnno.id}`);
+                                          continue;
+                                    }
+
+                                    page.drawImage(pdfImage, {
+                                          x: annoX,
+                                          y: annoImgYPdfLib,
+                                          width: finalAnnoWidthInPoints,
+                                          height: finalAnnoHeightInPoints,
+                                          rotate: degrees(anno.rotation || 0),
+                                    });
+                              } catch (error) {
+                                    console.error(`Failed to embed image for annotation ${imgAnno.id}:`, error);
+                              }
+                        } else if (anno.type === 'profile' || anno.type === 'signature') {
+                              const profileAnno = anno as ProfileAnnotation;
+                              let currentYOffsetFromTopPercent = profileAnno.y;
+                              const profileRotation = degrees(profileAnno.rotation || 0);
+
+                              // 1. Draw Image
+                              const imgWidthPoints = parseDimension(profileAnno.imageWidth, pageWidth, 20);
+                              const imgHeightPoints = parseDimension(profileAnno.imageHeight, pageHeight, 10);
+                              const imgYPdfLib = pageHeight - (currentYOffsetFromTopPercent / 100 * pageHeight) - imgHeightPoints;
+
+                              try {
+                                    const imgSrc = profileAnno.imageSrc || (profileAnno as any).dataUrl;
+                                    if (imgSrc) {
+                                          let imageBytes: ArrayBuffer;
+                                          if (imgSrc.startsWith('data:image')) {
+                                                const base64Data = imgSrc.split(',')[1];
+                                                imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)).buffer;
+                                          } else {
+                                                const response = await fetch(imgSrc);
+                                                imageBytes = await response.arrayBuffer();
+                                          }
+
+                                          let pdfImage;
+                                          if (imgSrc.includes('png')) {
+                                                pdfImage = await pdfDoc.embedPng(imageBytes);
+                                          } else if (imgSrc.includes('jpeg') || imgSrc.includes('jpg')) {
+                                                pdfImage = await pdfDoc.embedJpg(imageBytes);
+                                          } else {
+                                                // Try PNG as default for data URLs
+                                                try {
+                                                      pdfImage = await pdfDoc.embedPng(imageBytes);
+                                                } catch {
+                                                      pdfImage = await pdfDoc.embedJpg(imageBytes);
+                                                }
+                                          }
+
+                                          if (pdfImage) {
+                                                page.drawImage(pdfImage, {
+                                                      x: annoX,
+                                                      y: imgYPdfLib,
+                                                      width: imgWidthPoints,
+                                                      height: imgHeightPoints,
+                                                      rotate: profileRotation,
+                                                });
+                                          }
+                                    }
+                              } catch (error) {
+                                    console.error(`Failed to embed profile image for annotation ${profileAnno.id}:`, error);
+                              }
+                              currentYOffsetFromTopPercent += (imgHeightPoints / pageHeight * 100) + 1;
+
+                              // 2. Draw Name
+                              if (profileAnno.name) {
+                                    const nameFontSize = parseFontSizeToPoints(profileAnno.nameFontSize || "12pt", 12);
+                                    const nameColorStr = profileAnno.nameColor || '#000000';
+                                    const nameR = parseInt(nameColorStr.substring(1, 3), 16) / 255;
+                                    const nameG = parseInt(nameColorStr.substring(3, 5), 16) / 255;
+                                    const nameB = parseInt(nameColorStr.substring(5, 7), 16) / 255;
+                                    const nameYPdfLib = pageHeight - (currentYOffsetFromTopPercent / 100 * pageHeight) - nameFontSize;
+
+                                    page.drawText(profileAnno.name, {
+                                          x: annoX,
+                                          y: nameYPdfLib,
+                                          size: nameFontSize,
+                                          font: helveticaBoldFont,
+                                          color: rgb(nameR, nameG, nameB),
+                                          rotate: profileRotation,
+                                          maxWidth: pageWidth * 0.8,
+                                    });
+                                    currentYOffsetFromTopPercent += (nameFontSize * 1.5 / pageHeight * 100) + 0.5;
+                              }
+
+                              // 3. Draw Wallet Address
+                              if (profileAnno.walletAddress) {
+                                    const walletFontSize = parseFontSizeToPoints(profileAnno.walletAddressFontSize || "10pt", 10);
+                                    const walletColorStr = profileAnno.walletAddressColor || '#333333';
+                                    const walletR = parseInt(walletColorStr.substring(1, 3), 16) / 255;
+                                    const walletG = parseInt(walletColorStr.substring(3, 5), 16) / 255;
+                                    const walletB = parseInt(walletColorStr.substring(5, 7), 16) / 255;
+                                    const walletYPdfLib = pageHeight - (currentYOffsetFromTopPercent / 100 * pageHeight) - walletFontSize;
+
+                                    page.drawText(profileAnno.walletAddress, {
+                                          x: annoX,
+                                          y: walletYPdfLib,
+                                          size: walletFontSize,
+                                          font: helveticaFont,
+                                          color: rgb(walletR, walletG, walletB),
+                                          rotate: profileRotation,
+                                          maxWidth: pageWidth * 0.8,
+                                    });
+                              }
+                        }
+                  }
+
+                  const pdfBytes = await pdfDoc.save();
+                  const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
+                  const link = document.createElement('a');
+                  link.href = URL.createObjectURL(blob);
+                  link.download = `${pdfFile.name.replace('.pdf', '')}_signed.pdf`;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  toast.success("Download Started - Your signed PDF is downloading.");
+            } catch (error) {
+                  console.error("Failed to save PDF:", error);
+                  toast.error("Download Failed - Could not generate the signed PDF.");
+            }
+      };
+
       return (
             <PdfRenderer
                   pdfFile={pdfFile}
-                  annotations={annotations.map((anno: any) => ({
-                        ...anno,
-                        type: 'signature' as any,
-                        dataUrl: anno.dataUrl || anno.imageSrc,
-                  }))}
+                  annotations={mappedAnnotations}
                   annotationsInDocument={annotationsInDocument}
                   onAnnotationAdd={(_newAnnotationData: Omit<Annotation, 'id'>) => {}}
                   onAnnotationUpdate={(_updatedAnnotation: Annotation) => {}}
@@ -155,6 +402,7 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument }:
                   selectedAnnotationId={null}
                   onAnnotationSelect={(_annotatedid: string | null) => {}}
                   onAnnotationRotate={(_direction: 'cw' | 'ccw') => {}}
+                  onDownload={handleDownload}
             />
       )
 }
@@ -230,204 +478,204 @@ export default function SignerPage({
       )
 
       // TIP: Do not remove
-      // const parseDimension = (dimension: string, pageDimension: number, defaultPercentage: number): number => {
-      //   if (dimension.endsWith('%')) {
-      //     const num = parseFloat(dimension);
-      //     return isNaN(num) ? (defaultPercentage / 100) * pageDimension : (num / 100) * pageDimension;
-      //   } else if (dimension.endsWith('px') || dimension.endsWith('pt')) {
-      //     const num = parseFloat(dimension);
-      //     return isNaN(num) ? (defaultPercentage / 100) * pageDimension : num;
-      //   } else if (dimension.endsWith('em')) {
-      //     const num = parseFloat(dimension);
-      //     return isNaN(num) ? (defaultPercentage / 100) * pageDimension : num * 12; // Assuming 1em = 12pt
-      //   } else if (!isNaN(parseFloat(dimension))) {
-      //     return parseFloat(dimension);
-      //   }
-      //   return (defaultPercentage / 100) * pageDimension;
-      // };
+      const parseDimension = (dimension: string, pageDimension: number, defaultPercentage: number): number => {
+        if (dimension.endsWith('%')) {
+          const num = parseFloat(dimension);
+          return isNaN(num) ? (defaultPercentage / 100) * pageDimension : (num / 100) * pageDimension;
+        } else if (dimension.endsWith('px') || dimension.endsWith('pt')) {
+          const num = parseFloat(dimension);
+          return isNaN(num) ? (defaultPercentage / 100) * pageDimension : num;
+        } else if (dimension.endsWith('em')) {
+          const num = parseFloat(dimension);
+          return isNaN(num) ? (defaultPercentage / 100) * pageDimension : num * 12; // Assuming 1em = 12pt
+        } else if (!isNaN(parseFloat(dimension))) {
+          return parseFloat(dimension);
+        }
+        return (defaultPercentage / 100) * pageDimension;
+      };
 
       // FEATURE: This method will help us do the download of the pdf
-      // const handleDownload = async () => {
-      //   if (!pdfFile) {
-      //     toaster.create({ title: "No PDF", description: "Please upload or load a PDF file first.", type: "error" });
-      //     return;
-      //   }
+      const handleDownload = async () => {
+        if (!pdfFile) {
+          toast.error("No PDF - Please upload or load a PDF file first.");
+          return;
+        }
 
-      //   try {
-      //     const existingPdfBytes = await pdfFile.arrayBuffer();
-      //     const pdfDoc = await PDFDocument.load(existingPdfBytes);
-      //     const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-      //     const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+        try {
+          const existingPdfBytes = await pdfFile.arrayBuffer();
+          const pdfDoc = await PDFDocument.load(existingPdfBytes);
+          const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+          const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-      //     for (const anno of annotations) {
-      //       const page = pdfDoc.getPage(anno.page - 1);
-      //       const { width: pageWidth, height: pageHeight } = page.getSize();
+          for (const anno of annotations) {
+            const page = pdfDoc.getPage(anno.page - 1);
+            const { width: pageWidth, height: pageHeight } = page.getSize();
 
-      //       const annoXPercent = anno.x;
-      //       const annoYPercent = anno.y;
-      //       const annoX = (annoXPercent / 100) * pageWidth;
+            const annoXPercent = anno.x;
+            const annoYPercent = anno.y;
+            const annoX = (annoXPercent / 100) * pageWidth;
 
-      //       // Base Y for pdf-lib (bottom of the element)
-      //       // anno.y is percentage from top of page. pdf-lib y is from bottom of page.
-      //       // We will calculate y for each element within ProfileAnnotation specifically.
+            // Base Y for pdf-lib (bottom of the element)
+            // anno.y is percentage from top of page. pdf-lib y is from bottom of page.
+            // We will calculate y for each element within ProfileAnnotation specifically.
 
-      //       if (anno.type === 'text') {
-      //         const textAnno = anno as TextAnnotation;
-      //         const colorString = textAnno.color.startsWith('#') ? textAnno.color.substring(1) : textAnno.color;
-      //         const r = parseInt(colorString.substring(0, 2), 16) / 255;
-      //         const g = parseInt(colorString.substring(2, 4), 16) / 255;
-      //         const b = parseInt(colorString.substring(4, 6), 16) / 255;
+            if (anno.type === 'text') {
+              const textAnno = anno as TextAnnotation;
+              const colorString = textAnno.color.startsWith('#') ? textAnno.color.substring(1) : textAnno.color;
+              const r = parseInt(colorString.substring(0, 2), 16) / 255;
+              const g = parseInt(colorString.substring(2, 4), 16) / 255;
+              const b = parseInt(colorString.substring(4, 6), 16) / 255;
 
-      //         const annoTextWidth = (textAnno.width / 100) * pageWidth;
-      //         const fontSizeInPoints = parseFontSizeToPoints(textAnno.fontSize, 12);
-      //         // For text, anno.y is the top of the text block.
-      //         const textYPdfLib = pageHeight - (annoYPercent / 100 * pageHeight) - fontSizeInPoints;
+              const annoTextWidth = (textAnno.width / 100) * pageWidth;
+              const fontSizeInPoints = parseFontSizeToPoints(textAnno.fontSize, 12);
+              // For text, anno.y is the top of the text block.
+              const textYPdfLib = pageHeight - (annoYPercent / 100 * pageHeight) - fontSizeInPoints;
 
-      //         page.drawText(textAnno.text, {
-      //           x: annoX,
-      //           y: textYPdfLib,
-      //           size: fontSizeInPoints,
-      //           font: helveticaFont,
-      //           color: rgb(r, g, b),
-      //           lineHeight: fontSizeInPoints * 1.2,
-      //           maxWidth: annoTextWidth,
-      //           rotate: degrees(anno.rotation || 0),
-      //         });
-      //       } else if (anno.type === 'image') {
-      //         const imgAnno = anno as ImageAnnotation;
-      //         const finalAnnoWidthInPoints = parseDimension(imgAnno.width, pageWidth, 25);
-      //         const finalAnnoHeightInPoints = parseDimension(imgAnno.height, pageHeight, 15);
-      //         const annoImgYPdfLib = pageHeight - (annoYPercent / 100 * pageHeight) - finalAnnoHeightInPoints;
+              page.drawText(textAnno.text, {
+                x: annoX,
+                y: textYPdfLib,
+                size: fontSizeInPoints,
+                font: helveticaFont,
+                color: rgb(r, g, b),
+                lineHeight: fontSizeInPoints * 1.2,
+                maxWidth: annoTextWidth,
+                rotate: degrees(anno.rotation || 0),
+              });
+            } else if (anno.type === 'image') {
+              const imgAnno = anno as ImageAnnotation;
+              const finalAnnoWidthInPoints = parseDimension(imgAnno.width, pageWidth, 25);
+              const finalAnnoHeightInPoints = parseDimension(imgAnno.height, pageHeight, 15);
+              const annoImgYPdfLib = pageHeight - (annoYPercent / 100 * pageHeight) - finalAnnoHeightInPoints;
 
-      //         try {
-      //           let imageBytes: ArrayBuffer;
-      //           if (imgAnno.src.startsWith('data:image')) {
-      //             const base64Data = imgAnno.src.split(',')[1];
-      //             imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)).buffer;
-      //           } else {
-      //             const response = await fetch(imgAnno.src);
-      //             imageBytes = await response.arrayBuffer();
-      //           }
+              try {
+                let imageBytes: ArrayBuffer;
+                if (imgAnno.src.startsWith('data:image')) {
+                  const base64Data = imgAnno.src.split(',')[1];
+                  imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)).buffer;
+                } else {
+                  const response = await fetch(imgAnno.src);
+                  imageBytes = await response.arrayBuffer();
+                }
 
-      //           let pdfImage;
-      //           if (imgAnno.src.includes('png')) {
-      //             pdfImage = await pdfDoc.embedPng(imageBytes);
-      //           } else if (imgAnno.src.includes('jpeg') || imgAnno.src.includes('jpg')) {
-      //             pdfImage = await pdfDoc.embedJpg(imageBytes);
-      //           } else {
-      //             console.warn(`Unsupported image type for annotation ${imgAnno.id}`);
-      //             toaster.create({ title: "Image Error", description: `Unsupported image type: ${imgAnno.alt}`, type: "error" });
-      //             continue;
-      //           }
+                let pdfImage;
+                if (imgAnno.src.includes('png')) {
+                  pdfImage = await pdfDoc.embedPng(imageBytes);
+                } else if (imgAnno.src.includes('jpeg') || imgAnno.src.includes('jpg')) {
+                  pdfImage = await pdfDoc.embedJpg(imageBytes);
+                } else {
+                  console.warn(`Unsupported image type for annotation ${imgAnno.id}`);
+                  toast.error("Image Error - Unsupported image type");
+                  continue;
+                }
 
-      //           page.drawImage(pdfImage, {
-      //             x: annoX,
-      //             y: annoImgYPdfLib,
-      //             width: finalAnnoWidthInPoints,
-      //             height: finalAnnoHeightInPoints,
-      //             rotate: degrees(anno.rotation || 0),
-      //           });
-      //         } catch (error) {
-      //           console.error(`Failed to embed image for annotation ${imgAnno.id}:`, error);
-      //           toaster.create({ title: "Image Error", description: `Could not embed image: ${imgAnno.alt}`, type: "error" });
-      //         }
-      //       } else if (anno.type === 'profile') {
-      //         const profileAnno = anno as ProfileAnnotation;
-      //         let currentYOffsetFromTopPercent = profileAnno.y; // Start with the annotation's y
-      //         const profileRotation = degrees(profileAnno.rotation || 0);
+                page.drawImage(pdfImage, {
+                  x: annoX,
+                  y: annoImgYPdfLib,
+                  width: finalAnnoWidthInPoints,
+                  height: finalAnnoHeightInPoints,
+                  rotate: degrees(anno.rotation || 0),
+                });
+              } catch (error) {
+                console.error(`Failed to embed image for annotation ${imgAnno.id}:`, error);
+                toast.error("Image Error - Could not embed image");
+              }
+            } else if (anno.type === 'profile') {
+              const profileAnno = anno as ProfileAnnotation;
+              let currentYOffsetFromTopPercent = profileAnno.y; // Start with the annotation's y
+              const profileRotation = degrees(profileAnno.rotation || 0);
 
-      //         // 1. Draw Image
-      //         const imgWidthPoints = parseDimension(profileAnno.imageWidth, pageWidth, 20); // Default 20% width
-      //         const imgHeightPoints = parseDimension(profileAnno.imageHeight, pageHeight, 10); // Default 10% height
-      //         const imgYPdfLib = pageHeight - (currentYOffsetFromTopPercent / 100 * pageHeight) - imgHeightPoints;
+              // 1. Draw Image
+              const imgWidthPoints = parseDimension(profileAnno.imageWidth, pageWidth, 20); // Default 20% width
+              const imgHeightPoints = parseDimension(profileAnno.imageHeight, pageHeight, 10); // Default 10% height
+              const imgYPdfLib = pageHeight - (currentYOffsetFromTopPercent / 100 * pageHeight) - imgHeightPoints;
 
-      //         try {
-      //           let imageBytes: ArrayBuffer;
-      //           if (profileAnno.imageSrc.startsWith('data:image')) {
-      //             const base64Data = profileAnno.imageSrc.split(',')[1];
-      //             imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)).buffer;
-      //           } else {
-      //             const response = await fetch(profileAnno.imageSrc);
-      //             imageBytes = await response.arrayBuffer();
-      //           }
+              try {
+                let imageBytes: ArrayBuffer;
+                if (profileAnno.imageSrc.startsWith('data:image')) {
+                  const base64Data = profileAnno.imageSrc.split(',')[1];
+                  imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)).buffer;
+                } else {
+                  const response = await fetch(profileAnno.imageSrc);
+                  imageBytes = await response.arrayBuffer();
+                }
 
-      //           let pdfImage;
-      //           if (profileAnno.imageSrc.includes('png')) {
-      //             pdfImage = await pdfDoc.embedPng(imageBytes);
-      //           } else if (profileAnno.imageSrc.includes('jpeg') || profileAnno.imageSrc.includes('jpg')) {
-      //             pdfImage = await pdfDoc.embedJpg(imageBytes);
-      //           } else {
-      //             console.warn(`Unsupported image type for profile annotation ${profileAnno.id}`);
-      //             toaster.create({ title: "Profile Image Error", description: `Unsupported image: ${profileAnno.imageAlt}`, type: "error" });
-      //           }
-      //           if (pdfImage) {
-      //             page.drawImage(pdfImage, {
-      //               x: annoX,
-      //               y: imgYPdfLib,
-      //               width: imgWidthPoints,
-      //               height: imgHeightPoints,
-      //               rotate: profileRotation,
-      //             });
-      //           }
-      //         } catch (error) {
-      //           console.error(`Failed to embed profile image for annotation ${profileAnno.id}:`, error);
-      //           toaster.create({ title: "Profile Image Error", description: `Could not embed image: ${profileAnno.imageAlt}`, type: "error" });
-      //         }
-      //         currentYOffsetFromTopPercent += (imgHeightPoints / pageHeight * 100) + 1; // Add 1% spacing
+                let pdfImage;
+                if (profileAnno.imageSrc.includes('png')) {
+                  pdfImage = await pdfDoc.embedPng(imageBytes);
+                } else if (profileAnno.imageSrc.includes('jpeg') || profileAnno.imageSrc.includes('jpg')) {
+                  pdfImage = await pdfDoc.embedJpg(imageBytes);
+                } else {
+                  console.warn(`Unsupported image type for profile annotation ${profileAnno.id}`);
+                  toast.error("Profile Image Error - Unsupported image type");
+                }
+                if (pdfImage) {
+                  page.drawImage(pdfImage, {
+                    x: annoX,
+                    y: imgYPdfLib,
+                    width: imgWidthPoints,
+                    height: imgHeightPoints,
+                    rotate: profileRotation,
+                  });
+                }
+              } catch (error) {
+                console.error(`Failed to embed profile image for annotation ${profileAnno.id}:`, error);
+                toast.error("Profile Image Error - Could not embed image");
+              }
+              currentYOffsetFromTopPercent += (imgHeightPoints / pageHeight * 100) + 1; // Add 1% spacing
 
-      //         // 2. Draw Name
-      //         const nameFontSize = parseFontSizeToPoints(profileAnno.nameFontSize || "12pt", 12);
-      //         const nameColorStr = profileAnno.nameColor || '#000000';
-      //         const nameR = parseInt(nameColorStr.substring(1, 3), 16) / 255;
-      //         const nameG = parseInt(nameColorStr.substring(3, 5), 16) / 255;
-      //         const nameB = parseInt(nameColorStr.substring(5, 7), 16) / 255;
-      //         const nameYPdfLib = pageHeight - (currentYOffsetFromTopPercent / 100 * pageHeight) - nameFontSize;
+              // 2. Draw Name
+              const nameFontSize = parseFontSizeToPoints(profileAnno.nameFontSize || "12pt", 12);
+              const nameColorStr = profileAnno.nameColor || '#000000';
+              const nameR = parseInt(nameColorStr.substring(1, 3), 16) / 255;
+              const nameG = parseInt(nameColorStr.substring(3, 5), 16) / 255;
+              const nameB = parseInt(nameColorStr.substring(5, 7), 16) / 255;
+              const nameYPdfLib = pageHeight - (currentYOffsetFromTopPercent / 100 * pageHeight) - nameFontSize;
 
-      //         page.drawText(profileAnno.name, {
-      //           x: annoX,
-      //           y: nameYPdfLib,
-      //           size: nameFontSize,
-      //           font: helveticaBoldFont,
-      //           color: rgb(nameR, nameG, nameB),
-      //           rotate: profileRotation,
-      //           maxWidth: pageWidth * 0.8,
-      //         });
-      //         currentYOffsetFromTopPercent += (nameFontSize * 1.5 / pageHeight * 100) + 0.5; // Add 0.5% spacing
+              page.drawText(profileAnno.name, {
+                x: annoX,
+                y: nameYPdfLib,
+                size: nameFontSize,
+                font: helveticaBoldFont,
+                color: rgb(nameR, nameG, nameB),
+                rotate: profileRotation,
+                maxWidth: pageWidth * 0.8,
+              });
+              currentYOffsetFromTopPercent += (nameFontSize * 1.5 / pageHeight * 100) + 0.5; // Add 0.5% spacing
 
-      //         // 3. Draw Wallet Address
-      //         const walletFontSize = parseFontSizeToPoints(profileAnno.walletAddressFontSize || "10pt", 10);
-      //         const walletColorStr = profileAnno.walletAddressColor || '#333333';
-      //         const walletR = parseInt(walletColorStr.substring(1, 3), 16) / 255;
-      //         const walletG = parseInt(walletColorStr.substring(3, 5), 16) / 255;
-      //         const walletB = parseInt(walletColorStr.substring(5, 7), 16) / 255;
-      //         const walletYPdfLib = pageHeight - (currentYOffsetFromTopPercent / 100 * pageHeight) - walletFontSize;
+              // 3. Draw Wallet Address
+              const walletFontSize = parseFontSizeToPoints(profileAnno.walletAddressFontSize || "10pt", 10);
+              const walletColorStr = profileAnno.walletAddressColor || '#333333';
+              const walletR = parseInt(walletColorStr.substring(1, 3), 16) / 255;
+              const walletG = parseInt(walletColorStr.substring(3, 5), 16) / 255;
+              const walletB = parseInt(walletColorStr.substring(5, 7), 16) / 255;
+              const walletYPdfLib = pageHeight - (currentYOffsetFromTopPercent / 100 * pageHeight) - walletFontSize;
 
-      //         page.drawText(profileAnno.walletAddress, {
-      //           x: annoX,
-      //           y: walletYPdfLib,
-      //           size: walletFontSize,
-      //           font: helveticaFont,
-      //           color: rgb(walletR, walletG, walletB),
-      //           rotate: profileRotation,
-      //           maxWidth: pageWidth * 0.8,
-      //         });
-      //       }
-      //     }
+              page.drawText(profileAnno.walletAddress, {
+                x: annoX,
+                y: walletYPdfLib,
+                size: walletFontSize,
+                font: helveticaFont,
+                color: rgb(walletR, walletG, walletB),
+                rotate: profileRotation,
+                maxWidth: pageWidth * 0.8,
+              });
+            }
+          }
 
-      //     const pdfBytes = await pdfDoc.save();
-      //     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-      //     const link = document.createElement('a');
-      //     link.href = URL.createObjectURL(blob);
-      //     link.download = `${pdfFile.name.replace('.pdf', '')}_annotated.pdf`;
-      //     document.body.appendChild(link);
-      //     link.click();
-      //     document.body.removeChild(link);
-      //     toaster.create({ title: "Download Started", description: "Your annotated PDF is downloading." });
-      //   } catch (error) {
-      //     console.error("Failed to save PDF:", error);
-      //     toaster.create({ title: "Download Failed", description: "Could not generate the annotated PDF.", type: "error" });
-      //   }
-      // };
+          const pdfBytes = await pdfDoc.save();
+          const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = `${pdfFile.name.replace('.pdf', '')}_annotated.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          toast.success("Download Started - Your annotated PDF is downloading." );
+        } catch (error) {
+          console.error("Failed to save PDF:", error);
+          toast.error("Download Failed - Could not generate the annotated PDF.");
+        }
+      };
 
       const handleAnnotationRotation = (direction: 'cw' | 'ccw') => {
             if (!selectedAnnotationId) return
@@ -492,6 +740,7 @@ export default function SignerPage({
                         <div className="grid grid-cols-12 gap-0 h-auto md:h-full">
                               <div className="bg-gray-100 col-span-12 md:col-span-9 overflow-x-auto overflow-y-scroll h-full">
                                     <div className="h-auto md:h-full p-0 m-0">
+                                          {console.log("SignerPage passing onDownload:", typeof handleDownload)}
                                           <PdfRenderer
                                                 pdfFile={pdfFile}
                                                 annotations={annotations}
@@ -509,6 +758,7 @@ export default function SignerPage({
                                                 selectedAnnotationId={selectedAnnotationId}
                                                 onAnnotationSelect={setSelectedAnnotationId}
                                                 onAnnotationRotate={handleAnnotationRotation}
+                                                onDownload={handleDownload}
                                           />
                                     </div>
                               </div>
@@ -604,3 +854,4 @@ export default function SignerPage({
             </div>
       )
 }
+
