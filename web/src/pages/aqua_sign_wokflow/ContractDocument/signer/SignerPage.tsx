@@ -10,6 +10,7 @@ import {Slider} from '../../../../components/ui/slider'
 import {ensureDomainUrlHasSSL} from '@/utils/functions'
 import { toast } from 'sonner'
 import { degrees, PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+import { signPdfWithAquafier } from '@/utils/pdf-digital-signature'
 // import { ScrollArea } from '@/components/ui/scroll-area';
 
 const parseFontSizeToPoints = (fontSizeString: string, defaultSize: number = 12): number => {
@@ -384,15 +385,53 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument }:
                         }
                   }
 
+                  // Save PDF with annotations
                   const pdfBytes = await pdfDoc.save();
-                  const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
-                  const link = document.createElement('a');
-                  link.href = URL.createObjectURL(blob);
-                  link.download = `${pdfFile.name.replace('.pdf', '')}_signed.pdf`;
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                  toast.success("Download Started - Your signed PDF is downloading.");
+
+                  // Collect all signers from annotationsInDocument
+                  const signers = annotationsInDocument.map((sig: SignatureData) => ({
+                        name: sig.name,
+                        walletAddress: sig.walletAddress,
+                  }));
+
+                  // Get primary signer (first one) or use default
+                  const primarySigner = signers[0] || { name: 'Document Signer', walletAddress: '0x0' };
+                  const additionalSigners = signers.slice(1);
+
+                  // Apply digital signature to make it detectable by Adobe Acrobat
+                  toast.info("Applying digital signature...");
+
+                  try {
+                        const { signedPdf, signatureInfo } = await signPdfWithAquafier(
+                              pdfBytes,
+                              primarySigner.name,
+                              primarySigner.walletAddress,
+                              additionalSigners
+                        );
+
+                        // Download the digitally signed PDF
+                        const blob = new Blob([signedPdf as BlobPart], { type: 'application/pdf' });
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = `${pdfFile.name.replace('.pdf', '')}_signed.pdf`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+
+                        console.log("Digital Signature Info:", signatureInfo);
+                        toast.success(`Document signed by ${signatureInfo.signer} via ${signatureInfo.platform}`);
+                  } catch (signError) {
+                        console.warn("Digital signature failed, downloading without signature:", signError);
+                        // Fallback: download without digital signature
+                        const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = `${pdfFile.name.replace('.pdf', '')}_signed.pdf`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        toast.success("Download Started - PDF downloaded (without digital signature).");
+                  }
             } catch (error) {
                   console.error("Failed to save PDF:", error);
                   toast.error("Download Failed - Could not generate the signed PDF.");
@@ -487,18 +526,28 @@ export default function SignerPage({
       )
 
       // TIP: Do not remove
-      const parseDimension = (dimension: string, pageDimension: number, defaultPercentage: number): number => {
-        if (dimension.endsWith('%')) {
-          const num = parseFloat(dimension);
+      const parseDimension = (dimension: string | number | undefined, pageDimension: number, defaultPercentage: number): number => {
+        if (dimension === undefined || dimension === null) return (defaultPercentage / 100) * pageDimension;
+
+        // If it's already a number, return it directly
+        if (typeof dimension === 'number') {
+          return isNaN(dimension) ? (defaultPercentage / 100) * pageDimension : dimension;
+        }
+
+        // Convert to string if needed
+        const dimStr = String(dimension);
+
+        if (dimStr.endsWith('%')) {
+          const num = parseFloat(dimStr);
           return isNaN(num) ? (defaultPercentage / 100) * pageDimension : (num / 100) * pageDimension;
-        } else if (dimension.endsWith('px') || dimension.endsWith('pt')) {
-          const num = parseFloat(dimension);
+        } else if (dimStr.endsWith('px') || dimStr.endsWith('pt')) {
+          const num = parseFloat(dimStr);
           return isNaN(num) ? (defaultPercentage / 100) * pageDimension : num;
-        } else if (dimension.endsWith('em')) {
-          const num = parseFloat(dimension);
+        } else if (dimStr.endsWith('em')) {
+          const num = parseFloat(dimStr);
           return isNaN(num) ? (defaultPercentage / 100) * pageDimension : num * 12; // Assuming 1em = 12pt
-        } else if (!isNaN(parseFloat(dimension))) {
-          return parseFloat(dimension);
+        } else if (!isNaN(parseFloat(dimStr))) {
+          return parseFloat(dimStr);
         }
         return (defaultPercentage / 100) * pageDimension;
       };
@@ -671,15 +720,55 @@ export default function SignerPage({
             }
           }
 
+          // Save PDF with annotations
           const pdfBytes = await pdfDoc.save();
-          const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(blob);
-          link.download = `${pdfFile.name.replace('.pdf', '')}_annotated.pdf`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          toast.success("Download Started - Your annotated PDF is downloading." );
+
+          // Collect all signers from annotations
+          const signers = annotations
+            .filter((anno: any) => anno.name && anno.walletAddress)
+            .map((anno: any) => ({
+              name: anno.name,
+              walletAddress: anno.walletAddress,
+            }));
+
+          // Get primary signer (first one) or use default
+          const primarySigner = signers[0] || { name: 'Document Signer', walletAddress: '0x0' };
+          const additionalSigners = signers.slice(1);
+
+          // Apply digital signature to make it detectable by Adobe Acrobat
+          toast.info("Applying digital signature...");
+
+          try {
+            const { signedPdf, signatureInfo } = await signPdfWithAquafier(
+              pdfBytes,
+              primarySigner.name,
+              primarySigner.walletAddress,
+              additionalSigners
+            );
+
+            // Download the digitally signed PDF
+            const blob = new Blob([signedPdf as BlobPart], { type: 'application/pdf' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${pdfFile.name.replace('.pdf', '')}_signed.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            console.log("Digital Signature Info:", signatureInfo);
+            toast.success(`Document signed by ${signatureInfo.signer} via ${signatureInfo.platform}`);
+          } catch (signError) {
+            console.warn("Digital signature failed, downloading without signature:", signError);
+            // Fallback: download without digital signature
+            const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${pdfFile.name.replace('.pdf', '')}_annotated.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast.success("Download Started - PDF downloaded (without digital signature).");
+          }
         } catch (error) {
           console.error("Failed to save PDF:", error);
           toast.error("Download Failed - Could not generate the annotated PDF.");
