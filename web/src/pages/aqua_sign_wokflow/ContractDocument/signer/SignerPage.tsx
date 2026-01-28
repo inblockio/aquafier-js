@@ -150,9 +150,10 @@ interface EasyPDFRendererProps {
       pdfFile: File | null
       annotations: Annotation[]
       annotationsInDocument: SignatureData[]
+      documentUrl?: string
 }
 
-export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument }: EasyPDFRendererProps) => {
+export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, documentUrl }: EasyPDFRendererProps) => {
       const mappedAnnotations = annotations.map((anno: any) => ({
             ...anno,
             type: 'signature' as any,
@@ -406,7 +407,8 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument }:
                               pdfBytes,
                               primarySigner.name,
                               primarySigner.walletAddress,
-                              additionalSigners
+                              additionalSigners,
+                              documentUrl
                         );
 
                         // Download the digitally signed PDF
@@ -466,6 +468,7 @@ interface PdfSignerProps {
       handleSignatureSubmission: () => void
       submittingSignatureData: boolean
       signaturesInDocument: SignatureData[]
+      documentUrl?: string
 }
 
 export default function SignerPage({
@@ -479,6 +482,7 @@ export default function SignerPage({
       handleSignatureSubmission,
       submittingSignatureData,
       signaturesInDocument,
+      documentUrl,
 }: PdfSignerProps) {
       const pdfFile = file
       // const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -743,7 +747,8 @@ export default function SignerPage({
               pdfBytes,
               primarySigner.name,
               primarySigner.walletAddress,
-              additionalSigners
+              additionalSigners,
+              documentUrl
             );
 
             // Download the digitally signed PDF

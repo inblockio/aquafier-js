@@ -25,6 +25,7 @@ export interface SignatureOptions {
   reason?: string;
   location?: string;
   contactInfo?: string;
+  documentUrl?: string;
   signerInfo: SignerInfo;
 }
 
@@ -224,6 +225,12 @@ export async function signPdfDocument(
     infoDict.set(PDFName.of('SignaturePlatformURL'), PDFString.of(PLATFORM_URL));
     infoDict.set(PDFName.of('DocumentHash'), PDFString.of(documentHash));
     infoDict.set(PDFName.of('CertificateFingerprint'), PDFString.of(certFingerprint));
+
+    // Add document URL if provided
+    if (options.documentUrl) {
+      infoDict.set(PDFName.of('DocumentURL'), PDFString.of(options.documentUrl));
+      infoDict.set(PDFName.of('VerificationURL'), PDFString.of(options.documentUrl));
+    }
   }
 
   // Create a signature annotation on the first page
@@ -322,7 +329,8 @@ export async function signPdfWithAquafier(
   pdfBytes: Uint8Array,
   signerName: string,
   walletAddress: string,
-  additionalSigners?: Array<{ name: string; walletAddress: string }>
+  additionalSigners?: Array<{ name: string; walletAddress: string }>,
+  documentUrl?: string
 ): Promise<DigitalSignatureResult> {
   let signersList = signerName;
   if (additionalSigners && additionalSigners.length > 0) {
@@ -333,6 +341,7 @@ export async function signPdfWithAquafier(
     reason: `Document digitally signed via ${PLATFORM_NAME} by: ${signersList}`,
     location: PLATFORM_URL,
     contactInfo: `${PLATFORM_URL}/verify`,
+    documentUrl: documentUrl,
     signerInfo: {
       name: signerName,
       walletAddress: walletAddress,
