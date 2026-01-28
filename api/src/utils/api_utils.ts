@@ -323,15 +323,15 @@ const setUpSystemTemplates = async () => {
         let subtitles: Map<string, string> = new Map();
         subtitles.set("access_agreement", "Create a new access agreement workflow");
         subtitles.set("aqua_sign", "Create new PDF signing workflow");
-        subtitles.set("aqua_sign", "Create an Identity Card based on a subset of identity");
+        subtitles.set("identity_card", "Create an Identity Card based on a subset of identity");
 
-        // template
+        // template - use template name as ID for stability
         await prisma.aquaTemplate.upsert({
             where: {
-                id: `${index}`,
+                id: templateItem,
             },
             create: {
-                id: `${index}`,
+                id: templateItem,
                 name: templateItem,
                 owner: SYSTEM_WALLET_ADDRESS,
                 public: true,
@@ -340,7 +340,6 @@ const setUpSystemTemplates = async () => {
                 created_at: today.toDateString()
             },
             update: {
-                id: `${index}`,
                 name: templateItem,
                 owner: SYSTEM_WALLET_ADDRESS,
                 public: true,
@@ -350,18 +349,20 @@ const setUpSystemTemplates = async () => {
         })
 
 
-        // template fields
+        // template fields - use for...of to properly await async operations
         let fieldsFileData = fs.readFileSync(templateFieldsData, 'utf8')
         let documentContractFields: Array<AquaTemplatesFields> = JSON.parse(fieldsFileData)
-        documentContractFields.forEach(async (fieldData, fieldIndex) => {
 
-         await prisma.aquaTemplateFields.upsert({
+        for (let fieldIndex = 0; fieldIndex < documentContractFields.length; fieldIndex++) {
+            const fieldData = documentContractFields[fieldIndex];
+
+            await prisma.aquaTemplateFields.upsert({
                 where: {
-                    id: `${index}${fieldIndex}`,
+                    id: `${templateItem}_${fieldIndex}`,
                 },
                 create: {
-                    id: `${index}${fieldIndex}`,
-                    aqua_form_id: `${index}`,
+                    id: `${templateItem}_${fieldIndex}`,
+                    aqua_form_id: templateItem,
                     name: fieldData.name,
                     label: fieldData.label,
                     type: fieldData.type,
@@ -375,12 +376,12 @@ const setUpSystemTemplates = async () => {
                     is_verifiable: fieldData.isVerifiable || false,
                     depend_on_field: fieldData.dependsOn?.field,
                     depend_on_value: fieldData.dependsOn?.value,
-                   
+
                     is_editable: fieldData.isEditable == null ? true : fieldData.isEditable,
 
                 },
                 update: {
-                    aqua_form_id: `${index}`,
+                    aqua_form_id: templateItem,
                     name: fieldData.name,
                     label: fieldData.label,
                     type: fieldData.type,
@@ -394,49 +395,33 @@ const setUpSystemTemplates = async () => {
                     is_verifiable: fieldData.isVerifiable || false,
                     depend_on_field: fieldData.dependsOn?.field,
                     depend_on_value: fieldData.dependsOn?.value,
-                   
+
                     is_editable: fieldData.isEditable == null ? true : fieldData.isEditable,
                 },
             })
 
-
-            // if(templateItem=="aqua_certificate"){
-            //     Logger.info(`Field Data Options for aqua_certificate field ${fieldData.name} : ${JSON.stringify(fieldData.options)}`)
-            //     throw new Error(`Options type field must have options defined ${JSON.stringify(fieldData, null, 2)}`)
-            // }
-
-
-            // console.log(`🫠🫠🫠 Field Data Type for field ${fieldData.name} : ${fieldData.type} \n data : ${JSON.stringify(fieldData, null, 2)} \n options ${fieldData.options}`)
-            
             if(fieldData.type.trim() == 'options' && fieldData.options){
-                // throw new Error(`Options type field must have options defined ${JSON.stringify(fieldData)}`)
-                //save options
                 for(let optionIndex = 0; optionIndex < fieldData.options.length; optionIndex++){
                     let optionValue = fieldData.options[optionIndex];
                     await prisma.aquaTemplateFieldOptions.upsert({
                         where: {
-                            id: `${index}${fieldIndex}${optionIndex}`,
+                            id: `${templateItem}_${fieldIndex}_${optionIndex}`,
                         },
                         create: {
-                            id: `${index}${fieldIndex}${optionIndex}`,
-                            // aqua_template_field_id: `${index}${fieldIndex}`,
+                            id: `${templateItem}_${fieldIndex}_${optionIndex}`,
                             label: optionValue.label,
                             value: optionValue.value,
-                            field_id: `${index}${fieldIndex}`,
-                            // sort_order: optionIndex,
+                            field_id: `${templateItem}_${fieldIndex}`,
                         },
                         update: {
                             label: optionValue.label,
                             value: optionValue.value,
-                            field_id: `${index}${fieldIndex}`,
+                            field_id: `${templateItem}_${fieldIndex}`,
                         },
                     })
                 }
             }
-        
-
-
-        })
+        }
 
 
         //save aqua tree
