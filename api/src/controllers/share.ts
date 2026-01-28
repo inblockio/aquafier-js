@@ -1,13 +1,13 @@
-import {FastifyInstance} from 'fastify';
-import {prisma} from '../database/db';
-import {ShareRequest} from '../models/request_models';
-import {AquaTree, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties} from 'aqua-js-sdk';
-import {getHost, getPort} from '../utils/api_utils';
-import {fetchAquaTreeWithForwardRevisions} from '../utils/revisions_utils';
-import {SYSTEM_WALLET_ADDRESS} from '../models/constants';
-import {sendToUserWebsockerAMessage} from './websocketController';
+import { FastifyInstance } from 'fastify';
+import { prisma } from '../database/db';
+import { ShareRequest } from '../models/request_models';
+import { AquaTree, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk';
+import { getHost, getPort } from '../utils/api_utils';
+import { fetchAquaTreeWithForwardRevisions } from '../utils/revisions_utils';
+import { SYSTEM_WALLET_ADDRESS } from '../models/constants';
+import { sendToUserWebsockerAMessage } from './websocketController';
 import WebSocketActions from '../constants/constants';
-import {createAquaTreeFromRevisions} from '../utils/revisions_operations_utils';
+import { createAquaTreeFromRevisions } from '../utils/revisions_operations_utils';
 import Logger from "../utils/logger";
 import { sendNotificationReloadToWallet } from './websocketController2';
 import { ethers } from 'ethers';
@@ -29,19 +29,6 @@ export default async function shareController(fastify: FastifyInstance) {
         }
 
         try {
-            const session = await prisma.siweSession.findUnique({
-                where: { nonce }
-            });
-
-            if (!session) {
-                return reply.code(401).send({ success: false, message: "Session not found" });
-            }
-
-            // Check if session is expired
-            if (new Date(session.expirationTime!!) < new Date()) {
-                return reply.code(401).send({ success: false, message: "Session expired" });
-            }
-
             // check in contracts table if the current user has been granted access to the tree
             let contractData = await prisma.contract.findFirst({
                 where: {
@@ -54,22 +41,35 @@ export default async function shareController(fastify: FastifyInstance) {
 
             }
 
-           
+            console.log(contractData.sender, SYSTEM_WALLET_ADDRESS)
 
-            let allRecipients = contractData?.recipients?.map(addr => addr.trim().toLowerCase()) || []
+            if (contractData?.sender !== SYSTEM_WALLET_ADDRESS) {
+                const session = await prisma.siweSession.findUnique({
+                    where: { nonce }
+                });
 
-            // if the user is not in the recipient list and is not the sender, reject access
-            if (!allRecipients.includes(session.address.trim().toLowerCase()) && contractData.sender?.trim().toLowerCase() !=  session.address.trim().toLowerCase() ) {
-                if(allRecipients.includes(SYSTEM_WALLET_ADDRESS)){
-                    // allow access if the system wallet is a recipient
-                    // console.log(`System wallet is a recipient, allowing access`);
-                }else{
-                    return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you " + allRecipients.toString() + " == " + session.address });
+                if (!session) {
+                    return reply.code(401).send({ success: false, message: "Session not found" });
                 }
+
+                // Check if session is expired
+                if (new Date(session.expirationTime!!) < new Date()) {
+                    return reply.code(401).send({ success: false, message: "Session expired" });
+                }
+
+                let allRecipients = contractData?.recipients?.map(addr => addr.trim().toLowerCase()) || []
+
+                // if the user is not in the recipient list and is not the sender, reject access
+                if (!allRecipients.includes(session.address.trim().toLowerCase()) && contractData.sender?.trim().toLowerCase() != session.address.trim().toLowerCase()) {
+                    if (allRecipients.includes(SYSTEM_WALLET_ADDRESS)) {
+                        // allow access if the system wallet is a recipient
+                        // console.log(`System wallet is a recipient, allowing access`);
+                    } else {
+                        return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you " + allRecipients.toString() + " == " + session.address });
+                    }
+                }
+
             }
-
-
-
 
             // user has permission hence  fetch the enire aqua tree
             // if option is latest traverse tree into the future from the latest to the latest
@@ -127,7 +127,7 @@ export default async function shareController(fastify: FastifyInstance) {
             });
 
         } catch (error: any) {
-            Logger.error("Error in GET /share_data/:hash", {err: error});
+            Logger.error("Error in GET /share_data/:hash", { err: error });
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
     });
@@ -380,104 +380,104 @@ export default async function shareController(fastify: FastifyInstance) {
         }
     });
 
- 
+
     // Create an endpoint for filtering contracts, ie filter by sender, receiver, hash, etc
-fastify.get('/contracts', async (request, reply) => {
-    const { sender, receiver, hash, genesis_hash, ...otherParams } = request.query as {
-        sender?: string,
-        receiver?: string,
-        hash?: string,
-        genesis_hash?: string,
-        [key: string]: string | undefined
-    };
-
-    // Check if at least one search parameter is provided
-    if (!sender && !receiver && !hash && !genesis_hash && Object.keys(otherParams).length === 0) {
-        return reply.code(400).send({ success: false, message: "Missing required parameters" });
-    }
-
-    const nonce = request.headers['nonce'];
-
-    if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-        return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-    }
-
-    const session = await prisma.siweSession.findUnique({
-        where: { nonce: nonce }
-    });
-
-    if (session == null) {
-        return reply.code(403).send({success: false, message: "Nonce is invalid"});
-    }
-
-    // Build dynamic where clause based on provided parameters
-    let whereClause: any = {};
-
-    if (sender && receiver) {
-        whereClause = {
-            OR: [
-                { sender: { equals: sender, mode: 'insensitive' } },
-                     { recipients: { hasSome: [receiver.toLowerCase().trim()] } } // { recipients: { has: receiver } } // Changed from receiver to recipients array check
-            ]
+    fastify.get('/contracts', async (request, reply) => {
+        const { sender, receiver, hash, genesis_hash, ...otherParams } = request.query as {
+            sender?: string,
+            receiver?: string,
+            hash?: string,
+            genesis_hash?: string,
+            [key: string]: string | undefined
         };
-    } else if (sender) {
-        whereClause.sender = {
-            equals: sender,
-            mode: 'insensitive'
-        };
-    } else if (receiver) {
-        // Changed to check if receiver exists in recipients array
-        whereClause.recipients = {
-            has: receiver
-        };
-    }
 
-    if (hash) {
-        whereClause.hash = hash;
-    }
+        // Check if at least one search parameter is provided
+        if (!sender && !receiver && !hash && !genesis_hash && Object.keys(otherParams).length === 0) {
+            return reply.code(400).send({ success: false, message: "Missing required parameters" });
+        }
 
-    if (genesis_hash) {
-        whereClause.genesis_hash = {
-            contains: genesis_hash,
-            mode: 'insensitive'
-        };
-    }
+        const nonce = request.headers['nonce'];
 
-    // Handle any additional search parameters dynamically
-    for (const [key, value] of Object.entries(otherParams)) {
-        if (value !== undefined) {
-            // For string fields that should be case insensitive
-            if (['latest'].includes(key)) {
-                whereClause[key] = {
-                    equals: value,
-                    mode: 'insensitive'
-                };
-            } else {
-                whereClause[key] = value;
+        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+        }
+
+        const session = await prisma.siweSession.findUnique({
+            where: { nonce: nonce }
+        });
+
+        if (session == null) {
+            return reply.code(403).send({ success: false, message: "Nonce is invalid" });
+        }
+
+        // Build dynamic where clause based on provided parameters
+        let whereClause: any = {};
+
+        if (sender && receiver) {
+            whereClause = {
+                OR: [
+                    { sender: { equals: sender, mode: 'insensitive' } },
+                    { recipients: { hasSome: [receiver.toLowerCase().trim()] } } // { recipients: { has: receiver } } // Changed from receiver to recipients array check
+                ]
+            };
+        } else if (sender) {
+            whereClause.sender = {
+                equals: sender,
+                mode: 'insensitive'
+            };
+        } else if (receiver) {
+            // Changed to check if receiver exists in recipients array
+            whereClause.recipients = {
+                has: receiver
+            };
+        }
+
+        if (hash) {
+            whereClause.hash = hash;
+        }
+
+        if (genesis_hash) {
+            whereClause.genesis_hash = {
+                contains: genesis_hash,
+                mode: 'insensitive'
+            };
+        }
+
+        // Handle any additional search parameters dynamically
+        for (const [key, value] of Object.entries(otherParams)) {
+            if (value !== undefined) {
+                // For string fields that should be case insensitive
+                if (['latest'].includes(key)) {
+                    whereClause[key] = {
+                        equals: value,
+                        mode: 'insensitive'
+                    };
+                } else {
+                    whereClause[key] = value;
+                }
             }
         }
-    }
 
-    const contracts = await prisma.$transaction(async (tx) => {
-        const result = await tx.contract.findMany({
-            where: whereClause
+        const contracts = await prisma.$transaction(async (tx) => {
+            const result = await tx.contract.findMany({
+                where: whereClause
+            });
+
+            // Filter out contracts where the current user (sender or receiver) has deleted it
+            const currentUser = sender || receiver; // Get the current user from query params
+            const filteredResult = result.filter(contract => {
+                if (!currentUser) return true; // If no user specified, return all
+                return !contract.receiver_has_deleted.includes(currentUser);
+            });
+
+            return filteredResult;
+
+        }, {
+            timeout: 10000
         });
-        
-        // Filter out contracts where the current user (sender or receiver) has deleted it
-        const currentUser = sender || receiver; // Get the current user from query params
-        const filteredResult = result.filter(contract => {
-            if (!currentUser) return true; // If no user specified, return all
-            return !contract.receiver_has_deleted.includes(currentUser);
-        });
-        
-        return filteredResult;
-       
-    }, {
-        timeout: 10000
+
+        return reply.code(200).send({ success: true, contracts });
     });
-
-    return reply.code(200).send({ success: true, contracts });
-});
 
     // Original, DO NOT DELETE
     // fastify.get('/contracts', async (request, reply) => {

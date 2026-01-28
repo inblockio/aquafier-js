@@ -1,4 +1,4 @@
-import {FileObject, getLatestVH} from 'aqua-js-sdk'
+import {FileObject} from 'aqua-js-sdk'
 import {useEffect, useRef, useState} from 'react'
 import {useStore} from 'zustand'
 import appStore from '../store'

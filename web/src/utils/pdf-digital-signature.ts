@@ -126,7 +126,7 @@ function createPkcs7Signature(
   p7.content = forge.util.createBuffer(hashBytes);
 
   p7.addSigner({
-    key: privateKey,
+    key: privateKey as any,
     certificate: certificate,
     digestAlgorithm: forge.pki.oids.sha256,
     authenticatedAttributes: [
@@ -139,7 +139,7 @@ function createPkcs7Signature(
       },
       {
         type: forge.pki.oids.signingTime,
-        value: new Date(),
+        value: new Date().toDateString(),
       },
     ],
   });
@@ -241,7 +241,7 @@ export async function signPdfDocument(
   const pages = pdfDoc.getPages();
   if (pages.length > 0) {
     const firstPage = pages[0];
-    const { width, height } = firstPage.getSize();
+    const { width } = firstPage.getSize();
 
     // Create signature appearance (invisible by default, but can be made visible)
     // We'll add an invisible signature field in the bottom-right corner

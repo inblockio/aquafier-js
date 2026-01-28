@@ -839,7 +839,6 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             }
 
       }
-      console.log("ENS Claim: ", walletAddress === session?.address, ensName, claims.length > 0, !isLoading, !loading, !hasEnsClaim())
 
       useEffect(() => {
             if (walletAddress && session?.nonce) {

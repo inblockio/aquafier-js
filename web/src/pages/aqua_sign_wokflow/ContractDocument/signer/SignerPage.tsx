@@ -63,7 +63,7 @@ function PdfRendererComponent({
       onAnnotationSelect,
       onDownload,
 }: PdfRendererProps) {
-      console.log("PdfRendererComponent received onDownload:", typeof onDownload)
+
       const [currentPage, setCurrentPage] = useState(1)
       const [numPages, setNumPages] = useState(0)
       const [scale, setScale] = useState(1.15)
@@ -158,8 +158,8 @@ interface EasyPDFRendererProps {
       documentId?: string
 }
 
-export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, documentId, latestRevisionHash }: EasyPDFRendererProps) => {
- console.log("Latest revision hash--: ", latestRevisionHash)
+export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, latestRevisionHash }: EasyPDFRendererProps) => {
+ 
       const { session, backend_url } = useStore(appStore)
 
       const mappedAnnotations = annotations.map((anno: any) => ({
@@ -197,7 +197,6 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, d
 
 
       const createFileBackupOnServer = async (): Promise<string | null> => {
-            console.log("Latest revision hash: ", latestRevisionHash)
             if (!latestRevisionHash) {
                   return null
             }
@@ -214,12 +213,10 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, d
                         }
                   })
                   const resData = res.data
-                  console.log("Result: ", res)
                   if (resData.success) {
                         documentBackupID = resData.backupId
                   }
             } catch (error) {
-                  console.log("Error occurred creating a backup: ", error)
 
             }
             return documentBackupID
@@ -264,8 +261,8 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, d
                         const annoYPercent = anno.y;
                         const annoX = (annoXPercent / 100) * pageWidth;
 
-                        if (anno.type === 'text') {
-                              const textAnno = anno as TextAnnotation;
+                        if ((anno.type as any) === 'text') {
+                              const textAnno = anno as unknown as TextAnnotation;
                               const colorString = textAnno.color?.startsWith('#') ? textAnno.color.substring(1) : (textAnno.color || '000000');
                               const r = parseInt(colorString.substring(0, 2), 16) / 255;
                               const g = parseInt(colorString.substring(2, 4), 16) / 255;
@@ -285,8 +282,8 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, d
                                     maxWidth: annoTextWidth,
                                     rotate: degrees(anno.rotation || 0),
                               });
-                        } else if (anno.type === 'image') {
-                              const imgAnno = anno as ImageAnnotation;
+                        } else if ((anno.type as any) === 'image') {
+                              const imgAnno = anno as unknown as ImageAnnotation;
                               const finalAnnoWidthInPoints = parseDimension(imgAnno.width, pageWidth, 25);
                               const finalAnnoHeightInPoints = parseDimension(imgAnno.height, pageHeight, 15);
                               const annoImgYPdfLib = pageHeight - (annoYPercent / 100 * pageHeight) - finalAnnoHeightInPoints;
@@ -322,7 +319,7 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, d
                                     console.error(`Failed to embed image for annotation ${imgAnno.id}:`, error);
                               }
                         } else if (anno.type === 'profile' || anno.type === 'signature') {
-                              const profileAnno = anno as ProfileAnnotation;
+                              const profileAnno = anno as unknown as ProfileAnnotation;
                               let currentYOffsetFromTopPercent = profileAnno.y;
                               const profileRotation = degrees(profileAnno.rotation || 0);
 
@@ -883,7 +880,7 @@ export default function SignerPage({
                         <div className="grid grid-cols-12 gap-0 h-auto md:h-full">
                               <div className="bg-gray-100 col-span-12 md:col-span-9 overflow-x-auto overflow-y-scroll h-full">
                                     <div className="h-auto md:h-full p-0 m-0">
-                                          {console.log("SignerPage passing onDownload:", typeof handleDownload)}
+                                         
                                           <PdfRenderer
                                                 pdfFile={pdfFile}
                                                 annotations={annotations}

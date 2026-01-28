@@ -292,7 +292,7 @@ export default async function systemController(fastify: FastifyInstance) {
                         genesis_hash: getGenesisHash(entireChain[0].aquaTree),
                         latest: getLatestVH(entireChain[0].aquaTree),
                         recipients: [SYSTEM_WALLET_ADDRESS].map(item => item.trim().toLowerCase()),
-                        sender: userAddress,
+                        sender: SYSTEM_WALLET_ADDRESS,
                         option: "latest",
                         file_name: getAquaTreeFileName(entireChain[0].aquaTree)
                     }
