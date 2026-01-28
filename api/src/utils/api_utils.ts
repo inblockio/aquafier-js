@@ -339,7 +339,14 @@ const setUpSystemTemplates = async () => {
                 subtitle: subtitles.get(templateItem) || "",
                 created_at: today.toDateString()
             },
-            update: {},
+            update: {
+                id: `${index}`,
+                name: templateItem,
+                owner: SYSTEM_WALLET_ADDRESS,
+                public: true,
+                title: convertNameToLabel(templateItem),
+                subtitle: subtitles.get(templateItem) || "",
+            },
         })
 
 
