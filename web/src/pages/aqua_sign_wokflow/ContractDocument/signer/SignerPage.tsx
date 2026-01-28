@@ -197,8 +197,8 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument }:
                   const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
                   const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-                  // Combine mapped annotations with annotationsInDocument for embedding
-                  const allAnnotations = [...mappedAnnotations, ...annotationsInDocument.map((sig: SignatureData) => ({
+                  // Use annotationsInDocument as the source of truth for signatures
+                  const allAnnotations = annotationsInDocument.map((sig: SignatureData) => ({
                         type: 'profile' as const,
                         id: sig.id,
                         x: sig.x,
@@ -211,7 +211,7 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument }:
                         imageAlt: sig.name,
                         name: sig.name,
                         walletAddress: sig.walletAddress,
-                  }))];
+                  }));
 
                   for (const anno of allAnnotations) {
                         const pageIndex = (anno.page || 1) - 1;
@@ -286,10 +286,10 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument }:
                               let currentYOffsetFromTopPercent = profileAnno.y;
                               const profileRotation = degrees(profileAnno.rotation || 0);
 
-                              // 1. Draw Image
-                              const imgWidthPoints = parseDimension(profileAnno.imageWidth, pageWidth, 20);
-                              const imgHeightPoints = parseDimension(profileAnno.imageHeight, pageHeight, 10);
-                              const imgYPdfLib = pageHeight - (currentYOffsetFromTopPercent / 100 * pageHeight) - imgHeightPoints;
+                              // 1. Draw Image - use fixed width of 150px to match browser rendering
+                              const fixedImgWidth = 150; // Match browser's fixed width of 150px
+                              let imgWidthPoints = fixedImgWidth;
+                              let imgHeightPoints = fixedImgWidth * 0.6; // Default aspect ratio
 
                               try {
                                     const imgSrc = profileAnno.imageSrc || (profileAnno as any).dataUrl;
@@ -318,6 +318,12 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument }:
                                           }
 
                                           if (pdfImage) {
+                                                // Calculate height based on image's actual aspect ratio
+                                                const aspectRatio = pdfImage.height / pdfImage.width;
+                                                imgHeightPoints = imgWidthPoints * aspectRatio;
+
+                                                const imgYPdfLib = pageHeight - (currentYOffsetFromTopPercent / 100 * pageHeight) - imgHeightPoints;
+
                                                 page.drawImage(pdfImage, {
                                                       x: annoX,
                                                       y: imgYPdfLib,
@@ -330,12 +336,15 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument }:
                               } catch (error) {
                                     console.error(`Failed to embed profile image for annotation ${profileAnno.id}:`, error);
                               }
-                              currentYOffsetFromTopPercent += (imgHeightPoints / pageHeight * 100) + 1;
 
-                              // 2. Draw Name
+                              // Use fixed spacing (4px gap) to match browser rendering
+                              const gapPoints = 4;
+                              currentYOffsetFromTopPercent += (imgHeightPoints / pageHeight * 100) + (gapPoints / pageHeight * 100);
+
+                              // 2. Draw Name (match browser: fontSize 12pt, color #333333, bold)
                               if (profileAnno.name) {
                                     const nameFontSize = parseFontSizeToPoints(profileAnno.nameFontSize || "12pt", 12);
-                                    const nameColorStr = profileAnno.nameColor || '#000000';
+                                    const nameColorStr = profileAnno.nameColor || '#333333';
                                     const nameR = parseInt(nameColorStr.substring(1, 3), 16) / 255;
                                     const nameG = parseInt(nameColorStr.substring(3, 5), 16) / 255;
                                     const nameB = parseInt(nameColorStr.substring(5, 7), 16) / 255;
@@ -350,13 +359,13 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument }:
                                           rotate: profileRotation,
                                           maxWidth: pageWidth * 0.8,
                                     });
-                                    currentYOffsetFromTopPercent += (nameFontSize * 1.5 / pageHeight * 100) + 0.5;
+                                    currentYOffsetFromTopPercent += (nameFontSize / pageHeight * 100) + (gapPoints / pageHeight * 100);
                               }
 
-                              // 3. Draw Wallet Address
+                              // 3. Draw Wallet Address (match browser: fontSize 10pt, color #555555)
                               if (profileAnno.walletAddress) {
                                     const walletFontSize = parseFontSizeToPoints(profileAnno.walletAddressFontSize || "10pt", 10);
-                                    const walletColorStr = profileAnno.walletAddressColor || '#333333';
+                                    const walletColorStr = profileAnno.walletAddressColor || '#555555';
                                     const walletR = parseInt(walletColorStr.substring(1, 3), 16) / 255;
                                     const walletG = parseInt(walletColorStr.substring(3, 5), 16) / 255;
                                     const walletB = parseInt(walletColorStr.substring(5, 7), 16) / 255;
