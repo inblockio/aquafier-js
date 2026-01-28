@@ -1,36 +1,40 @@
-import {useCallback, useEffect, useState} from 'react'
-import type {Annotation, ImageAnnotation, ProfileAnnotation, TextAnnotation} from './types'
+import { useCallback, useEffect, useState } from 'react'
+import type { Annotation, ImageAnnotation, ProfileAnnotation, TextAnnotation } from './types'
 import PdfViewer from './pdf-viewer'
 import AnnotationSidebar from './annotation-sidebar'
-import {ArrowLeft, ArrowRight, Download, ZoomIn, ZoomOut} from 'lucide-react'
-import {SignatureData} from '../../../../types/types'
-import {LuInfo} from 'react-icons/lu'
-import {Button} from '../../../../components/ui/button'
-import {Slider} from '../../../../components/ui/slider'
-import {ensureDomainUrlHasSSL} from '@/utils/functions'
+import { ArrowLeft, ArrowRight, Download, ZoomIn, ZoomOut } from 'lucide-react'
+import { SignatureData } from '../../../../types/types'
+import { LuInfo } from 'react-icons/lu'
+import { Button } from '../../../../components/ui/button'
+import { Slider } from '../../../../components/ui/slider'
+import { ensureDomainUrlHasSSL } from '@/utils/functions'
 import { toast } from 'sonner'
 import { degrees, PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import { signPdfWithAquafier } from '@/utils/pdf-digital-signature'
+import { useStore } from 'zustand'
+import appStore from '@/store'
+import axios from 'axios'
+import { API_ENDPOINTS } from '@/utils/constants'
 // import { ScrollArea } from '@/components/ui/scroll-area';
 
 const parseFontSizeToPoints = (fontSizeString: string, defaultSize: number = 12): number => {
-  if (!fontSizeString || typeof fontSizeString !== 'string') return defaultSize;
+      if (!fontSizeString || typeof fontSizeString !== 'string') return defaultSize;
 
-  const value = parseFloat(fontSizeString);
-  if (isNaN(value)) return defaultSize;
+      const value = parseFloat(fontSizeString);
+      if (isNaN(value)) return defaultSize;
 
-  if (fontSizeString.toLowerCase().endsWith('pt')) {
-    return value;
-  } else if (fontSizeString.toLowerCase().endsWith('px')) {
-    // Common conversion: 1px = 0.75pt (for 96 DPI assumption where 1pt = 1/72 inch)
-    // Or, for pdf-lib, sometimes treating px as pt directly is fine for visual consistency.
-    // Let's treat px as pt for simplicity here, can be refined.
-    return value;
-  } else if (fontSizeString.toLowerCase().endsWith('em')) {
-    return value * defaultSize; // Assuming 1em = defaultSize (e.g., 12pt)
-  }
-  // If no unit, assume points
-  return value;
+      if (fontSizeString.toLowerCase().endsWith('pt')) {
+            return value;
+      } else if (fontSizeString.toLowerCase().endsWith('px')) {
+            // Common conversion: 1px = 0.75pt (for 96 DPI assumption where 1pt = 1/72 inch)
+            // Or, for pdf-lib, sometimes treating px as pt directly is fine for visual consistency.
+            // Let's treat px as pt for simplicity here, can be refined.
+            return value;
+      } else if (fontSizeString.toLowerCase().endsWith('em')) {
+            return value * defaultSize; // Assuming 1em = defaultSize (e.g., 12pt)
+      }
+      // If no unit, assume points
+      return value;
 };
 
 interface PdfRendererProps {
@@ -70,7 +74,7 @@ function PdfRendererComponent({
                   console.log("Download triggered from PdfRenderer");
                   onDownload()
             } else {
-             console.log("No onDownload prop provided to PdfRenderer");
+                  console.log("No onDownload prop provided to PdfRenderer");
                   toast.error("Download function not implemented.");
             }
             // else if (pdfFile) {
@@ -147,13 +151,17 @@ function PdfRendererComponent({
 export const PdfRenderer = PdfRendererComponent
 
 interface EasyPDFRendererProps {
+      latestRevisionHash: string
       pdfFile: File | null
       annotations: Annotation[]
       annotationsInDocument: SignatureData[]
-      documentUrl?: string
+      documentId?: string
 }
 
-export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, documentUrl }: EasyPDFRendererProps) => {
+export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, documentId, latestRevisionHash }: EasyPDFRendererProps) => {
+ console.log("Latest revision hash--: ", latestRevisionHash)
+      const { session, backend_url } = useStore(appStore)
+
       const mappedAnnotations = annotations.map((anno: any) => ({
             ...anno,
             type: 'signature' as any,
@@ -186,6 +194,36 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, d
             }
             return (defaultPercentage / 100) * pageDimension;
       };
+
+
+      const createFileBackupOnServer = async (): Promise<string | null> => {
+            console.log("Latest revision hash: ", latestRevisionHash)
+            if (!latestRevisionHash) {
+                  return null
+            }
+            // Goes to the backend and creates a backup of the file to the server account
+            let documentBackupID: string | null = null
+            try {
+                  const endpoint = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.CREATE_SERVER_ACCOUNT_BACKUP}`)
+                  const res = await axios.post(endpoint, {
+                        latestRevisionHash: latestRevisionHash,
+                  }, {
+                        headers: {
+                              nonce: session?.nonce,
+                              // metamaskAddress: session?.address
+                        }
+                  })
+                  const resData = res.data
+                  console.log("Result: ", res)
+                  if (resData.success) {
+                        documentBackupID = resData.backupId
+                  }
+            } catch (error) {
+                  console.log("Error occurred creating a backup: ", error)
+
+            }
+            return documentBackupID
+      }
 
       const handleDownload = async () => {
             if (!pdfFile) {
@@ -403,12 +441,14 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, d
                   toast.info("Applying digital signature...");
 
                   try {
+                        const docBackupId = await createFileBackupOnServer()
+                        
                         const { signedPdf, signatureInfo } = await signPdfWithAquafier(
                               pdfBytes,
                               primarySigner.name,
                               primarySigner.walletAddress,
                               additionalSigners,
-                              documentUrl
+                              docBackupId ?? ""
                         );
 
                         // Download the digitally signed PDF
@@ -445,13 +485,13 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, d
                   pdfFile={pdfFile}
                   annotations={mappedAnnotations}
                   annotationsInDocument={annotationsInDocument}
-                  onAnnotationAdd={(_newAnnotationData: Omit<Annotation, 'id'>) => {}}
-                  onAnnotationUpdate={(_updatedAnnotation: Annotation) => {}}
-                  onAnnotationDelete={(_id: string) => {}}
+                  onAnnotationAdd={(_newAnnotationData: Omit<Annotation, 'id'>) => { }}
+                  onAnnotationUpdate={(_updatedAnnotation: Annotation) => { }}
+                  onAnnotationDelete={(_id: string) => { }}
                   selectedTool={'text'}
                   selectedAnnotationId={null}
-                  onAnnotationSelect={(_annotatedid: string | null) => {}}
-                  onAnnotationRotate={(_direction: 'cw' | 'ccw') => {}}
+                  onAnnotationSelect={(_annotatedid: string | null) => { }}
+                  onAnnotationRotate={(_direction: 'cw' | 'ccw') => { }}
                   onDownload={handleDownload}
             />
       )
@@ -468,7 +508,7 @@ interface PdfSignerProps {
       handleSignatureSubmission: () => void
       submittingSignatureData: boolean
       signaturesInDocument: SignatureData[]
-      documentUrl?: string
+      documentId?: string
 }
 
 export default function SignerPage({
@@ -482,7 +522,7 @@ export default function SignerPage({
       handleSignatureSubmission,
       submittingSignatureData,
       signaturesInDocument,
-      documentUrl,
+      documentId,
 }: PdfSignerProps) {
       const pdfFile = file
       // const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -531,253 +571,253 @@ export default function SignerPage({
 
       // TIP: Do not remove
       const parseDimension = (dimension: string | number | undefined, pageDimension: number, defaultPercentage: number): number => {
-        if (dimension === undefined || dimension === null) return (defaultPercentage / 100) * pageDimension;
+            if (dimension === undefined || dimension === null) return (defaultPercentage / 100) * pageDimension;
 
-        // If it's already a number, return it directly
-        if (typeof dimension === 'number') {
-          return isNaN(dimension) ? (defaultPercentage / 100) * pageDimension : dimension;
-        }
+            // If it's already a number, return it directly
+            if (typeof dimension === 'number') {
+                  return isNaN(dimension) ? (defaultPercentage / 100) * pageDimension : dimension;
+            }
 
-        // Convert to string if needed
-        const dimStr = String(dimension);
+            // Convert to string if needed
+            const dimStr = String(dimension);
 
-        if (dimStr.endsWith('%')) {
-          const num = parseFloat(dimStr);
-          return isNaN(num) ? (defaultPercentage / 100) * pageDimension : (num / 100) * pageDimension;
-        } else if (dimStr.endsWith('px') || dimStr.endsWith('pt')) {
-          const num = parseFloat(dimStr);
-          return isNaN(num) ? (defaultPercentage / 100) * pageDimension : num;
-        } else if (dimStr.endsWith('em')) {
-          const num = parseFloat(dimStr);
-          return isNaN(num) ? (defaultPercentage / 100) * pageDimension : num * 12; // Assuming 1em = 12pt
-        } else if (!isNaN(parseFloat(dimStr))) {
-          return parseFloat(dimStr);
-        }
-        return (defaultPercentage / 100) * pageDimension;
+            if (dimStr.endsWith('%')) {
+                  const num = parseFloat(dimStr);
+                  return isNaN(num) ? (defaultPercentage / 100) * pageDimension : (num / 100) * pageDimension;
+            } else if (dimStr.endsWith('px') || dimStr.endsWith('pt')) {
+                  const num = parseFloat(dimStr);
+                  return isNaN(num) ? (defaultPercentage / 100) * pageDimension : num;
+            } else if (dimStr.endsWith('em')) {
+                  const num = parseFloat(dimStr);
+                  return isNaN(num) ? (defaultPercentage / 100) * pageDimension : num * 12; // Assuming 1em = 12pt
+            } else if (!isNaN(parseFloat(dimStr))) {
+                  return parseFloat(dimStr);
+            }
+            return (defaultPercentage / 100) * pageDimension;
       };
 
       // FEATURE: This method will help us do the download of the pdf
       const handleDownload = async () => {
-        if (!pdfFile) {
-          toast.error("No PDF - Please upload or load a PDF file first.");
-          return;
-        }
-
-        try {
-          const existingPdfBytes = await pdfFile.arrayBuffer();
-          const pdfDoc = await PDFDocument.load(existingPdfBytes);
-          const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-          const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-          for (const anno of annotations) {
-            const page = pdfDoc.getPage(anno.page - 1);
-            const { width: pageWidth, height: pageHeight } = page.getSize();
-
-            const annoXPercent = anno.x;
-            const annoYPercent = anno.y;
-            const annoX = (annoXPercent / 100) * pageWidth;
-
-            // Base Y for pdf-lib (bottom of the element)
-            // anno.y is percentage from top of page. pdf-lib y is from bottom of page.
-            // We will calculate y for each element within ProfileAnnotation specifically.
-
-            if (anno.type === 'text') {
-              const textAnno = anno as TextAnnotation;
-              const colorString = textAnno.color.startsWith('#') ? textAnno.color.substring(1) : textAnno.color;
-              const r = parseInt(colorString.substring(0, 2), 16) / 255;
-              const g = parseInt(colorString.substring(2, 4), 16) / 255;
-              const b = parseInt(colorString.substring(4, 6), 16) / 255;
-
-              const annoTextWidth = (textAnno.width / 100) * pageWidth;
-              const fontSizeInPoints = parseFontSizeToPoints(textAnno.fontSize, 12);
-              // For text, anno.y is the top of the text block.
-              const textYPdfLib = pageHeight - (annoYPercent / 100 * pageHeight) - fontSizeInPoints;
-
-              page.drawText(textAnno.text, {
-                x: annoX,
-                y: textYPdfLib,
-                size: fontSizeInPoints,
-                font: helveticaFont,
-                color: rgb(r, g, b),
-                lineHeight: fontSizeInPoints * 1.2,
-                maxWidth: annoTextWidth,
-                rotate: degrees(anno.rotation || 0),
-              });
-            } else if (anno.type === 'image') {
-              const imgAnno = anno as ImageAnnotation;
-              const finalAnnoWidthInPoints = parseDimension(imgAnno.width, pageWidth, 25);
-              const finalAnnoHeightInPoints = parseDimension(imgAnno.height, pageHeight, 15);
-              const annoImgYPdfLib = pageHeight - (annoYPercent / 100 * pageHeight) - finalAnnoHeightInPoints;
-
-              try {
-                let imageBytes: ArrayBuffer;
-                if (imgAnno.src.startsWith('data:image')) {
-                  const base64Data = imgAnno.src.split(',')[1];
-                  imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)).buffer;
-                } else {
-                  const response = await fetch(imgAnno.src);
-                  imageBytes = await response.arrayBuffer();
-                }
-
-                let pdfImage;
-                if (imgAnno.src.includes('png')) {
-                  pdfImage = await pdfDoc.embedPng(imageBytes);
-                } else if (imgAnno.src.includes('jpeg') || imgAnno.src.includes('jpg')) {
-                  pdfImage = await pdfDoc.embedJpg(imageBytes);
-                } else {
-                  console.warn(`Unsupported image type for annotation ${imgAnno.id}`);
-                  toast.error("Image Error - Unsupported image type");
-                  continue;
-                }
-
-                page.drawImage(pdfImage, {
-                  x: annoX,
-                  y: annoImgYPdfLib,
-                  width: finalAnnoWidthInPoints,
-                  height: finalAnnoHeightInPoints,
-                  rotate: degrees(anno.rotation || 0),
-                });
-              } catch (error) {
-                console.error(`Failed to embed image for annotation ${imgAnno.id}:`, error);
-                toast.error("Image Error - Could not embed image");
-              }
-            } else if (anno.type === 'profile') {
-              const profileAnno = anno as ProfileAnnotation;
-              let currentYOffsetFromTopPercent = profileAnno.y; // Start with the annotation's y
-              const profileRotation = degrees(profileAnno.rotation || 0);
-
-              // 1. Draw Image
-              const imgWidthPoints = parseDimension(profileAnno.imageWidth, pageWidth, 20); // Default 20% width
-              const imgHeightPoints = parseDimension(profileAnno.imageHeight, pageHeight, 10); // Default 10% height
-              const imgYPdfLib = pageHeight - (currentYOffsetFromTopPercent / 100 * pageHeight) - imgHeightPoints;
-
-              try {
-                let imageBytes: ArrayBuffer;
-                if (profileAnno.imageSrc.startsWith('data:image')) {
-                  const base64Data = profileAnno.imageSrc.split(',')[1];
-                  imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)).buffer;
-                } else {
-                  const response = await fetch(profileAnno.imageSrc);
-                  imageBytes = await response.arrayBuffer();
-                }
-
-                let pdfImage;
-                if (profileAnno.imageSrc.includes('png')) {
-                  pdfImage = await pdfDoc.embedPng(imageBytes);
-                } else if (profileAnno.imageSrc.includes('jpeg') || profileAnno.imageSrc.includes('jpg')) {
-                  pdfImage = await pdfDoc.embedJpg(imageBytes);
-                } else {
-                  console.warn(`Unsupported image type for profile annotation ${profileAnno.id}`);
-                  toast.error("Profile Image Error - Unsupported image type");
-                }
-                if (pdfImage) {
-                  page.drawImage(pdfImage, {
-                    x: annoX,
-                    y: imgYPdfLib,
-                    width: imgWidthPoints,
-                    height: imgHeightPoints,
-                    rotate: profileRotation,
-                  });
-                }
-              } catch (error) {
-                console.error(`Failed to embed profile image for annotation ${profileAnno.id}:`, error);
-                toast.error("Profile Image Error - Could not embed image");
-              }
-              currentYOffsetFromTopPercent += (imgHeightPoints / pageHeight * 100) + 1; // Add 1% spacing
-
-              // 2. Draw Name
-              const nameFontSize = parseFontSizeToPoints(profileAnno.nameFontSize || "12pt", 12);
-              const nameColorStr = profileAnno.nameColor || '#000000';
-              const nameR = parseInt(nameColorStr.substring(1, 3), 16) / 255;
-              const nameG = parseInt(nameColorStr.substring(3, 5), 16) / 255;
-              const nameB = parseInt(nameColorStr.substring(5, 7), 16) / 255;
-              const nameYPdfLib = pageHeight - (currentYOffsetFromTopPercent / 100 * pageHeight) - nameFontSize;
-
-              page.drawText(profileAnno.name, {
-                x: annoX,
-                y: nameYPdfLib,
-                size: nameFontSize,
-                font: helveticaBoldFont,
-                color: rgb(nameR, nameG, nameB),
-                rotate: profileRotation,
-                maxWidth: pageWidth * 0.8,
-              });
-              currentYOffsetFromTopPercent += (nameFontSize * 1.5 / pageHeight * 100) + 0.5; // Add 0.5% spacing
-
-              // 3. Draw Wallet Address
-              const walletFontSize = parseFontSizeToPoints(profileAnno.walletAddressFontSize || "10pt", 10);
-              const walletColorStr = profileAnno.walletAddressColor || '#333333';
-              const walletR = parseInt(walletColorStr.substring(1, 3), 16) / 255;
-              const walletG = parseInt(walletColorStr.substring(3, 5), 16) / 255;
-              const walletB = parseInt(walletColorStr.substring(5, 7), 16) / 255;
-              const walletYPdfLib = pageHeight - (currentYOffsetFromTopPercent / 100 * pageHeight) - walletFontSize;
-
-              page.drawText(profileAnno.walletAddress, {
-                x: annoX,
-                y: walletYPdfLib,
-                size: walletFontSize,
-                font: helveticaFont,
-                color: rgb(walletR, walletG, walletB),
-                rotate: profileRotation,
-                maxWidth: pageWidth * 0.8,
-              });
+            if (!pdfFile) {
+                  toast.error("No PDF - Please upload or load a PDF file first.");
+                  return;
             }
-          }
 
-          // Save PDF with annotations
-          const pdfBytes = await pdfDoc.save();
+            try {
+                  const existingPdfBytes = await pdfFile.arrayBuffer();
+                  const pdfDoc = await PDFDocument.load(existingPdfBytes);
+                  const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+                  const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-          // Collect all signers from annotations
-          const signers = annotations
-            .filter((anno: any) => anno.name && anno.walletAddress)
-            .map((anno: any) => ({
-              name: anno.name,
-              walletAddress: anno.walletAddress,
-            }));
+                  for (const anno of annotations) {
+                        const page = pdfDoc.getPage(anno.page - 1);
+                        const { width: pageWidth, height: pageHeight } = page.getSize();
 
-          // Get primary signer (first one) or use default
-          const primarySigner = signers[0] || { name: 'Document Signer', walletAddress: '0x0' };
-          const additionalSigners = signers.slice(1);
+                        const annoXPercent = anno.x;
+                        const annoYPercent = anno.y;
+                        const annoX = (annoXPercent / 100) * pageWidth;
 
-          // Apply digital signature to make it detectable by Adobe Acrobat
-          toast.info("Applying digital signature...");
+                        // Base Y for pdf-lib (bottom of the element)
+                        // anno.y is percentage from top of page. pdf-lib y is from bottom of page.
+                        // We will calculate y for each element within ProfileAnnotation specifically.
 
-          try {
-            const { signedPdf, signatureInfo } = await signPdfWithAquafier(
-              pdfBytes,
-              primarySigner.name,
-              primarySigner.walletAddress,
-              additionalSigners,
-              documentUrl
-            );
+                        if (anno.type === 'text') {
+                              const textAnno = anno as TextAnnotation;
+                              const colorString = textAnno.color.startsWith('#') ? textAnno.color.substring(1) : textAnno.color;
+                              const r = parseInt(colorString.substring(0, 2), 16) / 255;
+                              const g = parseInt(colorString.substring(2, 4), 16) / 255;
+                              const b = parseInt(colorString.substring(4, 6), 16) / 255;
 
-            // Download the digitally signed PDF
-            const blob = new Blob([signedPdf as BlobPart], { type: 'application/pdf' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `${pdfFile.name.replace('.pdf', '')}_signed.pdf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+                              const annoTextWidth = (textAnno.width / 100) * pageWidth;
+                              const fontSizeInPoints = parseFontSizeToPoints(textAnno.fontSize, 12);
+                              // For text, anno.y is the top of the text block.
+                              const textYPdfLib = pageHeight - (annoYPercent / 100 * pageHeight) - fontSizeInPoints;
 
-            console.log("Digital Signature Info:", signatureInfo);
-            toast.success(`Document signed by ${signatureInfo.signer} via ${signatureInfo.platform}`);
-          } catch (signError) {
-            console.warn("Digital signature failed, downloading without signature:", signError);
-            // Fallback: download without digital signature
-            const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `${pdfFile.name.replace('.pdf', '')}_annotated.pdf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            toast.success("Download Started - PDF downloaded (without digital signature).");
-          }
-        } catch (error) {
-          console.error("Failed to save PDF:", error);
-          toast.error("Download Failed - Could not generate the annotated PDF.");
-        }
+                              page.drawText(textAnno.text, {
+                                    x: annoX,
+                                    y: textYPdfLib,
+                                    size: fontSizeInPoints,
+                                    font: helveticaFont,
+                                    color: rgb(r, g, b),
+                                    lineHeight: fontSizeInPoints * 1.2,
+                                    maxWidth: annoTextWidth,
+                                    rotate: degrees(anno.rotation || 0),
+                              });
+                        } else if (anno.type === 'image') {
+                              const imgAnno = anno as ImageAnnotation;
+                              const finalAnnoWidthInPoints = parseDimension(imgAnno.width, pageWidth, 25);
+                              const finalAnnoHeightInPoints = parseDimension(imgAnno.height, pageHeight, 15);
+                              const annoImgYPdfLib = pageHeight - (annoYPercent / 100 * pageHeight) - finalAnnoHeightInPoints;
+
+                              try {
+                                    let imageBytes: ArrayBuffer;
+                                    if (imgAnno.src.startsWith('data:image')) {
+                                          const base64Data = imgAnno.src.split(',')[1];
+                                          imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)).buffer;
+                                    } else {
+                                          const response = await fetch(imgAnno.src);
+                                          imageBytes = await response.arrayBuffer();
+                                    }
+
+                                    let pdfImage;
+                                    if (imgAnno.src.includes('png')) {
+                                          pdfImage = await pdfDoc.embedPng(imageBytes);
+                                    } else if (imgAnno.src.includes('jpeg') || imgAnno.src.includes('jpg')) {
+                                          pdfImage = await pdfDoc.embedJpg(imageBytes);
+                                    } else {
+                                          console.warn(`Unsupported image type for annotation ${imgAnno.id}`);
+                                          toast.error("Image Error - Unsupported image type");
+                                          continue;
+                                    }
+
+                                    page.drawImage(pdfImage, {
+                                          x: annoX,
+                                          y: annoImgYPdfLib,
+                                          width: finalAnnoWidthInPoints,
+                                          height: finalAnnoHeightInPoints,
+                                          rotate: degrees(anno.rotation || 0),
+                                    });
+                              } catch (error) {
+                                    console.error(`Failed to embed image for annotation ${imgAnno.id}:`, error);
+                                    toast.error("Image Error - Could not embed image");
+                              }
+                        } else if (anno.type === 'profile') {
+                              const profileAnno = anno as ProfileAnnotation;
+                              let currentYOffsetFromTopPercent = profileAnno.y; // Start with the annotation's y
+                              const profileRotation = degrees(profileAnno.rotation || 0);
+
+                              // 1. Draw Image
+                              const imgWidthPoints = parseDimension(profileAnno.imageWidth, pageWidth, 20); // Default 20% width
+                              const imgHeightPoints = parseDimension(profileAnno.imageHeight, pageHeight, 10); // Default 10% height
+                              const imgYPdfLib = pageHeight - (currentYOffsetFromTopPercent / 100 * pageHeight) - imgHeightPoints;
+
+                              try {
+                                    let imageBytes: ArrayBuffer;
+                                    if (profileAnno.imageSrc.startsWith('data:image')) {
+                                          const base64Data = profileAnno.imageSrc.split(',')[1];
+                                          imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)).buffer;
+                                    } else {
+                                          const response = await fetch(profileAnno.imageSrc);
+                                          imageBytes = await response.arrayBuffer();
+                                    }
+
+                                    let pdfImage;
+                                    if (profileAnno.imageSrc.includes('png')) {
+                                          pdfImage = await pdfDoc.embedPng(imageBytes);
+                                    } else if (profileAnno.imageSrc.includes('jpeg') || profileAnno.imageSrc.includes('jpg')) {
+                                          pdfImage = await pdfDoc.embedJpg(imageBytes);
+                                    } else {
+                                          console.warn(`Unsupported image type for profile annotation ${profileAnno.id}`);
+                                          toast.error("Profile Image Error - Unsupported image type");
+                                    }
+                                    if (pdfImage) {
+                                          page.drawImage(pdfImage, {
+                                                x: annoX,
+                                                y: imgYPdfLib,
+                                                width: imgWidthPoints,
+                                                height: imgHeightPoints,
+                                                rotate: profileRotation,
+                                          });
+                                    }
+                              } catch (error) {
+                                    console.error(`Failed to embed profile image for annotation ${profileAnno.id}:`, error);
+                                    toast.error("Profile Image Error - Could not embed image");
+                              }
+                              currentYOffsetFromTopPercent += (imgHeightPoints / pageHeight * 100) + 1; // Add 1% spacing
+
+                              // 2. Draw Name
+                              const nameFontSize = parseFontSizeToPoints(profileAnno.nameFontSize || "12pt", 12);
+                              const nameColorStr = profileAnno.nameColor || '#000000';
+                              const nameR = parseInt(nameColorStr.substring(1, 3), 16) / 255;
+                              const nameG = parseInt(nameColorStr.substring(3, 5), 16) / 255;
+                              const nameB = parseInt(nameColorStr.substring(5, 7), 16) / 255;
+                              const nameYPdfLib = pageHeight - (currentYOffsetFromTopPercent / 100 * pageHeight) - nameFontSize;
+
+                              page.drawText(profileAnno.name, {
+                                    x: annoX,
+                                    y: nameYPdfLib,
+                                    size: nameFontSize,
+                                    font: helveticaBoldFont,
+                                    color: rgb(nameR, nameG, nameB),
+                                    rotate: profileRotation,
+                                    maxWidth: pageWidth * 0.8,
+                              });
+                              currentYOffsetFromTopPercent += (nameFontSize * 1.5 / pageHeight * 100) + 0.5; // Add 0.5% spacing
+
+                              // 3. Draw Wallet Address
+                              const walletFontSize = parseFontSizeToPoints(profileAnno.walletAddressFontSize || "10pt", 10);
+                              const walletColorStr = profileAnno.walletAddressColor || '#333333';
+                              const walletR = parseInt(walletColorStr.substring(1, 3), 16) / 255;
+                              const walletG = parseInt(walletColorStr.substring(3, 5), 16) / 255;
+                              const walletB = parseInt(walletColorStr.substring(5, 7), 16) / 255;
+                              const walletYPdfLib = pageHeight - (currentYOffsetFromTopPercent / 100 * pageHeight) - walletFontSize;
+
+                              page.drawText(profileAnno.walletAddress, {
+                                    x: annoX,
+                                    y: walletYPdfLib,
+                                    size: walletFontSize,
+                                    font: helveticaFont,
+                                    color: rgb(walletR, walletG, walletB),
+                                    rotate: profileRotation,
+                                    maxWidth: pageWidth * 0.8,
+                              });
+                        }
+                  }
+
+                  // Save PDF with annotations
+                  const pdfBytes = await pdfDoc.save();
+
+                  // Collect all signers from annotations
+                  const signers = annotations
+                        .filter((anno: any) => anno.name && anno.walletAddress)
+                        .map((anno: any) => ({
+                              name: anno.name,
+                              walletAddress: anno.walletAddress,
+                        }));
+
+                  // Get primary signer (first one) or use default
+                  const primarySigner = signers[0] || { name: 'Document Signer', walletAddress: '0x0' };
+                  const additionalSigners = signers.slice(1);
+
+                  // Apply digital signature to make it detectable by Adobe Acrobat
+                  toast.info("Applying digital signature...");
+
+                  try {
+                        const { signedPdf, signatureInfo } = await signPdfWithAquafier(
+                              pdfBytes,
+                              primarySigner.name,
+                              primarySigner.walletAddress,
+                              additionalSigners,
+                              documentId
+                        );
+
+                        // Download the digitally signed PDF
+                        const blob = new Blob([signedPdf as BlobPart], { type: 'application/pdf' });
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = `${pdfFile.name.replace('.pdf', '')}_signed.pdf`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+
+                        console.log("Digital Signature Info:", signatureInfo);
+                        toast.success(`Document signed by ${signatureInfo.signer} via ${signatureInfo.platform}`);
+                  } catch (signError) {
+                        console.warn("Digital signature failed, downloading without signature:", signError);
+                        // Fallback: download without digital signature
+                        const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = `${pdfFile.name.replace('.pdf', '')}_annotated.pdf`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        toast.success("Download Started - PDF downloaded (without digital signature).");
+                  }
+            } catch (error) {
+                  console.error("Failed to save PDF:", error);
+                  toast.error("Download Failed - Could not generate the annotated PDF.");
+            }
       };
 
       const handleAnnotationRotation = (direction: 'cw' | 'ccw') => {

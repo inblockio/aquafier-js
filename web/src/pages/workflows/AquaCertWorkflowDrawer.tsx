@@ -21,6 +21,7 @@ import { useStore } from "zustand"
 import appStore from "@/store"
 import { API_ENDPOINTS } from "@/utils/constants"
 import axios, { AxiosResponse } from "axios"
+import { getLatestVH } from "aqua-js-sdk"
 
 export default function AquaCertWorkflowDrawer({ open, onClose, attestors, fileInfo }: IAquaCertWorkflowDrawer) {
     const { backend_url, session } = useStore(appStore)
@@ -156,7 +157,7 @@ export default function AquaCertWorkflowDrawer({ open, onClose, attestors, fileI
                                         </div>
                                     }
                                 >
-                                    <FilePreview fileInfo={getAquaTreeFileObject(fileInfo!!)!} />
+                                    <FilePreview fileInfo={getAquaTreeFileObject(fileInfo!!)!} latestRevisionHash={getLatestVH(fileInfo?.aquaTree!)} />
                                 </Suspense>
                             </TabsContent>
                             <TabsContent value="linked_files">
@@ -188,7 +189,7 @@ export default function AquaCertWorkflowDrawer({ open, onClose, attestors, fileI
                                                         >
                                                             <div className="space-y-1">
                                                                 <p className="text-md text-semi-bold">{item.filename}</p>
-                                                                <FilePreview fileInfo={getAquaTreeFileObject(linkedFileInfos[i]!!)!} />
+                                                                <FilePreview fileInfo={getAquaTreeFileObject(linkedFileInfos[i]!!)!} latestRevisionHash={getLatestVH(linkedFileInfos[i].aquaTree!)} />
                                                             </div>
                                                         </Suspense>
                                                     </TabsContent>

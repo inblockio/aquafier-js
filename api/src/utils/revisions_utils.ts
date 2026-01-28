@@ -303,7 +303,7 @@ export async function transferRevisionChainData(
         let allAquaTrees: AquaTree[] = [];
         let allHashes = Object.keys(chainData.aquaTree.revisions);
         if (allHashes.length == 0) {
-            throw new Error("No revisions found in the aqua tree");
+            throw new Error("🎈🎈No revisions found in the aqua tree");
         }
 
         // Logger.info(`🎈🎈 aquaTree  ${JSON.stringify(chainData.aquaTree, null, 4)}`)

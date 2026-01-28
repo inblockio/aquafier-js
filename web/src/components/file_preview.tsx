@@ -1,4 +1,4 @@
-import {FileObject} from 'aqua-js-sdk'
+import {FileObject, getLatestVH} from 'aqua-js-sdk'
 import {useEffect, useRef, useState} from 'react'
 import {useStore} from 'zustand'
 import appStore from '../store'
@@ -111,15 +111,17 @@ const fileExtensionMap: { [key: string]: string } = {
 
 interface IFilePreview {
       fileInfo: FileObject
+      latestRevisionHash: string
 }
 
 interface IPdfViewerComponent {
       fileType: string
       fileURL: string
       fileInfo: FileObject
+      latestRevisionHash: string
 }
 
-function PdfViewerComponent({ fileType, fileURL, fileInfo }: IPdfViewerComponent) {
+function PdfViewerComponent({ fileType, fileURL, fileInfo, latestRevisionHash }: IPdfViewerComponent) {
       const [pdfFile, setPdfFile] = useState<File | null>(null)
 
       useEffect(() => {
@@ -140,7 +142,7 @@ function PdfViewerComponent({ fileType, fileURL, fileInfo }: IPdfViewerComponent
 
       if (!pdfFile) return <p>Loading PDF...</p>
 
-      return <EasyPDFRenderer pdfFile={pdfFile} annotations={[]} annotationsInDocument={[]} />
+      return <EasyPDFRenderer pdfFile={pdfFile} annotations={[]} annotationsInDocument={[]} latestRevisionHash={latestRevisionHash} />
 }
 
 // Add declaration for docx-preview global type
@@ -155,7 +157,7 @@ declare global {
       }
 }
 
-export const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
+export const FilePreview: React.FC<IFilePreview> = ({ fileInfo, latestRevisionHash }) => {
       const { session } = useStore(appStore)
       const [fileType, setFileType] = useState<string>('')
       const [fileURL, setFileURL] = useState<string>('')
@@ -460,7 +462,7 @@ export const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
       // PDF files
       if (fileType === 'application/pdf') {
-            return <PdfViewerComponent fileType={fileType} fileURL={fileURL} fileInfo={fileInfo} />
+            return <PdfViewerComponent fileType={fileType} fileURL={fileURL} fileInfo={fileInfo} latestRevisionHash={latestRevisionHash} />
       }
 
       // Markdown files

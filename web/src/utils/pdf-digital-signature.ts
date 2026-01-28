@@ -12,7 +12,11 @@ import { PDFDocument, PDFName, PDFString, PDFHexString, PDFDict, PDFArray, PDFNu
 
 // Platform identification
 const PLATFORM_NAME = 'Aquafier';
-const PLATFORM_URL = 'https://dev.inblock.io';
+
+let PLATFORM_URL: string = "https://dev.inblock.io" 
+if(window){
+  PLATFORM_URL = `${window.location.protocol}//${window.location.host}`
+}
 
 export interface SignerInfo {
   name: string;
@@ -25,7 +29,7 @@ export interface SignatureOptions {
   reason?: string;
   location?: string;
   contactInfo?: string;
-  documentUrl?: string;
+  documentId?: string;
   signerInfo: SignerInfo;
 }
 
@@ -101,7 +105,7 @@ function generateCertificate(signerInfo: SignerInfo): {
  * (more efficient for large files than node-forge)
  */
 async function createDocumentHash(data: Uint8Array): Promise<string> {
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data as any);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
@@ -227,9 +231,9 @@ export async function signPdfDocument(
     infoDict.set(PDFName.of('CertificateFingerprint'), PDFString.of(certFingerprint));
 
     // Add document URL if provided
-    if (options.documentUrl) {
-      infoDict.set(PDFName.of('DocumentURL'), PDFString.of(options.documentUrl));
-      infoDict.set(PDFName.of('VerificationURL'), PDFString.of(options.documentUrl));
+    if (options.documentId) {
+      infoDict.set(PDFName.of('DocumentId'), PDFString.of(options.documentId));
+      infoDict.set(PDFName.of('VerificationURL'), PDFString.of(options.documentId));
     }
   }
 
@@ -330,7 +334,7 @@ export async function signPdfWithAquafier(
   signerName: string,
   walletAddress: string,
   additionalSigners?: Array<{ name: string; walletAddress: string }>,
-  documentUrl?: string
+  documentId?: string
 ): Promise<DigitalSignatureResult> {
   let signersList = signerName;
   if (additionalSigners && additionalSigners.length > 0) {
@@ -341,10 +345,10 @@ export async function signPdfWithAquafier(
     reason: `Document digitally signed via ${PLATFORM_NAME} by: ${signersList}`,
     location: PLATFORM_URL,
     contactInfo: `${PLATFORM_URL}/verify`,
-    documentUrl: documentUrl,
+    documentId: documentId,
     signerInfo: {
       name: signerName,
-      walletAddress: walletAddress,
+      walletAddress: walletAddress
     },
   };
 

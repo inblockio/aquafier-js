@@ -18,7 +18,7 @@ export interface ContractWorkflowData {
       name: string
       creationDate: string // Could also use Date type if you parse it
       creatorAddress: string
-      documentUrl: string
+      documentId: string
       status: 'completed' | 'pending' | 'draft' | 'rejected' // Added other potential statuses
       pendingSignatures: number
       signers: Signer[]

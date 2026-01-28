@@ -10,7 +10,7 @@ import {
     isValidUrl,
     isWorkFlowData
 } from '@/utils/functions'
-import Aquafier, {getAquaTreeFileName, getAquaTreeFileObject, LogData, OrderRevisionInAquaTree} from 'aqua-js-sdk'
+import Aquafier, {getAquaTreeFileName, getAquaTreeFileObject, getLatestVH, LogData, OrderRevisionInAquaTree} from 'aqua-js-sdk'
 import {ChevronDown, ChevronUp} from 'lucide-react'
 import {Suspense, useCallback, useEffect, useState} from 'react'
 import {useStore} from 'zustand'
@@ -187,7 +187,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                                                       </div>
                                                 }
                                           >
-                                                <FilePreview fileInfo={getAquaTreeFileObject(selectedFileInfo!)!} />
+                                                <FilePreview fileInfo={getAquaTreeFileObject(selectedFileInfo!)!} latestRevisionHash={getLatestVH(selectedFileInfo?.aquaTree!)} />
                                           </Suspense>
                                     </ErrorBoundary>
                                     {/* </ScrollArea> */}

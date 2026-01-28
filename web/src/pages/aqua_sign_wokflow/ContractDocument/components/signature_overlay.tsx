@@ -106,10 +106,11 @@ export const SimpleSignatureOverlay = ({signature, currentPage}: { signature: Si
     )
 }
 
-export const PDFDisplayWithJustSimpleOverlay = ({pdfUrl, signatures}: {
+export const PDFDisplayWithJustSimpleOverlay = ({pdfUrl, signatures, latestRevisionHash}: {
     pdfUrl: string;
     signatures: SignatureData[];
-    annotationsInDocument: SignatureData[]
+    annotationsInDocument: SignatureData[];
+    latestRevisionHash: string
 }) => {
     const [pdfFile, setPdfFile] = useState<File | null>(null)
 
@@ -149,6 +150,7 @@ export const PDFDisplayWithJustSimpleOverlay = ({pdfUrl, signatures}: {
                     name: signature.name,
                     walletAddress: signature.walletAddress,
                 }))}
+                latestRevisionHash={latestRevisionHash}
             />
         </div>
     )
