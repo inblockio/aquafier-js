@@ -3,7 +3,7 @@ import { test } from "tap"
 import Logger from "../utils/logger";
 
 test('should work with fetch', async t => {
-  const fastify = buildServer()
+  const fastify = await buildServer()
 
   t.after(() => fastify.close())
 
@@ -19,7 +19,7 @@ test('should work with fetch', async t => {
 })
 
 test('test domain claim verification (sequential)', async t => {
-  const fastify = buildServer()
+  const fastify = await buildServer()
   t.after(() => fastify.close())
 
   // First request
