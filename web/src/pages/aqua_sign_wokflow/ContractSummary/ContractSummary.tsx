@@ -13,7 +13,7 @@ import {
       timeToHumanFriendly,
       parseAquaTreeContent
 } from '../../../utils/functions'
-import {toast} from 'sonner'
+import { toast } from 'sonner'
 import { ApiFileInfo } from '../../../models/FileInfo'
 import { IDrawerStatus, VerificationHashAndResult } from '../../../models/AquaTreeDetails'
 import ContractSummaryDetails from './ContractSummaryDetails'
@@ -22,7 +22,7 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
       const [isLoading, setIsLoading] = useState(true)
       const [signatureRevionHashesData, setSignatureRevionHashes] = useState<SummaryDetailsDisplayData[]>([])
       const [isWorkFlowComplete, setIsWorkFlowComplete] = useState<string[]>([])
-      const [_creatorEthreiumSignatureRevisionData, setCreatorEthreiumSignatureRevisionData] = useState<Revision | undefined>(undefined)
+      const [_creatorEthreiumSignatureRevisionData, _setCreatorEthreiumSignatureRevisionData] = useState<Revision | undefined>(undefined)
       const [firstRevisionData, setFirstRevisionData] = useState<Revision | undefined>(undefined)
       const [fileNameData, setFileNameData] = useState<string>('')
       const [contractCreatorAddress, setContractCreatorAddress] = useState<string>('')
@@ -51,7 +51,7 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
 
                         if (allAquaTrees) {
                               for (const anAquaTreeFileObject of allAquaTrees) {
-                                 
+
                                     const anAquaTree: AquaTree = parseAquaTreeContent(anAquaTreeFileObject.fileContent) as AquaTree
                                     if (!anAquaTree || !anAquaTree.revisions) {
                                           toast.error("Error parsing AquaTree from file object.");
@@ -323,12 +323,15 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                   const hashOfLinkedDocument = thirdRevision.link_verification_hashes![0]!
                   const fileName = selectedFileInfo!.aquaTree!.file_index[hashOfLinkedDocument]
                   setFileNameData(fileName)
-                  const creatorSignatureHash = revisionHashes[3]
-                  const signatureRevision: Revision | undefined = selectedFileInfo!.aquaTree!.revisions[creatorSignatureHash]
-                  setCreatorEthreiumSignatureRevisionData(signatureRevision)
-                  if (signatureRevision.revision_type == 'signature') {
-                        setContractCreatorAddress(signatureRevision.signature_wallet_address ?? '--eror--')
-                  }
+                  // const creatorSignatureHash = revisionHashes[3]
+                  // const signatureRevision: Revision | undefined = selectedFileInfo!.aquaTree!.revisions[creatorSignatureHash]
+                  // setCreatorEthreiumSignatureRevisionData(signatureRevision)
+                  // if (signatureRevision.revision_type == 'signature') {
+                  //       setContractCreatorAddress(signatureRevision.signature_wallet_address ?? '--eror--')
+                  // }
+
+                  let documentSignCreator = firstRevision['forms_sender']
+                  setContractCreatorAddress(documentSignCreator ?? '')
 
                   let fourthItmeHashOnwards: string[] = []
                   let signatureRevionHashes: Array<SummaryDetailsDisplayData> = []

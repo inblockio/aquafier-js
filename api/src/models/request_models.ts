@@ -92,7 +92,9 @@ export interface SaveRevisionForUser {
   revision: Revision,
   revisionHash: string,
   address : string,
-  orginAddress :string
+  orginAddress :string,
+  templateId : string,
+  isWorkflow : boolean
 }
 
 export interface AquaNameWithHash {

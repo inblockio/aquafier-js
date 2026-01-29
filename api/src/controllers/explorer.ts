@@ -633,7 +633,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 Logger.error('Error processing aqua files:', error);
 
                 const aquaFiles = getAquaFiles(zipData);
-                await processRegularFiles(aquaFiles, userAddress, null);
+                await processRegularFiles(aquaFiles, userAddress, null, true);
             }
 
             return reply.code(200).send({

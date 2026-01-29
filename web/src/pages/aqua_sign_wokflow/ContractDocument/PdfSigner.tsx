@@ -23,14 +23,16 @@ import { API_ENDPOINTS } from '../../../utils/constants'
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk/web'
 import { SignatureData } from '../../../types/types'
 import { LuInfo, LuTrash } from 'react-icons/lu'
-import { useNavigate } from 'react-router-dom'
 import { Annotation } from './signer/types'
 import { PdfRenderer } from './signer/SignerPage'
+import { downloadPdfWithAnnotations } from '@/utils/pdf-downloader'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
 import WalletAddressClaim from '../../v2_claims_workflow/WalletAdrressClaim'
 import { getAppKitProvider } from '@/utils/appkit-wallet-utils'
 import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocketContext'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { reloadDB, RELOAD_KEYS } from '../../../utils/reloadDatabase'
 
 interface PdfSignerProps {
       fileData: File | null
@@ -64,8 +66,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
       // PDF viewer container ref
       const pdfMainContainerRef = useRef<HTMLDivElement>(null)
 
-      const navigate = useNavigate()
-
       const saveRevisionsToServerForUser = async (aquaTrees: AquaTree[], address: string) => {
             for (let index = 0; index < aquaTrees.length; index++) {
                   const aquaTree = aquaTrees[index]
@@ -85,6 +85,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                     revisionHash: lastHash,
                                     address: address,
                                     orginAddress: session?.address,
+                                    isWorkflow: true,
+                                    templateId: null,
                               },
                               {
                                     headers: {
@@ -334,6 +336,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         await saveRevisionsToServerForUser(aquaTrees, sender)
 
                         // send notification to workflow creator
+                        //refetch the workflow
                         triggerWebsockets(sender, {
                               target: "aqua_sign_workflow",
                               genesisHash: genesisHash,
@@ -377,6 +380,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
       const saveRevisionsToServer = async (aquaTrees: AquaTree[]) => {
             // console.log("saveRevisionsToServer AquaTrees: ", aquaTrees)
 
+            let newApiFileInfo: ApiFileInfo = structuredClone(selectedFileInfo)
             for (let index = 0; index < aquaTrees.length; index++) {
                   const aquaTree = aquaTrees[index]
                   try {
@@ -387,7 +391,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         const url = `${backend_url}/tree`
                         const actualUrlToFetch = ensureDomainUrlHasSSL(url)
 
-                        await axios.post(
+                        let apiResponse = await axios.post(
                               actualUrlToFetch,
                               {
                                     revision: lastRevision,
@@ -401,6 +405,40 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                               }
                         )
 
+
+                        let hasUpdate=false
+
+                        if (index == aquaTrees.length - 1) {
+                              // newApiFileInfo.aquaTree = aquaTree
+                              // newApiFileInfo.lastRevisionHash = lastHash
+                              // newApiFileInfo.lastRevision = lastRevision
+
+                              // ensure genesis matche
+                              if (apiResponse.data.data) {
+                                    let genHashOfApiFileInf = getGenesisHash(selectedFileInfo!.aquaTree!)
+                                    let userAquaTrees: ApiFileInfo[] = apiResponse.data.data.data
+                                    // console.log(" apiResponse.data.data: ", JSON.stringify( apiResponse.data.data, null, 2))
+                                    console.log("userAquaTrees: ", JSON.stringify(userAquaTrees, null, 2))
+                             
+                                    for (const userAquaTree of userAquaTrees) {
+                                          let currentGenHash = getGenesisHash(userAquaTree.aquaTree!)
+                                          if (currentGenHash == genHashOfApiFileInf) {
+                                                newApiFileInfo.aquaTree = userAquaTree.aquaTree
+                                                newApiFileInfo.fileObject = userAquaTree.fileObject
+                                                hasUpdate=true
+                                                break
+                                          }
+                                    }
+
+                              }
+                        }
+
+                        if(hasUpdate){
+                              console.log("newApiFileInfo: updted", )
+                             setSelectedFileInfo(newApiFileInfo) 
+                             setActiveStep(1)
+                              toast.success("Document signed successfully")
+                        }
 
                   } catch (error) {
                         console.error(`Error saving revision ${index + 1}:`, error)
@@ -431,6 +469,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         const selectedFileGenesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
 
                         if (incomingGenesisHash === selectedFileGenesisHash) {
+                              // console.log("TODO: Document signed successfully")
+                              // console.log("TODO: incomingAquaTree", JSON.stringify(incomingAquaTree, null,2))
                               setSelectedFileInfo(incomingAquaTree)
                               setActiveStep(1)
                               toast.success("Document signed successfully")
@@ -447,21 +487,21 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
       }
 
       // Helper function to update UI after success
-      const updateUIAfterSuccess = async () => {
-            try {
-          
-                  updateSelectedFileInfo()
+      // const updateUIAfterSuccess = async () => {
+      //       try {
 
-                
-            } catch (error) {
-                  toast.error(`An error occurred, redirecting to home`)
+      //             updateSelectedFileInfo()
 
-                  setTimeout(() => {
-                        window.location.reload()
-                  }, 150)
-                  navigate('/')
-            }
-      }
+
+      //       } catch (error) {
+      //             toast.error(`An error occurred, redirecting to home`)
+
+      //             setTimeout(() => {
+      //                   window.location.reload()
+      //             }, 150)
+      //             navigate('/')
+      //       }
+      // }
 
       const submitSignatureData = async (signaturePosition: SignatureData[]) => {
             setSubmittingSignatureData(true)
@@ -522,12 +562,14 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   }
 
                   // Step 8: Update UI and refresh files
-                  await updateUIAfterSuccess()
+                  // await updateUIAfterSuccess()
+                  // temprarily th ui is updated saveRevisionsToServer after the last revison is submitted
 
                   // Step 9:
                   // check if the owner of the document is a different wallet address send him the above revsions
                   // send the revision to the other wallet address if possible
                   await shareRevisionsToOwnerAnOtherSignersOfDocument([linkedAquaTreeWithUserSignatureData, linkedAquaTreeWithSignature, metaMaskSignedAquaTree])
+
             } catch (error) {
                   console.error('Error in submitSignatureData:', error)
                   showError('An unexpected error occurred during signature submission')
@@ -1155,11 +1197,15 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
       useEffect(() => {
             const unsubscribe = subscribe((message) => {
-                  // console.log("Notification received: ", message)
+                  console.log("TODO:Notification received: ", message)
+                  console.log("TODO: Notification received: ", message)
                   // Handle notification reload specifically
-                    if (message.type === 'notification_reload' && message.data && message.data.target === "aqua_sign_workflow") {
-                      updateSelectedFileInfo()
-                    }
+                  if (message.type === 'notification_reload' && message.data && message.data.target === "aqua_sign_workflow") {
+                        updateSelectedFileInfo()
+                  }
+                  if(message.type=="aqua_sign_workflow"){
+                        updateSelectedFileInfo()
+                  }
             });
             return unsubscribe;
       }, []);
@@ -1281,6 +1327,94 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
       }, [openDialog, selectedFileInfo])
 
+
+      const userSignatureReload = useLiveQuery(
+            () => reloadDB.reloadConfigs.where('key').equals(RELOAD_KEYS.user_signature).first(),
+            []
+      );
+
+      useEffect(() => {
+            if (userSignatureReload?.value) {
+                  (async () => {
+                        await loadUserSignatures(true)
+                  })()
+            }
+      }, [userSignatureReload?.timestamp])
+
+      const createFileBackupOnServer = async (): Promise<string | null> => {
+            const hash = selectedFileInfo?.aquaTree ? getLastRevisionVerificationHash(selectedFileInfo.aquaTree) : null
+            if (!hash) {
+                  return null
+            }
+            // Goes to the backend and creates a backup of the file to the server account
+            let documentBackupID: string | null = null
+            try {
+                  const endpoint = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.CREATE_SERVER_ACCOUNT_BACKUP}`)
+                  const res = await axios.post(endpoint, {
+                        latestRevisionHash: hash,
+                  }, {
+                        headers: {
+                              nonce: session?.nonce,
+                              // metamaskAddress: session?.address
+                        }
+                  })
+                  const resData = res.data
+                  if (resData.success) {
+                        documentBackupID = resData.backupId
+                  }
+            } catch (error) {
+
+            }
+            return documentBackupID
+      }
+
+      const handleDownload = async () => {
+            if (!pdfFile) {
+                  toast.error("No PDF - Please upload or load a PDF file first.");
+                  return;
+            }
+
+            // Combine existing document signatures + new user-placed signatures
+            const existingSigs = (documentSignatures || []).map((sig: SignatureData) => ({
+                  type: 'profile' as const,
+                  id: sig.id,
+                  x: sig.x,
+                  y: sig.y,
+                  page: typeof sig.page === 'string' ? parseInt(sig.page) : sig.page,
+                  rotation: sig.rotation ?? 0,
+                  imageSrc: sig.dataUrl,
+                  imageWidth: sig.imageWidth ?? '140px',
+                  imageHeight: sig.imageHeight ?? '80px',
+                  imageAlt: sig.name,
+                  name: sig.name,
+                  walletAddress: sig.walletAddress,
+            }));
+
+            const newSigs = signaturePositions.map((sig: SignatureData) => ({
+                  type: 'profile' as const,
+                  id: sig.id,
+                  x: sig.x,
+                  y: sig.y,
+                  page: typeof sig.page === 'string' ? parseInt(sig.page) : sig.page,
+                  rotation: sig.rotation ?? 0,
+                  imageSrc: sig.dataUrl,
+                  imageWidth: sig.imageWidth ?? '140px',
+                  imageHeight: sig.imageHeight ?? '80px',
+                  imageAlt: sig.name,
+                  name: sig.name,
+                  walletAddress: sig.walletAddress,
+            }));
+
+            const allAnnotations = [...existingSigs, ...newSigs];
+
+            await downloadPdfWithAnnotations({
+                  pdfFile,
+                  annotations: allAnnotations as any,
+                  fileName: `${pdfFile.name.replace('.pdf', '')}_signed.pdf`,
+                  backupFn: createFileBackupOnServer
+            });
+      };
+
       return (
             <div className="h-[calc(100vh-70px)] overflow-y-scroll md:overflow-hidden">
                   <div className="h-[60px] flex items-center">
@@ -1308,8 +1442,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                                                         selectedAnnotationId={selectedSignatureId}
                                                                         onAnnotationSelect={() => { }}
                                                                         onAnnotationRotate={() => { }}
+                                                                        onDownload={handleDownload}
                                                                   />
-                                                            </div>
+                                                            </div>+
                                                       </div>
                                                       <div className="col-span-12 md:col-span-3 bg-gray-100 overflow-hidden">
                                                             <div className="p-4 h-auto md:h-full overflow-y-scroll overflow-x-hidden break-words">{signatureSideBar()}</div>

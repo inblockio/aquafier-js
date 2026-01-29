@@ -19,7 +19,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { HiDocumentText } from 'react-icons/hi'
 import { FaCircleInfo } from 'react-icons/fa6'
 import { Check } from 'lucide-react'
-import { ApiFileInfo } from '@/models/FileInfo'
 import { toast } from 'sonner'
 
 export default function PdfWorkflowPage() {
@@ -27,7 +26,6 @@ export default function PdfWorkflowPage() {
       const [timeLineTitle, setTimeLineTitle] = useState('')
       const [error, _setError] = useState('')
       const [timeLineItems, setTimeLineItems] = useState<Array<WorkFlowTimeLine>>([])
-      const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
       const { selectedFileInfo, setSelectedFileInfo } = useStore(appStore)
 
       const navigate = useNavigate()
@@ -130,7 +128,7 @@ export default function PdfWorkflowPage() {
       function loadTimeline() {
             const items: Array<WorkFlowTimeLine> = []
 
-            if (!fileInfo) {
+            if (!selectedFileInfo) {
                   return items
             }
 
@@ -139,7 +137,7 @@ export default function PdfWorkflowPage() {
                   completed: true,
                   content: (
                         <ContractSummaryView
-                              selectedFileInfo={fileInfo}
+                              selectedFileInfo={selectedFileInfo}
                               setActiveStep={(index: number) => {
                                     setActiveStep(index)
                               }}
@@ -156,7 +154,7 @@ export default function PdfWorkflowPage() {
                   completed: computeIsWorkflowCOmplete(),
                   content: (
                         <ContractDocumentView
-                              selectedFileInfo={fileInfo}
+                              selectedFileInfo={selectedFileInfo}
                               setActiveStep={(index: number) => {
                                     setActiveStep(index)
                               }}
@@ -172,8 +170,8 @@ export default function PdfWorkflowPage() {
       }
 
       const loadData = () => {
-            if (fileInfo) {
-                  const workflowName = getFileName(fileInfo.aquaTree!)
+            if (selectedFileInfo) {
+                  const workflowName = getFileName(selectedFileInfo.aquaTree!)
 
                   setTimeLineTitle(convertTemplateNameToTitle(workflowName))
 
@@ -201,15 +199,8 @@ export default function PdfWorkflowPage() {
       }, [page, timeLineItems.length])
 
       useEffect(() => {
-            if (selectedFileInfo) {
-                  setFileInfo(selectedFileInfo)
-            }
-
-      }, [selectedFileInfo])
-
-      useEffect(() => {
             loadData()
-      }, [JSON.stringify(fileInfo)])
+      }, [JSON.stringify(selectedFileInfo)])
 
       // Find the currently active content
       const activeContent = () => {

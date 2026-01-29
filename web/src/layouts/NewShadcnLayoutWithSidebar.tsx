@@ -25,7 +25,7 @@ import WorkspaceDialogUI from '@/components/workspace/workspace_download_dialog_
 import IdentityCardDialogUi from '@/components/identity_card_dialog_ui'
 
 export default function NewShadcnLayoutWithSidebar() {
-
+ 
       const {
             session,
             setSelectedFileInfo,
