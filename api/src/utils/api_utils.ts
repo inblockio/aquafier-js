@@ -196,51 +196,70 @@ export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string,
 
     // Save the file
     // await pump(data.file, fs.createWriteStream(filePath))
-    await fs.promises.writeFile(filePath, fileData);
-    await prisma.file.upsert({
-        where: {
-            file_hash: fileHash,
-        },
-        create: {
-            file_hash: fileHash,
-            file_location: filePath,
+    try {
+        await fs.promises.writeFile(filePath, fileData);
+    } catch (error) {
+        console.log("File save Error: ", error)
+    }
+    try {
+        await prisma.file.upsert({
+            where: {
+                file_hash: fileHash,
+            },
+            create: {
+                file_hash: fileHash,
+                file_location: filePath,
 
-        },
-        update: {
-            file_hash: fileHash,
-            file_location: filePath,
-        }
-    })
+            },
+            update: {
+                file_hash: fileHash,
+                file_location: filePath,
+            }
+        })
+    } catch (error) {
+        console.log("File db save update error: ", error)
+    }
 
-    await prisma.fileIndex.upsert({
-        where: {
-            file_hash: fileHash,
-        },
-        create: {
-            pubkey_hash: [filepubkeyhash],
-            file_hash: fileHash,
+    try {
 
-        },
-        update: {
-            pubkey_hash: [filepubkeyhash],
-            file_hash: fileHash,
-        }
-    })
+        await prisma.fileIndex.upsert({
+            where: {
+                file_hash: fileHash,
+            },
+            create: {
+                pubkey_hash: [filepubkeyhash],
+                file_hash: fileHash,
 
-    await prisma.fileName.upsert({
-        where: {
-            pubkey_hash: filepubkeyhash,
-        },
-        create: {
-            pubkey_hash: filepubkeyhash,
-            file_name: fileName,
+            },
+            update: {
+                pubkey_hash: [filepubkeyhash],
+                file_hash: fileHash,
+            }
+        })
 
-        },
-        update: {
-            pubkey_hash: filepubkeyhash,
-            file_name: fileName,
-        }
-    })
+
+    } catch (error) {
+        console.log("File index error: ", error)
+    }
+
+    try {
+        await prisma.fileName.upsert({
+            where: {
+                pubkey_hash: filepubkeyhash,
+            },
+            create: {
+                pubkey_hash: filepubkeyhash,
+                file_name: fileName,
+
+            },
+            update: {
+                pubkey_hash: filepubkeyhash,
+                file_name: fileName,
+            }
+        })
+    } catch (error) {
+        console.log("Filename save error: ", error)
+    }
 
 }
 
@@ -313,7 +332,7 @@ const setUpSystemTemplates = async () => {
     //     "aqua_certificate",
     // ]
 
-     let templates = Object.keys(TEMPLATE_HASHES)
+    let templates = Object.keys(TEMPLATE_HASHES)
     for (let index = 0; index < templates.length; index++) {
         const templateItem = templates[index];
         let templateData = path.join(assetsPath, `${templateItem}.json`);
@@ -400,8 +419,8 @@ const setUpSystemTemplates = async () => {
                 },
             })
 
-            if(fieldData.type.trim() == 'options' && fieldData.options){
-                for(let optionIndex = 0; optionIndex < fieldData.options.length; optionIndex++){
+            if (fieldData.type.trim() == 'options' && fieldData.options) {
+                for (let optionIndex = 0; optionIndex < fieldData.options.length; optionIndex++) {
                     let optionValue = fieldData.options[optionIndex];
                     await prisma.aquaTemplateFieldOptions.upsert({
                         where: {
@@ -429,8 +448,16 @@ const setUpSystemTemplates = async () => {
         let templateAquaTree: AquaTree = JSON.parse(templateAquaTreeDataContent)
 
         let templateDataContent = fs.readFileSync(templateData, 'utf-8')
-        await saveTemplateFileData(templateAquaTree, templateDataContent, SYSTEM_WALLET_ADDRESS)
-        await saveAquaTree(templateAquaTree, SYSTEM_WALLET_ADDRESS);
+        try {
+            await saveTemplateFileData(templateAquaTree, templateDataContent, SYSTEM_WALLET_ADDRESS)
+        } catch (error) {
+            console.log("Save template global error: ", error)
+        }
+        try {
+            await saveAquaTree(templateAquaTree, SYSTEM_WALLET_ADDRESS);
+        } catch (error) {
+            console.log("Save Aquatree template error: ", error)
+        }
     }
 }
 
