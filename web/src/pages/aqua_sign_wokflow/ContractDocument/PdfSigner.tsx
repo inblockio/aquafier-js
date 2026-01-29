@@ -26,11 +26,14 @@ import { LuInfo, LuTrash } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
 import { Annotation } from './signer/types'
 import { PdfRenderer } from './signer/SignerPage'
+import { downloadPdfWithAnnotations } from '@/utils/pdf-downloader'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
 import WalletAddressClaim from '../../v2_claims_workflow/WalletAdrressClaim'
 import { getAppKitProvider } from '@/utils/appkit-wallet-utils'
 import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocketContext'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { reloadDB, RELOAD_KEYS } from '../../../utils/reloadDatabase'
 
 interface PdfSignerProps {
       fileData: File | null
@@ -449,10 +452,10 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
       // Helper function to update UI after success
       const updateUIAfterSuccess = async () => {
             try {
-          
+
                   updateSelectedFileInfo()
 
-                
+
             } catch (error) {
                   toast.error(`An error occurred, redirecting to home`)
 
@@ -1157,9 +1160,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
             const unsubscribe = subscribe((message) => {
                   // console.log("Notification received: ", message)
                   // Handle notification reload specifically
-                    if (message.type === 'notification_reload' && message.data && message.data.target === "aqua_sign_workflow") {
-                      updateSelectedFileInfo()
-                    }
+                  if (message.type === 'notification_reload' && message.data && message.data.target === "aqua_sign_workflow") {
+                        updateSelectedFileInfo()
+                  }
             });
             return unsubscribe;
       }, []);
@@ -1281,6 +1284,94 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
       }, [openDialog, selectedFileInfo])
 
+
+      const userSignatureReload = useLiveQuery(
+            () => reloadDB.reloadConfigs.where('key').equals(RELOAD_KEYS.user_signature).first(),
+            []
+      );
+
+      useEffect(() => {
+            if (userSignatureReload?.value) {
+                  (async () => {
+                        await loadUserSignatures(true)
+                  })()
+            }
+      }, [userSignatureReload?.timestamp])
+
+      const createFileBackupOnServer = async (): Promise<string | null> => {
+            const hash = selectedFileInfo?.aquaTree ? getLastRevisionVerificationHash(selectedFileInfo.aquaTree) : null
+            if (!hash) {
+                  return null
+            }
+            // Goes to the backend and creates a backup of the file to the server account
+            let documentBackupID: string | null = null
+            try {
+                  const endpoint = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.CREATE_SERVER_ACCOUNT_BACKUP}`)
+                  const res = await axios.post(endpoint, {
+                        latestRevisionHash: hash,
+                  }, {
+                        headers: {
+                              nonce: session?.nonce,
+                              // metamaskAddress: session?.address
+                        }
+                  })
+                  const resData = res.data
+                  if (resData.success) {
+                        documentBackupID = resData.backupId
+                  }
+            } catch (error) {
+
+            }
+            return documentBackupID
+      }
+
+      const handleDownload = async () => {
+            if (!pdfFile) {
+                  toast.error("No PDF - Please upload or load a PDF file first.");
+                  return;
+            }
+
+            // Combine existing document signatures + new user-placed signatures
+            const existingSigs = (documentSignatures || []).map((sig: SignatureData) => ({
+                  type: 'profile' as const,
+                  id: sig.id,
+                  x: sig.x,
+                  y: sig.y,
+                  page: typeof sig.page === 'string' ? parseInt(sig.page) : sig.page,
+                  rotation: sig.rotation ?? 0,
+                  imageSrc: sig.dataUrl,
+                  imageWidth: sig.imageWidth ?? '140px',
+                  imageHeight: sig.imageHeight ?? '80px',
+                  imageAlt: sig.name,
+                  name: sig.name,
+                  walletAddress: sig.walletAddress,
+            }));
+
+            const newSigs = signaturePositions.map((sig: SignatureData) => ({
+                  type: 'profile' as const,
+                  id: sig.id,
+                  x: sig.x,
+                  y: sig.y,
+                  page: typeof sig.page === 'string' ? parseInt(sig.page) : sig.page,
+                  rotation: sig.rotation ?? 0,
+                  imageSrc: sig.dataUrl,
+                  imageWidth: sig.imageWidth ?? '140px',
+                  imageHeight: sig.imageHeight ?? '80px',
+                  imageAlt: sig.name,
+                  name: sig.name,
+                  walletAddress: sig.walletAddress,
+            }));
+
+            const allAnnotations = [...existingSigs, ...newSigs];
+
+            await downloadPdfWithAnnotations({
+                  pdfFile,
+                  annotations: allAnnotations as any,
+                  fileName: `${pdfFile.name.replace('.pdf', '')}_signed.pdf`,
+                  backupFn: createFileBackupOnServer
+            });
+      };
+
       return (
             <div className="h-[calc(100vh-70px)] overflow-y-scroll md:overflow-hidden">
                   <div className="h-[60px] flex items-center">
@@ -1308,8 +1399,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                                                         selectedAnnotationId={selectedSignatureId}
                                                                         onAnnotationSelect={() => { }}
                                                                         onAnnotationRotate={() => { }}
+                                                                        onDownload={handleDownload}
                                                                   />
-                                                            </div>
+                                                            </div>+
                                                       </div>
                                                       <div className="col-span-12 md:col-span-3 bg-gray-100 overflow-hidden">
                                                             <div className="p-4 h-auto md:h-full overflow-y-scroll overflow-x-hidden break-words">{signatureSideBar()}</div>
