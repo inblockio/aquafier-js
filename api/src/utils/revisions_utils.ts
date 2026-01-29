@@ -1888,11 +1888,18 @@ export async function processAquaFiles(
 
 
 
-    const isWorkFlow: {
+    let isWorkFlow: {
         isWorkFlow: boolean;
         workFlow: string;
-    } = isWorkFlowData(mainAquaTree!, systemTemplateHashes)
+    } = {
+        isWorkFlow: false,
+        workFlow: ''
+    }
 
+    if (mainAquaTree){
+
+      isWorkFlow = isWorkFlowData(mainAquaTree, systemTemplateHashes)
+    }
     // Logger.info(`actualIsWorkFlow: ${JSON.stringify(isWorkFlow)}`);
     try {
 
@@ -2046,14 +2053,16 @@ export async function processAllAquaFiles(
 
 
     if (isWorkFlow && mainAquaTree && aquaConfig) {
+      
         // Process workflow: save non-main files first, then main file
-        await processWorkflowFiles(aquaFiles, aquaConfig.genesis, userAddress, templateId);
+        await processWorkflowFiles(aquaFiles, aquaConfig.genesis, userAddress, templateId, true);
         await deletLatestIfExistsForAquaTree(mainAquaTree, userAddress)
         await saveAquaTree(mainAquaTree, userAddress, templateId, false);
     } else {
+      
 
         // Process regular files
-        await processRegularFiles(aquaFiles, userAddress, templateId);
+        await processRegularFiles(aquaFiles, userAddress, templateId, false);
     }
 }
 
@@ -2061,7 +2070,8 @@ export async function processWorkflowFiles(
     aquaFiles: Array<{ fileName: string; file: JSZip.JSZipObject }>,
     genesisFileName: string,
     userAddress: string,
-    templateId: string | null
+    templateId: string | null,
+    isWorkFlow: boolean
 ) {
     const nonMainFiles = aquaFiles.filter(({ fileName }) => fileName !== genesisFileName);
 
@@ -2073,8 +2083,8 @@ export async function processWorkflowFiles(
             throw new Error(`Genesis hash cannot be null`);
         }
 
-        let isSystem = systemTemplateHashes.includes(genhash.trim())
-        await saveAquaTree(aquaTree, userAddress, templateId, isSystem);
+        // let isSystem = systemTemplateHashes.includes(genhash.trim())
+        await saveAquaTree(aquaTree, userAddress, templateId, isWorkFlow);
     }
 }
 
@@ -2082,7 +2092,7 @@ export async function processRegularFiles(
     aquaFiles: Array<{ fileName: string; file: JSZip.JSZipObject }>,
     userAddress: string,
     templateId: string | null,
-
+    isWorkFlow: boolean = false
 ) {
     for (const { file } of aquaFiles) {
         const aquaTree = await parseAquaFile(file);
@@ -2091,11 +2101,11 @@ export async function processRegularFiles(
             throw new Error(`Genesis hash cannot be null`);
         }
 
-        let isSystem = systemTemplateHashes.includes(genhash.trim())
+        // let isSystem = systemTemplateHashes.includes(genhash.trim())
 
 
         await deletLatestIfExistsForAquaTree(aquaTree, userAddress)
-        await saveAquaTree(aquaTree, userAddress, templateId, isSystem);
+        await saveAquaTree(aquaTree, userAddress, templateId, isWorkFlow);
     }
 }
 

@@ -21,7 +21,7 @@ import FilesList from '@/pages/files/files_list'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 
 export const LinkButton = ({ item, nonce, index }: IShareButton) => {
-      const { backend_url, setFiles, files, session } = useStore(appStore)
+      const { backend_url, setFiles,  session } = useStore(appStore)
       const [isOpen, setIsOpen] = useState(false)
       const [linking, setLinking] = useState(false)
       const [primaryFileObject, setPrimaryFileObject] = useState<FileObject | null | "loading">("loading")
@@ -204,7 +204,8 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
 
                                                             <FilesList
                                                                   showFileActions={false}
-                                                                  selectedFiles={linkItems} activeFile={item}
+                                                                  selectedFiles={linkItems} 
+                                                                  activeFile={item}
                                                                   showCheckbox={true}
                                                                   showHeader={true}
                                                                   onFileDeSelected={(file) => {
@@ -240,7 +241,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                                                 Cancel
                                           </Button>
 
-                                          {files?.fileData.length > 1 && (
+                                          {linkItems.length > 0 && (
                                                 <Button
                                                       onClick={handleLink}
                                                       disabled={linking || linkItems === null || linkItems.length == 0}

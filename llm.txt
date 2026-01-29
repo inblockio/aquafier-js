@@ -1,0 +1,138 @@
+# Aquafier JS - LLM Documentation
+
+## Project Overview
+Aquafier JS is a reference implementation of the Aqua Protocol, demonstrating how its features can be integrated into modern web and backend applications. The project enables digital content signing, provenance verification, and integrity validation, serving as an example for real-world Aqua use cases.
+
+## Architecture
+- **Backend**: Fastify (TypeScript) with Prisma ORM and PostgreSQL
+- **Frontend**: React (TypeScript, Chakra UI)
+- **Blockchain**: Aqua Protocol, Ethereum (ethers/viem)
+- **Testing**: Playwright end-to-end testing
+
+## Core Features
+
+### 1. Digital Content Signing & Verification
+- Create digital signatures using Aqua Protocol
+- Verify content integrity and provenance
+- Track content origins and version history
+
+### 2. Authentication & Authorization
+- Sign-In with Ethereum (SIWE)
+- OAuth providers integration
+- Session management with nonce-based authentication
+
+### 3. Template System
+- Pre-defined templates for common document types (cheque, identity, attestation)
+- Custom template creation and management
+- Dynamic field options and dependencies
+
+### 4. Payment Processing
+- Stripe integration for subscriptions and payments
+- Payment plan management
+- Invoice generation and management
+
+### 5. Notifications
+- Twilio-powered SMS and email verification
+- Notification system for user interactions
+
+### 6. Storage & File Management
+- Local file storage or S3-compatible storage (MinIO)
+- File upload and download
+- Media management
+
+### 7. Real-time Communication
+- WebSocket support for live updates
+- Enhanced WebSocket controller for advanced functionality
+
+### 8. Analytics & Metrics
+- User usage tracking
+- System metrics and analytics
+- Payment and subscription tracking
+
+## Key Technologies & Dependencies
+
+### Backend (API)
+- Fastify: High-performance Node.js framework
+- Prisma: ORM for PostgreSQL
+- Aqua JS SDK: Aqua Protocol integration
+- Ethers/viem: Ethereum blockchain interactions
+- SIWE: Sign-In with Ethereum
+- Twilio: SMS/email verification
+- Stripe: Payment processing
+- Minio: S3-compatible storage
+- Puppeteer: Browser automation
+- Winston: Logging
+- Sentry: Error tracking and profiling
+
+### Database Models
+- Users: User profiles and settings
+- Templates & Template Fields: Content templates
+- Revisions: Content versioning
+- SIWE Sessions: Authentication sessions
+- DNS Claim Verifications: Domain verification
+- Payments & Subscriptions: Stripe integration
+- User Usage Metrics: Analytics data
+
+## API Structure
+
+### Controllers (Endpoints)
+1. **auth**: Authentication endpoints
+2. **oauth**: OAuth providers integration
+3. **user**: User management
+4. **files**: File upload and management
+5. **templates**: Template system
+6. **revisions**: Content versioning
+7. **verify**: Content verification
+8. **payments**: Payment processing
+9. **subscriptions**: Subscription management
+10. **admin**: Admin operations
+11. **metrics**: Analytics and metrics
+12. **workflow**: Process automation
+13. **websocketController/websocketController2**: Real-time communication
+14. **notifications**: Notification system
+15. **api**: Generic API endpoints
+
+## Environment Variables
+Key configuration:
+- Database connection details (DATABASE_URL)
+- Twilio API credentials
+- Stripe API keys
+- Server configuration (HOST, PORT)
+- Storage settings (local or S3)
+- CORS origins
+
+## Deployment
+- Docker-based deployment with Docker Compose
+- Multiple environments: local, dev, prod
+- Automatic backup and restore functionality
+- GitHub Actions for CI/CD
+- Let's Encrypt integration for SSL
+
+## Getting Started
+1. Clone the repository
+2. Configure environment variables from `.env.sample`
+3. Install dependencies: `npm install`
+4. Run migrations: `npm run migrate-dev`
+5. Start development server: `npm run dev`
+
+## Project Structure
+```
+aquafier-js/
+├── api/                          # Backend API
+│   ├── src/
+│   │   ├── controllers/         # API endpoints
+│   │   ├── database/            # Prisma & DB connection
+│   │   ├── services/            # Business logic
+│   │   ├── utils/               # Utility functions
+│   │   ├── models/              # Data models
+│   │   ├── middleware/          # Request/response handling
+│   │   └── index.ts             # Entry point
+│   ├── prisma/                  # Prisma schema & migrations
+│   └── package.json
+├── bruno/                        # API testing (Bruno)
+├── actionfiles/                 # Docker & deployment files
+└── README.md
+```
+
+## Contribution
+Refer to CONTRIBUTION.md for guidelines on contributing to the project.
