@@ -439,6 +439,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         if(hasUpdate){
                               console.log("newApiFileInfo: updted", )
                              setSelectedFileInfo(newApiFileInfo) 
+                             setActiveStep(1)
+                              toast.success("Document signed successfully")
                         }
 
                   } catch (error) {
@@ -470,6 +472,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         const selectedFileGenesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
 
                         if (incomingGenesisHash === selectedFileGenesisHash) {
+                              // console.log("TODO: Document signed successfully")
+                              // console.log("TODO: incomingAquaTree", JSON.stringify(incomingAquaTree, null,2))
                               setSelectedFileInfo(incomingAquaTree)
                               setActiveStep(1)
                               toast.success("Document signed successfully")
@@ -486,21 +490,21 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
       }
 
       // Helper function to update UI after success
-      const updateUIAfterSuccess = async () => {
-            try {
+      // const updateUIAfterSuccess = async () => {
+      //       try {
 
-                  updateSelectedFileInfo()
+      //             updateSelectedFileInfo()
 
 
-            } catch (error) {
-                  toast.error(`An error occurred, redirecting to home`)
+      //       } catch (error) {
+      //             toast.error(`An error occurred, redirecting to home`)
 
-                  setTimeout(() => {
-                        window.location.reload()
-                  }, 150)
-                  navigate('/')
-            }
-      }
+      //             setTimeout(() => {
+      //                   window.location.reload()
+      //             }, 150)
+      //             navigate('/')
+      //       }
+      // }
 
       const submitSignatureData = async (signaturePosition: SignatureData[]) => {
             setSubmittingSignatureData(true)
@@ -561,7 +565,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   }
 
                   // Step 8: Update UI and refresh files
-                  await updateUIAfterSuccess()
+                  // await updateUIAfterSuccess()
+                  // temprarily th ui is updated saveRevisionsToServer after the last revison is submitted
 
                   // Step 9:
                   // check if the owner of the document is a different wallet address send him the above revsions
@@ -1196,13 +1201,14 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
       useEffect(() => {
             const unsubscribe = subscribe((message) => {
                   console.log("TODO:Notification received: ", message)
+                  console.log("TODO: Notification received: ", message)
                   // Handle notification reload specifically
-                  // if (message.type === 'notification_reload' && message.data && message.data.target === "aqua_sign_workflow") {
-                  //       updateSelectedFileInfo()
-                  // }
-                  // if(message.type=="aqua_sign_workflow"){
-                  //       updateSelectedFileInfo()
-                  // }
+                  if (message.type === 'notification_reload' && message.data && message.data.target === "aqua_sign_workflow") {
+                        updateSelectedFileInfo()
+                  }
+                  if(message.type=="aqua_sign_workflow"){
+                        updateSelectedFileInfo()
+                  }
             });
             return unsubscribe;
       }, []);
