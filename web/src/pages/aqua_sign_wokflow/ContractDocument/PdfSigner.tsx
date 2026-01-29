@@ -88,6 +88,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                     revisionHash: lastHash,
                                     address: address,
                                     orginAddress: session?.address,
+                                    isWorkflow: true,
+                                    templateId: null,
                               },
                               {
                                     headers: {
@@ -337,6 +339,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         await saveRevisionsToServerForUser(aquaTrees, sender)
 
                         // send notification to workflow creator
+                        //refetch the workflow
                         triggerWebsockets(sender, {
                               target: "aqua_sign_workflow",
                               genesisHash: genesisHash,
@@ -380,6 +383,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
       const saveRevisionsToServer = async (aquaTrees: AquaTree[]) => {
             // console.log("saveRevisionsToServer AquaTrees: ", aquaTrees)
 
+            let newApiFileInfo: ApiFileInfo = structuredClone(selectedFileInfo)
             for (let index = 0; index < aquaTrees.length; index++) {
                   const aquaTree = aquaTrees[index]
                   try {
@@ -390,7 +394,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         const url = `${backend_url}/tree`
                         const actualUrlToFetch = ensureDomainUrlHasSSL(url)
 
-                        await axios.post(
+                        let apiResponse = await axios.post(
                               actualUrlToFetch,
                               {
                                     revision: lastRevision,
@@ -404,6 +408,38 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                               }
                         )
 
+
+                        let hasUpdate=false
+
+                        if (index == aquaTrees.length - 1) {
+                              // newApiFileInfo.aquaTree = aquaTree
+                              // newApiFileInfo.lastRevisionHash = lastHash
+                              // newApiFileInfo.lastRevision = lastRevision
+
+                              // ensure genesis matche
+                              if (apiResponse.data.data) {
+                                    let genHashOfApiFileInf = getGenesisHash(selectedFileInfo!.aquaTree!)
+                                    let userAquaTrees: ApiFileInfo[] = apiResponse.data.data.data
+                                    // console.log(" apiResponse.data.data: ", JSON.stringify( apiResponse.data.data, null, 2))
+                                    console.log("userAquaTrees: ", JSON.stringify(userAquaTrees, null, 2))
+                             
+                                    for (const userAquaTree of userAquaTrees) {
+                                          let currentGenHash = getGenesisHash(userAquaTree.aquaTree!)
+                                          if (currentGenHash == genHashOfApiFileInf) {
+                                                newApiFileInfo.aquaTree = userAquaTree.aquaTree
+                                                newApiFileInfo.fileObject = userAquaTree.fileObject
+                                                hasUpdate=true
+                                                break
+                                          }
+                                    }
+
+                              }
+                        }
+
+                        if(hasUpdate){
+                              console.log("newApiFileInfo: updted", )
+                             setSelectedFileInfo(newApiFileInfo) 
+                        }
 
                   } catch (error) {
                         console.error(`Error saving revision ${index + 1}:`, error)
@@ -531,6 +567,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   // check if the owner of the document is a different wallet address send him the above revsions
                   // send the revision to the other wallet address if possible
                   await shareRevisionsToOwnerAnOtherSignersOfDocument([linkedAquaTreeWithUserSignatureData, linkedAquaTreeWithSignature, metaMaskSignedAquaTree])
+
             } catch (error) {
                   console.error('Error in submitSignatureData:', error)
                   showError('An unexpected error occurred during signature submission')
@@ -1158,9 +1195,12 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
       useEffect(() => {
             const unsubscribe = subscribe((message) => {
-                  // console.log("Notification received: ", message)
+                  console.log("Notification received: ", message)
                   // Handle notification reload specifically
                   if (message.type === 'notification_reload' && message.data && message.data.target === "aqua_sign_workflow") {
+                        updateSelectedFileInfo()
+                  }
+                  if(message.type=="aqua_sign_workflow"){
                         updateSelectedFileInfo()
                   }
             });
