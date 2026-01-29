@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { Annotation, ImageAnnotation, ProfileAnnotation, TextAnnotation } from './types'
+import type { Annotation } from './types'
 import PdfViewer from './pdf-viewer'
 import AnnotationSidebar from './annotation-sidebar'
 import { ArrowLeft, ArrowRight, Download, ZoomIn, ZoomOut } from 'lucide-react'
@@ -9,8 +9,6 @@ import { Button } from '../../../../components/ui/button'
 import { Slider } from '../../../../components/ui/slider'
 import { ensureDomainUrlHasSSL } from '@/utils/functions'
 import { toast } from 'sonner'
-import { degrees, PDFDocument, rgb, StandardFonts } from 'pdf-lib'
-import { signPdfWithAquafier } from '@/utils/pdf-digital-signature'
 import { useStore } from 'zustand'
 import appStore from '@/store'
 import axios from 'axios'
@@ -18,25 +16,25 @@ import { API_ENDPOINTS } from '@/utils/constants'
 import { downloadPdfWithAnnotations } from '@/utils/pdf-downloader'
 // import { ScrollArea } from '@/components/ui/scroll-area';
 
-const parseFontSizeToPoints = (fontSizeString: string, defaultSize: number = 12): number => {
-      if (!fontSizeString || typeof fontSizeString !== 'string') return defaultSize;
+// const parseFontSizeToPoints = (fontSizeString: string, defaultSize: number = 12): number => {
+//       if (!fontSizeString || typeof fontSizeString !== 'string') return defaultSize;
 
-      const value = parseFloat(fontSizeString);
-      if (isNaN(value)) return defaultSize;
+//       const value = parseFloat(fontSizeString);
+//       if (isNaN(value)) return defaultSize;
 
-      if (fontSizeString.toLowerCase().endsWith('pt')) {
-            return value;
-      } else if (fontSizeString.toLowerCase().endsWith('px')) {
-            // Common conversion: 1px = 0.75pt (for 96 DPI assumption where 1pt = 1/72 inch)
-            // Or, for pdf-lib, sometimes treating px as pt directly is fine for visual consistency.
-            // Let's treat px as pt for simplicity here, can be refined.
-            return value;
-      } else if (fontSizeString.toLowerCase().endsWith('em')) {
-            return value * defaultSize; // Assuming 1em = defaultSize (e.g., 12pt)
-      }
-      // If no unit, assume points
-      return value;
-};
+//       if (fontSizeString.toLowerCase().endsWith('pt')) {
+//             return value;
+//       } else if (fontSizeString.toLowerCase().endsWith('px')) {
+//             // Common conversion: 1px = 0.75pt (for 96 DPI assumption where 1pt = 1/72 inch)
+//             // Or, for pdf-lib, sometimes treating px as pt directly is fine for visual consistency.
+//             // Let's treat px as pt for simplicity here, can be refined.
+//             return value;
+//       } else if (fontSizeString.toLowerCase().endsWith('em')) {
+//             return value * defaultSize; // Assuming 1em = defaultSize (e.g., 12pt)
+//       }
+//       // If no unit, assume points
+//       return value;
+// };
 
 interface PdfRendererProps {
       pdfFile: File | null
@@ -315,31 +313,31 @@ export default function SignerPage({
       )
 
       // TIP: Do not remove
-      const parseDimension = (dimension: string | number | undefined, pageDimension: number, defaultPercentage: number): number => {
-            if (dimension === undefined || dimension === null) return (defaultPercentage / 100) * pageDimension;
+      // const parseDimension = (dimension: string | number | undefined, pageDimension: number, defaultPercentage: number): number => {
+      //       if (dimension === undefined || dimension === null) return (defaultPercentage / 100) * pageDimension;
 
-            // If it's already a number, return it directly
-            if (typeof dimension === 'number') {
-                  return isNaN(dimension) ? (defaultPercentage / 100) * pageDimension : dimension;
-            }
+      //       // If it's already a number, return it directly
+      //       if (typeof dimension === 'number') {
+      //             return isNaN(dimension) ? (defaultPercentage / 100) * pageDimension : dimension;
+      //       }
 
-            // Convert to string if needed
-            const dimStr = String(dimension);
+      //       // Convert to string if needed
+      //       const dimStr = String(dimension);
 
-            if (dimStr.endsWith('%')) {
-                  const num = parseFloat(dimStr);
-                  return isNaN(num) ? (defaultPercentage / 100) * pageDimension : (num / 100) * pageDimension;
-            } else if (dimStr.endsWith('px') || dimStr.endsWith('pt')) {
-                  const num = parseFloat(dimStr);
-                  return isNaN(num) ? (defaultPercentage / 100) * pageDimension : num;
-            } else if (dimStr.endsWith('em')) {
-                  const num = parseFloat(dimStr);
-                  return isNaN(num) ? (defaultPercentage / 100) * pageDimension : num * 12; // Assuming 1em = 12pt
-            } else if (!isNaN(parseFloat(dimStr))) {
-                  return parseFloat(dimStr);
-            }
-            return (defaultPercentage / 100) * pageDimension;
-      };
+      //       if (dimStr.endsWith('%')) {
+      //             const num = parseFloat(dimStr);
+      //             return isNaN(num) ? (defaultPercentage / 100) * pageDimension : (num / 100) * pageDimension;
+      //       } else if (dimStr.endsWith('px') || dimStr.endsWith('pt')) {
+      //             const num = parseFloat(dimStr);
+      //             return isNaN(num) ? (defaultPercentage / 100) * pageDimension : num;
+      //       } else if (dimStr.endsWith('em')) {
+      //             const num = parseFloat(dimStr);
+      //             return isNaN(num) ? (defaultPercentage / 100) * pageDimension : num * 12; // Assuming 1em = 12pt
+      //       } else if (!isNaN(parseFloat(dimStr))) {
+      //             return parseFloat(dimStr);
+      //       }
+      //       return (defaultPercentage / 100) * pageDimension;
+      // };
 
       // FEATURE: This method will help us do the download of the pdf
       const handleDownload = async () => {

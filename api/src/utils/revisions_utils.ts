@@ -301,7 +301,7 @@ export async function transferRevisionChainData(
 
     try {
         let allAquaTrees: AquaTree[] = [];
-        
+
         let allHashes = Object.keys(chainData.aquaTree.revisions);
         if (allHashes.length == 0) {
             throw new Error("🎈🎈No revisions found in the aqua tree");
@@ -787,12 +787,23 @@ export async function saveRevisionInAquaTree(revisionData: SaveRevisionForUser, 
 
     }
     else {
+        let previousPubkeyhash = `${userAddress}_${revisionData.revision.previous_verification_hash}`
+        let oldUserRevision = await prisma.revision.findFirst({
+            where: {
+                pubkey_hash: {
+                    equals: previousPubkeyhash
+                }
+            }
+        })
 
+        if(!oldUserRevision){
+            return [204, `Previous revision not found in this user context`]
+        }
         //checkif the latest has exist or we should start from previous verification hash
         let fetchAquatreFromHash = `${revisionData.orginAddress}_${revisionData.revisionHash}`;
 
 
-// buildEntireTreeFromGivenRevisionHash
+        // buildEntireTreeFromGivenRevisionHash
         // Use the working createAquaTreeFromRevisions function as the base
         const [baseAquaTree, baseFileObjects] = await createAquaTreeFromRevisions(fetchAquatreFromHash, url);
 
@@ -1607,151 +1618,151 @@ export async function deleteAquaTreeFromSystem(walletAddress: string, hash: stri
 }
 
 
- export async function buildEntireTreeFromGivenRevisionHash(revisionHash: string) {
-        const visitedHashes = new Set<string>();
-        const revisionTree: Array<{ revisionHash: string, children: Array<string>, data: any }> = [];
+export async function buildEntireTreeFromGivenRevisionHash(revisionHash: string) {
+    const visitedHashes = new Set<string>();
+    const revisionTree: Array<{ revisionHash: string, children: Array<string>, data: any }> = [];
 
-        // Helper function to traverse backwards through previous revisions
-        async function traverseBackwards(hash: string): Promise<void> {
-            if (visitedHashes.has(hash)) return;
+    // Helper function to traverse backwards through previous revisions
+    async function traverseBackwards(hash: string): Promise<void> {
+        if (visitedHashes.has(hash)) return;
 
-            const revisionData = await prisma.revision.findUnique({
-                select: {
-                    children: true,
-                    previous: true
-                },
-                where: {
-                    pubkey_hash: hash
-                }
-            });
-
-            if (!revisionData) return;
-
-            visitedHashes.add(hash);
-            revisionTree.push({
-                revisionHash: hash,
-                children: revisionData.children,
-                data: revisionData
-            });
-
-            // If there's a previous revision, traverse backwards
-            if (revisionData.previous) {
-                await traverseBackwards(revisionData.previous);
-            }
-        }
-
-        // Helper function to traverse forwards through children revisions
-        async function traverseForwards(hash: string): Promise<void> {
-            if (visitedHashes.has(hash)) return;
-
-            const revisionData = await prisma.revision.findUnique({
-                select: {
-                    children: true,
-                    previous: true
-                },
-                where: {
-                    pubkey_hash: hash
-                }
-            });
-
-            if (!revisionData) return;
-
-            visitedHashes.add(hash);
-            revisionTree.push({
-                revisionHash: hash,
-                children: revisionData.children,
-                data: revisionData
-            });
-
-            // If there are children, traverse each child recursively
-            if (revisionData.children && revisionData.children.length > 0) {
-                for (const childHash of revisionData.children) {
-                    await traverseForwards(childHash);
-                }
-            }
-        }
-
-        // Start by getting the initial revision
-        const initialRevision = await prisma.revision.findUnique({
+        const revisionData = await prisma.revision.findUnique({
             select: {
                 children: true,
                 previous: true
             },
             where: {
-                pubkey_hash: revisionHash
+                pubkey_hash: hash
             }
         });
 
-        if (!initialRevision) {
-            return revisionTree; // Return empty array if revision not found
-        }
+        if (!revisionData) return;
 
-        // Add the starting revision to visited set and tree
-        visitedHashes.add(revisionHash);
+        visitedHashes.add(hash);
         revisionTree.push({
-            revisionHash: revisionHash,
-            children: initialRevision.children,
-            data: initialRevision
+            revisionHash: hash,
+            children: revisionData.children,
+            data: revisionData
         });
 
-        // Traverse backwards through previous revisions
-        if (initialRevision.previous) {
-            await traverseBackwards(initialRevision.previous);
+        // If there's a previous revision, traverse backwards
+        if (revisionData.previous) {
+            await traverseBackwards(revisionData.previous);
         }
+    }
 
-        // Traverse forwards through all children recursively
-        if (initialRevision.children && initialRevision.children.length > 0) {
-            for (const childHash of initialRevision.children) {
+    // Helper function to traverse forwards through children revisions
+    async function traverseForwards(hash: string): Promise<void> {
+        if (visitedHashes.has(hash)) return;
+
+        const revisionData = await prisma.revision.findUnique({
+            select: {
+                children: true,
+                previous: true
+            },
+            where: {
+                pubkey_hash: hash
+            }
+        });
+
+        if (!revisionData) return;
+
+        visitedHashes.add(hash);
+        revisionTree.push({
+            revisionHash: hash,
+            children: revisionData.children,
+            data: revisionData
+        });
+
+        // If there are children, traverse each child recursively
+        if (revisionData.children && revisionData.children.length > 0) {
+            for (const childHash of revisionData.children) {
                 await traverseForwards(childHash);
             }
         }
-
-        let orderedRevisions = orderRevisionsFromGenesisToLatest(revisionTree)
-
-        return orderedRevisions;
     }
 
-
-  export  function orderRevisionsFromGenesisToLatest(revisionTree: Array<{ revisionHash: string, children: Array<string>, data: any }>) {
-        if (!revisionTree || revisionTree.length === 0) {
-            return [];
+    // Start by getting the initial revision
+    const initialRevision = await prisma.revision.findUnique({
+        select: {
+            children: true,
+            previous: true
+        },
+        where: {
+            pubkey_hash: revisionHash
         }
+    });
 
-        // Create a map for quick lookup by revision hash
-        const revisionMap = new Map<string, { revisionHash: string, children: Array<string>, data: any }>();
-        revisionTree.forEach(revision => {
-            revisionMap.set(revision.revisionHash, revision);
-        });
+    if (!initialRevision) {
+        return revisionTree; // Return empty array if revision not found
+    }
 
-        // Find the genesis revision (where previous is null, undefined, or empty string)
-        const genesisRevision = revisionTree.find(revision =>
-            !revision.data.previous || revision.data.previous === ""
+    // Add the starting revision to visited set and tree
+    visitedHashes.add(revisionHash);
+    revisionTree.push({
+        revisionHash: revisionHash,
+        children: initialRevision.children,
+        data: initialRevision
+    });
+
+    // Traverse backwards through previous revisions
+    if (initialRevision.previous) {
+        await traverseBackwards(initialRevision.previous);
+    }
+
+    // Traverse forwards through all children recursively
+    if (initialRevision.children && initialRevision.children.length > 0) {
+        for (const childHash of initialRevision.children) {
+            await traverseForwards(childHash);
+        }
+    }
+
+    let orderedRevisions = orderRevisionsFromGenesisToLatest(revisionTree)
+
+    return orderedRevisions;
+}
+
+
+export function orderRevisionsFromGenesisToLatest(revisionTree: Array<{ revisionHash: string, children: Array<string>, data: any }>) {
+    if (!revisionTree || revisionTree.length === 0) {
+        return [];
+    }
+
+    // Create a map for quick lookup by revision hash
+    const revisionMap = new Map<string, { revisionHash: string, children: Array<string>, data: any }>();
+    revisionTree.forEach(revision => {
+        revisionMap.set(revision.revisionHash, revision);
+    });
+
+    // Find the genesis revision (where previous is null, undefined, or empty string)
+    const genesisRevision = revisionTree.find(revision =>
+        !revision.data.previous || revision.data.previous === ""
+    );
+
+    if (!genesisRevision) {
+        // If no genesis found, return the original array (shouldn't happen in a well-formed tree)
+        return revisionTree;
+    }
+
+    // Build ordered array starting from genesis
+    const orderedRevisions: Array<{ revisionHash: string, children: Array<string>, data: any }> = [];
+    let currentRevision: any = genesisRevision;
+
+    // Follow the chain from genesis to latest
+    while (currentRevision) {
+        orderedRevisions.push(currentRevision);
+
+        // Find the next revision in the chain
+        // Look for a revision that has the current revision as its previous
+        const nextRevision = revisionTree.find(revision =>
+            revision.data.previous === currentRevision.revisionHash
         );
 
-        if (!genesisRevision) {
-            // If no genesis found, return the original array (shouldn't happen in a well-formed tree)
-            return revisionTree;
-        }
-
-        // Build ordered array starting from genesis
-        const orderedRevisions: Array<{ revisionHash: string, children: Array<string>, data: any }> = [];
-        let currentRevision: any = genesisRevision;
-
-        // Follow the chain from genesis to latest
-        while (currentRevision) {
-            orderedRevisions.push(currentRevision);
-
-            // Find the next revision in the chain
-            // Look for a revision that has the current revision as its previous
-            const nextRevision = revisionTree.find(revision =>
-                revision.data.previous === currentRevision.revisionHash
-            );
-
-            currentRevision = nextRevision || null;
-        }
-
-        return orderedRevisions;
+        currentRevision = nextRevision || null;
     }
+
+    return orderedRevisions;
+}
 
 
 // =====================================================

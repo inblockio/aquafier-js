@@ -23,7 +23,6 @@ import { API_ENDPOINTS } from '../../../utils/constants'
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk/web'
 import { SignatureData } from '../../../types/types'
 import { LuInfo, LuTrash } from 'react-icons/lu'
-import { useNavigate } from 'react-router-dom'
 import { Annotation } from './signer/types'
 import { PdfRenderer } from './signer/SignerPage'
 import { downloadPdfWithAnnotations } from '@/utils/pdf-downloader'
@@ -66,8 +65,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
       // PDF viewer container ref
       const pdfMainContainerRef = useRef<HTMLDivElement>(null)
-
-      const navigate = useNavigate()
 
       const saveRevisionsToServerForUser = async (aquaTrees: AquaTree[], address: string) => {
             for (let index = 0; index < aquaTrees.length; index++) {

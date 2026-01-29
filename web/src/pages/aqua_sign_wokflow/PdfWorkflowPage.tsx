@@ -19,7 +19,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { HiDocumentText } from 'react-icons/hi'
 import { FaCircleInfo } from 'react-icons/fa6'
 import { Check } from 'lucide-react'
-import { ApiFileInfo } from '@/models/FileInfo'
 import { toast } from 'sonner'
 
 export default function PdfWorkflowPage() {
