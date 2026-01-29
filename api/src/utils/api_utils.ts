@@ -345,6 +345,63 @@ const setUpSystemTemplates = async () => {
         subtitles.set("identity_card", "Create an Identity Card based on a subset of identity");
 
         // template - use template name as ID for stability
+
+        // CLEANUP: Delete existing records to allow clean recreation
+        // 1. Find existing fields to delete their options
+        const existingFields = await prisma.aquaTemplateFields.findMany({
+            where: { aqua_form_id: templateItem },
+            select: { id: true }
+        });
+
+        const existingFieldIds = existingFields.map(f => f.id);
+
+        if (existingFieldIds.length > 0) {
+            // 2. Delete options associated with these fields
+            await prisma.aquaTemplateFieldOptions.deleteMany({
+                where: {
+                    field_id: { in: existingFieldIds }
+                }
+            });
+
+            // 3. Delete the fields themselves
+            await prisma.aquaTemplateFields.deleteMany({
+                where: {
+                    aqua_form_id: templateItem
+                }
+            });
+        }
+
+        // 4. Delete the template
+        await prisma.aquaTemplate.deleteMany({
+            where: {
+                AND: [
+                    { name: templateItem },
+                    { owner: SYSTEM_WALLET_ADDRESS },
+                ],
+            },
+        });
+
+        // // 5. Cleanup Latest and Revision (User Request: "clean slate")
+        // const knownHash = TEMPLATE_HASHES[templateItem as keyof typeof TEMPLATE_HASHES];
+        // await prisma.latest.deleteMany({
+        //     where: {
+        //         user: SYSTEM_WALLET_ADDRESS,
+        //         OR: [
+        //             { template_id: templateItem }, // Future proof cleanup
+        //             { hash: `${SYSTEM_WALLET_ADDRESS}_${knownHash}` } // Legacy cleanup
+        //         ]
+        //     }
+        // });
+
+        // if (knownHash) {
+        //     // Best effort cleanup of the specific revision tip
+        //     await prisma.revision.deleteMany({
+        //         where: { pubkey_hash: `${SYSTEM_WALLET_ADDRESS}_${knownHash}` }
+        //     });
+        // }
+
+        // 6. Save/Upsert the template
+        // This way, we won't have several template with the same name
         await prisma.aquaTemplate.upsert({
             where: {
                 id: templateItem,
@@ -454,7 +511,7 @@ const setUpSystemTemplates = async () => {
             console.log("Save template global error: ", error)
         }
         try {
-            await saveAquaTree(templateAquaTree, SYSTEM_WALLET_ADDRESS);
+            await saveAquaTree(templateAquaTree, SYSTEM_WALLET_ADDRESS, templateItem);
         } catch (error) {
             console.log("Save Aquatree template error: ", error)
         }

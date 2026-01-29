@@ -1,9 +1,9 @@
 // Import the server
 import buildServer from './server';
-import {getHost, getPort} from './utils/api_utils';
+import { getHost, getPort } from './utils/api_utils';
 import Logger from "./utils/logger";
 
-const server = buildServer()
+const server = await buildServer()
 
 // Read host and port from environment variables
 const HOST = getHost();
@@ -14,7 +14,7 @@ const PORT = getPort();
 const start = async () => {
     try {
 
-        await server.listen({port: PORT, host: HOST});
+        await server.listen({ port: PORT, host: HOST });
         Logger.info("Server started", {
             host: HOST,
             port: PORT,

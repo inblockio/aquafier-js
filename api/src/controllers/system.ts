@@ -87,7 +87,14 @@ export default async function systemController(fastify: FastifyInstance) {
             template_id: string | null;
         }[] = await prisma.latest.findMany({
             where: {
-                user: SYSTEM_WALLET_ADDRESS
+                AND: [
+                    { user: SYSTEM_WALLET_ADDRESS },
+                    {
+                        hash: {
+                            in: Object.values(TEMPLATE_HASHES).map(it => `${SYSTEM_WALLET_ADDRESS}_${it}`)
+                        }
+                    }
+                ],
             }
         });
 
