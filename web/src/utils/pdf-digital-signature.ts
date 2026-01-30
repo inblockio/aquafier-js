@@ -4,6 +4,8 @@
  * Implements digital signatures for PDF documents that are detectable
  * by Adobe Acrobat and other PDF readers.
  *
+ * Refactored to support multiple signatures via sequential saves.
+ *
  * Platform: Aquafier (dev.inblock.io)
  */
 
@@ -13,8 +15,8 @@ import { PDFDocument, PDFName, PDFString, PDFHexString, PDFDict, PDFArray, PDFNu
 // Platform identification
 const PLATFORM_NAME = 'Aquafier';
 
-let PLATFORM_URL: string = "https://dev.inblock.io" 
-if(window){
+let PLATFORM_URL: string = "https://dev.inblock.io"
+if (typeof window !== 'undefined') {
   PLATFORM_URL = `${window.location.protocol}//${window.location.host}`
 }
 
@@ -31,6 +33,7 @@ export interface SignatureOptions {
   contactInfo?: string;
   documentId?: string;
   signerInfo: SignerInfo;
+  additionalSigners?: SignerInfo[];
 }
 
 export interface DigitalSignatureResult {
@@ -165,29 +168,24 @@ function formatPdfDate(date: Date): string {
 }
 
 /**
- * Adds digital signature metadata to a PDF document using pdf-lib.
- * This embeds signature information that can be detected by PDF readers.
+ * Adds a single signature to a PDF document.
+ * This is the core signing function that works with pdf-lib.
  */
-export async function signPdfDocument(
+async function addSingleSignature(
   pdfBytes: Uint8Array,
-  options: SignatureOptions
-): Promise<DigitalSignatureResult> {
-  const signedAt = new Date();
-  const { signerInfo } = options;
+  signerInfo: SignerInfo,
+  options: {
+    reason: string;
+    location: string;
+    contactInfo: string;
+    signedAt: Date;
+    yOffset: number;
+  }
+): Promise<Uint8Array> {
+  const { reason, location, contactInfo, signedAt, yOffset } = options;
 
-  // Generate certificate
+  // Generate certificate for this signer
   const { certificate, privateKey } = generateCertificate(signerInfo);
-
-  // Get certificate fingerprint
-  const certDer = forge.asn1.toDer(forge.pki.certificateToAsn1(certificate));
-  const certFingerprint = forge.md.sha256
-    .create()
-    .update(certDer.getBytes())
-    .digest()
-    .toHex();
-
-  const reason = options.reason || `Digitally signed via ${PLATFORM_NAME}`;
-  const location = options.location || PLATFORM_URL;
 
   // Load the PDF
   const pdfDoc = await PDFDocument.load(pdfBytes, {
@@ -195,47 +193,11 @@ export async function signPdfDocument(
     updateMetadata: false
   });
 
-  // Create document hash (using Web Crypto API for efficiency)
+  // Create document hash
   const documentHash = await createDocumentHash(pdfBytes);
 
   // Create PKCS#7 signature
   const pkcs7Signature = createPkcs7Signature(documentHash, certificate, privateKey);
-
-  // Set PDF metadata with signature information
-  pdfDoc.setTitle(pdfDoc.getTitle() || 'Signed Document');
-  pdfDoc.setAuthor(signerInfo.name);
-  pdfDoc.setSubject(`Digitally signed via ${PLATFORM_NAME}`);
-  pdfDoc.setKeywords([
-    PLATFORM_NAME,
-    'digital-signature',
-    'signed',
-    signerInfo.walletAddress,
-  ]);
-  pdfDoc.setProducer(`${PLATFORM_NAME} Digital Signature Service (${PLATFORM_URL})`);
-  pdfDoc.setCreator(`${PLATFORM_NAME}`);
-  pdfDoc.setCreationDate(signedAt);
-  pdfDoc.setModificationDate(signedAt);
-
-  // Add custom metadata using the Info dictionary
-  const infoDict = pdfDoc.context.lookup(pdfDoc.context.trailerInfo.Info);
-  if (infoDict instanceof PDFDict) {
-    // Add signature-related metadata
-    infoDict.set(PDFName.of('SignedBy'), PDFString.of(signerInfo.name));
-    infoDict.set(PDFName.of('SignerWallet'), PDFString.of(signerInfo.walletAddress));
-    infoDict.set(PDFName.of('SignatureReason'), PDFString.of(reason));
-    infoDict.set(PDFName.of('SignatureLocation'), PDFString.of(location));
-    infoDict.set(PDFName.of('SignatureDate'), PDFString.of(formatPdfDate(signedAt)));
-    infoDict.set(PDFName.of('SignaturePlatform'), PDFString.of(PLATFORM_NAME));
-    infoDict.set(PDFName.of('SignaturePlatformURL'), PDFString.of(PLATFORM_URL));
-    infoDict.set(PDFName.of('DocumentHash'), PDFString.of(documentHash));
-    infoDict.set(PDFName.of('CertificateFingerprint'), PDFString.of(certFingerprint));
-
-    // Add document URL if provided
-    if (options.documentId) {
-      infoDict.set(PDFName.of('DocumentId'), PDFString.of(options.documentId));
-      infoDict.set(PDFName.of('VerificationURL'), PDFString.of(options.documentId));
-    }
-  }
 
   // Create a signature annotation on the first page
   const pages = pdfDoc.getPages();
@@ -244,13 +206,12 @@ export async function signPdfDocument(
     const { width } = firstPage.getSize();
 
     // Create signature appearance (invisible by default, but can be made visible)
-    // We'll add an invisible signature field in the bottom-right corner
     const sigAnnotDict = pdfDoc.context.obj({
       Type: 'Annot',
       Subtype: 'Widget',
       FT: 'Sig',
-      T: PDFString.of(`Sig-${signerInfo.walletAddress.substring(0, 8)}`),
-      Rect: [width - 200, 10, width - 10, 60], // Bottom-right corner
+      T: PDFString.of(`Sig-${signerInfo.walletAddress.substring(0, 8)}-${Date.now()}`),
+      Rect: [width - 200, yOffset, width - 10, yOffset + 50],
       F: 132, // Print and Hidden flags
       P: firstPage.ref,
       V: pdfDoc.context.obj({
@@ -261,7 +222,7 @@ export async function signPdfDocument(
         Location: PDFString.of(location),
         Reason: PDFString.of(reason),
         M: PDFString.of(formatPdfDate(signedAt)),
-        ContactInfo: PDFString.of(options.contactInfo || PLATFORM_URL),
+        ContactInfo: PDFString.of(contactInfo),
         Contents: PDFHexString.of(pkcs7Signature.padEnd(8192, '0')),
         ByteRange: PDFArray.withContext(pdfDoc.context),
         Prop_Build: pdfDoc.context.obj({
@@ -314,8 +275,91 @@ export async function signPdfDocument(
     updateFieldAppearances: false,
   });
 
+  return signedPdfBytes;
+}
+
+/**
+ * Adds digital signature metadata to a PDF document.
+ * Supports multiple signatures via sequential saves (incremental updates).
+ */
+export async function signPdfDocument(
+  pdfBytes: Uint8Array,
+  options: SignatureOptions
+): Promise<DigitalSignatureResult> {
+  const signedAt = new Date();
+  const { signerInfo } = options;
+
+  // Collect all signers (primary + additional)
+  const allSigners: SignerInfo[] = [signerInfo];
+  if (options.additionalSigners && options.additionalSigners.length > 0) {
+    allSigners.push(...options.additionalSigners);
+  }
+
+  // Collect names and wallets for metadata
+  const allSignerNames = allSigners.map(s => s.name);
+  const allSignerWallets = allSigners.map(s => s.walletAddress);
+  const reason = options.reason || `Digitally signed via ${PLATFORM_NAME}`;
+  const location = options.location || PLATFORM_URL;
+
+  // 1. Preparation Phase: Add Metadata BEFORE any signatures
+  const tempDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+
+  // Set basic metadata
+  tempDoc.setTitle(tempDoc.getTitle() || 'Signed Document');
+  tempDoc.setAuthor(allSignerNames.join(', '));
+  tempDoc.setSubject(`Digitally signed via ${PLATFORM_NAME}`);
+  tempDoc.setKeywords([PLATFORM_NAME, 'digital-signature', 'signed', ...allSignerWallets]);
+  tempDoc.setProducer(`${PLATFORM_NAME} Digital Signature Service (${PLATFORM_URL})`);
+  tempDoc.setCreator(PLATFORM_NAME);
+  tempDoc.setCreationDate(signedAt);
+  tempDoc.setModificationDate(signedAt);
+
+  // Add custom Info dictionary metadata
+  const infoDict = tempDoc.context.lookup(tempDoc.context.trailerInfo.Info);
+  if (infoDict instanceof PDFDict) {
+    infoDict.set(PDFName.of('SignedBy'), PDFString.of(allSignerNames.join(', ')));
+    infoDict.set(PDFName.of('SignerWallet'), PDFString.of(allSignerWallets.join(', ')));
+    infoDict.set(PDFName.of('SignerCount'), PDFString.of(String(allSigners.length)));
+    infoDict.set(PDFName.of('SignatureReason'), PDFString.of(reason));
+    infoDict.set(PDFName.of('SignatureLocation'), PDFString.of(location));
+    infoDict.set(PDFName.of('SignatureDate'), PDFString.of(formatPdfDate(signedAt)));
+    infoDict.set(PDFName.of('SignaturePlatform'), PDFString.of(PLATFORM_NAME));
+    infoDict.set(PDFName.of('SignaturePlatformURL'), PDFString.of(PLATFORM_URL));
+
+    if (options.documentId) {
+      infoDict.set(PDFName.of('DocumentId'), PDFString.of(options.documentId));
+      infoDict.set(PDFName.of('VerificationURL'), PDFString.of(options.documentId));
+    }
+  }
+
+  // Save the prepared document
+  let currentPdfBytes = await tempDoc.save({ useObjectStreams: false });
+
+  // Get certificate fingerprint from primary signer
+  const { certificate } = generateCertificate(signerInfo);
+  const certDer = forge.asn1.toDer(forge.pki.certificateToAsn1(certificate));
+  const certFingerprint = forge.md.sha256
+    .create()
+    .update(certDer.getBytes())
+    .digest()
+    .toHex();
+
+  // 2. Sequential Signing Loop - Each signature is a separate save (incremental update)
+  for (let i = 0; i < allSigners.length; i++) {
+    const signer = allSigners[i];
+    const yOffset = 10 + (i * 60); // Stack signatures vertically
+
+    currentPdfBytes = await addSingleSignature(currentPdfBytes, signer, {
+      reason,
+      location,
+      contactInfo: options.contactInfo || PLATFORM_URL,
+      signedAt,
+      yOffset,
+    });
+  }
+
   return {
-    signedPdf: signedPdfBytes,
+    signedPdf: currentPdfBytes,
     signatureInfo: {
       signedAt,
       signer: signerInfo.name,
@@ -336,10 +380,15 @@ export async function signPdfWithAquafier(
   additionalSigners?: Array<{ name: string; walletAddress: string }>,
   documentId?: string
 ): Promise<DigitalSignatureResult> {
-  let signersList = signerName;
-  if (additionalSigners && additionalSigners.length > 0) {
-    signersList += ', ' + additionalSigners.map((s) => s.name).join(', ');
-  }
+  const signersList = signerName + (additionalSigners ? ', ' + additionalSigners.map((s) => s.name).join(', ') : '');
+
+  // Convert additional signers to SignerInfo format
+  const additionalSignerInfos: SignerInfo[] = additionalSigners
+    ? additionalSigners.map((s) => ({
+      name: s.name,
+      walletAddress: s.walletAddress,
+    }))
+    : [];
 
   const options: SignatureOptions = {
     reason: `Document digitally signed via ${PLATFORM_NAME} by: ${signersList}`,
@@ -348,8 +397,9 @@ export async function signPdfWithAquafier(
     documentId: documentId,
     signerInfo: {
       name: signerName,
-      walletAddress: walletAddress
+      walletAddress: walletAddress,
     },
+    additionalSigners: additionalSignerInfos,
   };
 
   return signPdfDocument(pdfBytes, options);

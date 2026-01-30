@@ -18,6 +18,7 @@ import { EasyPDFRenderer } from '@/pages/aqua_sign_wokflow/ContractDocument/sign
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle, FileText, User, Calendar, Link, Hash, ShieldCheck, AlertCircle, Loader2, X, ShieldCheckIcon, Wallet2, Copy, InfoIcon, ShieldUser } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import WalletAdrressClaim from './v2_claims_workflow/WalletAdrressClaim'
 
 
 interface IMetadata {
@@ -111,12 +112,18 @@ const CustomPDFMetada = ({ metadata, drawerStatus }: { metadata: IMetadata | nul
                                     <p className="text-[0.7rem] uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                                           Signed By
                                     </p>
-                                    <p
-                                          id="signedBy"
-                                          className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100"
-                                    >
-                                          {metadata?.signedBy}
-                                    </p>
+                                    {
+                                          metadata?.signedBy?.split(",").map(item => item.trim()).map((_name, idx) => (
+
+                                                <p
+                                                      key={`${idx + 1}._${_name}`}
+                                                      className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100"
+                                                >
+                                                      {`${idx + 1}. ${_name}`}
+                                                </p>
+
+                                          ))
+                                    }
                               </div>
                         </div>
                         {/* Wallet */}
@@ -129,26 +136,13 @@ const CustomPDFMetada = ({ metadata, drawerStatus }: { metadata: IMetadata | nul
                                     <p className="text-[0.7rem] uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                                           Wallet Address
                                     </p>
-                                    <div className="flex items-center gap-2">
-                                          <code
-                                                id="signerWallet"
-                                                className="truncate text-xs text-neutral-900 dark:text-neutral-100"
-                                                title=""
-                                          >
-                                                {metadata?.signerWallet}
-                                          </code>
-                                          <button
-                                                id="copyWallet"
-                                                className="inline-flex h-7 items-center gap-1 rounded-md bg-neutral-900/5 px-2 text-xs font-medium text-neutral-700 ring-1 ring-neutral-300/60 transition hover:bg-neutral-900/10 hover:ring-neutral-400/70 active:scale-[0.98] dark:bg-white/5 dark:text-neutral-300 dark:ring-white/10 dark:hover:bg-white/10"
-                                                aria-label="Copy wallet"
-                                          >
-                                                <Copy
-                                                      className="h-3.5 w-3.5"
-                                                      style={{ strokeWidth: "1.5" }}
-                                                />
-                                                Copy
-                                          </button>
-                                    </div>
+                                    {
+                                          metadata?.signerWallet?.split(",").map(item => item.trim()).map((_address, idx) => (
+                                                <div className="flex items-center gap-2">
+                                                      <WalletAdrressClaim key={`${_address}_${idx}`} walletAddress={_address} />
+                                                </div>
+                                          ))
+                                    }
                               </div>
                         </div>
                         {/* Signed On */}
@@ -292,7 +286,7 @@ const VerifyDocument = () => {
       const [hasError, setHasError] = useState<string | null>(null)
       const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
       const [pdfFile, setPDFFile] = useState<File | null>()
-      
+
       const [pdfMetadata, setPdfMetadata] = useState<IMetadata | null>(null)
 
       const loadPageData = async (documentId: string) => {
