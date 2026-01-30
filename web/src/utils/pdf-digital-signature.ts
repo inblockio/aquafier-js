@@ -31,6 +31,7 @@ export interface SignatureOptions {
   contactInfo?: string;
   documentId?: string;
   signerInfo: SignerInfo;
+  additionalSigners?: SignerInfo[];
 }
 
 export interface DigitalSignatureResult {
@@ -201,15 +202,27 @@ export async function signPdfDocument(
   // Create PKCS#7 signature
   const pkcs7Signature = createPkcs7Signature(documentHash, certificate, privateKey);
 
+  // Collect all signers for metadata
+  const allSignerNames = [signerInfo.name];
+  const allSignerWallets = [signerInfo.walletAddress];
+  if (options.additionalSigners && options.additionalSigners.length > 0) {
+    for (const s of options.additionalSigners) {
+      allSignerNames.push(s.name);
+      allSignerWallets.push(s.walletAddress);
+    }
+  }
+
+
+
   // Set PDF metadata with signature information
   pdfDoc.setTitle(pdfDoc.getTitle() || 'Signed Document');
-  pdfDoc.setAuthor(signerInfo.name);
+  pdfDoc.setAuthor(allSignerNames.join(', '));
   pdfDoc.setSubject(`Digitally signed via ${PLATFORM_NAME}`);
   pdfDoc.setKeywords([
     PLATFORM_NAME,
     'digital-signature',
     'signed',
-    signerInfo.walletAddress,
+    ...allSignerWallets,
   ]);
   pdfDoc.setProducer(`${PLATFORM_NAME} Digital Signature Service (${PLATFORM_URL})`);
   pdfDoc.setCreator(`${PLATFORM_NAME}`);
@@ -220,8 +233,9 @@ export async function signPdfDocument(
   const infoDict = pdfDoc.context.lookup(pdfDoc.context.trailerInfo.Info);
   if (infoDict instanceof PDFDict) {
     // Add signature-related metadata
-    infoDict.set(PDFName.of('SignedBy'), PDFString.of(signerInfo.name));
-    infoDict.set(PDFName.of('SignerWallet'), PDFString.of(signerInfo.walletAddress));
+    infoDict.set(PDFName.of('SignedBy'), PDFString.of(allSignerNames.join(', ')));
+    infoDict.set(PDFName.of('SignerWallet'), PDFString.of(allSignerWallets.join(', ')));
+    infoDict.set(PDFName.of('SignerCount'), PDFString.of(String(allSignerNames.length)));
     infoDict.set(PDFName.of('SignatureReason'), PDFString.of(reason));
     infoDict.set(PDFName.of('SignatureLocation'), PDFString.of(location));
     infoDict.set(PDFName.of('SignatureDate'), PDFString.of(formatPdfDate(signedAt)));
@@ -237,53 +251,80 @@ export async function signPdfDocument(
     }
   }
 
-  // Create a signature annotation on the first page
+  // Collect all signers (primary + additional)
+  const allSigners: SignerInfo[] = [signerInfo];
+  if (options.additionalSigners && options.additionalSigners.length > 0) {
+    allSigners.push(...options.additionalSigners);
+  }
+
+  // Create signature annotations on the first page for all signers
   const pages = pdfDoc.getPages();
   if (pages.length > 0) {
     const firstPage = pages[0];
     const { width } = firstPage.getSize();
 
-    // Create signature appearance (invisible by default, but can be made visible)
-    // We'll add an invisible signature field in the bottom-right corner
-    const sigAnnotDict = pdfDoc.context.obj({
-      Type: 'Annot',
-      Subtype: 'Widget',
-      FT: 'Sig',
-      T: PDFString.of(`Sig-${signerInfo.walletAddress.substring(0, 8)}`),
-      Rect: [width - 200, 10, width - 10, 60], // Bottom-right corner
-      F: 132, // Print and Hidden flags
-      P: firstPage.ref,
-      V: pdfDoc.context.obj({
-        Type: 'Sig',
-        Filter: 'Adobe.PPKLite',
-        SubFilter: 'adbe.pkcs7.detached',
-        Name: PDFString.of(signerInfo.name),
-        Location: PDFString.of(location),
-        Reason: PDFString.of(reason),
-        M: PDFString.of(formatPdfDate(signedAt)),
-        ContactInfo: PDFString.of(options.contactInfo || PLATFORM_URL),
-        Contents: PDFHexString.of(pkcs7Signature.padEnd(8192, '0')),
-        ByteRange: PDFArray.withContext(pdfDoc.context),
-        Prop_Build: pdfDoc.context.obj({
-          App: pdfDoc.context.obj({
-            Name: PDFName.of(PLATFORM_NAME),
-            REx: PDFString.of(PLATFORM_URL),
+    const sigAnnotRefs: any[] = [];
+
+    // Create a signature field for each signer
+    for (let i = 0; i < allSigners.length; i++) {
+      const signer = allSigners[i];
+
+      // Generate certificate for this signer
+      const { certificate: signerCert, privateKey: signerPrivateKey } = generateCertificate(signer);
+
+      // Create PKCS#7 signature for this signer
+      const signerPkcs7Signature = createPkcs7Signature(documentHash, signerCert, signerPrivateKey);
+
+      // Position each signature field (stacked vertically from bottom-right)
+      const yOffset = 10 + (i * 55); // Stack signatures 55pt apart
+
+      // Create signature appearance (invisible by default, but can be made visible)
+      const sigAnnotDict = pdfDoc.context.obj({
+        Type: 'Annot',
+        Subtype: 'Widget',
+        FT: 'Sig',
+        T: PDFString.of(`Sig-${signer.walletAddress.substring(0, 8)}-${i}`),
+        Rect: [width - 200, yOffset, width - 10, yOffset + 50],
+        F: 132, // Print and Hidden flags
+        P: firstPage.ref,
+        V: pdfDoc.context.obj({
+          Type: 'Sig',
+          Filter: 'Adobe.PPKLite',
+          SubFilter: 'adbe.pkcs7.detached',
+          Name: PDFString.of(signer.name),
+          Location: PDFString.of(location),
+          Reason: PDFString.of(`Digitally signed via ${PLATFORM_NAME}`),
+          M: PDFString.of(formatPdfDate(signedAt)),
+          ContactInfo: PDFString.of(options.contactInfo || PLATFORM_URL),
+          Contents: PDFHexString.of(signerPkcs7Signature.padEnd(8192, '0')),
+          ByteRange: PDFArray.withContext(pdfDoc.context),
+          Prop_Build: pdfDoc.context.obj({
+            App: pdfDoc.context.obj({
+              Name: PDFName.of(PLATFORM_NAME),
+              REx: PDFString.of(PLATFORM_URL),
+            }),
           }),
         }),
-      }),
-    });
+      });
 
-    const sigAnnotRef = pdfDoc.context.register(sigAnnotDict);
-
-    // Add annotation to page
-    const annots = firstPage.node.lookup(PDFName.of('Annots'));
-    if (annots instanceof PDFArray) {
-      annots.push(sigAnnotRef);
-    } else {
-      firstPage.node.set(PDFName.of('Annots'), pdfDoc.context.obj([sigAnnotRef]));
+      const sigAnnotRef = pdfDoc.context.register(sigAnnotDict);
+      sigAnnotRefs.push(sigAnnotRef);
     }
 
-    // Create or update AcroForm
+    // Add all annotations to page at once (after the loop to avoid lookup issues)
+    const existingAnnots = firstPage.node.lookup(PDFName.of('Annots'));
+    if (existingAnnots instanceof PDFArray) {
+      // Add all new signature annotations to existing array
+      for (const sigAnnotRef of sigAnnotRefs) {
+        existingAnnots.push(sigAnnotRef);
+      }
+    } else {
+      // Create new Annots array with all signature annotations
+      const annotsArray = pdfDoc.context.obj(sigAnnotRefs);
+      firstPage.node.set(PDFName.of('Annots'), annotsArray);
+    }
+
+    // Create or update AcroForm with all signature fields
     const catalog = pdfDoc.catalog;
     let acroForm = catalog.lookup(PDFName.of('AcroForm'));
 
@@ -291,16 +332,18 @@ export async function signPdfDocument(
       // Update existing AcroForm
       const fields = acroForm.lookup(PDFName.of('Fields'));
       if (fields instanceof PDFArray) {
-        fields.push(sigAnnotRef);
+        for (const sigAnnotRef of sigAnnotRefs) {
+          fields.push(sigAnnotRef);
+        }
       } else {
-        acroForm.set(PDFName.of('Fields'), pdfDoc.context.obj([sigAnnotRef]));
+        acroForm.set(PDFName.of('Fields'), pdfDoc.context.obj(sigAnnotRefs));
       }
       // Set SigFlags to indicate document contains signatures
       acroForm.set(PDFName.of('SigFlags'), PDFNumber.of(3));
     } else {
-      // Create new AcroForm
+      // Create new AcroForm with all signature fields
       const acroFormDict = pdfDoc.context.obj({
-        Fields: [sigAnnotRef],
+        Fields: sigAnnotRefs,
         SigFlags: 3, // SignaturesExist (1) + AppendOnly (2)
       });
       catalog.set(PDFName.of('AcroForm'), acroFormDict);
@@ -341,6 +384,14 @@ export async function signPdfWithAquafier(
     signersList += ', ' + additionalSigners.map((s) => s.name).join(', ');
   }
 
+  // Convert additional signers to SignerInfo format
+  const additionalSignerInfos: SignerInfo[] = additionalSigners
+    ? additionalSigners.map((s) => ({
+        name: s.name,
+        walletAddress: s.walletAddress,
+      }))
+    : [];
+
   const options: SignatureOptions = {
     reason: `Document digitally signed via ${PLATFORM_NAME} by: ${signersList}`,
     location: PLATFORM_URL,
@@ -348,8 +399,9 @@ export async function signPdfWithAquafier(
     documentId: documentId,
     signerInfo: {
       name: signerName,
-      walletAddress: walletAddress
+      walletAddress: walletAddress,
     },
+    additionalSigners: additionalSignerInfos,
   };
 
   return signPdfDocument(pdfBytes, options);
