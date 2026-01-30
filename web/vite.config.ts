@@ -9,14 +9,6 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    nodePolyfills({
-      include: ['buffer', 'process', 'util', 'stream'],
-      globals: {
-        Buffer: true,
-        global: true,
-        process: true,
-      },
-    }),
     {
       name: 'configure-response-headers',
       configureServer: (server) => {
