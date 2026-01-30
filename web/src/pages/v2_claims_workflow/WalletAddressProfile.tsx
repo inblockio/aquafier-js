@@ -815,7 +815,6 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
       }
 
       const loadEnsName = async () => {
-            console.log("Loading ens name: ")
             if (!session && !backend_url) {
                   return
             }
@@ -847,7 +846,6 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
       }, [walletAddress, session?.nonce, files])
 
       useEffect(() => {
-            console.log(session, backend_url)
             if (session?.address && session.nonce && backend_url) {
                   loadEnsName()
             }

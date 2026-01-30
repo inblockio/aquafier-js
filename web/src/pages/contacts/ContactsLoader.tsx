@@ -125,7 +125,6 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
       // const allRevisions = Object.values(orderedAquaTree.revisions);
       let walletAddress = "";
 
-      console.log("workflow: ", workFlow)
       const walletAddressField: Record<string, string> = {
         identity_attestation: "forms_claim_wallet_address",
         ens_claim: "forms_wallet_address",
@@ -215,8 +214,6 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
       // Process all files in parallel
       const processedFiles = await Promise.all(files.map(processFile));
       const validResults = processedFiles.filter(result => result !== null);
-
-      console.log(validResults)
 
       for (const result of validResults) {
         const { walletAddress, claimType, claimValue, searchText, element } = result!;
