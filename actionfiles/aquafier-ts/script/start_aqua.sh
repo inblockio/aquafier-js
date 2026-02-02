@@ -271,8 +271,8 @@ else
     echo "🔒 PRESERVING EXISTING DATA"
     echo "Current data: Users=$user_count, Files=$file_count, Revisions=$revision_count"
 
-    # Run simple migrate script
-    /app/simple_migrate.sh
+    # Run simple migrate script (skip redundant init since we already did it)
+    SKIP_INIT=true /app/simple_migrate.sh
     
     # # Check if all required tables exist
     # export PGPASSWORD=$DB_PASSWORD
