@@ -9,36 +9,44 @@ DB_USER=${DB_USER:-aquafier}
 DB_PASSWORD=${DB_PASSWORD:-changeme}
 DB_NAME=${DB_NAME:-aquafier}
 
-# Wait for database to be ready
-echo "Waiting for database connection..."
-max_attempts=30
-attempt=0
+# Check if called from start_aqua.sh (skip redundant checks)
+SKIP_INIT=${SKIP_INIT:-false}
 
-while [ $attempt -lt $max_attempts ]; do
-    export PGPASSWORD=$DB_PASSWORD
-    if psql -h postgres -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1" > /dev/null 2>&1; then
-        echo "Database is ready!"
+if [ "$SKIP_INIT" != "true" ]; then
+    # Wait for database to be ready
+    echo "Waiting for database connection..."
+    max_attempts=30
+    attempt=0
+
+    while [ $attempt -lt $max_attempts ]; do
+        export PGPASSWORD=$DB_PASSWORD
+        if psql -h postgres -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1" > /dev/null 2>&1; then
+            echo "Database is ready!"
+            unset PGPASSWORD
+            break
+        fi
         unset PGPASSWORD
-        break
-    fi
-    unset PGPASSWORD
-    
-    echo "Waiting for database... (Attempt $((attempt+1))/$max_attempts)"
-    sleep 2
-    attempt=$((attempt+1))
-    
-    if [ $attempt -eq $max_attempts ]; then
-        echo "ERROR: Could not connect to database after $max_attempts attempts"
-        exit 1
-    fi
-done
 
-# Change to backend directory where prisma files are
-cd /app/backend
+        echo "Waiting for database... (Attempt $((attempt+1))/$max_attempts)"
+        sleep 2
+        attempt=$((attempt+1))
 
-# Generate Prisma client (in case it's not already generated)
-echo "Generating Prisma client..."
-npx prisma generate
+        if [ $attempt -eq $max_attempts ]; then
+            echo "ERROR: Could not connect to database after $max_attempts attempts"
+            exit 1
+        fi
+    done
+
+    # Change to backend directory where prisma files are
+    cd /app/backend
+
+    # Generate Prisma client (in case it's not already generated)
+    echo "Generating Prisma client..."
+    npx prisma generate
+else
+    echo "Skipping init checks (SKIP_INIT=true)"
+    cd /app/backend
+fi
 
 # Function to check if _prisma_migrations table exists
 check_migrations_table() {
