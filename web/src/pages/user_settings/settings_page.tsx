@@ -3,9 +3,9 @@ import { LuSettings, LuSun, LuUser, LuWallet, LuKey, LuNetwork, LuSave } from 'r
 import { FaEthereum, FaFileContract } from 'react-icons/fa6'
 import appStore from '@/store'
 import { useStore } from 'zustand'
-import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import axios from 'axios'
+import { ensureDomainUrlHasSSL } from '@/utils/functions'
 import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { ContactsService } from '@/storage/databases/contactsDb'
@@ -46,8 +46,6 @@ export function ConfirmDeleteDialog({ children, deleteFunc, title, description, 
 const DeleteUserData = () => {
       const [_deleting, setDeleting] = useState(false)
 
-      const navigate = useNavigate()
-
       const { setUserProfile, setFiles, setSession, setMetamaskAddress, setAvatar, backend_url, session } = useStore(appStore)
 
       const deleteUserData = async () => {
@@ -58,7 +56,7 @@ const DeleteUserData = () => {
                   }
 
                   setDeleting(true)
-                  const url = `${backend_url}/user_data`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/user_data`)
                   const response = await axios.delete(url, {
                         headers: {
                               nonce: session.nonce,
@@ -83,18 +81,20 @@ const DeleteUserData = () => {
                         setMetamaskAddress(null)
                         setAvatar(undefined)
                         // Reset local dexie dbs we have created
-                        ContactsService.getInstance().clear()
-                        AquaSystemNamesService.getInstance().clear()
+                        await ContactsService.getInstance().clear()
+                        await AquaSystemNamesService.getInstance().clear()
 
                         // Remove cookie
                         document.cookie = 'pkc_nonce=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
 
                         toast('User data cleared successfully. You have been logged out.')
 
+
                         if (window.location.pathname == '/') {
                               window.location.reload()
                         } else {
-                              navigate('/app')
+                              // navigate('/app')
+                              window.location.href = '/'  // Force reload to clear state
                         }
                   }
 
@@ -142,7 +142,7 @@ export default function SettingsPage() {
             // formData.append("user_pub_key", metamaskAddress ?? user_profile.user_pub_key)
             // formData.append('theme', colorMode ?? "light");
 
-            const url = `${backend_url}/explorer_update_user_settings`
+            const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_update_user_settings`)
 
             const response = await axios.post(
                   url,

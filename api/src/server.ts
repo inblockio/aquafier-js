@@ -11,34 +11,38 @@ import * as fs from "fs"
 import chequeApiController from './controllers/chequeApi';
 import userController from './controllers/user';
 import authController from './controllers/auth';
+import oauthController from './controllers/oauth';
 import indexController from './controllers/index';
 import versionController from './controllers/version';
 import filesController from './controllers/files';
 import explorerController from './controllers/explorer';
 import verifyController from './controllers/verify';
-import {getFileUploadDirectory} from './utils/file_utils';
+import { getFileUploadDirectory } from './utils/file_utils';
 import revisionsController from './controllers/revisions';
 import shareController from './controllers/share';
 import fetchChainController from './controllers/fetch-chain';
 import templatesController from './controllers/templates';
-import {setUpSystemTemplates} from './utils/api_utils';
+import { setupPaymentPlans, setUpSystemTemplates } from './utils/api_utils';
 import systemController from './controllers/system';
 import webSocketController from './controllers/websocketController';
 import notificationsController from './controllers/notifications';
 import ApiController from './controllers/api';
 import * as Sentry from "@sentry/node"
-import {nodeProfilingIntegration} from "@sentry/profiling-node"
-import {ensureDomainViewForCors} from './utils/server_utils';
+import { nodeProfilingIntegration } from "@sentry/profiling-node"
+import { ensureDomainViewForCors } from './utils/server_utils';
 import Logger from "./utils/logger";
 import DNSClaimVerificationController from './controllers/dns_claim_verification';
 import metricsController from './controllers/metrics';
 import workflowsController from './controllers/workflow';
 import enhancedWebSocketController from './controllers/websocketController2';
+import adminController from './controllers/admin';
+import subscriptionsController from './controllers/subscriptions';
+import paymentsController from './controllers/payments';
 import { prisma } from './database/db';
 import logger from './utils/logger';
 
 
-function buildServer() {
+async function buildServer() {
     // Load environment variables
     dotenv.config();
 
@@ -49,7 +53,7 @@ function buildServer() {
 
     // Ensure upload directory exists
     if (!fs.existsSync(UPLOAD_DIR)) {
-        fs.mkdirSync(UPLOAD_DIR, {recursive: true});
+        fs.mkdirSync(UPLOAD_DIR, { recursive: true });
     }
 
 
@@ -83,7 +87,10 @@ function buildServer() {
     Sentry.setupFastifyErrorHandler(fastify);
 
     // reister system templates ie cheque, identity and attestation
-    setUpSystemTemplates();
+    await setUpSystemTemplates();
+
+    // Setup payment plans
+    await setupPaymentPlans()
 
 
     let corsAllowedOrigins = process.env.ALLOWED_CORS ? [process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()), ...ensureDomainViewForCors(process.env.FRONTEND_URL)] : [
@@ -106,7 +113,7 @@ function buildServer() {
     // Logger.info("Allowed CORS origins: ", JSON.stringify(corsAllowedOrigins, null, 2));
 
 
-// Remove duplicates using Set
+    // Remove duplicates using Set
     corsAllowedOrigins = [...new Set(corsAllowedOrigins.flat())];
 
     // Logger.info("Without duplicates Allowed CORS origins: ", JSON.stringify(corsAllowedOrigins, null, 2));
@@ -144,6 +151,7 @@ function buildServer() {
 
     // Register controllers
     fastify.register(authController);
+    fastify.register(oauthController);
     fastify.register(userController);
     fastify.register(indexController);
     fastify.register(versionController);
@@ -163,21 +171,24 @@ function buildServer() {
     fastify.register(DNSClaimVerificationController);
     fastify.register(metricsController);
     fastify.register(workflowsController);
+    fastify.register(adminController);
+    fastify.register(subscriptionsController);
+    fastify.register(paymentsController);
 
     // Hook to add wallet address to labels when user is authenticated
     fastify.addHook("onRequest", async function (request, reply) {
         const nonce = request.headers['nonce'];
-        
+
         if (typeof nonce === 'string' && nonce.trim() !== '') {
             try {
                 const session = await prisma.siweSession.findUnique({
                     where: { nonce }
                 });
-                
+
                 if (session && session.address) {
                     // Add wallet address to request for logging purposes
                     (request as any).walletAddress = session.address;
-                    
+
                     // Log the authenticated request with wallet address
                     logger.info('Request received', {
                         labels: {

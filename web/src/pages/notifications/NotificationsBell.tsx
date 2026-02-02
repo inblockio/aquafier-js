@@ -6,6 +6,7 @@ import axios from 'axios'
 import { INotification } from '../../types/index'
 import appStore from '../../store'
 import { API_ENDPOINTS } from '../../utils/constants'
+import { ensureDomainUrlHasSSL } from '../../utils/functions'
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover'
 import { Badge } from '../../components/ui/badge'
 import { Button } from '../../components/ui/button'
@@ -27,7 +28,7 @@ const NotificationsBell = () => {
 
             setIsLoading(true)
             try {
-                  const response = await axios.get(`${backend_url}${API_ENDPOINTS.NOTIFICATIONS}`, {
+                  const response = await axios.get(ensureDomainUrlHasSSL(`${backend_url}${API_ENDPOINTS.NOTIFICATIONS}`), {
                         headers: {
                               nonce: session.nonce,
                         },
@@ -47,7 +48,7 @@ const NotificationsBell = () => {
 
             try {
                   await axios.patch(
-                        `${backend_url}${API_ENDPOINTS.NOTIFICATIONS_READ_ALL}`,
+                        ensureDomainUrlHasSSL(`${backend_url}${API_ENDPOINTS.NOTIFICATIONS_READ_ALL}`),
                         {},
                         {
                               headers: {

@@ -4,7 +4,7 @@ import {useStore} from 'zustand'
 import appStore from '../../store'
 import {useState} from 'react'
 import {ApiFileInfo} from '../../models/FileInfo'
-import {checkIfFileExistInUserFiles} from '../../utils/functions'
+import {checkIfFileExistInUserFiles, ensureDomainUrlHasSSL} from '../../utils/functions'
 import {maxFileSizeForUpload} from '../../utils/constants'
 import {IDropzoneAction} from '../../types/types'
 import {Button} from '@/components/ui/button'
@@ -47,7 +47,7 @@ export const FormRevisionFile = ({ file, filesWrapper, removeFilesListForUpload 
 
             setUploading(true)
             try {
-                  const url = `${backend_url}/explorer_files`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
                   const response = await axios.post(url, formData, {
                         headers: {
                               'Content-Type': 'multipart/form-data',

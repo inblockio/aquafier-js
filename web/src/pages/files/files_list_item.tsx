@@ -61,9 +61,11 @@ export default function FilesListItem({
             if (systemAquaFileNames.length === 0) {
                   return
             }
+            console.log('systemAquaFileNames', systemAquaFileNames)
             const fileObject = getAquaTreeFileObject(file)
             setCurrentFileObject(fileObject)
             const workFlow = isWorkFlowData(file.aquaTree!, systemAquaFileNames)
+            console.log('workFlow', workFlow)
             setWorkFlowInfo(workFlow)
       }
 
@@ -98,13 +100,48 @@ export default function FilesListItem({
             return file.aquaTree?.revisions[getGenesisHash(file.aquaTree!) || ""]?.forms_wallet_address || ""
       }
 
-      const workFlowAquaSignActions = () => {
+       const workFlowAquaSignActions = () => {
             return (
 
                   <div className="flex flex-wrap gap-1">
                         <div className="w-[202px]">
                               <OpenAquaSignWorkFlowButton item={file} nonce={nonce} index={index} />
                         </div>
+
+                        <div className="w-[100px]">
+                              <OpenSelectedFileDetailsButton file={file} index={index} />
+                        </div>
+
+                        <div className="w-[100px]">
+                              <ShareButton item={file} nonce={nonce} index={index} />
+                        </div>
+
+                        {/* Delete Button */}
+                        <div className="w-[100px]">
+                              <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
+                        </div>
+
+                        {/* Download Button - Smaller width */}
+                        <div className="w-[100px]">
+                              <DownloadAquaChain file={file} index={index} />
+                        </div>
+                  </div>
+      
+            )
+      }
+
+      const workFlowAquaCertificateActions = () => {
+            return (
+
+                  <div className="flex flex-wrap gap-1">
+                        
+                        {/* <div className="w-[202px]">
+                              <OpenAquaSignWorkFlowButton item={file} nonce={nonce} index={index} />
+                        </div> */}
+
+<div className="w-[100px]">
+                                                <AttestAquaClaim file={file} index={index} />
+                                          </div>
 
                         <div className="w-[100px]">
                               <OpenSelectedFileDetailsButton file={file} index={index} />
@@ -186,7 +223,7 @@ export default function FilesListItem({
                               </div>
 
                               {
-                                    workflowInfo && ['identity_claim', 'phone_number_claim', 'email_claim', 'user_signature'].includes(workflowInfo.workFlow) && session?.address != getTheWalletAddressFromWorkflow() ? (
+                                    workflowInfo && ['identity_claim', 'phone_number_claim', 'email_claim', 'user_signature','aqua_certificate'].includes(workflowInfo.workFlow) && session?.address != getTheWalletAddressFromWorkflow() ? (
                                           <div className="w-[100px]">
                                                 <AttestAquaClaim file={file} index={index} />
                                           </div>
@@ -221,11 +258,16 @@ export default function FilesListItem({
       }
 
       const showActionsButton = () => {
+            // return <>-- {workflowInfo?.workFlow}</>
             if (filesListProps.showFileActions == false) {
                   return null
             }
             if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'aqua_sign') {
                   return workFlowAquaSignActions()
+            }
+
+             if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'aqua_certificate') {
+                  return workFlowAquaCertificateActions()
             }
             if (workflowInfo?.isWorkFlow == true && (["domain_claim", "identity_claim", "user_signature", "email_claim", "phone_number_claim"].includes(workflowInfo.workFlow))) {
                   return workFlowIdentityClaimActions(workflowInfo)
@@ -437,7 +479,59 @@ export default function FilesListItem({
                               <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
                                     <p className="text-xs ">Owner   {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
                                     <WalletAdrressClaim walletAddress={creatorWallet} />
+                              </div>
 
+                        </>
+                  }
+            }
+
+            if (workflowInfo?.workFlow == "identity_card") {
+                  let genesisHash = getGenesisHash(file.aquaTree!)
+                  if (!genesisHash) {
+                        return <div />
+                  }
+                  let genRevision = file.aquaTree?.revisions[genesisHash]
+                  if (!genRevision) {
+                        return <div />
+                  }
+
+                  let creatorWallet = genRevision[`forms_wallet_address`]
+
+                  if (creatorWallet) {
+
+                        return <>
+                              <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
+                                    <p className="text-xs ">Owner   {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
+                                    <WalletAdrressClaim walletAddress={creatorWallet} />
+                              </div>
+
+                        </>
+                  }
+            }
+
+            if (workflowInfo?.workFlow == "ens_claim") {
+                  let genesisHash = getGenesisHash(file.aquaTree!)
+                  if (!genesisHash) {
+                        return <div />
+                  }
+                  let genRevision = file.aquaTree?.revisions[genesisHash]
+                  if (!genRevision) {
+                        return <div />
+                  }
+
+                  let creatorWallet = genRevision[`forms_wallet_address`]
+                  let ensName = genRevision[`forms_ens_name`]
+
+                  if (creatorWallet) {
+
+                        return <>
+                              <div className="flex flex-nowrap  text-xs text-gray-500">
+                                    <p className="text-xs">ENS Name: &nbsp;</p>
+                                    <p className="text-xs ">{ensName}</p>
+                              </div>
+                              <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
+                                    <p className="text-xs ">Owner   {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
+                                    <WalletAdrressClaim walletAddress={creatorWallet} />
                               </div>
 
                         </>
@@ -456,15 +550,15 @@ export default function FilesListItem({
 
                   let creatorWallet = genRevision[`forms_wallet_address`]
                   let claimWallet = genRevision[`forms_claim_wallet_address`]
-                  let claimType = genRevision[`forms_claim_type`]
-                  let attestationType = genRevision[`forms_attestion_type`]
+                  let claimType = genRevision[`forms_claim_type`] ?? ""
+                  let attestationType = genRevision[`forms_attestion_type`] ??""
 
                   if (creatorWallet) {
                         return <>
 
                               <div className="flex flex-nowrap  text-xs text-gray-500">
                                     {
-                                          attestationType == "user" ? <>
+                                          attestationType == "user"  ? <>
                                                 <p className="text-xs">Attestation Of : &nbsp;</p>
                                                 <p className="text-xs ">{capitalizeWords(claimType.replace(/_/g, ' '))}</p>
                                           </> : <>

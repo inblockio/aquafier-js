@@ -9,7 +9,7 @@ import { FormTemplate } from './aqua_forms'
 import { SESSION_COOKIE_NAME } from '@/utils/constants'
 
 const LoadConfiguration = () => {
-      const { setMetamaskAddress, setUserProfile, setFiles, setAvatar, setSystemFileInfo, backend_url, setSession, setFormTemplate, session } = useStore(appStore)
+      const { setMetamaskAddress, setUserProfile, setFiles, setAvatar, setSystemFileInfo, backend_url, setSession, setFormTemplate, setIsAdmin, session } = useStore(appStore)
 
       const fetchAddressGivenANonce = async (nonce: string) => {
             if (!backend_url.includes('0.0.0.0') && !session?.address) {
@@ -31,19 +31,10 @@ const LoadConfiguration = () => {
                                     setMetamaskAddress(address)
                                     const avatar = generateAvatar(address)
                                     setAvatar(avatar)
-
-                                    // const files = await fetchFiles(address, url2, nonce)
-                                    // setFiles({
-                                    //       fileData: files,
-                                    //       status: 'loaded',
-                                    // })
-
-
-                                    // const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                                    // setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
                                     fetchUserProfile(_address, nonce)
                                     setSession(response.data?.session)
-                                    const url3 = `${backend_url}/system/aqua_tree`
+                                    //`${backend_url}/system/aqua_tree`
+                                    const url3 = ensureDomainUrlHasSSL(`${backend_url}/system/aqua_tree`)
                                     const systemFiles = await fetchSystemFiles(url3, address)
                                     setSystemFileInfo(systemFiles)
                               }
@@ -73,7 +64,8 @@ const LoadConfiguration = () => {
       }
 
       const fetchUserProfile = async (address: string, nonce: string) => {
-            const url = `${backend_url}/explorer_fetch_user_settings`
+            //`${backend_url}/explorer_fetch_user_settings`
+            const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_fetch_user_settings`)
 
             const response = await axios.get(url, {
                   headers: {
@@ -120,7 +112,7 @@ const LoadConfiguration = () => {
 
       const loadTemplates = async () => {
             try {
-                  const url = `${backend_url}/templates`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/templates`)
                   const response = await axios.get(url, {
                         headers: {
                               nonce: session?.nonce,
@@ -140,9 +132,37 @@ const LoadConfiguration = () => {
             }
       }
 
+      const checkAdminStatus = async () => {
+            if (!session?.nonce || !backend_url) {
+                  setIsAdmin(false)
+                  return
+            }
+
+            try {
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/admin/check`)
+                  const response = await axios.get(url, {
+                        headers: {
+                              nonce: session.nonce,
+                        },
+                  })
+
+                  if (response.status === 200 && response.data?.isAdmin) {
+                        setIsAdmin(true)
+                  } else {
+                        setIsAdmin(false)
+                  }
+            } catch (error) {
+                  // If the endpoint returns 403 or any other error, user is not an admin
+                  setIsAdmin(false)
+            }
+      }
+
       useEffect(() => {
             if (session?.nonce) {
                   loadTemplates()
+                  checkAdminStatus()
+            } else {
+                  setIsAdmin(false)
             }
       }, [session?.nonce])
 

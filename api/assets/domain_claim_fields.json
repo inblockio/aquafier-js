@@ -7,20 +7,73 @@
         "isArray": false
     },
     {
-        "name": "type",
-        "label": "Type",
+        "name": "unique_id",
+        "label": "Unique ID",
         "type": "text",
         "required": true,
         "isArray": false,
-        "isEditable": false,
         "isHidden": true,
-        "defaultValue": "dns_claim"
+        "isEditable": false
+    },
+    {
+        "name": "claim_secret",
+        "label": "Claim Secret",
+        "type": "text",
+        "required": false,
+        "isArray": false,
+        "isHidden": true,
+        "isEditable": false
+    },
+    {
+        "name": "txt_name",
+        "label": "TXT Name",
+        "type": "text",
+        "required": true,
+        "isArray": false,
+        "isHidden": true,
+        "isEditable": false
     },
     {
         "name": "txt_record",
-        "label": "string",
+        "label": "TXT Record",
         "type": "text",
         "required": true,
+        "isArray": false,
+        "isHidden": true,
+        "isEditable": false
+    },
+    {
+        "name": "public_association",
+        "label": "Public Association",
+        "type": "text",
+        "required": false,
+        "isArray": false,
+        "isHidden": true,
+        "isEditable": false
+    },
+    {
+        "name": "itime",
+        "label": "Issued Time",
+        "type": "text",
+        "required": true,
+        "isArray": false,
+        "isHidden": true,
+        "isEditable": false
+    },
+    {
+        "name": "etime",
+        "label": "Expiration Time",
+        "type": "text",
+        "required": true,
+        "isArray": false,
+        "isHidden": true,
+        "isEditable": false
+    },
+    {
+        "name": "claim_json",
+        "label": "Claim JSON",
+        "type": "text",
+        "required": false,
         "isArray": false,
         "isHidden": true,
         "isEditable": false
@@ -32,5 +85,25 @@
         "required": true,
         "isArray": false,
         "isEditable": false
+    },
+    {
+        "name": "signature_type",
+        "label": "Signature Type",
+        "type": "text",
+        "required": true,
+        "isArray": false,
+        "isHidden": true,
+        "isEditable": false,
+        "defaultValue": "ethereum:eip-191"
+    },
+    {
+        "name": "type",
+        "label": "Type",
+        "type": "text",
+        "required": true,
+        "isArray": false,
+        "isEditable": false,
+        "isHidden": true,
+        "defaultValue": "dns_claim"
     }
 ]

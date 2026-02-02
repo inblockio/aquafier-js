@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { copyToClipboardModern } from '../../utils/functions'
+import { copyToClipboardModern, ensureDomainUrlHasSSL } from '../../utils/functions'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -20,7 +20,7 @@ export default function AccountContracts({ inline, open, updateOpenStatus }: IAc
                   return
             }
             try {
-                  const url = `${backend_url}/contracts`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/contracts`)
                   const response = await axios.get(url, {
                         params: {
                               receiver: session?.address,

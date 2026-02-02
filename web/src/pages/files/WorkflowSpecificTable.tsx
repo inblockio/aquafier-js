@@ -2,6 +2,7 @@ import { ApiFileInfo } from "@/models/FileInfo"
 import appStore from "@/store"
 import { GlobalPagination } from "@/types"
 import { API_ENDPOINTS } from "@/utils/constants"
+import { ensureDomainUrlHasSSL } from "@/utils/functions"
 import axios from "axios"
 import { useEffect, useState } from "react"
 import { useStore } from "zustand"
@@ -20,7 +21,7 @@ interface IWorkflowSpecificTable {
     isSmallScreen: boolean
     systemAquaFileNames: string[]
     sortBy: 'date' | 'name' | 'size'
-}
+} 
 
 const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScreen, systemAquaFileNames, sortBy }: IWorkflowSpecificTable) => {
  
@@ -34,7 +35,7 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
     const { subscribe } = useNotificationWebSocketContext();
 
     const loadFiles = async () => {
-        if (!session?.address || !backend_url) return;
+        if (!session?.address || !backend_url || !workflowName) return;
         setFiles([])
         try {
             setLoading(true)
@@ -48,15 +49,15 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
             }
 
             // For specific workflow types (claims), use the old endpoint
-            if (workflowName !== 'all' && workflowName !== 'aqua_files') {
+            if (workflowName !== 'all' && workflowName !== 'user_files') {
                 endpoint = API_ENDPOINTS.GET_PER_TYPE
                 params.claim_types = JSON.stringify([workflowName])
             } else {
-                // For 'all' and 'aqua_files', use the new sorted endpoint
+                // For 'all' and 'user_files', use the new sorted endpoint
                 params.fileType = workflowName
             }
 
-            const filesDataQuery = await axios.get(`${backend_url}/${endpoint}`, {
+            const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${endpoint}`), {
                 headers: {
                     'Content-Type': 'application/json',
                     'nonce': `${session!.nonce}`
@@ -89,8 +90,8 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
         if (workflowName === 'all') {
             return RELOAD_KEYS.all_files;
         }
-        if (workflowName === 'aqua_files') {
-            return RELOAD_KEYS.aqua_files;
+        if (workflowName === 'user_files') {
+            return RELOAD_KEYS.user_files;
         }
 
         // For specific workflow types, use the workflow name as key if it exists in RELOAD_KEYS

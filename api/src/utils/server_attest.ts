@@ -142,3 +142,104 @@ export async function serverAttestation(identityClaimId: string,  walletAddress:
         attestationJSONfileName : fileName
     }
 }
+
+
+export async function generateENSClaim(ensName: string, ensExpiry: string, walletAddress: string): Promise<{
+    aquaTree : AquaTree,
+    ensJSONfileData : Object, 
+    ensJSONfileName : string
+} | null> {
+
+    const aquafier = new Aquafier()
+    const templateItem = "ens_claim"
+
+    const templateInformation = getTemplateInformation(templateItem)
+
+    const serverWalletInformation = await getServerWalletInformation()
+
+    if (!serverWalletInformation) {
+        // throw new Error("Server wallet information is not defined");
+        Logger.info("Server wallet information is not defined");
+        return null;
+    }
+
+
+    const ensForm = {
+        "ens_name": ensName,
+        "wallet_address": walletAddress,
+        "expiry": ensExpiry
+    }
+
+    console.log(ensForm)
+
+    let randomNum = getRandomNumber(999, 9999)
+    let fileName = `ens_claim_${randomNum}.json`
+
+    const fileObject: FileObject = {
+        fileName: fileName,
+        fileContent: Buffer.from(JSON.stringify(ensForm)),
+        path: ""
+    }
+
+    const genesisAquaTreeResult = await aquafier.createGenesisRevision(fileObject, true, false, false)
+
+    if (genesisAquaTreeResult.isErr()) {
+        Logger.error(`Error creating genesis aqua tree ${genesisAquaTreeResult.data}`)
+        return null;
+    }
+    const genesisAquaTree = genesisAquaTreeResult.data.aquaTree
+
+    const aquatreeWrapperToWrapTo: AquaTreeWrapper = {
+        aquaTree: genesisAquaTree!,
+        fileObject: fileObject,
+        revision: ""
+    }
+
+    let name =  getAquaTreeFileName(templateInformation.templateAquaTree);
+    if(name.length==0){
+        name="ens_claim.json"
+    }
+
+    const templateFileObject: FileObject = {
+        fileName:name,
+        fileContent: templateInformation.templateAquaTreeDataContent,
+        path: ""
+    }
+
+    const wrapThis: AquaTreeWrapper = {
+        aquaTree: templateInformation.templateAquaTree,
+        fileObject: templateFileObject,
+        revision: ""
+    }
+
+    const linkedAquaTreeResult = await aquafier.linkAquaTree(aquatreeWrapperToWrapTo, wrapThis, false)
+
+    Logger.info(`linkedAquaTreeResult: isErr=${linkedAquaTreeResult.isErr()}`)
+
+    if (linkedAquaTreeResult.isErr()) {
+        Logger.error(`Error linking aqua tree ${linkedAquaTreeResult.data}`)
+        return null;
+    }
+    const creds = dummyCredential()
+    creds.mnemonic = serverWalletInformation.mnemonic
+    const linkedAquaTree = linkedAquaTreeResult.data.aquaTree
+    const aquaTreeWrapper: AquaTreeWrapper = {
+        aquaTree: linkedAquaTree!,
+        fileObject: fileObject,
+        revision: ""
+    }
+    const signAquaTreeResult = await aquafier.signAquaTree(aquaTreeWrapper, "cli", creds)
+
+    if (signAquaTreeResult.isErr()) {
+        Logger.error(`Error signing aqua tree ${signAquaTreeResult.data}`)
+        return null;
+    }
+
+    const signedAttestation = signAquaTreeResult.data.aquaTree
+
+    return {
+        aquaTree: signedAttestation!!,
+        ensJSONfileData : ensForm,
+        ensJSONfileName : fileName
+    }
+}

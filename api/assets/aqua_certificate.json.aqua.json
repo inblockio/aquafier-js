@@ -1,0 +1,47 @@
+{
+  "revisions": {
+    "0xa8d724f58d432b98347f1fd52caf40402fc668bea8f7a5a7266922874b5ab522": {
+      "file_hash": "f487319348e3a8c1cf615cbaa80c274a794c2b86bbd9a03defbdc1ea76337359",
+      "file_nonce": "9be371d09b2ddb05de425fb7f18ebe0988a226d5dcd8251161c065d5b7f830fc",
+      "forms_cert_type": "",
+      "forms_content": "",
+      "forms_custom_cert_name": "",
+      "forms_document": "",
+      "forms_sender": "0x...",
+      "forms_signers": "0x...",
+      "leaves": [
+        "c24739ccb880420aed75e75a10e7d8e29eee969060e4f6c6cc46cf33691c75ca",
+        "ed2c19aa243ba7434fdd44b8abc963277fd75589fb529d1cf889997a206fd171",
+        "572119bb9655eb78ba51d6a0ee94f888269b4004a3b50224fbcbf9e32604d415",
+        "334c9b43b38ff746ce840b6499fa64c0c63abd978d4699feab1ef50450bce50c",
+        "bebdd09725d3ffd6366b6df03118f59cfb8a899c68070d53d5933cea8a3c4ec5",
+        "49a892a2f827744c1b5b670ceafb29a797991b2abe877a17dae56d57e9155c65",
+        "ba659ab1a0fdaf33b83fd90d3f4a26a8e46d114c8351d0369bfdc254cc4a0027",
+        "9cf56940d1f8447901d2b510243e84c175967a670d9141646dcb51036255fda3",
+        "f72c2839055bf91273cb29ab536f13ab299d81ca7a22473a0a7bd385423b9dd6",
+        "d781acf7ba880ecae581ffd8debcb4f5cb430bc2f237e27a6098471a9f7ffa60",
+        "43fcaef3dc4b2a2d0550543b638048edcfb710da9276da109a9e011ed1a53ed1",
+        "39ccd407bb105ed3be74df4a546d9b10c4f6c80e48b559102b04fa2b29aa83b4"
+      ],
+      "local_timestamp": "20260127083430",
+      "previous_verification_hash": "",
+      "revision_type": "form",
+      "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: tree"
+    }
+  },
+  "file_index": {
+    "0xa8d724f58d432b98347f1fd52caf40402fc668bea8f7a5a7266922874b5ab522": "aqua_certificate.json"
+  },
+  "tree": {
+    "children": [],
+    "hash": "0xa8d724f58d432b98347f1fd52caf40402fc668bea8f7a5a7266922874b5ab522"
+  },
+  "treeMapping": {
+    "paths": {
+      "0xa8d724f58d432b98347f1fd52caf40402fc668bea8f7a5a7266922874b5ab522": [
+        "0xa8d724f58d432b98347f1fd52caf40402fc668bea8f7a5a7266922874b5ab522"
+      ]
+    },
+    "latestHash": "0xa8d724f58d432b98347f1fd52caf40402fc668bea8f7a5a7266922874b5ab522"
+  }
+}

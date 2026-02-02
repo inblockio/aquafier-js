@@ -5,7 +5,7 @@ import { ApiFileInfo } from './models/FileInfo'
 import { ApiFileData, ApiFileInfoState, emptyUserStats, IUserStats, OpenDialog, Session, WebConfig } from './types/types'
 import { FormTemplate } from './components/aqua_forms/types'
 import { ensureDomainUrlHasSSL } from './utils/functions'
-import { USER_PROFILE_DEFAULT } from './utils/constants'
+import { USER_PROFILE_DEFAULT, BACKEND_URL_STORAGE_KEY } from './utils/constants'
 
 type AppStoreState = {
       user_profile: {
@@ -18,12 +18,24 @@ type AppStoreState = {
             ens_name: string
             enable_dba_claim: boolean
             witness_contract_address: string | null
+            User?: {
+                  address: string
+                  ens_name: string
+                  email: string
+            }
       }
       session: Session | null
+      isAdmin: boolean
       files: ApiFileInfoState,
       filesStats: IUserStats,
       workflows: ApiFileInfoState,
       webConfig: WebConfig,
+      workSpaceDowload: {
+            fileName: string,
+            fileIndex: number,
+            totalFiles: number
+      },
+
       apiFileData: ApiFileData[]
       systemFileInfo: ApiFileInfo[]
       formTemplates: FormTemplate[]
@@ -43,12 +55,14 @@ type AppStoreState = {
 type AppStoreActions = {
       setUserProfile: (config: AppStoreState['user_profile']) => void
       setSession: (config: AppStoreState['session']) => void
+      setIsAdmin: (isAdmin: boolean) => void
       setMetamaskAddress: (address: AppStoreState['metamaskAddress']) => void
       setAvatar: (avatar: AppStoreState['avatar']) => void
       setFiles: (files: AppStoreState['files']) => void
       setFilesStats: (files: AppStoreState['filesStats']) => void
       setWorkflows: (workflows: AppStoreState['workflows']) => void
       setWebConfig: (config: AppStoreState['webConfig']) => void
+      setWorkSpaceDowload: (config: AppStoreState['workSpaceDowload']) => void
       setSelectedFileInfo: (file: ApiFileInfo | null) => void
 
       setOpenDialog: (state: OpenDialog | null) => void
@@ -64,6 +78,7 @@ type AppStoreActions = {
       setFormTemplate: (apiFileData: FormTemplate[]) => void
       setContracts: (contracts: any[]) => void
       setBackEndUrl: (backend_url: AppStoreState['backend_url']) => void
+      resetState: () => void
 }
 
 type TAppStore = AppStoreState & AppStoreActions
@@ -132,47 +147,61 @@ const indexedDBStorage = {
       },
 }
 
+export const INITIAL_STATE: AppStoreState = {
+      user_profile: USER_PROFILE_DEFAULT,
+      session: null,
+      isAdmin: false,
+      files: {
+            fileData: [],
+            status: 'idle',
+      },
+      filesStats: emptyUserStats,
+      workflows: {
+            fileData: [],
+            status: 'idle',
+      },
+      selectedFileInfo: null,
+      webConfig: {
+            CUSTOM_LANDING_PAGE_URL: false,
+            CUSTOM_LOGO_URL: false,
+            SENTRY_DSN: undefined,
+            BACKEND_URL: undefined,
+            AUTH_PROVIDER: undefined,
+            DEFAULT_PAYMENT_METHOD: "CRYPTO",
+            ENABLE_CRYPTO_PAYMENTS: true,
+            ENABLE_STRIPE_PAYMENTS: false,
+      },
+      workSpaceDowload: {
+            fileName: '',
+            fileIndex: 0,
+            totalFiles: 0
+      },
+      openDialog: null, // Initialize openDialog state
+      // openFilesDetailsPopUp: false,
+      // openCreateTemplatePopUp: false,
+      // openCreateAquaSignPopUp: false,
+      // openCreateClaimPopUp: false,
+      // openCreateClaimAttestationPopUp: false,
+      metamaskAddress: null,
+      avatar: '',
+      apiFileData: [],
+      systemFileInfo: [],
+      formTemplates: [],
+      backend_url: 'http://0.0.0.0:3000',
+      contracts: [],
+}
+
 
 const appStore = createStore<TAppStore>()(
       persist(
             set => ({
                   // Initial state
-                  user_profile: USER_PROFILE_DEFAULT,
-                  session: null,
-                  files: {
-                        fileData: [],
-                        status: 'idle',
-                  },
-                  filesStats: emptyUserStats,
-                  workflows: {
-                        fileData: [],
-                        status: 'idle',
-                  },
-                  selectedFileInfo: null,
-                  webConfig: {
-                        CUSTOM_LANDING_PAGE_URL: false,
-                        CUSTOM_LOGO_URL: false,
-                        SENTRY_DSN: undefined,
-                        BACKEND_URL: undefined,
-                        AUTH_PROVIDER: undefined
-                  },
-                  openDialog: null, // Initialize openDialog state
-                  // openFilesDetailsPopUp: false,
-                  // openCreateTemplatePopUp: false,
-                  // openCreateAquaSignPopUp: false,
-                  // openCreateClaimPopUp: false,
-                  // openCreateClaimAttestationPopUp: false,
-                  metamaskAddress: '',
-                  avatar: '',
-                  apiFileData: [],
-                  systemFileInfo: [],
-                  formTemplates: [],
-                  backend_url: 'http://0.0.0.0:3000',
-                  contracts: [],
+                  ...INITIAL_STATE,
 
                   // Actions
                   setUserProfile: config => set({ user_profile: config }),
                   setSession: session => set({ session: session }),
+                  setIsAdmin: (isAdmin: boolean) => set({ isAdmin: isAdmin }),
                   setMetamaskAddress: (address: AppStoreState['metamaskAddress']) => set({ metamaskAddress: address }),
                   setAvatar: (avatar: AppStoreState['avatar']) => set({ avatar: avatar }),
                   setFiles: (files: AppStoreState['files']) => set({ files: files }),
@@ -194,6 +223,9 @@ const appStore = createStore<TAppStore>()(
                   setWebConfig(config) {
                         set({ webConfig: config })
                   },
+                  setWorkSpaceDowload(config) {
+                        set({ workSpaceDowload: config })
+                  },
                   addFile: (file: ApiFileInfo) => {
                         const { files } = appStore.getState()
                         files.fileData = [file, ...files.fileData]
@@ -201,8 +233,18 @@ const appStore = createStore<TAppStore>()(
                   },
                   setBackEndUrl: (backend_url: AppStoreState['backend_url']) => {
                         let urlData = ensureDomainUrlHasSSL(backend_url)
+                        console.log('[SIWE DEBUG] store.setBackEndUrl called with:', urlData)
                         set({ backend_url: urlData })
+                        // Sync to localStorage for synchronous access (needed for SIWE getSession before IndexedDB rehydrates)
+                        try {
+                              localStorage.setItem(BACKEND_URL_STORAGE_KEY, urlData)
+                        } catch (e) {
+                              console.warn('Failed to sync backend_url to localStorage:', e)
+                        }
                   },
+                  resetState: () => {
+                        set(INITIAL_STATE)
+                  }
             }),
             {
                   name: 'app-store', // Unique name for storage key
@@ -218,8 +260,50 @@ const appStore = createStore<TAppStore>()(
                         backend_url: state.backend_url,
                         // selectedFileInfo & setApiFileData is intentionally omitted
                   }),
+                  onRehydrateStorage: () => (state) => {
+                        console.log('[SIWE DEBUG] store.onRehydrateStorage called, state:', state ? 'exists' : 'null')
+                        // Transform backend_url after loading from persistence
+                        if (state && state.backend_url) {
+                              console.log('[SIWE DEBUG] store.onRehydrateStorage - backend_url from IndexedDB:', state.backend_url)
+                              const transformedUrl = ensureDomainUrlHasSSL(state.backend_url);
+                              if (transformedUrl !== state.backend_url) {
+                                    state.setBackEndUrl(transformedUrl);
+                              }
+                              // Sync to localStorage for synchronous access (needed for SIWE getSession)
+                              try {
+                                    console.log('[SIWE DEBUG] store.onRehydrateStorage - syncing to localStorage:', transformedUrl)
+                                    localStorage.setItem(BACKEND_URL_STORAGE_KEY, transformedUrl);
+                              } catch (e) {
+                                    console.warn('Failed to sync backend_url to localStorage on rehydrate:', e);
+                              }
+                        }
+                  },
             }
       )
 )
 
 export default appStore
+
+/**
+ * Helper function to get the backend URL with proper transformation.
+ * Use this instead of directly accessing appStore.getState().backend_url
+ * to ensure the URL is always correctly transformed for the current environment.
+ */
+export function getBackendUrl(): string {
+      const backend_url = appStore.getState().backend_url;
+      return ensureDomainUrlHasSSL(backend_url);
+}
+
+/**
+ * Helper function to build a full API URL with the correct backend host.
+ * @param path - The API path (e.g., '/templates', '/explorer_files')
+ * @returns The full URL with the correct backend host
+ */
+export function getApiUrl(path: string): string {
+      const backend_url = getBackendUrl();
+      // Ensure path starts with /
+      const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+      // Avoid double slashes
+      const baseUrl = backend_url.endsWith('/') ? backend_url.slice(0, -1) : backend_url;
+      return `${baseUrl}${normalizedPath}`;
+}

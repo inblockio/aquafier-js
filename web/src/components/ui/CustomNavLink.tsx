@@ -1,3 +1,4 @@
+import { FileCheck } from 'lucide-react';
 import { Link as RouterLink, useResolvedPath, useMatch } from 'react-router-dom'
 
 const CustomNavLink = ({ item, index, callBack }: { item: any; index: number; callBack?: () => void }) => {
@@ -18,7 +19,13 @@ const CustomNavLink = ({ item, index, callBack }: { item: any; index: number; ca
                         callBack?.()
                   }}
             >
-                  {item.icon && <item.icon className="w-4 h-4" />}
+                  {item.icon && (
+<>
+{item.icon == FileCheck ? <FileCheck className="w-5 h-5" /> : <item.icon className="w-4 h-4" />}
+</>
+                  )}
+                  
+                 
                   <span>{item.label}</span>
             </RouterLink>
       )

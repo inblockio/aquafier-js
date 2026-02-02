@@ -30,6 +30,8 @@ import axios from 'axios'
 import { getDNSStatusBadge, IDnsVerificationResult, verifyDNS } from '@/utils/verifiy_dns'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
+import { API_ENDPOINTS } from '@/utils/constants'
+import { FaEthereum } from 'react-icons/fa6'
 
 interface ISignatureWalletAddressCard {
       index?: number
@@ -85,6 +87,9 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
             else if (claim.claimType === 'user_signature') {
                   return 'Signature'
             }
+            else if (claim.claimType === 'ens_claim') {
+                  return 'ENS Name'
+            }
             else {
                   return 'Unknown'
             }
@@ -127,6 +132,17 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                   return (
                         <div className={`h-[34px] w-[34px] flex items-center justify-center ${extraClasses}`}>
                               <Mail size={ICON_SIZE} className='text-blue-500' />
+                        </div>
+                  )
+            }
+            else if (claim.claimType === 'ens_claim') {
+                  let extraClasses = ""
+                  if (claim.attestationsCount > 0) {
+                        extraClasses = "text-green-500"
+                  }
+                  return (
+                        <div className={`h-[34px] w-[34px] flex items-center justify-center ${extraClasses}`}>
+                              <FaEthereum size={ICON_SIZE} className='text-blue-500' />
                         </div>
                   )
             }
@@ -202,6 +218,15 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                         </div>
                   )
             }
+            else if (claim.claimType === "ens_claim") {
+                  const verificationBadge = getDNSStatusBadge("verified", "Verified")
+                  return (
+                        <div className="flex gap-2 items-center" >
+
+                              {verificationBadge}
+                        </div>
+                  )
+            }
             else {
                   if (claim.attestationsCount > 0) {
                         return (
@@ -271,10 +296,11 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
 }
 
 const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, showShadow, hideOpenProfileButton, noBg, timestamp, files, signatureHash }: ISignatureWalletAddressCard) => {
-      const { workflows, session, setFiles, backend_url, setOpenDialog, setSelectedFileInfo } = useStore(appStore)
+      const { workflows, session, setFiles, backend_url, setOpenDialog, setSelectedFileInfo, user_profile } = useStore(appStore)
       const [claims, setClaims] = useState<IClaim[]>([])
       const [loading, setLoading] = useState(true)
       const [isLoading, setIsLoading] = useState<boolean>(true)
+      const [ensName, setEnsName] = useState<string | null>(null)
       const navigate = useNavigate()
 
       const loadSystemAquaFileNames = async () => {
@@ -285,7 +311,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
       const shadowClasses = showShadow ? 'shadow-lg hover:shadow-xl transition-shadow duration-300' : 'shadow-none'
 
-      const requiredClaims = ['simple_claim', 'domain_claim', 'identity_claim', 'phone_number_claim', 'email_claim', 'user_signature']
+      const requiredClaims = ['simple_claim', 'domain_claim', 'identity_claim', 'phone_number_claim', 'email_claim', 'user_signature', 'ens_claim']
 
       const lastFourLetterOfWalletAddress = walletAddress?.substring(walletAddress?.length - 4)
 
@@ -374,6 +400,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                                 claimName = firstRevision.forms_phone_number
                                           } else if (workFlow === 'email_claim') {
                                                 claimName = firstRevision.forms_email
+                                          } else if (workFlow === 'ens_claim') {
+                                                claimName = firstRevision.forms_ens_name
                                           }
                                           let claimInformation: IClaim = {
                                                 claimType: workFlow,
@@ -473,8 +501,9 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                   if (response.status === 200 || response.status === 201) {
                         if (isFinal) {
 
-
-                              const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                              const urlPath = `${backend_url}/explorer_files`
+                              const url2 = ensureDomainUrlHasSSL(urlPath)
+                              const filesApi = await fetchFiles(session!.address, url2, session!.nonce)
                               setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
                               toast.success('Profile Aqua tree created successfully')
@@ -482,8 +511,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
 
                               // trigger file reloads 
-                               await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
-                                          await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
+                              await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
+                              await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
 
 
                               // Create the profile item to share
@@ -749,22 +778,78 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             }
       }
 
+      const handleCreateEnsClaim = async () => {
+
+            if (!backend_url || !session) {
+                  toast.warning("It seems you are not logged in!")
+                  return
+            }
+            //`${backend_url}/${API_ENDPOINTS.CREATE_ENS_CLAIM}`
+            const createENSClaimUrl = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.CREATE_ENS_CLAIM}`)
+            const res = await axios.post(createENSClaimUrl, {}, {
+                  headers: {
+                        metamask_address: session.address,
+                        nonce: `${session.nonce}`
+                  }
+            })
+
+            if (res.status === 200 || res.status === 201) {
+                  await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
+                  await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
+                  await triggerWorkflowReload(RELOAD_KEYS.ens_claim, true);
+                  await triggerWorkflowReload(RELOAD_KEYS.contacts, true);
+                  toast.success("You have successfully created your ENS Claim")
+            } else {
+                  toast.error(`An error occured ${res.status}`)
+            }
+      }
+
+      const hasEnsClaim = () => {
+            if (claims && claims.length > 0) {
+                  let ens_claim = claims.find(claim => claim.claimType === "ens_claim")
+                  if (ens_claim) {
+                        return true
+                  }
+            }
+            return false
+      }
+
+      const loadEnsName = async () => {
+            if (!session && !backend_url) {
+                  return
+            }
+            try {
+                  const response = await fetch(`${backend_url}/resolve/${session?.address}?useEns=true`, {
+                        method: 'GET',
+                        headers: {
+                              metamask_address: session?.address!,
+                              'nonce': session?.nonce!,
+                              'Content-Type': 'application/json'
+                        }
+                  });
+
+                  const data = await response.json();
+
+                  if (response.ok && data.success) {
+                        setEnsName(data.result);
+                  }
+            } catch (_err) {
+                  // console.error('Resolution error:', err);
+            }
+
+      }
+
       useEffect(() => {
             if (walletAddress && session?.nonce) {
                   loadWorkflows()
             }
       }, [walletAddress, session?.nonce, files])
 
-      // if (claims.length === 0 && !isLoading) {
-      //       return (
-      //             <div className={`${width ? width : 'w-full'} bg-transparent`}>
-      //                   <div className={`flex p-2 flex-col ${noBg ? '' : 'bg-gradient-to-br from-white to-slate-200 border border-slate-200'} ${shadowClasses} rounded-xl gap-4 transition-shadow duration-300`}>
-      //                         <p className="text-sm">No claims found</p>
-      //                   </div> 
-      //             </div>
-      //       )
-      // }
-
+      useEffect(() => {
+            if (session?.address && session.nonce && backend_url) {
+                  loadEnsName()
+            }
+      }, [session, backend_url])
 
 
       return (
@@ -795,6 +880,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                     <CustomCopyButton value={`${walletAddress}`} />
                               </div>
                         ) : null}
+
 
                         {
                               (claims.length === 0 && !loading && !isLoading) ? (
@@ -828,6 +914,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                     </div>
                               ) : null
                         }
+
                         {
                               (claims.length > 0 && !isLoading && !loading) ? (
                                     <>
@@ -849,6 +936,20 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                     </>
                               ) : null
                         }
+
+                        {
+                              (walletAddress === session?.address && ensName && claims.length > 0 && !isLoading && !loading && !hasEnsClaim()) ? (
+                                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                          <div className="flex flex-col gap-1">
+                                                <p className="text-sm font-medium text-green-800">You have an ENS name</p>
+                                                <p className="text-sm text-green-700">Would you like to create your claim?</p>
+                                                <p className="text-sm font-semibold text-green-900 bg-green-100 px-2 py-1 rounded w-fit">{user_profile?.ens_name}</p>
+                                          </div>
+                                          <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleCreateEnsClaim}>Create</Button>
+                                    </div>
+                              ) : null
+                        }
+
                         {
                               claims.length > 0 ? (
                                     <div className="flex flex-col gap-[6px] rounded-lg">

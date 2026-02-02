@@ -2,8 +2,9 @@ import { FastifyInstance, FastifyRequest } from 'fastify';
 import { prisma } from '../database/db';
 import { SessionQuery, SiweRequest } from '../models/request_models';
 import { verifySiweMessage } from '../utils/auth_utils';
-import { fetchEnsName } from '../utils/api_utils';
+import { fetchEnsExpiry, fetchEnsName } from '../utils/api_utils';
 import Logger, { EventCategory, EventOutcome, EventType } from "../utils/logger";
+import logger from '../utils/logger';
 
 export default async function authController(fastify: FastifyInstance) {
   // get current session
@@ -15,7 +16,6 @@ export default async function authController(fastify: FastifyInstance) {
     }
 
     try {
-
 
       const session = await prisma.siweSession.findUnique({
         where: { nonce }
@@ -34,11 +34,14 @@ export default async function authController(fastify: FastifyInstance) {
       let settingsData = await prisma.settings.findFirst({
         where: {
           user_pub_key: session.address!!
+        },
+        include: {
+          User: true
         }
       })
 
       if (settingsData == null) {
-        let defaultData = {
+        const defaultData = {
           user_pub_key: session.address!!,
           cli_pub_key: "",
           cli_priv_key: "",
@@ -46,14 +49,13 @@ export default async function authController(fastify: FastifyInstance) {
           witness_network: process.env.DEFAULT_WITNESS_NETWORK ?? "sepolia",
           theme: "light",
           witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
-          createdAt: new Date(),
-          updatedAt: new Date(),
         }
 
-        settingsData = defaultData
-
-        await prisma.settings.create({
-          data: defaultData
+        settingsData = await prisma.settings.create({
+          data: defaultData,
+          include: {
+            User: true
+          }
         })
       }
 
@@ -81,6 +83,15 @@ export default async function authController(fastify: FastifyInstance) {
     }
 
     try {
+      // Check if session exists before deleting
+      const session = await prisma.siweSession.findUnique({
+        where: { nonce }
+      });
+
+      if (!session) {
+        return { success: true, message: "Session already deleted or does not exist" };
+      }
+
       await prisma.siweSession.delete({
         where: { nonce }
       });
@@ -116,13 +127,35 @@ export default async function authController(fastify: FastifyInstance) {
       }
 
       // Insert session into the database
-      const session = await prisma.siweSession.create({
-        data: {
+      // Debug: log the expiration time from the SIWE message
+      console.log('[AUTH DEBUG] siweData.expirationTime:', siweData.expirationTime);
+      console.log('[AUTH DEBUG] siweData.expirationTime type:', typeof siweData.expirationTime);
+
+      let expirationTime: Date;
+      // If no expiration time from SIWE message, set a default of 7 days
+      let expirationTimeSiwe = siweData.expirationTime;
+      if (!expirationTimeSiwe) {
+        expirationTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7-day expiry
+        console.log('[AUTH DEBUG] No expiration time in SIWE message, using default 7 days:', expirationTime);
+      } else {
+        // Ensure it's a Date object
+        expirationTime = new Date(expirationTimeSiwe);
+        console.log('[AUTH DEBUG] Using expiration time from SIWE message:', expirationTime);
+      }
+
+      const session = await prisma.siweSession.upsert({
+        where: {
+          nonce: siweData.nonce!!,
+        },
+        update: {
+          issuedAt: new Date(),
+          expirationTime: expirationTime
+        },
+        create: {
           address: siweData.address!!,
           nonce: siweData.nonce!!,
           issuedAt: new Date(),
-          // expirationTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24-hour expiry
-          expirationTime: siweData.expirationTime
+          expirationTime: expirationTime
         },
       });
 
@@ -135,15 +168,19 @@ export default async function authController(fastify: FastifyInstance) {
       })
 
       // Check if we should attempt ENS lookup
-      const infuraProjectId = process.env.VITE_INFURA_PROJECT_ID;
+      const alchemyProjectKey = process.env.ALCHEMY_API_KEY;
       const duration = Date.now() - startTime;
       Logger.logAuthEvent('user-login', EventOutcome.SUCCESS, siweData.address!!);
 
       if (userData == null) {
         let ensName = null
 
-        if (infuraProjectId) {
-          ensName = await fetchEnsName(siweData.address!!, infuraProjectId)
+        if (alchemyProjectKey) {
+          try {
+            ensName = await fetchEnsName(siweData.address!!, alchemyProjectKey)
+          } catch (error) {
+            logger.error(`Unable to fetch ENS name: ${error}`)
+          }
         }
         await prisma.users.create({
           data: {
@@ -168,8 +205,20 @@ export default async function authController(fastify: FastifyInstance) {
       } else {
 
         if (userData.ens_name == null || userData.ens_name == undefined || userData.ens_name == "") {
-          if (infuraProjectId) {
-            const ensName = await fetchEnsName(siweData.address!!, infuraProjectId)
+          if (alchemyProjectKey && siweData.address) {
+
+            let ensName = ""
+            let ensExpiry: Date | null = null
+
+            try {
+              ensName = await fetchEnsName(siweData.address!!, alchemyProjectKey)
+              if (ensName) {
+                ensExpiry = await fetchEnsExpiry(ensName, alchemyProjectKey)
+              }
+            } catch (error) {
+              logger.error(`Unable to fetch ENS data: ${error}`)
+            }
+
 
             await prisma.users.update({
               where: {
@@ -179,6 +228,33 @@ export default async function authController(fastify: FastifyInstance) {
                 ens_name: ensName
               }
             });
+
+            let existingEnsEntry = await prisma.eNSName.findFirst({
+              where: {
+                wallet_address: siweData.address
+              }
+            })
+
+            if (existingEnsEntry) {
+              await prisma.eNSName.update({
+                data: {
+                  wallet_address: siweData.address,
+                  ens_name: ensName,
+                  ens_expiry: ensExpiry
+                },
+                where: {
+                  id: existingEnsEntry.id
+                }
+              })
+            } else {
+              await prisma.eNSName.create({
+                data: {
+                  wallet_address: siweData.address,
+                  ens_name: ensName,
+                  ens_expiry: ensExpiry
+                },
+              })
+            }
           }
         }
       }
@@ -186,12 +262,15 @@ export default async function authController(fastify: FastifyInstance) {
 
       let settingsData = await prisma.settings.findFirst({
         where: {
-          user_pub_key: siweData.address!!
+          user_pub_key: siweData.address!!,
+        },
+        include: {
+          User: true
         }
       })
 
       if (settingsData == null) {
-        let defaultData = {
+        const defaultData = {
           user_pub_key: siweData.address!!,
           cli_pub_key: "",
           cli_priv_key: "",
@@ -199,11 +278,7 @@ export default async function authController(fastify: FastifyInstance) {
           witness_network: process.env.DEFAULT_WITNESS_NETWORK ?? "sepolia",
           theme: "light",
           witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
-          createdAt: new Date(),
-          updatedAt: new Date(),
         }
-
-        settingsData = defaultData
 
         await prisma.notifications.create({
           data: {
@@ -216,8 +291,11 @@ export default async function authController(fastify: FastifyInstance) {
           }
         })
 
-        await prisma.settings.create({
-          data: defaultData
+        settingsData = await prisma.settings.create({
+          data: defaultData,
+          include: {
+            User: true
+          }
         })
       }
 
@@ -239,7 +317,7 @@ export default async function authController(fastify: FastifyInstance) {
 
 
 
-      Logger.logEvent('User login successful', {
+      logger.logEvent('User login successful', {
         category: EventCategory.DATABASE,
         type: EventType.CREATION,
         action: 'user-login',
@@ -270,4 +348,3 @@ export default async function authController(fastify: FastifyInstance) {
   });
 
 }
-

@@ -81,12 +81,15 @@ export const RELOAD_KEYS = {
     email_claim: "email_claim",
     phone_number_claim: "phone_number_claim",
     user_profile: "user_profile",
-    aqua_files: "aqua_files",
+    user_files: "user_files",
     all_files: "all_files",
     notifications: "notifications",
     claims_and_attestations: "claims_and_attestations",
     user_stats: "user_stats",
     contacts: "contacts",
+    identity_card: "identity_card",
+    ens_claim: "ens_claim",
+    aqua_certificate: "aqua_certificate",
 };
 
 /**
@@ -95,15 +98,15 @@ export const RELOAD_KEYS = {
  */
 export const triggerWorkflowReload = async (workflowType: string, watchAll?: boolean) => {
     try {
-        console.log("Workflow type: ", workflowType)
+        // console.log("Workflow type: ", workflowType)
         if (workflowType === 'all') {
             await triggerReload(RELOAD_KEYS.all_files);
             await triggerReload(RELOAD_KEYS.contacts);
             return;
         }
         
-        if (workflowType === 'aqua_files') {
-            await triggerReload(RELOAD_KEYS.aqua_files);
+        if (workflowType === 'user_files') {
+            await triggerReload(RELOAD_KEYS.user_files);
             return;
         }
 
@@ -112,7 +115,7 @@ export const triggerWorkflowReload = async (workflowType: string, watchAll?: boo
             return;
         }
 
-        if(IDENTITY_CLAIMS.includes(workflowType)) {
+        if (IDENTITY_CLAIMS.includes(workflowType)) {
             await triggerReload(RELOAD_KEYS.claims_and_attestations);
             await triggerReload(workflowType);
             await triggerReload(RELOAD_KEYS.contacts);
@@ -123,7 +126,7 @@ export const triggerWorkflowReload = async (workflowType: string, watchAll?: boo
         const reloadKey = (RELOAD_KEYS as any)[workflowType];
         if (reloadKey) {
             await triggerReload(reloadKey);
-            
+
             // Also trigger claims_and_attestations if it's an identity claim
             const identityClaims = ['identity_claim', 'user_signature', 'email_claim', 'phone_number_claim', 'domain_claim', 'identity_attestation'];
             if (identityClaims.includes(workflowType)) {

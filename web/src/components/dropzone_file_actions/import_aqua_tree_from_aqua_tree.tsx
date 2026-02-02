@@ -4,7 +4,7 @@ import { useStore } from 'zustand'
 import appStore from '../../store'
 import { useEffect, useState } from 'react'
 import { ApiFileInfo } from '../../models/FileInfo'
-import { formatCryptoAddress, reorderRevisionsInAquaTree } from '../../utils/functions'
+import { ensureDomainUrlHasSSL, formatCryptoAddress, isWorkFlowData, reorderRevisionsInAquaTree } from '../../utils/functions'
 import { analyzeAndMergeRevisions } from '../../utils/aqua_funcs'
 import { RevisionsComparisonResult } from '../../models/revision_merge'
 import { OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk'
@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { API_ENDPOINTS } from '@/utils/constants'
+import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 // import { toast } from "@/components/ui/use-toast"; 
 // import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 // import { Button } from "@/components/ui/button";
@@ -21,8 +22,10 @@ import { API_ENDPOINTS } from '@/utils/constants'
 // import { Card, CardContent } from "@/components/ui/card";
 // import { Badge } from "@/components/ui/badge";
 // import { Separator } from "@/components/ui/separator";
+import { useNavigate } from 'react-router-dom'
 
 export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificationSuccessful, contractData }: ImportChainFromChainProps) => {
+      const navigate = useNavigate()
       const [uploading, setUploading] = useState(false)
       const [hasFetchedanyExistingChain, setHasFetchedanyExistingChain] = useState(false)
       const [_uploaded, setUploaded] = useState(false)
@@ -40,7 +43,7 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
             color: 'blue',
       })
 
-      const { backend_url, session } = useStore(appStore)
+      const { backend_url, session, setSelectedFileInfo } = useStore(appStore)
       const [existingChainFile, setExistingChainFile] = useState<ApiFileInfo | null>(null)
 
 
@@ -102,7 +105,8 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
             setUploading(true)
 
             try {
-                  const url = `${backend_url}/transfer_chain`
+                  //`${backend_url}/transfer_chain`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/transfer_chain`)
                   const reorderedRevisions = OrderRevisionInAquaTree(fileInfo.aquaTree!)
                   const revisions = reorderedRevisions.revisions
                   const revisionHashes = Object.keys(revisions)
@@ -125,10 +129,15 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                         toast.success('Aqua Chain imported successfully')
 
                         // Use setTimeout to ensure state is updated before navigation
-                        setTimeout(() => {
-                              window.location.replace('/app');
-                              // navigate('/app',  { replace: true })
-                        }, 500)
+                        const aquaSystemFileNames = await loadSystemAquaFileNames()
+                        const { isWorkFlow, workFlow } = isWorkFlowData(fileInfo.aquaTree!, aquaSystemFileNames)
+
+                        if (isWorkFlow && workFlow == "aqua_sign") {
+                              setSelectedFileInfo(fileInfo)
+                              navigate('/app/pdf/workflow/2')
+                        } else {
+                              navigate('/app')
+                        }
                   } else {
                         toast.error('Failed to import chain')
                   }
@@ -142,17 +151,26 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
             }
       }
 
+
+      const loadSystemAquaFileNames = async () => {
+            if (!session?.nonce) return []
+            const aquaSystemNamesService = AquaSystemNamesService.getInstance();
+            const systemNames = await aquaSystemNamesService.getSystemNames();
+            return systemNames;
+      }
+
       const handleMergeRevisions = async () => {
 
             // Early check to prevent recursion if already processing
             if (uploading) return
-            if(!hasFetchedanyExistingChain) {
+            if (!hasFetchedanyExistingChain) {
                   toast.error('Please wait as we compare these chains if they are different')
                   return
             }
 
             try {
-                  const url = `${backend_url}/merge_chain`
+                  //`${backend_url}/merge_chain`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/merge_chain`)
                   const reorderedRevisions = OrderRevisionInAquaTree(fileInfo.aquaTree!)
                   // const revisions = reorderedRevisions.revisions
                   const revisionHashes = Object.keys(reorderedRevisions.revisions)
@@ -177,11 +195,23 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                   if (res.status === 200) {
                         toast.success('Aqua Chain imported successfully')
 
+                        const aquaSystemFileNames = await loadSystemAquaFileNames()
+                        const { isWorkFlow, workFlow } = isWorkFlowData(fileInfo.aquaTree!, aquaSystemFileNames)
+
+                        if (isWorkFlow && workFlow == "aqua_sign") {
+                              setSelectedFileInfo(fileInfo)
+                              navigate('/app/pdf/workflow/2')
+                        } else {
+                              navigate('/app')
+                        }
+
                         // Use setTimeout to ensure state is updated before navigation
-                        setTimeout(() => {
-                              // navigate('/loading?reload=true')
-                              window.location.replace('/app');
-                        }, 500)
+                        // setTimeout(() => {
+                        // navigate('/loading?reload=true')
+                        // window.location.replace('/app');
+
+
+                        // }, 500)
                   } else {
                         toast.error('Failed to import chain')
                   }
@@ -200,7 +230,7 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                   // Get ordered revision hashes from genesis to latest
                   const orderedRevisionHashes = reorderRevisionsInAquaTree(fileInfo.aquaTree!)
                   setUploading(true)
-                  const url = `${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`)
                   const res = await axios.post(url, {
                         revisionHashes: orderedRevisionHashes
                   }, {
@@ -236,7 +266,7 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
       }
 
       useEffect(() => {
-            if(fileInfo){
+            if (fileInfo) {
                   loadExistingChainFile()
             }
       }, [fileInfo])
@@ -262,7 +292,7 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
       //         </div>
       //     </div>
       // );
-      
+
 
       return (
             <>

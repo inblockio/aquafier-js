@@ -74,6 +74,104 @@ export function formatTxtRecord(proof: DNSProof): string {
       return `wallet=${proof.walletAddress}&timestamp=${proof.timestamp}&expiration=${proof.expiration}&sig=${proof.signature}`;
 }
 
+// ============================================
+// NEW PRIVACY-PRESERVING DNS CLAIM FUNCTIONS
+// ============================================
+
+export interface AquaTreeClaim {
+      forms_unique_id: string;
+      forms_claim_secret: string;
+      forms_txt_name: string;
+      forms_txt_record: string;
+      forms_wallet_address: string;
+      forms_domain: string;
+      forms_type: string;
+      signature_type: string;
+      itime: string;
+      etime: string;
+      sig: string;
+      public_association: boolean;
+}
+
+// Generate random 8-char hex ID using crypto for security
+export function generateUniqueId(): string {
+      const array = new Uint8Array(4);
+      crypto.getRandomValues(array);
+      return Array.from(array)
+            .map(byte => byte.toString(16).padStart(2, '0'))
+            .join('');
+}
+
+// Generate random 16-char hex secret (for private mode)
+export function generateClaimSecret(): string {
+      const array = new Uint8Array(8);
+      crypto.getRandomValues(array);
+      return Array.from(array)
+            .map(byte => byte.toString(16).padStart(2, '0'))
+            .join('');
+}
+
+// Format TXT record based on mode (private or public)
+export function formatClaimTxtRecord(
+      uniqueId: string,
+      itime: number,
+      etime: number,
+      signature: string,
+      walletAddress?: string
+): string {
+      if (walletAddress) {
+            // Public mode: include wallet address in record
+            return `id=${uniqueId}&wallet=${walletAddress}&itime=${itime}&etime=${etime}&sig=${signature}`;
+      }
+      // Private mode: no wallet in record
+      return `id=${uniqueId}&itime=${itime}&etime=${etime}&sig=${signature}`;
+}
+
+// Main DNS claim generation function
+export async function generateDNSClaim(
+      domain: string,
+      walletAddress: string,
+      signMessageFunction: (message: string) => Promise<string>,
+      expirationDays: number = 90,
+      publicAssociation: boolean = false
+): Promise<AquaTreeClaim> {
+      const uniqueId = generateUniqueId();
+      const claimSecret = publicAssociation ? '' : generateClaimSecret();
+      const messagePrefix = publicAssociation ? walletAddress : claimSecret;
+
+      const itime = Math.floor(Date.now() / 1000);
+      const etime = itime + expirationDays * 86400;
+
+      // Message format: {prefix}&{itime}&{domain}&{etime}
+      // Private mode: {secret}&{itime}&{domain}&{etime}
+      // Public mode: {wallet}&{itime}&{domain}&{etime}
+      const message = `${messagePrefix}&${itime}&${domain}&${etime}`;
+      const signature = await signMessageFunction(message);
+
+      const txtName = `_aw.${domain}`;
+
+      return {
+            forms_unique_id: uniqueId,
+            forms_claim_secret: claimSecret,
+            forms_txt_name: txtName,
+            forms_txt_record: formatClaimTxtRecord(
+                  uniqueId,
+                  itime,
+                  etime,
+                  signature,
+                  publicAssociation ? walletAddress : undefined
+            ),
+            forms_wallet_address: walletAddress,
+            forms_domain: domain,
+            forms_type: 'dns_claim',
+            signature_type: 'ethereum:eip-191',
+            itime: itime.toString(),
+            etime: etime.toString(),
+            sig: signature,
+            public_association: publicAssociation
+      };
+}
+
 // Helper function to convert string to hex with 0x prefix
 export const stringToHex = (str: string): string => {
       const hex = Array.from(str)
@@ -156,7 +254,7 @@ export function isAquaTree(content: any): boolean {
       }
       if (isJsonAlready) {
             json = content
-      }else {
+      } else {
             try {
                   json = JSON.parse(content)
             } catch (e) {
@@ -165,6 +263,23 @@ export function isAquaTree(content: any): boolean {
       }
       // Check if content has the properties of an AquaTree
       return json && typeof json === 'object' && 'revisions' in json && 'file_index' in json
+}
+
+export function parseAquaTreeContent(content: any): any {
+      // If content is already an object with revisions, return it
+      if (content && typeof content === 'object' && 'revisions' in content) {
+            return content
+      }
+      // If content is a string, try to parse it
+      if (typeof content === 'string') {
+            try {
+                  return JSON.parse(content)
+            } catch (e) {
+                  console.error('Failed to parse AquaTree content:', e)
+                  return null
+            }
+      }
+      return content
 }
 export function formatCryptoAddress(address?: string, start: number = 10, end: number = 4, message?: string): string {
       if (!address) return message ?? 'NO ADDRESS'
@@ -225,8 +340,8 @@ export function getAquatreeObject(content: any): AquaTree {
             return JSON.parse(content)
       }
       return content
-  }
-  
+}
+
 
 export function getAquaTreeFileObject(fileInfo: ApiFileInfo): FileObject | undefined {
       let mainAquaFileName = ''
@@ -320,9 +435,9 @@ export const getWalletClaims = (aquaTemplateNames: string[], files: ApiFileInfo[
                   const genesisHash = getGenesisHash(firstClaim.aquaTree!)
                   const firstRevision = firstClaim.aquaTree!.revisions[genesisHash!]
                   let nameOrEmail = ""
-                  if(firstRevision.forms_name){
+                  if (firstRevision.forms_name) {
                         nameOrEmail = firstRevision.forms_name
-                  }else if(firstRevision.forms_email){
+                  } else if (firstRevision.forms_email) {
                         nameOrEmail = firstRevision.forms_email
                   }
 
@@ -2145,73 +2260,60 @@ export function convertToWebsocketUrl(actualUrlToFetch: string): string {
 }
 
 export function ensureDomainUrlHasSSL(url: string): string {
-      // let url = actualUrlToFetch;
+      const windowHost = typeof window !== 'undefined' ? window.location.origin : '';
+      const isWindowLocalhost = windowHost.includes('localhost') || windowHost.includes('127.0.0.1');
+      const isUrlLocalhost = url.includes('localhost') || url.includes('0.0.0.0') || url.includes('127.0.0.1');
 
-      // Check if actualUrlToFetch is localhost but window host is not localhost
-      const isLocalhost = url.includes('localhost') || url.includes('0.0.0.0') || url.includes('localhost');
-      const windowHost = window.location.origin;
+      // If we're on a production domain but the URL points to localhost/0.0.0.0,
+      // transform the URL to use the production API
+      if (isUrlLocalhost && !isWindowLocalhost && windowHost) {
+            let apiHost = '';
 
-
-
-      // Step 1: Enforce HTTPS for all domains except localhost/development
-      if (!isLocalhost) {
-            // Add https if no protocol specified
-            if (!url.includes('://')) {
-                  url = 'https://' + url;
-            }
-            // Replace http with https if not localhost
-            else if (url.startsWith('http://')) {
-                  url = url.replace('http://', 'https://');
-            }
-
-            //Remove port numbers for non-localhost URLs
-            url = url.replace(/:\d+/g, '');
-      }
-
-      // Step 2: Replace unsafe localhost URLs with safe ones
-      const localhostReplacements = [
-            { from: 'https://0.0.0.0', to: 'http://localhost' },
-            { from: 'http://0.0.0.0', to: 'http://localhost' },
-            { from: 'https://localhost', to: 'http://localhost' },
-            { from: 'https://localhost', to: 'http://localhost' }
-      ];
-
-      for (const replacement of localhostReplacements) {
-            if (url.startsWith(replacement.from)) {
-                  url = url.replace(replacement.from, replacement.to);
-            }
-      }
-
-      (`ensureDomainUrlHasSSL url after replacements: ${url}`)
-
-      if (isLocalhost && !(windowHost.includes('localhost') || windowHost.includes('localhost'))) {
-
-            (`ensureDomainUrlHasSSL isLocalhost: ${isLocalhost}, windowHost: ${windowHost}`)
-            // Replace localhost/localhost based on window host
+            // Determine the API host based on the current window host
             if (windowHost === 'https://dev.inblock.io') {
-                  url = url.replace('https://localhost', 'https://dev-api.inblock.io')
-                        .replace('https://localhost', 'https://dev-api.inblock.io')
-                        .replace('https://0.0.0.0', 'https://dev-api.inblock.io');
-
+                  apiHost = 'https://dev-api.inblock.io';
             } else if (windowHost === 'https://aquafier.inblock.io') {
-                  url = url.replace('https://localhost', 'https://aquafier-api.inblock.io')
-                        .replace('https://localhost', 'https://aquafier-api.inblock.io')
-                        .replace('https://0.0.0.0', 'https://aquafier-api.inblock.io');
+                  apiHost = 'https://aquafier-api.inblock.io';
             } else {
-                  // Extract subdomain and add -api
-                  const match = windowHost.match(/https?:\/\/([^.]+)\./);
+                  // Extract subdomain and create API host (e.g., https://foo.inblock.io -> https://foo-api.inblock.io)
+                  const match = windowHost.match(/https?:\/\/([^.]+)\.(.*)/);
                   if (match) {
                         const subdomain = match[1];
-                        const baseHost = windowHost.replace(/https?:\/\/[^.]+\./, `https://${subdomain}-api.`);
-                        // url = url.replace(/https?:\/\/(127\.0\.0\.1|localhost|0\.0\.0\.0)/g, baseHost);
-                        url = url.replace('https://localhost', baseHost)
-                              .replace('https://localhost', baseHost)
-                              .replace('https://0.0.0.0', baseHost);
+                        const domain = match[2];
+                        apiHost = `https://${subdomain}-api.${domain}`;
                   }
             }
-            // Remove port numbers and path from the replaced URL if they exist
-            url = url.replace(/:\d+/g, '').replace(/\/.*$/, '');
-            return url;
+
+            if (apiHost) {
+                  // Extract the path from the original URL (exclude "/" as it's the default)
+                  let path = '';
+                  try {
+                        const urlObj = new URL(url);
+                        // Only include path if it's not just "/"
+                        if (urlObj.pathname !== '/') {
+                              path = urlObj.pathname;
+                        }
+                        path += urlObj.search;
+                  } catch {
+                        // Fallback: extract path manually
+                        const pathMatch = url.match(/https?:\/\/[^\/]+(\/.*)?$/);
+                        if (pathMatch && pathMatch[1] && pathMatch[1] !== '/') {
+                              path = pathMatch[1];
+                        }
+                  }
+
+                  return apiHost + path;
+            }
+      }
+
+      // For non-localhost URLs, ensure HTTPS for inblock.io domains
+      if (url.includes('inblock.io') && url.startsWith('http://')) {
+            url = url.replace('http://', 'https://');
+      }
+
+      // For local development, normalize 0.0.0.0 to localhost
+      if (isWindowLocalhost && url.includes('0.0.0.0')) {
+            url = url.replace('0.0.0.0', 'localhost');
       }
 
       return url;
@@ -2474,7 +2576,11 @@ const getSignatureRevionHashes = (hashesToLoopPar: Array<string>, selectedFileIn
                   const hashSigPositionHashString = selectedFileInfo!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0]
                   if (allAquaTrees) {
                         for (const anAquaTreeFileObject of allAquaTrees) {
-                              const anAquaTree: AquaTree = anAquaTreeFileObject.fileContent as AquaTree
+                              const anAquaTree: AquaTree = parseAquaTreeContent(anAquaTreeFileObject.fileContent) as AquaTree
+                              if (!anAquaTree || !anAquaTree.revisions) {
+                                    console.error("Error parsing AquaTree from file object.")
+                                    continue
+                              }
                               const allHashes = Object.keys(anAquaTree.revisions)
                               if (allHashes.includes(hashSigPositionHashString)) {
                                     const revData = anAquaTree.revisions[hashSigPositionHashString]
@@ -2877,7 +2983,7 @@ export const reorderRevisionsInAquaTree = (aquaTree: AquaTree): string[] => {
 
       const revisions = aquaTree.revisions
       const orderedHashes: string[] = []
-      
+
       // Find genesis revision (one with empty previous_hash)
       let genesisHash: string | null = null
       for (const [hash, revision] of Object.entries(revisions)) {

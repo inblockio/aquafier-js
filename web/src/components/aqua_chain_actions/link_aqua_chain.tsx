@@ -1,6 +1,7 @@
 import { LuLink2 } from 'react-icons/lu'
 import { useEffect, useState } from 'react'
 import {
+      ensureDomainUrlHasSSL,
       fetchFiles,
       getAquaTreeFileObject,
       getGenesisHash,
@@ -20,7 +21,7 @@ import FilesList from '@/pages/files/files_list'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 
 export const LinkButton = ({ item, nonce, index }: IShareButton) => {
-      const { backend_url, setFiles, files, session } = useStore(appStore)
+      const { backend_url, setFiles,  session } = useStore(appStore)
       const [isOpen, setIsOpen] = useState(false)
       const [linking, setLinking] = useState(false)
       const [primaryFileObject, setPrimaryFileObject] = useState<FileObject | null | "loading">("loading")
@@ -91,7 +92,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                         const lastHash = revisionHashes[revisionHashes.length - 1]
                         const lastRevision = result.data.aquaTree?.revisions[lastHash]
                         // send to server
-                        const url = `${backend_url}/tree`
+                        const url = ensureDomainUrlHasSSL(`${backend_url}/tree`)
 
                         await axios.post(
                               url,
@@ -120,14 +121,14 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
             setLinking(false)
 
             // Trigger actions
-            await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true)
+            await triggerWorkflowReload(RELOAD_KEYS.user_files, true)
             await triggerWorkflowReload(RELOAD_KEYS.all_files, true)
       }
 
       const refetchAllUserFiles = async () => {
             // refetch all the files to ensure the front end state is the same as the backend
             try {
-                  const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                  const filesApi = await fetchFiles(session!.address, ensureDomainUrlHasSSL(`${backend_url}/explorer_files`), session!.nonce)
                   setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
             } catch (e) {
@@ -203,7 +204,8 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
 
                                                             <FilesList
                                                                   showFileActions={false}
-                                                                  selectedFiles={linkItems} activeFile={item}
+                                                                  selectedFiles={linkItems} 
+                                                                  activeFile={item}
                                                                   showCheckbox={true}
                                                                   showHeader={true}
                                                                   onFileDeSelected={(file) => {
@@ -239,7 +241,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                                                 Cancel
                                           </Button>
 
-                                          {files?.fileData.length > 1 && (
+                                          {linkItems.length > 0 && (
                                                 <Button
                                                       onClick={handleLink}
                                                       disabled={linking || linkItems === null || linkItems.length == 0}

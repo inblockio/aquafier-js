@@ -8,7 +8,7 @@ import JSZip from 'jszip'
 import { AquaJsonManifestFileInZip, IDropzoneAction, ImportZipAquaTreeConflictResolutionDialogProps } from '../../types/types'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { fetchFiles, getFileName, getGenesisHash } from '@/utils/functions'
+import { ensureDomainUrlHasSSL, fetchFiles, getFileName, getGenesisHash } from '@/utils/functions'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { FileText, Loader2, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
@@ -34,7 +34,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
 
             setUploading(true)
             try {
-                  const url = `${backend_url}/explorer_aqua_zip`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_aqua_zip`)
                   await axios.post(url, formData, {
                         headers: {
                               'Content-Type': 'multipart/form-data',
@@ -42,13 +42,11 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                         },
                   })
 
-                  // return all user files
-                  // const files = await fetchFiles(session!.address!, `${backend_url}/explorer_files`, session!.nonce)
-                  // setFiles({
-                  //       fileData: files, status: 'loaded'
-                  // })
+                 const urlPath = `${backend_url}/explorer_files`
+                                    const url2 = ensureDomainUrlHasSSL(urlPath)
 
-                  const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                                    
+                  const filesApi = await fetchFiles(session!.address, url2, session!.nonce)
                   setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
 
@@ -60,7 +58,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                   removeFilesListForUpload(filesWrapper)
 
                   // Trigger reload for all files and stats
-                  await triggerWorkflowReload(RELOAD_KEYS.aqua_files, true);
+                  await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
                   await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
 
                   return

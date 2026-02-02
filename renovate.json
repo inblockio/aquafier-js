@@ -3,9 +3,12 @@
   "extends": [
     "github>inblockio/renovate-config"
   ],
-  "baseBranches": ["dev"],
+  "baseBranches": [
+    "dev"
+  ],
   "timezone": "Europe/Berlin",
   "schedule": [
     "* 0-1 * * *"
-  ]
+  ],
+  "rangeStrategy": "replace"
 }

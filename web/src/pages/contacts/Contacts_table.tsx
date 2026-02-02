@@ -8,6 +8,7 @@ import WalletAddressProfile from "../v2_claims_workflow/WalletAddressProfile";
 import { Button } from "@/components/ui/button";
 import { ClipLoader } from "react-spinners";
 import { useContacts } from "@/hooks/useContactResolver";
+import { FaEthereum } from "react-icons/fa6";
 
 
 const letters = ['0', ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))];
@@ -68,7 +69,7 @@ const ContactRow = ({ contact, onProfileSelect }: ContactRowProps) => {
     const subtle = nm ? truncateAddress(contact.walletAddress) : '';
     const meta = [contact.phone, contact.email].filter(Boolean).join(' • ') || (nm ? '' : 'Wallet');
 
-    const renderClaimIcon = (claimType: "identity_claim" | "email_claim" | "phone_number_claim" | "user_signature" | "domain_claim") => {
+    const renderClaimIcon = (claimType: "identity_claim" | "email_claim" | "phone_number_claim" | "user_signature" | "domain_claim" | "ens_claim") => {
         switch (claimType) {
             case "identity_claim":
                 return <User className="w-5 h-5" />
@@ -80,12 +81,14 @@ const ContactRow = ({ contact, onProfileSelect }: ContactRowProps) => {
                 return <Signature className="w-5 h-5" />
             case "domain_claim":
                 return <TbWorld className="w-5 h-5" />
+            case "ens_claim":
+                return <FaEthereum className="w-5 h-5" />
             default:
                 return <User className="w-5 h-5" />
         }
     }
 
-    const getClaimType = (claimType: "identity_claim" | "email_claim" | "phone_number_claim" | "user_signature" | "domain_claim") => {
+    const getClaimType = (claimType: "identity_claim" | "email_claim" | "phone_number_claim" | "user_signature" | "domain_claim" | "ens_claim") => {
         switch (claimType) {
             case "identity_claim":
                 return "Identity"
@@ -97,6 +100,8 @@ const ContactRow = ({ contact, onProfileSelect }: ContactRowProps) => {
                 return "Signature"
             case "domain_claim":
                 return "Domain"
+            case "ens_claim":
+                return "ENS"
             default:
                 return "Unknown"
         }
@@ -219,6 +224,8 @@ const ContactsTable = () => {
 
     const { contacts: contactProfiles, loading: contactsLoading } = useContacts();
 
+    console.log(contactProfiles)
+
     const groupKey = (c: ContactProfile) => {
         const nm = normalizeText(c.name ?? "");
         if (nm) {
@@ -240,7 +247,7 @@ const ContactsTable = () => {
             // return [c.name ?? "", c.walletAddress, c.phone, c.email, c.searchString].some(
             //     v => (v || '').toLowerCase().includes(q)
             // );
-            return `${c.name ?? ""} ${c.walletAddress ?? ""} ${c.phone ?? ""} ${c.email ?? ""} ${c.searchString ?? ""}`.toLowerCase().includes(q)
+            return `${c.ensName ?? ""} ${c.name ?? ""} ${c.walletAddress ?? ""} ${c.phone ?? ""} ${c.email ?? ""} ${c.searchString ?? ""}`.toLowerCase().includes(q)
         });
     };
 

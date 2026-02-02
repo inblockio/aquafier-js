@@ -1,15 +1,37 @@
-import { createSIWEConfig } from '@reown/appkit-siwe'
+import { createSIWEConfig, formatMessage } from '@reown/appkit-siwe'
 import type { SIWECreateMessageArgs, SIWESession, SIWEVerifyMessageArgs } from '@reown/appkit-siwe'
 import axios from 'axios'
 import { getCookie, setCookie, ensureDomainUrlHasSSL } from '../utils/functions'
-import { ETH_CHAINID_MAP_NUMBERS, SESSION_COOKIE_NAME } from '../utils/constants'
+import { ETH_CHAINID_MAP_NUMBERS, SESSION_COOKIE_NAME, BACKEND_URL_STORAGE_KEY } from '../utils/constants'
 import appStore from '../store'
 import { toast } from 'sonner'
-import { createSiweMessage } from '@/utils/appkit-wallet-utils'
 import { ethers } from 'ethers'
 
+/**
+ * Get backend URL synchronously - reads from localStorage first (sync),
+ * then falls back to the Zustand store.
+ * This is needed because getSession() is called before IndexedDB rehydrates.
+ */
+const getBackendUrlSync = (): string => {
+  // Try localStorage first (synchronous access)
+  try {
+    const cachedUrl = localStorage.getItem(BACKEND_URL_STORAGE_KEY)
+    if (cachedUrl && !cachedUrl.includes('0.0.0.0')) {
+      const result = ensureDomainUrlHasSSL(cachedUrl)
+      return result
+    }
+  } catch (e) {
+    console.warn('Failed to read backend_url from localStorage:', e)
+  }
+
+  // Fall back to store (may not be rehydrated yet)
+  const storeUrl = appStore.getState().backend_url
+  const result = ensureDomainUrlHasSSL(storeUrl)
+  return result
+}
+
 // Helper function to extract Ethereum address from DID or return as-is if already an address
-const extractEthereumAddress = (addressOrDid: string): string => {
+export const extractEthereumAddress = (addressOrDid: string): string => {
   // Check if it's a DID format: did:pkh:eip155:1:0x...
   if (addressOrDid.startsWith('did:pkh:eip155:')) {
     const parts = addressOrDid.split(':')
@@ -23,12 +45,9 @@ const extractEthereumAddress = (addressOrDid: string): string => {
 
 export const siweConfig = createSIWEConfig({
 
-  
-  createMessage: ({ address }: SIWECreateMessageArgs) => {
-    // Extract the actual Ethereum address from DID format if necessary
-    const ethAddress = extractEthereumAddress(address)
 
-    return createSiweMessage(ethAddress, "Sign in with Ethereum to the app")
+  createMessage: ({ address, ...args }: SIWECreateMessageArgs) => {
+    return formatMessage(args, address)
   },
 
   getNonce: async () => {
@@ -37,24 +56,35 @@ export const siweConfig = createSIWEConfig({
   },
 
   getMessageParams: async () => {
+    // Set session expiration to 7 days from now
+    const expirationTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+
     return {
       domain: window.location.host,
       uri: window.location.origin,
       statement: 'Sign in with Ethereum to the app.',
       version: '1',
       chains: [1, 11155111, 17000], // main, Sepolia and Holesky
+      expirationTime,
     }
   },
 
   getSession: async () => {
     const nonce = getCookie(SESSION_COOKIE_NAME)
-    // console.log("getSession : Nonce: ", nonce)
-    if (!nonce) return null
-
-    // console.log("getSession : Here after nonce")
+    if (!nonce) {
+      return null
+    }
 
     try {
-      const backend_url = appStore.getState().backend_url
+      // Use synchronous getter to avoid race condition with IndexedDB rehydration
+      const backend_url = getBackendUrlSync()
+
+      // Skip if backend_url is still the default placeholder
+      if (backend_url.includes('0.0.0.0')) {
+        console.warn('[SIWE DEBUG] getSession: backend_url not yet available, skipping session check')
+        return null
+      }
+
       const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
       const response = await axios.get(url, {
         params: { nonce },
@@ -62,10 +92,8 @@ export const siweConfig = createSIWEConfig({
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       })
-      // console.log("Response: ", response)
 
       if (response.status === 200 && response.data?.session) {
-        // console.log("Session: ", response.data.session)
         const userSettings = response.data.user_settings
         const network = userSettings.witness_network
         const chainId = ETH_CHAINID_MAP_NUMBERS[network]
@@ -73,33 +101,30 @@ export const siweConfig = createSIWEConfig({
           address: ethers.getAddress(response.data.session.address),
           // TODO: fix this. Find a way to return the connected chain id from the backend to avoid issues in which it asks the user to reconnect
           // For now, I read the user settings to get chainID
-          chainId: response.data.session.chain_id || chainId, 
+          chainId: response.data.session.chain_id || chainId,
         } as SIWESession
 
-        // console.log("getSession : Retrieved session data:", JSON.stringify(data))
         return data
+      } else {
       }
     } catch (error) {
-      console.error('getSession : Failed to get session:', error)
     }
 
     return null
   },
 
-  enabled:true,
+  enabled: true,
   required: true,
-  
+
 
   signOutOnDisconnect: false,        // ADD
-    signOutOnAccountChange: false,     // ADD
-    signOutOnNetworkChange: false,     // ADD
-  
+  signOutOnAccountChange: false,     // ADD
+  signOutOnNetworkChange: false,     // ADD
+
 
   verifyMessage: async ({ message, signature }: SIWEVerifyMessageArgs) => {
-    // console.log("Message: ", message)
-    // console.log("Signature: ", signature)
     try {
-      const backend_url = appStore.getState().backend_url
+      const backend_url = getBackendUrlSync()
       const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
       const domain = window.location.host
 
@@ -129,7 +154,6 @@ export const siweConfig = createSIWEConfig({
 
       return false
     } catch (error) {
-      console.error('Failed to verify message:', error)
       toast.error('An error occurred during authentication')
       return false
     }
@@ -141,7 +165,7 @@ export const siweConfig = createSIWEConfig({
       const nonce = getCookie(SESSION_COOKIE_NAME)
 
       if (nonce) {
-        const backend_url = appStore.getState().backend_url
+        const backend_url = getBackendUrlSync()
         const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
         await axios.delete(url, {
           params: { nonce },
@@ -156,6 +180,7 @@ export const siweConfig = createSIWEConfig({
       store.setMetamaskAddress(null)
       store.setAvatar(undefined)
       store.setSession(null)
+      store.setIsAdmin(false)
       store.setFiles({
         fileData: [],
         status: 'idle',

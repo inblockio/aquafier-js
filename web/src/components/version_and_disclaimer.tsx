@@ -10,6 +10,7 @@ import {toast} from 'sonner'
 import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from './ui/dialog'
 import {Button} from './ui/button'
 import {Alert, AlertDescription} from './ui/alert'
+import { ensureDomainUrlHasSSL } from '@/utils/functions'
 
 export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }: IVersionAndDisclaimer) {
       //   const {  es, avatar, setAvatar, setUserProfile, backend_url } = useStore(appStore);
@@ -26,7 +27,8 @@ export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }:
 
       const fetchVersionDetails = async () => {
             try {
-                  const url = `${backend_url}/version`
+                  //`${backend_url}/version`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/version`)
 
                   const response = await axios.get(url)
 

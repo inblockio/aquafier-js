@@ -3,10 +3,12 @@ import { prisma } from '../database/db';
 import { DeleteRevision, FetchAquaTreeRequest, SaveRevisionForUser } from '../models/request_models';
 import { getAquaTreeFileName, getHost, getPort } from '../utils/api_utils';
 import {
+    buildEntireTreeFromGivenRevisionHash,
     deleteAquaTree,
     getSignatureAquaTrees,
     getUserApiFileInfo,
-    saveARevisionInAquaTree
+    isWorkFlowData,
+    saveRevisionInAquaTree
 } from '../utils/revisions_utils';
 import { AquaTree, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
@@ -15,7 +17,7 @@ import WebSocketActions from '../constants/constants';
 import { createAquaTreeFromRevisions, deleteChildrenFieldFromAquaTrees } from '../utils/revisions_operations_utils';
 import Logger from "../utils/logger";
 import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
-import { TEMPLATE_HASHES } from '../models/constants';
+import { systemTemplateHashes, TEMPLATE_HASHES } from '../models/constants';
 import { ethers } from 'ethers';
 import * as fs from 'fs';
 
@@ -142,7 +144,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             // Construct the full URL
             const url = `${protocol}://${host}`;
 
-            const [_httpCode, _message] = await saveARevisionInAquaTree(revisionData, revisionData.address, url);
+            const [_httpCode, _message] = await saveRevisionInAquaTree(revisionData, revisionData.address, url);
 
             // if (httpCode != 200 && httpCode !== 407) {
             //     return reply.code(httpCode).send({ success: false, message: message });
@@ -217,7 +219,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             // Construct the full URL
             const url = `${protocol}://${host}`;
 
-            const [httpCode, message] = await saveARevisionInAquaTree(revisionData, session.address, url);
+            const [httpCode, message] = await saveRevisionInAquaTree(revisionData, session.address, url);
 
             if (httpCode != 200) {
                 return reply.code(httpCode).send({ success: false, message: message });
@@ -434,151 +436,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
         return invalidClaimTypes;
     }
 
-    function orderRevisionsFromGenesisToLatest(revisionTree: Array<{ revisionHash: string, children: Array<string>, data: any }>) {
-        if (!revisionTree || revisionTree.length === 0) {
-            return [];
-        }
-
-        // Create a map for quick lookup by revision hash
-        const revisionMap = new Map<string, { revisionHash: string, children: Array<string>, data: any }>();
-        revisionTree.forEach(revision => {
-            revisionMap.set(revision.revisionHash, revision);
-        });
-
-        // Find the genesis revision (where previous is null, undefined, or empty string)
-        const genesisRevision = revisionTree.find(revision =>
-            !revision.data.previous || revision.data.previous === ""
-        );
-
-        if (!genesisRevision) {
-            // If no genesis found, return the original array (shouldn't happen in a well-formed tree)
-            return revisionTree;
-        }
-
-        // Build ordered array starting from genesis
-        const orderedRevisions: Array<{ revisionHash: string, children: Array<string>, data: any }> = [];
-        let currentRevision: any = genesisRevision;
-
-        // Follow the chain from genesis to latest
-        while (currentRevision) {
-            orderedRevisions.push(currentRevision);
-
-            // Find the next revision in the chain
-            // Look for a revision that has the current revision as its previous
-            const nextRevision = revisionTree.find(revision =>
-                revision.data.previous === currentRevision.revisionHash
-            );
-
-            currentRevision = nextRevision || null;
-        }
-
-        return orderedRevisions;
-    }
-
-    async function buildEntireTreeFromGivenRevisionHash(revisionHash: string) {
-        const visitedHashes = new Set<string>();
-        const revisionTree: Array<{ revisionHash: string, children: Array<string>, data: any }> = [];
-
-        // Helper function to traverse backwards through previous revisions
-        async function traverseBackwards(hash: string): Promise<void> {
-            if (visitedHashes.has(hash)) return;
-
-            const revisionData = await prisma.revision.findUnique({
-                select: {
-                    children: true,
-                    previous: true
-                },
-                where: {
-                    pubkey_hash: hash
-                }
-            });
-
-            if (!revisionData) return;
-
-            visitedHashes.add(hash);
-            revisionTree.push({
-                revisionHash: hash,
-                children: revisionData.children,
-                data: revisionData
-            });
-
-            // If there's a previous revision, traverse backwards
-            if (revisionData.previous) {
-                await traverseBackwards(revisionData.previous);
-            }
-        }
-
-        // Helper function to traverse forwards through children revisions
-        async function traverseForwards(hash: string): Promise<void> {
-            if (visitedHashes.has(hash)) return;
-
-            const revisionData = await prisma.revision.findUnique({
-                select: {
-                    children: true,
-                    previous: true
-                },
-                where: {
-                    pubkey_hash: hash
-                }
-            });
-
-            if (!revisionData) return;
-
-            visitedHashes.add(hash);
-            revisionTree.push({
-                revisionHash: hash,
-                children: revisionData.children,
-                data: revisionData
-            });
-
-            // If there are children, traverse each child recursively
-            if (revisionData.children && revisionData.children.length > 0) {
-                for (const childHash of revisionData.children) {
-                    await traverseForwards(childHash);
-                }
-            }
-        }
-
-        // Start by getting the initial revision
-        const initialRevision = await prisma.revision.findUnique({
-            select: {
-                children: true,
-                previous: true
-            },
-            where: {
-                pubkey_hash: revisionHash
-            }
-        });
-
-        if (!initialRevision) {
-            return revisionTree; // Return empty array if revision not found
-        }
-
-        // Add the starting revision to visited set and tree
-        visitedHashes.add(revisionHash);
-        revisionTree.push({
-            revisionHash: revisionHash,
-            children: initialRevision.children,
-            data: initialRevision
-        });
-
-        // Traverse backwards through previous revisions
-        if (initialRevision.previous) {
-            await traverseBackwards(initialRevision.previous);
-        }
-
-        // Traverse forwards through all children recursively
-        if (initialRevision.children && initialRevision.children.length > 0) {
-            for (const childHash of initialRevision.children) {
-                await traverseForwards(childHash);
-            }
-        }
-
-        let orderedRevisions = orderRevisionsFromGenesisToLatest(revisionTree)
-
-        return orderedRevisions;
-    }
-
+   
     function getBaseUrl(request: AuthenticatedRequest) {
         const host = request.headers.host || `${getHost()}:${getPort()}`;
 
@@ -589,6 +447,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
         const url = `${protocol}://${host}`;
         return url
     }
+
 
     // Get user files based on a given claim type
     fastify.get('/tree/per_type', {
@@ -1022,7 +881,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
 
     // Get aqua files only, files that are not part of any workflow
-    fastify.get('/tree/aqua_files', {
+    fastify.get('/tree/user_files', {
         preHandler: authenticate
     }, async (request: AuthenticatedRequest, reply) => {
         const userAddress = request.user?.address;
@@ -1264,7 +1123,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 const filteredFileNames = fileNameRecords.filter(fn => fileRevisionHashes.has(fn.pubkey_hash));
 
                 // Filter out workflow files if needed
-                if (fileType === 'aqua_files') {
+                if (fileType === 'user_files') {
                     const workflowLatestRecords = await prisma.latest.findMany({
                         where: {
                             AND: {
@@ -1362,7 +1221,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 }));
 
                 // Filter out workflow files if needed
-                if (fileType === 'aqua_files') {
+                if (fileType === 'user_files') {
                     const workflowLatestRecords = await prisma.latest.findMany({
                         where: {
                             AND: {
@@ -1395,7 +1254,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                     AND: {
                         user: userAddress,
                         template_id: null,
-                        is_workflow: fileType === 'aqua_files' ? false : undefined
+                        is_workflow: fileType === 'all' || fileType == "user_files" ? false : undefined
                     }
                 };
 
@@ -1438,6 +1297,24 @@ export default async function revisionsController(fastify: FastifyInstance) {
             });
 
             displayData = await Promise.all(displayDataPromises);
+
+            if (fileType === 'user_files') {
+                // Filter out any workflow files that might have slipped through
+                let filteredDisplayData: Array<{
+                    aquaTree: AquaTree,
+                    fileObject: FileObject[]
+                }> = []
+
+                for (const dataItem of displayData) {
+                    let isWorkflow = isWorkFlowData(dataItem.aquaTree, systemTemplateHashes);
+                    if (!isWorkflow || isWorkflow.isWorkFlow === false) {
+                        filteredDisplayData.push(dataItem);
+                    }
+
+                }
+                displayData = filteredDisplayData;
+                totalCount = displayData.length;
+            }
 
             const queryEnd = performance.now()
             const queryDuration = (queryEnd - queryStart) / 1000

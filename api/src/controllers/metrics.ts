@@ -19,6 +19,11 @@ export default async function metricsController(fastify: FastifyInstance) {
             return reply.code(403).send({ success: false, message: "Nounce  is invalid "+nonce  });
         }
 
+        const allowedWallets = (process.env.DASHBOARD_WALLETS || "").split(",").map(w => w.trim().toLowerCase());
+        if (!session.address || !allowedWallets.includes(session.address.toLowerCase())) {
+             return reply.code(403).send({ error: 'Unauthorized: Access denied' });
+        }
+
 
         try {
             // Get start of today in UTC
@@ -55,6 +60,15 @@ export default async function metricsController(fastify: FastifyInstance) {
                 totalNotifications,
                 unreadNotifications,
                 newNotificationsToday,
+                // Revision Types Breakdown
+                revisionTypes,
+                revisionTypesToday,
+
+                // Core metrics - Payments
+                totalPayments,
+                newPaymentsToday,
+                totalPaymentAmount,
+                paymentStatusBreakdown,
             ] = await Promise.all([
                 // Core metrics - Users
                 prisma.users.count(),
@@ -117,6 +131,31 @@ export default async function metricsController(fastify: FastifyInstance) {
                 prisma.notifications.count({
                     where: { created_on: { gte: startOfToday } },
                 }),
+
+                // Revision Types Breakdown
+                prisma.revision.groupBy({
+                    by: ['revision_type'],
+                    _count: true,
+                }),
+                prisma.revision.groupBy({
+                    by: ['revision_type'],
+                    where: { createdAt: { gte: startOfToday } },
+                    _count: true,
+                }),
+
+                // Payment Metrics
+                prisma.payment.count(),
+                prisma.payment.count({
+                    where: { createdAt: { gte: startOfToday } },
+                }),
+                prisma.payment.aggregate({
+                    _sum: { amount: true },
+                    where: { status: 'SUCCEEDED' }
+                }),
+                prisma.payment.groupBy({
+                    by: ['status'],
+                    _count: true,
+                }),
             ]);
 
             // Calculate growth percentages
@@ -138,6 +177,25 @@ export default async function metricsController(fastify: FastifyInstance) {
             const contractsPerUser = totalUsers > 0
                 ? (totalContracts / totalUsers).toFixed(2)
                 : '0';
+            
+            // Format revision breakdown
+            const revisionBreakdown = revisionTypes.map(rt => ({
+                type: rt.revision_type,
+                count: rt._count
+            })).sort((a, b) => b.count - a.count);
+
+            // Calculate revision stats
+            const getRevStat = (type: string) => {
+                const total = revisionTypes.find(rt => rt.revision_type === type)?._count || 0;
+                const newToday = revisionTypesToday.find(rt => rt.revision_type === type)?._count || 0;
+                return { total, newToday };
+            };
+
+            // Format payment breakdown
+            const paymentBreakdown = paymentStatusBreakdown.map(pb => ({
+                status: pb.status,
+                count: pb._count
+            })).sort((a, b) => b.count - a.count);
 
             const metrics: MetricsResponse = {
                 users: {
@@ -154,11 +212,19 @@ export default async function metricsController(fastify: FastifyInstance) {
                     total: totalRevisions,
                     newToday: newRevisionsToday,
                     growth: calculateGrowth(newRevisionsToday, totalRevisions),
+                    breakdown: revisionBreakdown,
                 },
                 files: {
                     total: totalFiles,
                     newToday: newFilesToday,
                     growth: calculateGrowth(newFilesToday, totalFiles),
+                },
+                payments: {
+                    total: totalPayments,
+                    newToday: newPaymentsToday,
+                    growth: calculateGrowth(newPaymentsToday, totalPayments),
+                    totalAmount: totalPaymentAmount._sum.amount?.toString() || '0',
+                    breakdown: paymentBreakdown,
                 },
                 additionalMetrics: {
                     activeUsers: {
@@ -182,6 +248,11 @@ export default async function metricsController(fastify: FastifyInstance) {
                         total: totalNotifications,
                         unread: unreadNotifications,
                         newToday: newNotificationsToday,
+                    },
+                    revisionStats: {
+                        form: getRevStat('form'),
+                        link: getRevStat('link'),
+                        file: getRevStat('file'),
                     },
                     averages: {
                         revisionsPerContract,
@@ -238,6 +309,11 @@ export default async function metricsController(fastify: FastifyInstance) {
             return reply.code(403).send({ success: false, message: "Nounce  is invalid "+nonce  });
         }
 
+        const allowedWallets = (process.env.DASHBOARD_WALLETS || "").split(",").map(w => w.trim().toLowerCase());
+        if (!session.address || !allowedWallets.includes(session.address.toLowerCase())) {
+             return reply.code(403).send({ error: 'Unauthorized: Access denied' });
+        }
+
         
         try {
             const { startDate, endDate, tables } = request.query;
@@ -284,7 +360,7 @@ export default async function metricsController(fastify: FastifyInstance) {
                 merkleNodes: 'createdAt',
                 settings: 'createdAt',
                 verificationAttempt: 'createdAt',
-                dNSClaimVerificationOne: 'createdAt',
+                dNSClaimVerification: 'createdAt',
             };
 
             // Determine which tables to query

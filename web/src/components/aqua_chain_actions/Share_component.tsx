@@ -1,7 +1,7 @@
 import appStore from '@/store'
 import { Contract } from '@/types/types'
 import { SYSTEM_WALLET_ADDRESS } from '@/utils/constants'
-import { fetchFiles, getGenesisHash, isValidEthereumAddress, timeToHumanFriendly } from '@/utils/functions'
+import { ensureDomainUrlHasSSL, fetchFiles, getGenesisHash, isValidEthereumAddress, timeToHumanFriendly } from '@/utils/functions'
 import { getAquaTreeFileObject } from 'aqua-js-sdk'
 import axios from 'axios'
 import { Share2, X, Users, ExternalLink, Check, Copy, Lock, Trash2, Plus } from 'lucide-react'
@@ -119,7 +119,7 @@ const ShareComponent = () => {
             setSharing(true)
 
             const unique_identifier = `${Date.now()}_${generateNonce()}`
-            const url = `${backend_url}/share_data`
+            const url = ensureDomainUrlHasSSL(`${backend_url}/share_data`)
 
             const allHashes = Object.keys(selectedFileInfo!.aquaTree!.revisions!)
             const latest = allHashes[allHashes.length - 1]
@@ -181,7 +181,7 @@ const ShareComponent = () => {
                         return
                   }
 
-                  const response = await axios.get(`${backend_url}/contracts`, {
+                  const response = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/contracts`), {
                         params: {
                               genesis_hash: getGenesisHash(selectedFileInfo.aquaTree!),
                               sender: session?.address
@@ -229,7 +229,7 @@ const ShareComponent = () => {
                         <span style={{ fontSize: 24, fontWeight: 500 }}>Loading...</span>
                   </div>
             )
-      }
+      } 
 
       return (
             <div className='h-full w-full'>
@@ -334,7 +334,7 @@ const ShareComponent = () => {
                                                 </div>
                                           </div>
                                     </div>
-                              </div>
+                              </div> 
 
                               {/* Wallet Address Input */}
                               {recipientType === 'specific' && (
@@ -361,7 +361,7 @@ const ShareComponent = () => {
                                                                               address={address}
                                                                               multipleAddresses={multipleAddresses}
                                                                               setMultipleAddresses={setMultipleAddresses}
-                                                                              placeholder="Enter wallet address (0x...)"
+                                                                              // placeholder="Enter wallet address (0x...)"
                                                                               className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                                                                         />
                                                                         {

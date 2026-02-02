@@ -15,6 +15,7 @@ import appStore from '@/store'
 import { useStore } from 'zustand'
 import {
       displayTime,
+      ensureDomainUrlHasSSL,
       getAquaTreeFileName,
       getAquaTreeFileObject,
       getGenesisHash
@@ -68,7 +69,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
 
       const loadSharedContractsData = async (_latestRevisionHash: string, _genesisHash: string) => {
             try {
-                  const url = `${backend_url}/contracts`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/contracts`)
                   const response = await axios.get(url, {
                         params: {
                               sender: session?.address,
@@ -267,7 +268,7 @@ const ClaimsAndAttestationPage = () => {
                         claim_types: JSON.stringify(IDENTITY_CLAIMS),
                         wallet_address: session?.address
                   }
-                  const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
+                  const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
                         headers: {
                               'Content-Type': 'application/json',
                               'nonce': `${session!.nonce}`

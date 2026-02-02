@@ -4,7 +4,7 @@ import { prisma } from '../database/db';
 // import { Settings } from '@prisma/client';
 import { SettingsRequest, UserAttestationAddressesRequest } from '../models/request_models';
 // import { verifySiweMessage } from '../utils/auth_utils';
-import { fetchEnsName } from '../utils/api_utils';
+import { fetchEnsExpiry, fetchEnsName } from '../utils/api_utils';
 import { getAddressGivenEnsName, isEnsNameOrAddrss } from '../utils/server_utils';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
 import { Prisma, PrismaClient, UserAttestationAddresses } from '@prisma/client';
@@ -13,6 +13,11 @@ import Logger from '../utils/logger';
 import { TEMPLATE_HASHES } from '../models/constants';
 import fs from 'fs';
 import { findAquaTreeRevision } from '../utils/revisions_operations_utils';
+import { generateENSClaim } from '../utils/server_attest';
+import { saveAquaTree } from '../utils/revisions_utils';
+import { saveFileAndCreateOrUpdateFileIndex } from '../utils/aqua_tree_utils';
+import Aquafier, { cliRedify } from 'aqua-js-sdk';
+import { calculateStorageUsage } from '../utils/stats';
 
 export default async function userController(fastify: FastifyInstance) {
 
@@ -40,7 +45,8 @@ export default async function userController(fastify: FastifyInstance) {
                 address: address,
             },
             data: {
-                ens_name: addr.name
+                ens_name: addr.name,
+                ens_name_type: 'ALIAS'
             }
         });
 
@@ -110,15 +116,16 @@ export default async function userController(fastify: FastifyInstance) {
         }
 
         // Fetch from blockchain
-        const infuraProjectId = process.env.ALCHEMY_API_KEY;
-        if (!infuraProjectId) {
+        const alchemyProjectKey = process.env.ALCHEMY_API_KEY;
+        if (!alchemyProjectKey) {
             return reply.code(404).send({
                 success: false,
                 message: "ENS resolution unavailable: API key not configured"
             });
         }
 
-        const ensName = await fetchEnsName(address, infuraProjectId);
+        const ensName = await fetchEnsName(address, alchemyProjectKey);
+        console.log(cliRedify(`Found ENS NAME: ${ensName}`))
         if (ensName) {
             // Save to database
             await saveEnsToDatabase(address, ensName, useEns);
@@ -193,6 +200,9 @@ export default async function userController(fastify: FastifyInstance) {
 
     // Helper function to save ENS data to database
     async function saveEnsToDatabase(address: string, ensName: string, useEns: string | undefined) {
+        const alchemyProjectKey = process.env.ALCHEMY_API_KEY || "";
+        const ensExpiry = ensName ? await fetchEnsExpiry(ensName, alchemyProjectKey) : null;
+
         if (useEns === 'true') {
             // First, try to find existing record with case-insensitive search
             const existingEnsRecord = await prisma.eNSName.findFirst({
@@ -208,12 +218,12 @@ export default async function userController(fastify: FastifyInstance) {
                 // Update existing record using its ID
                 await prisma.eNSName.update({
                     where: { id: existingEnsRecord.id },
-                    data: { ens_name: ensName, wallet_address: address }
+                    data: { ens_name: ensName, wallet_address: address, ens_expiry: ensExpiry }
                 });
             } else {
                 // Create new record
                 await prisma.eNSName.create({
-                    data: { wallet_address: address, ens_name: ensName }
+                    data: { wallet_address: address, ens_name: ensName, ens_expiry: ensExpiry }
                 });
             }
         }
@@ -236,6 +246,62 @@ export default async function userController(fastify: FastifyInstance) {
             return reply.code(500).send({ success: false, message: `error : ${e}`, });
 
         }
+    })
+
+    fastify.post('/user/create_ens_claim', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
+
+        const user = request.user;
+
+        const userAddress = user?.address
+
+        console.log("User address: ", userAddress)
+
+        if (!userAddress) {
+            return reply.code(400).send({ error: "You are not logged in!" })
+        }
+
+        const ensEntry = await prisma.eNSName.findFirst({
+            where: {
+                wallet_address: {
+                    equals: userAddress,
+                    mode: "insensitive"
+                }
+            }
+        })
+
+        if (!ensEntry) {
+            return reply.code(400).send({ error: "Please logout and login in again!" })
+        }
+
+        const userEns = ensEntry.ens_name
+
+        if (!userEns) {
+            return reply.code(400).send({ error: "You don't have an ENS name!" })
+        }
+
+        try {
+
+            let ensAquaClaim = await generateENSClaim(userEns, ensEntry.ens_expiry?.toDateString() ?? new Date().toString(), userAddress)
+            let ensClaimAquaTree = ensAquaClaim?.aquaTree
+            let ensFiledata = ensAquaClaim?.ensJSONfileData
+            let ensFileName = ensAquaClaim?.ensJSONfileName
+
+            if (ensClaimAquaTree && ensFiledata && ensFileName) {
+                let ensFileBuffer = Buffer.from(JSON.stringify(ensFiledata))
+
+                let res = await saveAquaTree(ensClaimAquaTree, userAddress)
+
+
+                let res2 = await saveFileAndCreateOrUpdateFileIndex(userAddress, ensClaimAquaTree, ensFileName, ensFileBuffer)
+
+                return reply.code(200).send({ success: true, message: "Claim created successfully", aquaTree: ensClaimAquaTree })
+            }
+
+        } catch (e: any) {
+            return reply.code(500).send({ success: true, message: `error : ${e}`, });
+
+        }
+
     })
 
     fastify.get('/attestation_address', {
@@ -756,7 +822,32 @@ export default async function userController(fastify: FastifyInstance) {
         }
     });
 
-    // Get user data stats
+    // Get user data stats 
+    // fastify.get('/user_data_stats', {
+    //     preHandler: authenticate
+    // }, async (request: AuthenticatedRequest, reply) => {
+    //     const userAddress = request.user?.address;
+
+    //     if (!userAddress) {
+    //         return reply.code(401).send({ error: 'User not authenticated' });
+    //     }
+
+        // let stats = await calculateStorageUsage(userAddress)
+
+        // return reply.code(200).send({
+        //     filesCount: stats.totalFiles,
+        //     storageUsed: stats.storageUsage,
+        //     // totalRevisions: allUserRevisions.length,
+        //     // linkRevisionsCount: linkRevisions.length,
+        //     claimTypeCounts: {
+        //         ...stats.formTypesToTrack,
+        //         user_files: aquaFiles
+        //     }
+        // })
+
+    // });
+
+     // Get user data stats
     fastify.get('/user_data_stats', {
         preHandler: authenticate
     }, async (request: AuthenticatedRequest, reply) => {
@@ -977,8 +1068,11 @@ export default async function userController(fastify: FastifyInstance) {
             }
         }
 
-        const totalFiles = filteredUserRevisions.length
+        const totalFiles = latestRecords.length
         const aquaFiles = totalFiles - Object.values(formTypesToTrack).reduce((a, b) => a + b, 0)
+
+
+         let stats = await calculateStorageUsage(userAddress)
 
         return reply.code(200).send({
             filesCount: totalFiles,
@@ -986,8 +1080,8 @@ export default async function userController(fastify: FastifyInstance) {
             // totalRevisions: allUserRevisions.length,
             // linkRevisionsCount: linkRevisions.length,
             claimTypeCounts: {
-                ...formTypesToTrack,
-                aqua_files: aquaFiles
+                 ...stats.formTypesToTrack,
+                user_files: aquaFiles
             }
         })
 
@@ -995,6 +1089,8 @@ export default async function userController(fastify: FastifyInstance) {
 
 
 
+
+     
     // Helper function to handle files deletion
     async function handleFilesDeletion(
         tx: Omit<PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">,

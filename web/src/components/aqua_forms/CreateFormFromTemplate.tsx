@@ -9,13 +9,13 @@ import {
       estimateFileSize,
       fetchSystemFiles,
       formatDate,
-      formatTxtRecord,
-      generateProofFromSignature,
+      generateDNSClaim,
       getAquaTreeFileObject,
       getGenesisHash,
       getLastRevisionVerificationHash,
       getRandomNumber,
       isValidEthereumAddress,
+      isWorkFlowData,
       reorderRevisionsInAquaTree,
       stringToHex
 } from '@/utils/functions'
@@ -25,6 +25,7 @@ import Aquafier, {
       AquaTreeWrapper,
       FileObject,
       getAquaTreeFileName,
+      getLatestVH,
       Revision
 } from 'aqua-js-sdk'
 import axios from 'axios'
@@ -86,6 +87,8 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useNavigate } from 'react-router-dom'
 import { API_ENDPOINTS } from '@/utils/constants'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { useAquaSystemNames } from '@/hooks/useAquaSystemNames'
 
 /** Props for the SortableSignerItem component */
 interface SortableSignerItemProps {
@@ -99,6 +102,8 @@ interface SortableSignerItemProps {
       onRemove: (index: number) => void
       canRemove: boolean
 }
+
+type CustomInputType = string | File | number | File[]
 
 /** Sortable signer item component for drag-and-drop reordering */
 const SortableSignerItem = ({
@@ -187,6 +192,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 }) => {
       const [submittingTemplateData, setSubmittingTemplateData] = useState(false)
       const [modalFormErorMessae, setModalFormErorMessae] = useState('')
+      const { systemNames: systemAquaFileNames } = useAquaSystemNames()
 
       const {
             session,
@@ -198,7 +204,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             setSelectedFileInfo,
             webConfig
       } = useStore(appStore)
-      const [formData, setFormData] = useState<Record<string, string | File | number>>({})
+      const [formData, setFormData] = useState<Record<string, CustomInputType>>({})
       const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
       const [isDialogOpen, setDialogOpen] = useState(false)
       const [dialogData, setDialogData] = useState<null | {
@@ -222,7 +228,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
       const fetchInfoDetails = async () => {
             try {
-                  const url = `${backend_url}/app_info`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/app_info`);
 
                   const response = await axios.get(url)
 
@@ -272,8 +278,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
       }, []);
 
-      const getFieldDefaultValue = (field: FormField, currentState: string | File | number | undefined
-      ): string | File | number => {
+      const getFieldDefaultValue = (field: FormField, currentState: CustomInputType | undefined
+      ): string | number | File | File[] => {
             if (field.type === 'number') {
                   return currentState ?? 0
             }
@@ -450,19 +456,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   if (response.status === 200 || response.status === 201) {
                         if (isFinal) {
 
-                              // if (account !== session?.address) {
-                              // const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                              // setFiles({ fileData: files, status: 'loaded' })
 
-                              // const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                              // setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
-
-
-
-
-                              // } else {
-                              //       setFiles({ fileData: [...files.fileData, response.data.files], status: 'loaded' })
-                              // }
 
                               if (account == session?.address) {
                                     // show success toast only if saving to own account
@@ -483,8 +477,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       }
 
       // Helper function to prepare complete form data
-      const prepareCompleteFormData = (formData: Record<string, string | File | number>, selectedTemplate: FormTemplate, multipleAddresses: string[]): Record<string, string | File | number> => {
-            const completeFormData: Record<string, string | File | number> = { ...formData }
+      const prepareCompleteFormData = (formData: Record<string, CustomInputType | Array<File>>, selectedTemplate: FormTemplate, multipleAddresses: string[]): Record<string, CustomInputType | File[]> => {
+            const completeFormData: Record<string, CustomInputType | File[]> = { ...formData }
 
             selectedTemplate.fields.forEach((field: FormField) => {
                   if (!field.is_array && !(field.name in completeFormData)) {
@@ -497,8 +491,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         } else if (field.name === 'delegated_wallets' && selectedTemplate && selectedTemplate.name === 'dba_claim') {
                               completeFormData[field.name] = multipleAddresses.join(',')
                         }
-
-
                   }
             })
 
@@ -506,7 +498,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       }
 
       // Validation function for required fields
-      const validateRequiredFields = (completeFormData: Record<string, string | File | number>, selectedTemplate: FormTemplate) => {
+      const validateRequiredFields = (completeFormData: Record<string, CustomInputType>, selectedTemplate: FormTemplate) => {
             for (const fieldItem of selectedTemplate.fields) {
                   const valueInput = completeFormData[fieldItem.name]
                   if (fieldItem.required && valueInput == undefined) {
@@ -516,7 +508,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       }
 
       // Wallet address validation function
-      const validateWalletAddress = (valueInput: string | number | File, fieldItem: FormField) => {
+      const validateWalletAddress = (valueInput: CustomInputType, fieldItem: FormField) => {
             if (typeof valueInput !== 'string') {
                   throw new Error(`${valueInput} provided at ${fieldItem.name} is not a string`)
             }
@@ -548,7 +540,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       }
 
       // Domain validation function
-      const validateDomain = (valueInput: string | number | File, fieldItem: FormField) => {
+      const validateDomain = (valueInput: CustomInputType, fieldItem: FormField) => {
             if (typeof valueInput !== 'string') {
                   throw new Error(`${valueInput} provided at ${fieldItem.name} is not a string`)
             }
@@ -580,7 +572,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       }
 
       // Field validation function
-      const validateFields = (completeFormData: Record<string, string | File | number>, selectedTemplate: FormTemplate) => {
+      const validateFields = (completeFormData: Record<string, CustomInputType>, selectedTemplate: FormTemplate) => {
 
             validateRequiredFields(completeFormData, selectedTemplate)
 
@@ -614,6 +606,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   const url3 = `${backend_url}/system/aqua_tree`
                   const systemFiles = await fetchSystemFiles(url3, sessionAddress)
                   allSystemFiles = systemFiles
+            } else {
+                  console.log(`Using cached system files`)
+                  console.log(`systemFileInfo length: ${systemFileInfo.length} : ${JSON.stringify(systemFileInfo, null, 2)}`)
             }
 
             if (allSystemFiles.length === 0) {
@@ -639,7 +634,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       }
 
       // Function to generate filename
-      const generateFileName = (selectedTemplate: FormTemplate, completeFormData: Record<string, string | File | number>) => {
+      const generateFileName = (selectedTemplate: FormTemplate, completeFormData: Record<string, CustomInputType>) => {
             const randomNumber = getRandomNumber(100, 1000)
             let fileName = `${selectedTemplate?.name ?? 'template'}-${randomNumber}.json`
 
@@ -657,7 +652,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       }
 
       // Function to handle identity attestation specific logic
-      const handleIdentityAttestation = (completeFormData: Record<string, string | File | number>, selectedFileInfo: ApiFileInfo | null): Record<string, string | File | number> => {
+      const handleIdentityAttestation = (completeFormData: Record<string, CustomInputType>, selectedFileInfo: ApiFileInfo | null): Record<string, CustomInputType> => {
             if (selectedFileInfo == null) {
                   throw new Error('No claim selected for identity attestation')
             }
@@ -677,6 +672,22 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             const genHash = getGenesisHash(selectedFileInfo.aquaTree!)
             if (genHash) {
                   completeFormData[`identity_claim_id`] = genHash
+
+                  const { isWorkFlow, workFlow } = isWorkFlowData(selectedFileInfo.aquaTree!, systemAquaFileNames)
+
+                  if (completeFormData['claim_type'] == undefined && isWorkFlow && workFlow == 'aqua_certificate') {
+
+                        let genesisRevision = selectedFileInfo.aquaTree!.revisions[genHash] as Revision
+                        if (!genesisRevision) {
+                              alert(`Error: The aqua tree selected does not contain a genesis revision, please report this issue.`)
+                              throw new Error('Identity claim genesis id not found in selected file')
+
+                        }
+                        let creator = genRevision['forms_creator'] as string
+                        completeFormData[`claim_wallet_address`] = creator ?? '';
+
+                        completeFormData[`claim_type`] = 'aqua_certificate';
+                  }
                   completeFormData[`attestion_type`] = 'user'
             } else {
                   throw new Error('Identity claim genesis id not found in selected file')
@@ -685,7 +696,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             return completeFormData
       }
 
-      async function domainTemplateSignMessageFunction(domainParams: string | undefined, timestamp: string, expiration: string): Promise<string | undefined> {
+      async function domainTemplateSignMessageFunction(domainParams: string | undefined, messageToSign: string): Promise<string | undefined> {
             let signature: string | undefined = undefined
             if (!domainParams) {
                   alert('Please enter a domain name')
@@ -693,10 +704,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             }
 
             const account = session?.address
-
-
-
-            const domain = domainParams.trim()
 
             if (webConfig.AUTH_PROVIDER == "metamask") {
                   if (typeof window.ethereum == 'undefined') {
@@ -713,17 +720,15 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                     </>
                               ),
                         })
+                        return
                   }
 
-                  const domain = domainParams.trim()
                   try {
-                        const message = `${timestamp}|${domain}|${expiration}`
                         signature = await (window.ethereum as any).request({
                               method: 'personal_sign',
-                              params: [message, account],
+                              params: [messageToSign, account],
                         })
                   } catch (error: any) {
-                        // alert('Failed to sign: ' + error.message);
                         console.error('Error signing domain claim:' + error)
                         setDialogOpen(true)
                         setDialogData({
@@ -761,8 +766,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   }
 
                   try {
-                        const messageToSign = `${timestamp}|${domain}|${expiration}`
-
                         const messageHex = stringToHex(messageToSign)
                         try {
                               signature = await provider.request({
@@ -777,7 +780,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                               })
                         }
                   } catch (error: any) {
-                        // alert('Failed to sign: ' + error.message);
                         console.error('Error signing domain claim:' + error)
                         setDialogOpen(true)
                         setDialogData({
@@ -799,7 +801,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
       // Function to prepare final form data
       const prepareFinalFormData = async (
-            completeFormData: Record<string, string | File | number>,
+            completeFormData: Record<string, CustomInputType>,
             selectedTemplate: FormTemplate
       ): Promise<{
             filteredData: Record<string, string | number>
@@ -819,7 +821,14 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
             // Filter out File objects for logging
             Object.entries(completeFormData).forEach(([key, value]) => {
-                  if (!(value instanceof File)) {
+                  let field = selectedTemplate.fields.find(field => field.name === key)
+                  if ((value instanceof File) || (Array.isArray(value) && value.length > 0 && value[0] instanceof File)) {
+                        if (field?.is_array && field.type === "document") {
+                              filteredData[key] = (value as File[]).map(file => file.name).join(", ")
+                        } else {
+                              filteredData[key] = (value as File).name
+                        }
+                  } else {
                         if (typeof value === 'string' || typeof value === 'number') {
                               if (key.endsWith(`_verification`)) {
                               } else {
@@ -829,36 +838,52 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         } else {
                               filteredData[key] = String(value)
                         }
-                  } else {
-                        filteredData[key] = (value as File).name
                   }
             })
 
-            // for domain_claim show pop up
+            // for domain_claim - NEW PRIVACY-PRESERVING IMPLEMENTATION
             if (selectedTemplate.name === 'domain_claim') {
-                  // we sign the
                   const domain = completeFormData['domain'] as string
                   const walletAddress = session?.address!
-                  const timestamp = Math.floor(Date.now() / 1000).toString()
-                  const expiration = Math.floor(Date.now() / 1000 + 90 * 24 * 60 * 60).toString() // 90 days default
+                  const expirationDays = 90
+                  const publicAssociation = completeFormData['public_association'] === 'true'
 
-                  let signature = await domainTemplateSignMessageFunction(domain, timestamp, expiration)
-                  if (!signature) {
-                        return null
+                  let dataGen = async (message: string) => {
+                        const signature = await domainTemplateSignMessageFunction(domain, message)
+                        if (!signature) {
+                              throw new Error("Failed to sign message")
+                        }
+                        return signature
                   }
+                  // Generate DNS claim using new format
+                  const dnsClaim = await generateDNSClaim(
+                        domain,
+                        walletAddress,
+                        dataGen,
+                        expirationDays,
+                        publicAssociation
+                  )
 
+                  // Store ALL claim data in form fields (no separate file)
+                  filteredData['txt_record'] = dnsClaim.forms_txt_record
+                  filteredData['unique_id'] = dnsClaim.forms_unique_id
+                  filteredData['claim_secret'] = dnsClaim.forms_claim_secret
+                  filteredData['txt_name'] = dnsClaim.forms_txt_name
+                  filteredData['signature_type'] = dnsClaim.signature_type
+                  filteredData['public_association'] = publicAssociation.toString()
+                  filteredData['itime'] = dnsClaim.itime
+                  filteredData['etime'] = dnsClaim.etime
 
-                  //domain: string, walletAddress: string, timestamp: string, expiration: string, signature: string
-                  const proof = generateProofFromSignature(domain, walletAddress, timestamp, expiration, signature)
-                  filteredData['txt_record'] = formatTxtRecord(proof)//signature
+                  // Store complete claim as JSON string for easy download
+                  // filteredData['claim_json'] = JSON.stringify(dnsClaim, null, 2)
             }
             return { filteredData }
       }
 
       // Function to create genesis aqua tree
-      const createGenesisAquaTree = async (completeFormData: Record<string, string | File | number>, fileName: string, aquafier: Aquafier) => {
+      const createGenesisAquaTree = async (completeFormData: Record<string, CustomInputType>, fileName: string, aquafier: Aquafier) => {
             const estimateSize = estimateFileSize(JSON.stringify(completeFormData))
-            const jsonString = JSON.stringify(completeFormData, null, 4)
+            const jsonString = JSON.stringify(completeFormData)
             const fileObject: FileObject = {
                   fileContent: jsonString,
                   fileName: fileName,
@@ -906,7 +931,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       }
 
       // Function to process file attachments
-      const processFileAttachments = async (selectedTemplate: FormTemplate, completeFormData: Record<string, string | File | number>, aquaTreeData: AquaTree, fileObject: FileObject, aquafier: Aquafier) => {
+      const processFileAttachments = async (selectedTemplate: FormTemplate, completeFormData: Record<string, CustomInputType>, aquaTreeData: AquaTree, fileObject: FileObject, aquafier: Aquafier) => {
             const containsFileData = selectedTemplate?.fields.filter((e: FormField) => e.type === 'file' || e.type === 'scratchpad' || e.type === 'image' || e.type === 'document')
 
             if (!containsFileData || containsFileData.length === 0) {
@@ -914,49 +939,94 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             }
 
             const fileProcessingPromises = containsFileData.map(async (element: FormField) => {
-                  const file: File = completeFormData[element.name] as File
 
-                  if (!file) {
-                        console.warn(`No file found for field: ${element.name}`)
-                        return null
-                  }
+                  if (element.is_array) {
+                        const files: File[] = completeFormData[element.name] as File[]
 
-                  if (typeof file === 'string' || !(file instanceof File)) {
-                        console.warn(`Invalid file type for field: ${element.name}. Expected File object, got:`, typeof file)
-                        return null
-                  }
-
-                  try {
-                        const arrayBuffer = await file.arrayBuffer()
-                        const uint8Array = new Uint8Array(arrayBuffer)
-
-                        const fileObjectPar: FileObject = {
-                              fileContent: uint8Array,
-                              fileName: file.name,
-                              path: './',
-                              fileSize: file.size,
+                        if (!files || !Array.isArray(files) || files.length === 0) {
+                              console.warn(`No files found for field: ${element.name}`)
+                              return null
                         }
 
-                        return fileObjectPar
-                  } catch (error) {
-                        console.error(`Error processing file ${file.name}:`, error)
-                        throw new Error(`Error processing file ${file.name}`)
+                        try {
+                              const fileObjects = await Promise.all(
+                                    files.map(async (file) => {
+                                          if (typeof file === 'string' || !(file instanceof File)) {
+                                                console.warn(`Invalid file type for field: ${element.name}. Expected File object, got:`, typeof file)
+                                                return null
+                                          }
+
+                                          const arrayBuffer = await file.arrayBuffer()
+                                          const uint8Array = new Uint8Array(arrayBuffer)
+
+                                          const fileObjectPar: FileObject = {
+                                                fileContent: uint8Array,
+                                                fileName: file.name,
+                                                path: './',
+                                                fileSize: file.size,
+                                          }
+
+                                          return fileObjectPar
+                                    })
+                              )
+
+                              return fileObjects.filter(Boolean)
+                        } catch (error) {
+                              console.error(`Error processing files for field ${element.name}:`, error)
+                              throw new Error(`Error processing files for field ${element.name}`)
+                        }
+
+                  } else {
+                        const file: File = completeFormData[element.name] as File
+
+                        if (!file) {
+                              console.warn(`No file found for field: ${element.name}`)
+                              return null
+                        }
+
+                        if (typeof file === 'string' || !(file instanceof File)) {
+                              console.warn(`Invalid file type for field: ${element.name}. Expected File object, got:`, typeof file)
+                              return null
+                        }
+
+                        try {
+                              const arrayBuffer = await file.arrayBuffer()
+                              const uint8Array = new Uint8Array(arrayBuffer)
+
+                              const fileObjectPar: FileObject = {
+                                    fileContent: uint8Array,
+                                    fileName: file.name,
+                                    path: './',
+                                    fileSize: file.size,
+                              }
+
+                              return fileObjectPar
+                        } catch (error) {
+                              console.error(`Error processing file ${file.name}:`, error)
+                              throw new Error(`Error processing file ${file.name}`)
+                        }
                   }
             })
 
+            console.log("11. ")
+
             const fileObjects = await Promise.all(fileProcessingPromises)
-            const validFileObjects = fileObjects.filter(obj => obj !== null) as FileObject[]
+            const validFileObjects = fileObjects.flat().filter(obj => obj !== null) as FileObject[]
 
             let currentAquaTreeData = aquaTreeData
 
             for (const item of validFileObjects) {
+
                   const aquaTreeResponse = await aquafier.createGenesisRevision(item)
+                  console.log("11.1")
 
                   if (aquaTreeResponse.isErr()) {
                         throw new Error('Error creating aqua tree for file')
                   }
 
-                  await saveAquaTree(aquaTreeResponse.data.aquaTree!, item, false, true)
+                  await saveAquaTree(aquaTreeResponse.data.aquaTree!, item, true, true)
+
+                  console.log("11.2")
 
                   const aquaTreeWrapper: AquaTreeWrapper = {
                         aquaTree: currentAquaTreeData,
@@ -971,6 +1041,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   }
 
                   const res = await aquafier.linkAquaTree(aquaTreeWrapper, aquaTreeWrapper2)
+                  console.log("11.3")
 
                   if (res.isErr()) {
                         throw new Error('Error linking file aqua tree')
@@ -1070,7 +1141,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       }
 
       // Function to handle post-signing actions
-      const handlePostSigning = async (signedAquaTree: AquaTree, fileObject: FileObject, completeFormData: Record<string, string | File | number>, selectedTemplate: FormTemplate, session: Session | null, selectedFileInfo: ApiFileInfo | null) => {
+      const handlePostSigning = async (signedAquaTree: AquaTree, fileObject: FileObject, completeFormData: Record<string, CustomInputType>, selectedTemplate: FormTemplate, session: Session | null, selectedFileInfo: ApiFileInfo | null) => {
             fileObject.fileContent = completeFormData
 
             const savedResult = await saveAquaTree(signedAquaTree, fileObject, true)
@@ -1147,12 +1218,32 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   await triggerWorkflowReload(RELOAD_KEYS.contacts);
             }
 
-            // Do navigation here
+            // Do navigation here for aqua_sign
             if (selectedTemplate.name === "aqua_sign") {
                   let apiFileInfoFromSystem = await loadThisTreeFromSystem(signedAquaTree)
-                  if(apiFileInfoFromSystem){
+                  if (apiFileInfoFromSystem) {
                         setSelectedFileInfo(apiFileInfoFromSystem)
-                        navigate('/app/pdf/workflow')
+                        // navigate('/app/pdf/workflow')
+                        try {
+                              let genesisHash = getGenesisHash(signedAquaTree)
+                              if (genesisHash && session?.address) {
+                                    let genesisRevision = signedAquaTree.revisions[genesisHash]
+                                    let signers = genesisRevision?.forms_signers
+                                    if (signers) {
+                                          let signersArray = signers.split(",").map((item: string) => item.trim().toLocaleLowerCase())
+                                          let activeUserAddress = session.address.toLocaleLowerCase()
+                                          let isUserSigner = signersArray.find((signer: string) => signer === activeUserAddress)
+                                          if (isUserSigner) {
+                                                navigate('/app/pdf/workflow/2')
+                                          }
+                                    } else {
+
+                                          navigate('/app/pdf/workflow')
+                                    }
+                              }
+                        } catch (error: any) {
+                              navigate('/app/pdf/workflow')
+                        }
                   }
             }
       }
@@ -1175,15 +1266,29 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             // Clear the canvas first
             signatureRef.current.clear()
 
-            // Configure text style
-            const fontSize = isInitials ? Math.min(canvas.height * 0.6, 80) : Math.min(canvas.height * 0.4, 50)
+            // Configure text style - use larger font to fill the signature box
+            const displayText = isInitials ? text.split(' ').map(n => n.charAt(0).toUpperCase()).join('') : text
+
+            // Calculate font size based on canvas dimensions and text length
+            // Start with height-based sizing, then adjust for width if neededz
+            let fontSize = isInitials ? canvas.height * 0.7 : canvas.height * 0.6
+
+            // Set font to measure text width
             ctx.font = `italic ${fontSize}px "Brush Script MT", "Segoe Script", "Bradley Hand", cursive`
+            let textWidth = ctx.measureText(displayText).width
+
+            // If text is too wide, scale down to fit within 90% of canvas width
+            const maxWidth = canvas.width * 0.9
+            if (textWidth > maxWidth) {
+                  fontSize = fontSize * (maxWidth / textWidth)
+                  ctx.font = `italic ${fontSize}px "Brush Script MT", "Segoe Script", "Bradley Hand", cursive`
+            }
+
             ctx.fillStyle = '#000000'
             ctx.textAlign = 'center'
             ctx.textBaseline = 'middle'
 
             // Draw the text centered
-            const displayText = isInitials ? text.split(' ').map(n => n.charAt(0).toUpperCase()).join('') : text
             ctx.fillText(displayText, canvas.width / 2, canvas.height / 2)
       }, [])
 
@@ -1358,14 +1463,22 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         aquafier
                   )
 
-                  // Step 11: Sign aqua tree
-                  const signedAquaTree = await signAquaTree(aquaTreeData, fileObject, aquafier)
 
 
-                  clearSignature()
+                  if (selectedTemplate?.name !== 'aqua_sign') {
+                        // Step 11: Sign aqua tree
+                        const signedAquaTree = await signAquaTree(aquaTreeData, fileObject, aquafier)
+                        clearSignature()
 
-                  // Step 12: Handle post-signing actions
-                  await handlePostSigning(signedAquaTree, fileObject, finalFormDataFiltered, selectedTemplate, session, selectedFileInfo)
+                        // Step 12: Handle post-signing actions
+                        await handlePostSigning(signedAquaTree, fileObject, finalFormDataFiltered, selectedTemplate, session, selectedFileInfo)
+                  } else {
+                        await handlePostSigning(aquaTreeData, fileObject, finalFormDataFiltered, selectedTemplate, session, selectedFileInfo)
+
+                  }
+                  // aqua sign signing happen in the server 
+
+
 
 
             } catch (error: any) {
@@ -1523,6 +1636,57 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             )
       }
 
+      /**Render options field if others show the input text */
+
+      const renderOptionsField = (field: FormField, fieldIndex: number) => {
+
+            let otherFieldsExist = selectedTemplate.fields.find((f: FormField) => f.depend_on_field === field.name && f.depend_on_value?.toLocaleLowerCase() === 'other' && f.is_hidden === true)
+            if (!otherFieldsExist) {
+                  console.warn(`No dependent 'Other' field found for options field: ${field.name}`)
+            }
+
+            return <div className="space-y-2" key={`fieldKey_${fieldIndex}`}>
+                  <Select
+                        onValueChange={(value) => {
+                              let fieldName = field.name
+                              setFormData(prev => ({ ...prev, [fieldName]: value }))
+                        }}
+                  >
+                        <SelectTrigger id={`input-options-${field.name}`} data-testid={`input-options-${field.name}`} className="w-full">
+                              <SelectValue placeholder="Select an option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                              {field.options?.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                              ))}
+
+                        </SelectContent>
+                  </Select>
+
+                  {otherFieldsExist && (
+                        <>
+
+                              {((formData[field.name] as string) ?? '')?.toLocaleLowerCase() === 'other' && otherFieldsExist && (
+                                    <Label htmlFor={`input-options-other`} className="text-sm font-medium text-gray-900">
+                                          Please specify
+                                    </Label>
+                              )}
+                              {((formData[field.name] as string) ?? '').toLocaleLowerCase() === 'other' && otherFieldsExist && (
+                                    <Input
+                                          id={`input-options-other`}
+                                          data-testid={`input-options-other`}
+                                          className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
+                                          placeholder="Please specify"
+                                          onChange={(e) => {
+                                                let fieldName = otherFieldsExist!.name
+                                                setFormData(prev => ({ ...prev, [fieldName]: e.target.value }))
+                                          }}
+                                    />
+                              )}
+                        </>
+                  )}
+            </div>
+      }
       /** Renders the signature/scratchpad field with Reset, Generate from Name, and Initials buttons */
       const renderScratchpadField = () => (
             <div className="space-y-3">
@@ -1592,7 +1756,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             if (field.is_hidden) return null
 
             // Use helper function for array fields (multiple signers)
-            if (field.is_array) {
+            if (field.is_array && field.name !== "document") {
                   return renderArrayField(field, fieldIndex)
             }
 
@@ -1616,8 +1780,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           placeholder={getFieldPlaceholder(field)}
                                           disabled={field.is_editable === false}
                                           defaultValue={(() => {
-                                                const val = getFieldDefaultValue(field, formData[field.name])
-                                                return val instanceof File ? undefined : val
+                                                const val = getFieldDefaultValue(field, formData[field.name] as any)
+                                                return val instanceof File || Array.isArray(val) ? undefined : val
                                           })()}
                                           onChange={(e) => handleTextInputChange(e, field)}
                                     />
@@ -1675,6 +1839,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         {/* Signature/Scratchpad field with Reset, Generate from Name, Initials */}
                         {field.type === 'scratchpad' && renderScratchpadField()}
 
+
+                        {/* option field with Reset, Generate from Name, Initials */}
+                        {field.type === 'options' && renderOptionsField(field, fieldIndex)}
+
+
+
+
                         {/* Wallet address field */}
                         {field.type === 'wallet_address' && (
                               field.is_editable === false ? (
@@ -1684,8 +1855,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
                                           disabled
                                           defaultValue={(() => {
-                                                const val = getFieldDefaultValue(field, formData[field.name])
-                                                return val instanceof File ? undefined : val
+                                                const val = getFieldDefaultValue(field, formData[field.name] as any)
+                                                return val instanceof File || Array.isArray(val) ? undefined : val
                                           })()}
                                     />
                               ) : (
@@ -1712,6 +1883,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           required={field.required}
                                           disabled={field.is_editable === false}
                                           accept={field.type === 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
+                                          multiple={field.is_array}
                                           placeholder={getFieldPlaceholder(field)}
                                           onChange={(e) => handleFileInputChange(e, field)}
                                     />
@@ -1742,9 +1914,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             const fields = reorderInputFields(selectedTemplate!.fields)
             const documentField = fields.find(f => f.type === 'document')
             const otherFields = fields.filter(f => f.type !== 'document')
-            
+
             // Check if user has added themselves to signers
-            const userInSigners = multipleAddresses.some(addr => 
+            const userInSigners = multipleAddresses.some(addr =>
                   addr.toLowerCase() === session?.address?.toLowerCase()
             )
 
@@ -1753,22 +1925,20 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         {/* Step indicator */}
                         <div className="flex items-center justify-center mb-6">
                               <div className="flex items-center gap-2">
-                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                                          aquaSignStep === 1 
-                                                ? 'bg-blue-600 text-white' 
-                                                : 'bg-green-500 text-white'
-                                    }`}>
+                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${aquaSignStep === 1
+                                          ? 'bg-blue-600 text-white'
+                                          : 'bg-green-500 text-white'
+                                          }`}>
                                           {aquaSignStep === 1 ? '1' : '✓'}
                                     </div>
                                     <span className={`text-sm ${aquaSignStep === 1 ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
                                           Select Document
                                     </span>
                                     <div className="w-12 h-0.5 bg-gray-300 mx-2" />
-                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                                          aquaSignStep === 2 
-                                                ? 'bg-blue-600 text-white' 
-                                                : 'bg-gray-300 text-gray-600'
-                                    }`}>
+                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${aquaSignStep === 2
+                                          ? 'bg-blue-600 text-white'
+                                          : 'bg-gray-300 text-gray-600'
+                                          }`}>
                                           2
                                     </div>
                                     <span className={`text-sm ${aquaSignStep === 2 ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
@@ -1785,7 +1955,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           <p className="text-sm text-gray-500 mt-1">Upload the document that requires signatures</p>
                                     </div>
                                     {renderSingleField(documentField, 0)}
-                                    
+
                                     <div className="flex justify-end pt-4">
                                           <Button
                                                 type="button"
@@ -1799,7 +1969,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                 }}
                                                 className="bg-blue-600 hover:bg-blue-700 text-white px-6"
                                                 disabled={!formData['document']}
-                                         >
+                                          >
                                                 Go to Add signers
                                           </Button>
                                     </div>
@@ -1818,22 +1988,22 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           <Alert className="border-amber-200 bg-amber-50">
                                                 <AlertCircle className="h-4 w-4 text-amber-600" />
                                                 <AlertDescription className="text-amber-800">
-                                                      
+
                                                       You haven't added yourself as a signer. If you need to sign this document, add your wallet address to the signers list.
-                                               <Button onClick={() => {
-                                                if(session){
-                                                      setMultipleAddresses( curr => [...curr, session?.address])
-                                                }
-                                               }}>
-                                                      Add Yourself
-                                                </Button>
+                                                      <Button onClick={() => {
+                                                            if (session) {
+                                                                  setMultipleAddresses(curr => [...curr, session?.address])
+                                                            }
+                                                      }}>
+                                                            Add Yourself
+                                                      </Button>
                                                 </AlertDescription>
                                           </Alert>
                                     )}
 
                                     {otherFields.map((field, idx) => renderSingleField(field, idx))}
                                     {/* Warning if user hasn't added themselves */}
-                                    
+
                                     <div className="flex justify-between pt-4">
                                           <Button
                                                 type="button"
@@ -1896,27 +2066,58 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             if (field.type === 'document') {
                   const files = e?.target?.files
                   if (files && files.length > 0) {
-                        const file = files[0]
-                        if (file.type !== 'application/pdf') {
-                              alert('Please select a PDF file')
-                              e.target.value = ''
-                              return
+                        // const file = files[0]
+                        for (let index = 0; index < files.length; index++) {
+                              const file = files[index];
+                              if (file.type !== 'application/pdf') {
+                                    alert('Please select a PDF file')
+                                    e.target.value = ''
+                                    return
+                              }
                         }
                   }
             }
 
             const isFileInput = field.type === 'file' || field.type === 'image' || field.type === 'document'
-            const value = isFileInput && e.target.files ? e.target.files[0] : e.target.value
 
-            if (field.default_value !== undefined && field.default_value !== null && field.default_value !== '') {
-                  e.target.value = field.default_value
-                  toast.error(`${field.label} cannot be changed`)
+            if (field.is_array) {
+                  let _files = e.target.files
+
+                  let filesToAttach: File[] = []
+
+                  if (!_files) {
+                        return
+                  }
+
+
+                  for (let i = 0; i < _files.length; i++) {
+                        const _file = _files[i];
+
+                        // if (field.default_value !== undefined && field.default_value !== null && field.default_value !== '') {
+                        //       e.target.value = field.default_value
+                        //       toast.error(`${field.label} cannot be changed`)
+                        // }
+                        filesToAttach.push(_file)
+
+                  }
+
+                  setFormData({
+                        ...formData,
+                        [field.name]: filesToAttach,
+                  })
+            } else {
+                  const value = isFileInput && e.target.files ? e.target.files[0] : e.target.value
+
+                  if (field.default_value !== undefined && field.default_value !== null && field.default_value !== '') {
+                        e.target.value = field.default_value
+                        toast.error(`${field.label} cannot be changed`)
+                  }
+
+                  setFormData({
+                        ...formData,
+                        [field.name]: value,
+                  })
             }
-
-            setFormData({
-                  ...formData,
-                  [field.name]: value,
-            })
       }
 
       /** Gets the placeholder text for a field */
@@ -2046,15 +2247,46 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
                                           <div className="space-y-4 sm:space-y-6">
                                                 {/* Use multi-step form for aqua_sign, default rendering for others */}
-                                                {isAquaSignTemplate 
+                                                {isAquaSignTemplate
                                                       ? renderAquaSignForm()
                                                       : selectedTemplate
-                                                            ? reorderInputFields(selectedTemplate.fields).map((field, fieldIndex) => 
+                                                            ? reorderInputFields(selectedTemplate.fields).map((field, fieldIndex) =>
                                                                   renderSingleField(field, fieldIndex)
                                                             )
                                                             : null
                                                 }
                                           </div>
+
+                                          {/* Privacy mode toggle for domain_claim */}
+                                          {selectedTemplate.name === 'domain_claim' && (
+                                                <div className="space-y-3 bg-blue-50 border border-blue-200 rounded-lg p-4 my-6">
+                                                      <div className="flex items-start gap-3">
+                                                            <input
+                                                                  type="checkbox"
+                                                                  id="public_association"
+                                                                  data-testid="input-public_association"
+                                                                  className="mt-1 h-4 w-4 rounded border-gray-300"
+                                                                  onChange={(e) => {
+                                                                        setFormData({
+                                                                              ...formData,
+                                                                              public_association: e.target.checked ? 'true' : 'false'
+                                                                        })
+                                                                  }}
+                                                            />
+                                                            <div className="flex-1">
+                                                                  <Label htmlFor="public_association" className="text-base font-medium cursor-pointer">
+                                                                        Make association public (wallet visible in DNS)
+                                                                  </Label>
+                                                                  <p className="text-sm text-gray-600 mt-1">
+                                                                        <strong>Private mode (default):</strong> Wallet address hidden in DNS record. Only parties with the claim file can verify the association. Recommended for privacy.
+                                                                  </p>
+                                                                  <p className="text-sm text-gray-600 mt-1">
+                                                                        <strong>Public mode:</strong> Wallet address visible in DNS record. Anyone can verify the association without the claim file.
+                                                                  </p>
+                                                            </div>
+                                                      </div>
+                                                </div>
+                                          )}
 
                                           {/* Hide separator for aqua_sign step 1 */}
                                           {(!isAquaSignTemplate || aquaSignStep === 2) && <Separator className="my-8" />}
@@ -2068,7 +2300,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                                         <li>Sign with metamask to generate a TXT record.</li>
                                                                         <li>Second metamask signature for self signed identity claim.</li>
                                                                         <li>Open details of the DNS Claim and copy the TXT record into to your DNS
-                                                                              records under the following subdomain <em>aqua._wallet.[domain filled
+                                                                              records under the following subdomain <em>_aw.[domain filled
                                                                                     above]</em></li>
                                                                   </ol>
                                                             </div>
@@ -2082,7 +2314,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                       <div>
                                                             <div className="space-y-4">
                                                                   <h5>Claim To Be attested</h5>
-                                                                  <FilePreview fileInfo={getAquaTreeFileObject(selectedFileInfo!)!} />
+                                                                  <FilePreview fileInfo={getAquaTreeFileObject(selectedFileInfo!)!} latestRevisionHash={getLatestVH(selectedFileInfo?.aquaTree!)} />
                                                             </div>
                                                             <Separator className="my-8" />
                                                       </div>

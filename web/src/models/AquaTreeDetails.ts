@@ -46,6 +46,7 @@ export interface AquaTreeDetails {
 export interface ICompleteChainView {
       callBack: (_drawerStatus: IDrawerStatus) => void
       selectedFileInfo: ApiFileInfo | null
+      hideFilePreview?: boolean
 }
 
 export interface IDrawerStatus {

@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useStore } from 'zustand'
 import appStore from '@/store'
 import { Contract } from '@/types/types'
+import { ensureDomainUrlHasSSL } from '@/utils/functions'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { SharedContract } from './files_shared_contracts_item'
@@ -19,7 +20,7 @@ export function SharedContracts() {
                   return
             }
             try {
-                  const url = `${backend_url}/contracts`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/contracts`)
                   const response = await axios.get(url, {
                         params: {
                               receiver: session?.address,
@@ -48,7 +49,10 @@ export function SharedContracts() {
                         contract.receiver?.toLowerCase().includes(searchQuery.toLowerCase())
             )
             setShareContracts(filteredContracts)
+            
       }, [JSON.stringify(contracts)])
+
+     
 
       return (
             <div>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import appStore from '../store';
 import { API_ENDPOINTS } from '../utils/constants';
 import { useStore } from 'zustand';
+import { ensureDomainUrlHasSSL } from '../utils/functions';
 
 interface WebSocketMessage {
   type: string;
@@ -308,14 +309,11 @@ export async function sendNotification(
   additionalData?: any
 ) {
   try {
-    let { backend_url } = appStore.getState();
-
-    // Fix 0.0.0.0 to localhost for browser compatibility
-    backend_url = backend_url.replace('0.0.0.0', 'localhost');
+    const { backend_url } = appStore.getState();
 
     // Replace :wallet_address placeholder with actual wallet address
     const endpoint = API_ENDPOINTS.SEND_NOTIFICATION.replace(':wallet_address', walletAddress);
-    const url = `${backend_url}/${endpoint}`;
+    const url = ensureDomainUrlHasSSL(`${backend_url}/${endpoint}`);
 
     const body = {
       type,

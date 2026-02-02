@@ -1,13 +1,18 @@
-import {AquaTree, OrderRevisionInAquaTree} from 'aqua-js-sdk';
+import Aquafier, { AquaTree, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 // For specific model types
-import {FileIndex} from '@prisma/client';
+import { FileIndex } from '@prisma/client';
 import Logger from "./logger";
+import { prisma } from '../database/db';
+import fs from 'fs';
+import { randomUUID } from 'crypto';
+import path from 'path';
+import { getFileUploadDirectory } from './file_utils';
 
 export const getLastRevisionVerificationHash = (aquaTree: AquaTree) => {
-      const orderedRevisions = OrderRevisionInAquaTree(aquaTree)
-      const revisonHashes = Object.keys(orderedRevisions.revisions)
-      const hash = revisonHashes[revisonHashes.length - 1]
-      return hash
+    const orderedRevisions = OrderRevisionInAquaTree(aquaTree)
+    const revisonHashes = Object.keys(orderedRevisions.revisions)
+    const hash = revisonHashes[revisonHashes.length - 1]
+    return hash
 }
 
 
@@ -85,7 +90,7 @@ export function validateAquaTree(tree: AquaTree): [boolean, string] {
     for (const hash in tree.revisions) {
         const revision = tree.revisions[hash];
 
-        Logger.info(`Revision --  ${JSON.stringify(revision)}`)
+        // Logger.info(`Revision --  ${JSON.stringify(revision)}`)
         // Check required fields for all revisions
         if (revision.previous_verification_hash === undefined || revision.previous_verification_hash === null) {
             return [false, "A revision must contain previous_verification_hash"];
@@ -169,4 +174,94 @@ export function validateAquaTree(tree: AquaTree): [boolean, string] {
 
     // If all checks pass, return true
     return [true, "valid aqua tree"];
+}
+
+
+export async function saveFileAndCreateOrUpdateFileIndex(walletAddress: string, aquaTree: AquaTree, fileName: string, aquaFileData: Buffer) {
+    // let filepubkeyhash = `${session.address}_${genesisHash}`
+    let genesisHash = getGenesisHash(aquaTree)
+    if (genesisHash == null) {
+        throw Error(`genesis hash cannot be null`)
+    }
+
+    let filepubkeyhash = `${walletAddress}_${genesisHash}`
+
+    let aquafier = new Aquafier()
+
+    let fileHash = aquafier.getFileHash(aquaFileData)
+
+    let genRevision = aquaTree.revisions[genesisHash]
+    if (!genRevision) {
+        throw Error(`genesis revision of attested aqua tree canno be null`)
+    }
+    let aquaTreeFilehash = genRevision[`file_hash`]
+    if (fileHash != aquaTreeFilehash) {
+        throw Error(`file hash doo not match aquaTreeFilehash ${aquaTreeFilehash} == generated ${fileHash}`)
+    }
+
+    let existingFileIndex = await prisma.fileIndex.findFirst({
+        where: { file_hash: fileHash },
+    });
+
+    // Create unique filename
+    await prisma.fileName.upsert({
+        where: {
+            pubkey_hash: filepubkeyhash,
+        },
+        create: {
+            pubkey_hash: filepubkeyhash,
+            file_name: fileName,
+        },
+        update: {
+            file_name: fileName,
+        }
+    })
+
+    if (existingFileIndex != null) {
+        Logger.info(`Update file index counter`)
+
+        await prisma.fileIndex.update({
+            where: { file_hash: existingFileIndex.file_hash },
+            data: {
+                pubkey_hash: [...existingFileIndex.pubkey_hash, filepubkeyhash]//`${session.address}_${genesisHash}`]
+            }
+        });
+
+
+    } else {
+        const UPLOAD_DIR = getFileUploadDirectory();
+
+
+        let aquaTreeName = await aquafier.getFileByHash(aquaTree, genesisHash);
+        if (aquaTreeName.isOk()) {
+            fileName = aquaTreeName.data
+        }
+        const filename = `${randomUUID()}-${fileName}`;
+        const filePath = path.join(UPLOAD_DIR, filename);
+
+        // Save the file
+        // await pump(data.file, fs.createWriteStream(filePath))
+        await fs.promises.writeFile(filePath, aquaFileData);
+
+
+        await prisma.file.create({
+            data: {
+
+                file_hash: fileHash,
+                file_location: filePath,
+
+            }
+        })
+
+        await prisma.fileIndex.create({
+            data: {
+
+                pubkey_hash: [filepubkeyhash],
+                file_hash: fileHash,
+
+            }
+        })
+
+
+    }
 }
