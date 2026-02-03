@@ -116,7 +116,7 @@ const SharePage = () => {
                                     <span className="ml-3">Loading shared file...</span>
                               </div>
                         ) : null}
-                        {!loading && !hasError && !fileInfo && session ? (
+                        {!loading && !hasError && !fileInfo && session && !backend_url.includes("0.0.0.0") ? (
                               <div className="flex justify-center items-center">
                                     <Alert className="w-auto">
                                           <AlertDescription>No file data available. Please check the share link.</AlertDescription>
