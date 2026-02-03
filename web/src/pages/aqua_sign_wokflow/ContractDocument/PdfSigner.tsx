@@ -331,7 +331,10 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         }
                   }
 
-                  if (sender != signers) {
+             
+                  // if pdf signer creator is not in the signers list
+                  // send him the revisions
+                  if (!signers.split(',').includes(sender)) {
                         //send the signatures to workflow creator
                         await saveRevisionsToServerForUser(aquaTrees, sender)
 

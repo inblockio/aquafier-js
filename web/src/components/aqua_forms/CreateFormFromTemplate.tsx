@@ -163,7 +163,7 @@ const SortableSignerItem = ({
                               address={address}
                               multipleAddresses={multipleAddresses}
                               setMultipleAddresses={setMultipleAddresses}
-                              placeholder="Enter signer wallet address"
+                              // placeholder="Enter signer wallet address"
                               className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                         />
                   </div>
@@ -1867,7 +1867,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           address={formData[field.name] ? (formData[field.name] as string) : ''}
                                           multipleAddresses={[]}
                                           setMultipleAddresses={(data) => handleWalletAddressSelect(data, field.name)}
-                                          placeholder="Enter signer wallet address"
+                                          // placeholder="Enter signer wallet address"
                                           className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                                     />
                               )

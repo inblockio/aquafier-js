@@ -6,6 +6,7 @@ import { ContactProfile } from '@/types/types';
 import { toast } from 'sonner';
 import appStore from '@/store';
 import { useStore } from 'zustand';
+import { cn } from '@/lib/utils';
 
 interface WalletAutosuggestProps {
   field: {
@@ -25,7 +26,7 @@ export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
   address,
   multipleAddresses,
   setMultipleAddresses,
-  placeholder = "Enter wallet address or ENS name...",
+  placeholder = "For autosuggest, enter any details of the contact (Wallet, Name in Identity claim, Email in Email claim, ENS name or user Alias) ...",
   className = "",
   disabled = false 
 }) => {
@@ -275,20 +276,22 @@ export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
       )}
       <Popover open={showSuggestions && suggestions.length > 0} onOpenChange={setShowSuggestions}>
         <PopoverAnchor asChild>
-          <Input
-            ref={inputRef}
-            data-testid={`input-${field.name}-${index}`}
-            className={className}
-            placeholder={placeholder}
-            type="text"
-            value={address}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            onBlur={handleBlur}
-            onFocus={handleFocus}
-            autoComplete="off"
-            disabled={disabled}
-          />
+          
+         <Input
+  ref={inputRef}
+  data-testid={`input-${field.name}-${index}`}
+  className={cn(className, "[&::placeholder]:text-xs")}
+  placeholder={placeholder}
+  type="text"
+  value={address}
+  onChange={handleInputChange}
+  onKeyDown={handleKeyDown}
+  onBlur={handleBlur}
+  onFocus={handleFocus}
+  autoComplete="off"
+  disabled={disabled}
+/>
+          
         </PopoverAnchor>
 
         <PopoverContent

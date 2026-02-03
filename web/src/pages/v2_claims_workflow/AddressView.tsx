@@ -86,7 +86,7 @@ export const AddressView: React.FC<AddressViewProps> = ({
                 setMultipleAddresses(addrs)
 
               }}
-              placeholder="Enter name claim or wallet address..."
+              // placeholder="Enter name claim or wallet address..."
               className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
