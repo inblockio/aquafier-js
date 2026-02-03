@@ -146,9 +146,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
             const [_httpCode, _message] = await saveRevisionInAquaTree(revisionData, revisionData.address, url);
 
-            // if (httpCode != 200 && httpCode !== 407) {
-            //     return reply.code(httpCode).send({ success: false, message: message });
-            // }
+          
 
 
             //trigger the other party to refetch explorer files
