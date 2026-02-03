@@ -603,7 +603,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             let allSystemFiles = systemFileInfo
 
             if (systemFileInfo.length === 0) {
-                  const url3 = `${backend_url}/system/aqua_tree`
+                  const url3 = ensureDomainUrlHasSSL(`${backend_url}/system/aqua_tree`)
+
                   const systemFiles = await fetchSystemFiles(url3, sessionAddress)
                   allSystemFiles = systemFiles
             } else {
