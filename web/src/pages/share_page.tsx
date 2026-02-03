@@ -35,10 +35,10 @@ const SharePage = () => {
                   console.log('Missing session nonce or identifier:', { nonce: session?.nonce, identifier: params?.identifier })
                   return
             }
-            if (backend_url.includes('0.0.0.0')) {
-                  console.log('Backend URL contains 0.0.0.0, skipping fetch')
-                  return
-            }
+            // if (backend_url.includes('0.0.0.0')) {
+            //       console.log('Backend URL contains 0.0.0.0, skipping fetch')
+            //       return
+            // }
 
             setLoading(true)
             setHasError(null)
