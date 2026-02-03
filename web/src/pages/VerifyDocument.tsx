@@ -437,11 +437,11 @@ const VerifyDocument = () => {
 
                               for (const nameHash of aquaJson.name_with_hash) {
                                     if (nameHash.name.endsWith('.aqua.json')) {
-                                          console.log('Processing aqua file:', nameHash.name)
+                                          console.log('Processing aqua chain file:', nameHash.name)
                                           // For aqua tree files, find them in embedded files
                                           const aquaFile = embeddedData.aquaChainFiles.find(f => f.filename === nameHash.name)
                                           if (!aquaFile) {
-                                                console.warn(`Aqua file not found: ${nameHash.name}`)
+                                                console.warn(`Aqua chain file not found: ${nameHash.name}`)
                                                 continue // Skip if not found instead of throwing
                                           }
 
@@ -456,10 +456,24 @@ const VerifyDocument = () => {
                                                 fileContent: aquaFile.content,
                                                 fileSize: aquaFile.content.length,
                                           })
+                                    } else {
+                                          // This is an asset file - check if it's embedded
+                                          console.log('Processing asset file:', nameHash.name)
+                                          const assetFile = embeddedData.assetFiles.find(f => f.filename === nameHash.name)
+                                          if (assetFile) {
+                                                fileObjects.push({
+                                                      fileName: nameHash.name,
+                                                      fileContent: assetFile.content,
+                                                      fileSize: typeof assetFile.content === 'string' ? assetFile.content.length : (assetFile.content as ArrayBuffer).byteLength,
+                                                })
+                                                console.log(`Added asset file: ${nameHash.name}`)
+                                          } else {
+                                                console.warn(`Asset file not found in PDF: ${nameHash.name} (file hash verification may fail)`)
+                                          }
                                     }
                               }
 
-                              console.log('Processed file objects:', fileObjects.length)
+                              console.log('Processed file objects:', fileObjects.length, '(aqua chain + asset files)')
 
                               // Create ApiFileInfo from embedded data
                               const mockFileInfo: ApiFileInfo = {
