@@ -562,7 +562,8 @@ export async function saveRevisionInAquaTree(revisionData: SaveRevisionForUser, 
                     ]
                 },
                 data: {
-                    hash: filePubKeyHash
+                    hash: filePubKeyHash,
+                    is_workflow: revisionData.isWorkflow ?  revisionData.isWorkflow :  existData.is_workflow
                 }
             });
 
@@ -588,6 +589,17 @@ export async function saveRevisionInAquaTree(revisionData: SaveRevisionForUser, 
                 },
             });
 
+            // Update the previous revision's children to include this new revision
+            await tx.revision.update({
+                where: {
+                    pubkey_hash: `${userAddress}_${revisionData.revision.previous_verification_hash}`
+                },
+                data: {
+                    children: {
+                        push: filePubKeyHash
+                    }
+                }
+            });
 
             // Process form data - iterate over revisionData keys that start with "forms_"
             if (revisionData.revision.revision_type == "form") {
@@ -694,6 +706,25 @@ export async function saveRevisionInAquaTree(revisionData: SaveRevisionForUser, 
                         reference_count: 0
                     }
                 })
+
+                // Check if this link revision makes the aqua tree a workflow
+                // by checking if any of the link_verification_hashes are known workflow template hashes
+                const linkVerificationHashes = revisionData.revision.link_verification_hashes || [];
+                const isLinkingToWorkflow = linkVerificationHashes.some(
+                    (hash: string) => systemTemplateHashes.includes(hash)
+                );
+
+                if (isLinkingToWorkflow) {
+                    // Update the is_workflow flag in Latest table
+                    await tx.latest.updateMany({
+                        where: {
+                            hash: filePubKeyHash
+                        },
+                        data: {
+                            is_workflow: true
+                        }
+                    });
+                }
             }
 
             if (revisionData.revision.revision_type == "file" || revisionData.revision.revision_type == "form") {
@@ -924,7 +955,9 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevisionForUser,
                 pubkey_hash: `${userAddress}_${revisionData.revision.previous_verification_hash}`
             },
             data: {
-                children: [filePubKeyHash]
+                children: {
+                    push: filePubKeyHash
+                }
             }
         })
     } catch (error) {
@@ -1623,6 +1656,8 @@ export async function buildEntireTreeFromGivenRevisionHash(revisionHash: string)
     const revisionTree: Array<{ revisionHash: string, children: Array<string>, data: any }> = [];
 
     // Helper function to traverse backwards through previous revisions
+    // Also traverses children of each visited node to handle cases where
+    // the initial node's children array might be incomplete
     async function traverseBackwards(hash: string): Promise<void> {
         if (visitedHashes.has(hash)) return;
 
@@ -1648,6 +1683,14 @@ export async function buildEntireTreeFromGivenRevisionHash(revisionHash: string)
         // If there's a previous revision, traverse backwards
         if (revisionData.previous) {
             await traverseBackwards(revisionData.previous);
+        }
+
+        // Also traverse children from this node to catch forward revisions
+        // This handles cases where children arrays might be incomplete
+        if (revisionData.children && revisionData.children.length > 0) {
+            for (const childHash of revisionData.children) {
+                await traverseForwards(childHash);
+            }
         }
     }
 
@@ -1714,6 +1757,51 @@ export async function buildEntireTreeFromGivenRevisionHash(revisionHash: string)
     if (initialRevision.children && initialRevision.children.length > 0) {
         for (const childHash of initialRevision.children) {
             await traverseForwards(childHash);
+        }
+    }
+
+    // Fallback: Find any revisions that reference our visited revisions as their previous
+    // This handles cases where children arrays were not properly populated (legacy data)
+    // Extract user address prefix from the revision hash
+    const userAddressPrefix = revisionHash.split('_')[0];
+    let foundNewRevisions = true;
+    while (foundNewRevisions) {
+        foundNewRevisions = false;
+        const visitedHashesArray = Array.from(visitedHashes);
+
+        // Query for revisions that have any of our visited hashes as their previous
+        const forwardRevisions = await prisma.revision.findMany({
+            select: {
+                pubkey_hash: true,
+                children: true,
+                previous: true
+            },
+            where: {
+                pubkey_hash: {
+                    startsWith: userAddressPrefix
+                },
+                previous: {
+                    in: visitedHashesArray
+                },
+                NOT: {
+                    pubkey_hash: {
+                        in: visitedHashesArray
+                    }
+                }
+            }
+        });
+
+        // Add newly discovered revisions to the tree
+        for (const revision of forwardRevisions) {
+            if (!visitedHashes.has(revision.pubkey_hash)) {
+                visitedHashes.add(revision.pubkey_hash);
+                revisionTree.push({
+                    revisionHash: revision.pubkey_hash,
+                    children: revision.children,
+                    data: revision
+                });
+                foundNewRevisions = true;
+            }
         }
     }
 

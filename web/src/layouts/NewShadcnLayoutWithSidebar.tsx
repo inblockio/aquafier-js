@@ -23,7 +23,7 @@ import { useState } from 'react'
 import { RELOAD_KEYS, triggerWorkflowReload } from '../utils/reloadDatabase';
 import WorkspaceDialogUI from '@/components/workspace/workspace_download_dialog_ui'
 import IdentityCardDialogUi from '@/components/identity_card_dialog_ui'
-
+ 
 export default function NewShadcnLayoutWithSidebar() {
  
       const {

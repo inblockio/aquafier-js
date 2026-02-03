@@ -146,7 +146,7 @@ function App() {
                     </Route>
 
                     <Route path='/app/verify-document' element={<VerifyDocument />} />
-
+ 
                     <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
 
                         <Route index element={<FilesPage />} />

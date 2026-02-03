@@ -163,7 +163,7 @@ const SortableSignerItem = ({
                               address={address}
                               multipleAddresses={multipleAddresses}
                               setMultipleAddresses={setMultipleAddresses}
-                              placeholder="Enter signer wallet address"
+                              // placeholder="Enter signer wallet address"
                               className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                         />
                   </div>
@@ -183,7 +183,7 @@ const SortableSignerItem = ({
             </div>
       )
 }
-
+ 
 // const CreateFormF romTemplate  = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       selectedTemplate: FormTemplate;
@@ -603,7 +603,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             let allSystemFiles = systemFileInfo
 
             if (systemFileInfo.length === 0) {
-                  const url3 = `${backend_url}/system/aqua_tree`
+                  const url3 = ensureDomainUrlHasSSL(`${backend_url}/system/aqua_tree`)
+
                   const systemFiles = await fetchSystemFiles(url3, sessionAddress)
                   allSystemFiles = systemFiles
             } else {
@@ -1866,7 +1867,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           address={formData[field.name] ? (formData[field.name] as string) : ''}
                                           multipleAddresses={[]}
                                           setMultipleAddresses={(data) => handleWalletAddressSelect(data, field.name)}
-                                          placeholder="Enter signer wallet address"
+                                          // placeholder="Enter signer wallet address"
                                           className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                                     />
                               )

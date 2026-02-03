@@ -26,6 +26,7 @@ export const NotificationWebSocketProvider: React.FC<{ children: React.ReactNode
     walletAddress: session?.address,
     userId: session?.address,
     onMessage: (message) => {
+      console.log("WEbsocket message: ", message)
       // Broadcast to all subscribers
       subscribers.forEach(callback => callback(message));
     },

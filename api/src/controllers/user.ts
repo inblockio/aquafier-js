@@ -832,22 +832,22 @@ export default async function userController(fastify: FastifyInstance) {
     //         return reply.code(401).send({ error: 'User not authenticated' });
     //     }
 
-        // let stats = await calculateStorageUsage(userAddress)
+    // let stats = await calculateStorageUsage(userAddress)
 
-        // return reply.code(200).send({
-        //     filesCount: stats.totalFiles,
-        //     storageUsed: stats.storageUsage,
-        //     // totalRevisions: allUserRevisions.length,
-        //     // linkRevisionsCount: linkRevisions.length,
-        //     claimTypeCounts: {
-        //         ...stats.formTypesToTrack,
-        //         user_files: aquaFiles
-        //     }
-        // })
+    // return reply.code(200).send({
+    //     filesCount: stats.totalFiles,
+    //     storageUsed: stats.storageUsage,
+    //     // totalRevisions: allUserRevisions.length,
+    //     // linkRevisionsCount: linkRevisions.length,
+    //     claimTypeCounts: {
+    //         ...stats.formTypesToTrack,
+    //         user_files: aquaFiles
+    //     }
+    // })
 
     // });
 
-     // Get user data stats
+    // Get user data stats
     fastify.get('/user_data_stats', {
         preHandler: authenticate
     }, async (request: AuthenticatedRequest, reply) => {
@@ -902,58 +902,58 @@ export default async function userController(fastify: FastifyInstance) {
             previous: string | null;
             AquaForms: {
                 key: string | null;
-            }[] 
-        }[]= [];
+            }[]
+        }[] = [];
 
 
-        
-         const latestRecords = await prisma.latest.findMany({
-                where: {
-                    AND: {
-                        user: userAddress,
-                        template_id: null,
-                        is_workflow: false
-                    }
-                },
-                select: {
-                    hash: true
-                },
-                
-                orderBy: {
-                    createdAt: 'desc'
+
+        const latestRecords = await prisma.latest.findMany({
+            where: {
+                AND: {
+                    user: userAddress,
+                    template_id: null,
+                    is_workflow: false
                 }
+            },
+            select: {
+                hash: true
+            },
+
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        for (let index = 0; index < latestRecords.length; index++) {
+            const element = latestRecords[index];
+
+            let revision = await prisma.revision.findFirst({
+                where: {
+                    pubkey_hash: element.hash
+                },
             });
 
-            for (let index = 0; index < latestRecords.length; index++) {
-                const element = latestRecords[index];
-                
-                let revision = await prisma.revision.findFirst({
-                    where: {
-                        pubkey_hash: element.hash
-                    },  
-                });
+            // get genesis 
+            if (revision) {
+                let aquaTreeRevisions = await findAquaTreeRevision(revision?.pubkey_hash)
 
-                // get genesis 
-                if(revision){
-                    let aquaTreeRevisions = await findAquaTreeRevision(revision?.pubkey_hash)
-                    
-                    let genesisRevision = aquaTreeRevisions.find((e)=>e.previous==null || e.previous=="")
+                let genesisRevision = aquaTreeRevisions.find((e) => e.previous == null || e.previous == "")
 
-                    if(genesisRevision){
+                if (genesisRevision) {
 
-                        let aquaForms = await prisma.aquaForms.findMany({
-                            where: {
-                                hash: genesisRevision.pubkey_hash
-                            },  
-                        });
-                        allUserRevisions.push({
-                            pubkey_hash: genesisRevision.pubkey_hash,
-                            previous: genesisRevision.previous,    
-                            AquaForms: aquaForms
-                        });
-                    }
-                }  
+                    let aquaForms = await prisma.aquaForms.findMany({
+                        where: {
+                            hash: genesisRevision.pubkey_hash
+                        },
+                    });
+                    allUserRevisions.push({
+                        pubkey_hash: genesisRevision.pubkey_hash,
+                        previous: genesisRevision.previous,
+                        AquaForms: aquaForms
+                    });
+                }
             }
+        }
 
 
 
@@ -1072,7 +1072,7 @@ export default async function userController(fastify: FastifyInstance) {
         const aquaFiles = totalFiles - Object.values(formTypesToTrack).reduce((a, b) => a + b, 0)
 
 
-         let stats = await calculateStorageUsage(userAddress)
+        let stats = await calculateStorageUsage(userAddress)
 
         return reply.code(200).send({
             filesCount: totalFiles,
@@ -1080,7 +1080,7 @@ export default async function userController(fastify: FastifyInstance) {
             // totalRevisions: allUserRevisions.length,
             // linkRevisionsCount: linkRevisions.length,
             claimTypeCounts: {
-                 ...stats.formTypesToTrack,
+                ...stats.formTypesToTrack,
                 user_files: aquaFiles
             }
         })
@@ -1090,7 +1090,7 @@ export default async function userController(fastify: FastifyInstance) {
 
 
 
-     
+
     // Helper function to handle files deletion
     async function handleFilesDeletion(
         tx: Omit<PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">,

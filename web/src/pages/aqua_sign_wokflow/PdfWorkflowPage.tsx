@@ -84,7 +84,7 @@ export default function PdfWorkflowPage() {
 
             return signatureRevionHashes
       }
-
+ 
       function computeIsWorkflowCOmplete(): boolean {
             if (selectedFileInfo) {
                   const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
