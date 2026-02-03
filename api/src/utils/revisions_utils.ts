@@ -562,7 +562,8 @@ export async function saveRevisionInAquaTree(revisionData: SaveRevisionForUser, 
                     ]
                 },
                 data: {
-                    hash: filePubKeyHash
+                    hash: filePubKeyHash,
+                    is_workflow: revisionData.isWorkflow ?  revisionData.isWorkflow :  existData.is_workflow
                 }
             });
 
