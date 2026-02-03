@@ -588,6 +588,17 @@ export async function saveRevisionInAquaTree(revisionData: SaveRevisionForUser, 
                 },
             });
 
+            // Update the previous revision's children to include this new revision
+            await tx.revision.update({
+                where: {
+                    pubkey_hash: `${userAddress}_${revisionData.revision.previous_verification_hash}`
+                },
+                data: {
+                    children: {
+                        push: filePubKeyHash
+                    }
+                }
+            });
 
             // Process form data - iterate over revisionData keys that start with "forms_"
             if (revisionData.revision.revision_type == "form") {
@@ -924,7 +935,9 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevisionForUser,
                 pubkey_hash: `${userAddress}_${revisionData.revision.previous_verification_hash}`
             },
             data: {
-                children: [filePubKeyHash]
+                children: {
+                    push: filePubKeyHash
+                }
             }
         })
     } catch (error) {
