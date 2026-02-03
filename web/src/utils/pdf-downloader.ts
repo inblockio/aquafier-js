@@ -2,6 +2,7 @@ import { degrees, PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { toast } from 'sonner';
 import { signPdfWithAquafier } from './pdf-digital-signature';
 import { Annotation, ImageAnnotation, ProfileAnnotation, TextAnnotation } from '../pages/aqua_sign_wokflow/ContractDocument/signer/types';
+import appStore from '../store';
 
 /**
  * Parses a font size string (e.g., "12pt", "16px") to points.
@@ -72,7 +73,7 @@ const sanitizeTextForWinAnsi = (text: string): string => {
     // We'll filter out anything else for safety to avoid crash.
     return text.replace(/[^\x20-\x7E\xA0-\xFF]/g, '?');
 };
-
+ 
 export const downloadPdfWithAnnotations = async ({
     pdfFile,
     annotations,
@@ -299,8 +300,27 @@ export const downloadPdfWithAnnotations = async ({
                 docBackupId
             );
 
+            // Update selectedFileInfo with the signed PDF blob and metadata
+            const { selectedFileInfo, setSelectedFileInfo } = appStore.getState();
+            if (selectedFileInfo) {
+                // Create a File object from the signed PDF
+                const signedPdfFile = new File(
+                    [signedPdf as any],
+                    fileName || (pdfFile.name ? `${pdfFile.name.replace('.pdf', '')}_signed.pdf` : 'signed_document.pdf'),
+                    { type: 'application/pdf' }
+                );
+
+                // Update the selectedFileInfo with the signed PDF
+                setSelectedFileInfo({
+                    ...selectedFileInfo,
+                    signedPdfBlob: signedPdfFile,
+                    signatureInfo: signatureInfo,
+                    lastSignedAt: new Date().toISOString(),
+                });
+            }
+
             // Download the digitally signed PDF
-            const blob = new Blob([signedPdf as BlobPart], { type: 'application/pdf' });
+            const blob = new Blob([signedPdf as any], { type: 'application/pdf' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = fileName || (pdfFile.name ? `${pdfFile.name.replace('.pdf', '')}_signed.pdf` : 'signed_document.pdf');
@@ -320,7 +340,7 @@ export const downloadPdfWithAnnotations = async ({
         } catch (signError) {
             console.warn("Digital signature failed, downloading without signature:", signError);
             // Fallback: download without digital signature
-            const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
+            const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = fileName || (pdfFile.name ? `${pdfFile.name.replace('.pdf', '')}_signed.pdf` : 'document_signed.pdf');

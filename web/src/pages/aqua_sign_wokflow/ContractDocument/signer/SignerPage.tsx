@@ -11,7 +11,7 @@ import { ensureDomainUrlHasSSL } from '@/utils/functions'
 import { toast } from 'sonner'
 import { useStore } from 'zustand'
 import appStore from '@/store'
-import axios from 'axios'
+import axios from 'axios' 
 import { API_ENDPOINTS } from '@/utils/constants'
 import { downloadPdfWithAnnotations } from '@/utils/pdf-downloader'
 // import { ScrollArea } from '@/components/ui/scroll-area';

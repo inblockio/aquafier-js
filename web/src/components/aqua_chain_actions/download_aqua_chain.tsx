@@ -29,7 +29,7 @@ const getMimeType = (filename: string): string => {
             '.jpg': 'image/jpeg',
             '.jpeg': 'image/jpeg',
             '.png': 'image/png',
-            '.gif': 'image/gif',
+            '.gif': 'image/gif', 
             '.bmp': 'image/bmp',
             '.tiff': 'image/tiff',
             '.webp': 'image/webp',

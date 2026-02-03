@@ -10,6 +10,16 @@ export interface ApiFileInfo {
       linkedFileObjects: FileObject[]
       mode: string
       owner: string
+      // Added for PDF signing with embedded aqua data
+      signedPdfBlob?: File
+      signatureInfo?: {
+            signedAt: Date;
+            signer: string;
+            reason: string;
+            platform: string;
+            certificateFingerprint: string;
+      }
+      lastSignedAt?: string
 }
 
 export interface ClaimInformation {

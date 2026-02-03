@@ -113,7 +113,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             if (aquaJson.type !== "aqua_file_backup") {
                 return reply.code(400).send({ error: 'Invalid aqua.json type for workspace upload' });
             }
-
+   
             // Process aqua.json metadata first
             await processAquaMetadata(zipData, session.address);
 

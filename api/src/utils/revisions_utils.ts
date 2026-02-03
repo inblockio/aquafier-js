@@ -2238,7 +2238,7 @@ export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
         }
         return fileName;
     };
-
+ 
     // Create a map of decoded filenames to original keys
     const fileMap: Map<string, string> = new Map();
     for (const originalKey in zipData.files) {
