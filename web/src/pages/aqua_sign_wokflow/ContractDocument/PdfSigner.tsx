@@ -331,7 +331,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         }
                   }
 
-             
+
                   // if pdf signer creator is not in the signers list
                   // send him the revisions
                   if (!signers.split(',').includes(sender)) {
@@ -409,7 +409,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         )
 
 
-                        let hasUpdate=false
+                        let hasUpdate = false
 
                         if (index == aquaTrees.length - 1) {
                               // newApiFileInfo.aquaTree = aquaTree
@@ -422,13 +422,13 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                     let userAquaTrees: ApiFileInfo[] = apiResponse.data.data.data
                                     // console.log(" apiResponse.data.data: ", JSON.stringify( apiResponse.data.data, null, 2))
                                     console.log("userAquaTrees: ", JSON.stringify(userAquaTrees, null, 2))
-                             
+
                                     for (const userAquaTree of userAquaTrees) {
                                           let currentGenHash = getGenesisHash(userAquaTree.aquaTree!)
                                           if (currentGenHash == genHashOfApiFileInf) {
                                                 newApiFileInfo.aquaTree = userAquaTree.aquaTree
                                                 newApiFileInfo.fileObject = userAquaTree.fileObject
-                                                hasUpdate=true
+                                                hasUpdate = true
                                                 break
                                           }
                                     }
@@ -436,10 +436,10 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                               }
                         }
 
-                        if(hasUpdate){
-                              console.log("newApiFileInfo: updted", )
-                             setSelectedFileInfo(newApiFileInfo) 
-                             setActiveStep(1)
+                        if (hasUpdate) {
+                              console.log("newApiFileInfo: updted",)
+                              setSelectedFileInfo(newApiFileInfo)
+                              setActiveStep(1)
                               toast.success("Document signed successfully")
                         }
 
@@ -535,44 +535,51 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   // Step 6: Save both revisions to server (only after successful MetaMask signing)
                   await saveRevisionsToServer([linkedAquaTreeWithUserSignatureData, linkedAquaTreeWithSignature, metaMaskSignedAquaTree])
 
-                  // Step 7: Create notification for the contract sender
-                  // Get the genesis hash to find the contract sender
-                  const genesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
-                  if (genesisHash) {
-                        const revision = selectedFileInfo!.aquaTree!.revisions[genesisHash]
-                        const sender = revision['forms_sender']
 
-                        // Only create notification if the current user is not the sender
-                        if (sender && session?.address && sender !== session.address) {
-                              await createSigningNotification(session.address, sender)
-                        }
-
-                        let signersString = revision['forms_signers']
-                        let signers: string[] = [];
-                        if (signersString.includes(',')) {
-                              signers = signersString.split(',')
-                        } else {
-                              signers.push(signersString)
-                        }
-
-                        for (const wallet of signers) {
-
-                              if (wallet.toLowerCase() !== sender.toLowerCase() || wallet.toLowerCase() !== session?.address.toLowerCase()) {
-                                    await createSigningNotification(session!.address, wallet)
-                              }
-                        }
-
-                  }
-
-                  // Step 8: Update UI and refresh files
-                  // await updateUIAfterSuccess()
-                  // temprarily th ui is updated saveRevisionsToServer after the last revison is submitted
-
-                  // Step 9:
+                  // Step 7:
                   // check if the owner of the document is a different wallet address send him the above revsions
                   // send the revision to the other wallet address if possible
                   await shareRevisionsToOwnerAnOtherSignersOfDocument([linkedAquaTreeWithUserSignatureData, linkedAquaTreeWithSignature, metaMaskSignedAquaTree])
 
+
+                   // Step 8: Create notification for the contract sender
+                  setTimeout(async () => {
+                       
+                        // Get the genesis hash to find the contract sender
+                        const genesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
+                        if (genesisHash) {
+                              const revision = selectedFileInfo!.aquaTree!.revisions[genesisHash]
+                              const sender = revision['forms_sender']
+
+                              // Only create notification if the current user is not the sender
+                              if (sender && session?.address && sender !== session.address) {
+                                    await createSigningNotification(session.address, sender)
+                              }
+
+                              let signersString = revision['forms_signers']
+                              let signers: string[] = [];
+                              if (signersString.includes(',')) {
+                                    signers = signersString.split(',')
+                              } else {
+                                    signers.push(signersString)
+                              }
+
+                              for (const wallet of signers) {
+
+                                    if (wallet.toLowerCase() !== sender.toLowerCase() || wallet.toLowerCase() !== session?.address.toLowerCase()) {
+                                          await createSigningNotification(session!.address, wallet)
+                                    }
+                              }
+
+                        }
+
+                  }, 3000)
+
+                  // Step 9: Update UI and refresh files
+                  // await updateUIAfterSuccess()
+                  // temprarily th ui is updated saveRevisionsToServer after the last revison is submitted
+
+              
             } catch (error) {
                   console.error('Error in submitSignatureData:', error)
                   showError('An unexpected error occurred during signature submission')
