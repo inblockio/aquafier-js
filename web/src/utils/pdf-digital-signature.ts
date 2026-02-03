@@ -387,27 +387,134 @@ export async function signPdfDocument(
         }
       );
 
-      // Embed the main aqua tree file if available
+      // Embed all file objects (both .aqua.json metadata and actual asset files)
       if (selectedFileInfo.fileObject && selectedFileInfo.fileObject.length > 0) {
         for (const fileObj of selectedFileInfo.fileObject) {
-          if (fileObj.fileName.endsWith('.aqua.json')) {
-            try {
+          try {
+            // Skip files that are URLs - we can't embed remote content
+            if (typeof fileObj.fileContent === 'string' &&
+                (fileObj.fileContent.startsWith('http://') || fileObj.fileContent.startsWith('https://'))) {
+              console.log(`Skipping URL-based file: ${fileObj.fileName}`);
+              continue;
+            }
+
+            let fileBytes: Uint8Array;
+            let mimeType = 'application/octet-stream';
+            let description = 'Aquafier asset file';
+
+            if (fileObj.fileName.endsWith('.aqua.json')) {
+              // Handle aqua tree files
               const fileContent = typeof fileObj.fileContent === 'string'
                 ? fileObj.fileContent
                 : JSON.stringify(fileObj.fileContent);
-
-              await tempDoc.attach(
-                new Uint8Array(new TextEncoder().encode(fileContent)),
-                fileObj.fileName,
-                {
-                  mimeType: 'application/json',
-                  description: 'Aquafier chain file',
-                  creationDate: signedAt,
-                  modificationDate: signedAt,
+              fileBytes = new Uint8Array(new TextEncoder().encode(fileContent));
+              mimeType = 'application/json';
+              description = 'Aquafier chain file';
+            } else if (fileObj.fileName.endsWith('.json')) {
+              // Handle JSON files
+              const fileContent = typeof fileObj.fileContent === 'string'
+                ? fileObj.fileContent
+                : JSON.stringify(fileObj.fileContent);
+              fileBytes = new Uint8Array(new TextEncoder().encode(fileContent));
+              mimeType = 'application/json';
+              description = 'Aquafier JSON asset';
+            } else if (fileObj.fileName.endsWith('.png')) {
+              mimeType = 'image/png';
+              description = 'Aquafier image asset';
+              if (fileObj.fileContent instanceof ArrayBuffer) {
+                fileBytes = new Uint8Array(fileObj.fileContent);
+              } else if (typeof fileObj.fileContent === 'string') {
+                // Check if it's base64 encoded
+                if (fileObj.fileContent.startsWith('data:')) {
+                  const base64Data = fileObj.fileContent.split(',')[1];
+                  fileBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+                } else {
+                  fileBytes = new Uint8Array(new TextEncoder().encode(fileObj.fileContent));
                 }
-              );
-            } catch (error) {
-              console.error(`Failed to attach ${fileObj.fileName}:`, error);
+              } else {
+                console.warn(`Skipping ${fileObj.fileName} - unsupported content type`);
+                continue;
+              }
+            } else if (fileObj.fileName.endsWith('.pdf')) {
+              mimeType = 'application/pdf';
+              description = 'Aquafier PDF asset';
+              if (fileObj.fileContent instanceof ArrayBuffer) {
+                fileBytes = new Uint8Array(fileObj.fileContent);
+              } else if (typeof fileObj.fileContent === 'string') {
+                fileBytes = new Uint8Array(new TextEncoder().encode(fileObj.fileContent));
+              } else {
+                console.warn(`Skipping ${fileObj.fileName} - unsupported content type`);
+                continue;
+              }
+            } else {
+              // Handle other file types
+              if (typeof fileObj.fileContent === 'string') {
+                fileBytes = new Uint8Array(new TextEncoder().encode(fileObj.fileContent));
+              } else if (fileObj.fileContent instanceof ArrayBuffer) {
+                fileBytes = new Uint8Array(fileObj.fileContent);
+              } else {
+                console.warn(`Skipping ${fileObj.fileName} - unsupported content type`);
+                continue;
+              }
+            }
+
+            await tempDoc.attach(
+              fileBytes,
+              fileObj.fileName,
+              {
+                mimeType,
+                description,
+                creationDate: signedAt,
+                modificationDate: signedAt,
+              }
+            );
+            console.log(`Attached file: ${fileObj.fileName} (${fileBytes.length} bytes)`);
+          } catch (error) {
+            console.error(`Failed to attach ${fileObj.fileName}:`, error);
+          }
+        }
+      }
+
+      // Also embed linkedFileObjects if they exist and have content
+      if (selectedFileInfo.linkedFileObjects && selectedFileInfo.linkedFileObjects.length > 0) {
+        for (const linkedFileObj of selectedFileInfo.linkedFileObjects) {
+          if (linkedFileObj.fileObject) {
+            for (const fileObj of linkedFileObj.fileObject) {
+              try {
+                // Skip files that are URLs
+                if (typeof fileObj.fileContent === 'string' &&
+                    (fileObj.fileContent.startsWith('http://') || fileObj.fileContent.startsWith('https://'))) {
+                  continue;
+                }
+
+                let fileBytes: Uint8Array;
+                let mimeType = 'application/octet-stream';
+
+                if (typeof fileObj.fileContent === 'string') {
+                  fileBytes = new Uint8Array(new TextEncoder().encode(fileObj.fileContent));
+                  if (fileObj.fileName.endsWith('.json')) {
+                    mimeType = 'application/json';
+                  }
+                } else if (fileObj.fileContent instanceof ArrayBuffer) {
+                  fileBytes = new Uint8Array(fileObj.fileContent);
+                } else {
+                  continue;
+                }
+
+                await tempDoc.attach(
+                  fileBytes,
+                  fileObj.fileName,
+                  {
+                    mimeType,
+                    description: 'Aquafier linked asset',
+                    creationDate: signedAt,
+                    modificationDate: signedAt,
+                  }
+                );
+                console.log(`Attached linked file: ${fileObj.fileName} (${fileBytes.length} bytes)`);
+              } catch (error) {
+                console.error(`Failed to attach linked file ${fileObj.fileName}:`, error);
+              }
             }
           }
         }
@@ -498,68 +605,156 @@ export async function extractEmbeddedAquaData(
 ): Promise<{
   aquaJson: any | null;
   aquaChainFiles: Array<{ filename: string; content: string }>;
+  assetFiles: Array<{ filename: string; content: string | ArrayBuffer }>;
 }> {
   try {
+    console.log('Loading PDF document for extraction...');
     const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
 
     let aquaJson: any = null;
     const aquaChainFiles: Array<{ filename: string; content: string }> = [];
+    const assetFiles: Array<{ filename: string; content: string | ArrayBuffer }> = [];
 
     // Access the catalog to find embedded files
     const catalog = pdfDoc.catalog;
     const namesDict = catalog.lookup(PDFName.of('Names'));
 
-    if (namesDict && namesDict instanceof PDFDict) {
-      const embeddedFilesDict = namesDict.lookup(PDFName.of('EmbeddedFiles'));
+    if (!namesDict) {
+      console.log('No Names dictionary found in PDF catalog');
+      return { aquaJson: null, aquaChainFiles: [], assetFiles: [] };
+    }
 
-      if (embeddedFilesDict && embeddedFilesDict instanceof PDFDict) {
-        const namesArray = embeddedFilesDict.lookup(PDFName.of('Names'));
+    if (!(namesDict instanceof PDFDict)) {
+      console.log('Names entry is not a dictionary');
+      return { aquaJson: null, aquaChainFiles: [], assetFiles: [] };
+    }
 
-        if (namesArray && namesArray instanceof PDFArray) {
-          // Names array contains alternating filename and filespec entries
-          for (let i = 0; i < namesArray.size(); i += 2) {
-            try {
-              const filenameObj = namesArray.get(i);
-              const filespecRef = namesArray.get(i + 1);
+    const embeddedFilesDict = namesDict.lookup(PDFName.of('EmbeddedFiles'));
 
-              if (filenameObj instanceof PDFString || filenameObj instanceof PDFHexString) {
-                const filename = filenameObj.decodeText();
-                const filespec = pdfDoc.context.lookup(filespecRef);
+    if (!embeddedFilesDict) {
+      console.log('No EmbeddedFiles dictionary found');
+      return { aquaJson: null, aquaChainFiles: [], assetFiles: [] };
+    }
 
-                if (filespec && filespec instanceof PDFDict) {
-                  const efDict = filespec.lookup(PDFName.of('EF'));
+    if (!(embeddedFilesDict instanceof PDFDict)) {
+      console.log('EmbeddedFiles entry is not a dictionary');
+      return { aquaJson: null, aquaChainFiles: [], assetFiles: [] };
+    }
 
-                  if (efDict && efDict instanceof PDFDict) {
-                    const fileStreamRef = efDict.lookup(PDFName.of('F'));
-                    const fileStream = pdfDoc.context.lookup(fileStreamRef);
+    const namesArray = embeddedFilesDict.lookup(PDFName.of('Names'));
 
-                    if (fileStream) {
-                      // Decode the embedded file content
-                      const fileBytes = (fileStream as any).contents;
-                      const textDecoder = new TextDecoder('utf-8');
-                      const content = textDecoder.decode(fileBytes);
+    if (!namesArray || !(namesArray instanceof PDFArray)) {
+      console.log('Names array not found in EmbeddedFiles');
+      return { aquaJson: null, aquaChainFiles: [], assetFiles: [] };
+    }
 
-                      if (filename === 'aqua.json') {
-                        aquaJson = JSON.parse(content);
-                      } else if (filename.endsWith('.aqua.json')) {
-                        aquaChainFiles.push({ filename, content });
-                      }
-                    }
-                  }
-                }
-              }
-            } catch (error) {
-              console.error('Failed to process embedded file:', error);
-            }
-          }
+    console.log(`Found ${namesArray.size() / 2} embedded files`);
+
+    // Names array contains alternating filename and filespec entries
+    for (let i = 0; i < namesArray.size(); i += 2) {
+      try {
+        const filenameObj = namesArray.get(i);
+        const filespecRef = namesArray.get(i + 1);
+
+        if (!(filenameObj instanceof PDFString || filenameObj instanceof PDFHexString)) {
+          continue;
         }
+
+        const filename = filenameObj.decodeText();
+        console.log(`Processing embedded file: ${filename}`);
+
+        const filespec = pdfDoc.context.lookup(filespecRef);
+
+        if (!filespec || !(filespec instanceof PDFDict)) {
+          console.log(`Filespec not found for ${filename}`);
+          continue;
+        }
+
+        const efDict = filespec.lookup(PDFName.of('EF'));
+
+        if (!efDict || !(efDict instanceof PDFDict)) {
+          console.log(`EF dictionary not found for ${filename}`);
+          continue;
+        }
+
+        const fileStreamRef = efDict.lookup(PDFName.of('F'));
+        const fileStream = pdfDoc.context.lookup(fileStreamRef);
+
+        if (!fileStream) {
+          console.log(`File stream not found for ${filename}`);
+          continue;
+        }
+
+        // Decode the embedded file content
+        // Check if the stream has encoded contents (compressed)
+        let fileBytes: Uint8Array;
+
+        if ((fileStream as any).contents) {
+          fileBytes = (fileStream as any).contents;
+        } else {
+          console.log(`No contents found for ${filename}`);
+          continue;
+        }
+
+        if (!fileBytes || fileBytes.length === 0) {
+          console.log(`No contents found for ${filename}`);
+          continue;
+        }
+
+        console.log(`Raw bytes for ${filename}: length=${fileBytes.length}, first byte=0x${fileBytes[0].toString(16)}, second byte=0x${fileBytes[1]?.toString(16) || 'N/A'}`);
+
+        // Check if the stream has a FlateDecode filter (zlib compressed)
+        // Zlib header starts with 0x78 followed by compression level byte
+        const isZlibCompressed = fileBytes[0] === 0x78;
+
+        let content: string;
+
+        if (isZlibCompressed) {
+          console.log(`File ${filename} appears to be zlib compressed, attempting to decompress with pako...`);
+          try {
+            // Use pako to decompress zlib data
+            const pako = await import('pako');
+            const decompressed = pako.inflate(fileBytes);
+            content = new TextDecoder('utf-8').decode(decompressed);
+            console.log(`Successfully decompressed ${filename} with pako`);
+          } catch (error) {
+            console.error(`Failed to decompress ${filename} with pako:`, error);
+            // Try decoding as plain text
+            content = new TextDecoder('utf-8').decode(fileBytes);
+          }
+        } else {
+          // Not compressed, decode as plain text
+          content = new TextDecoder('utf-8').decode(fileBytes);
+        }
+
+        console.log(`Extracted ${filename}: ${content.length} characters`);
+
+        if (filename === 'aqua.json') {
+          try {
+            aquaJson = JSON.parse(content);
+            console.log('Successfully parsed aqua.json');
+          } catch (error) {
+            console.error('Failed to parse aqua.json:', error);
+            console.log('First 100 chars:', content.substring(0, 100));
+          }
+        } else if (filename.endsWith('.aqua.json')) {
+          aquaChainFiles.push({ filename, content });
+          console.log(`Added ${filename} to aquaChainFiles`);
+        } else {
+          // This is an asset file (non-aqua.json)
+          assetFiles.push({ filename, content });
+          console.log(`Added ${filename} to assetFiles`);
+        }
+      } catch (error) {
+        console.error('Failed to process embedded file at index', i, ':', error);
       }
     }
 
-    return { aquaJson, aquaChainFiles };
+    console.log(`Extraction complete. aquaJson: ${aquaJson ? 'found' : 'not found'}, aquaChainFiles: ${aquaChainFiles.length}, assetFiles: ${assetFiles.length}`);
+    return { aquaJson, aquaChainFiles, assetFiles };
   } catch (error) {
     console.error('Error extracting embedded aqua data:', error);
-    return { aquaJson: null, aquaChainFiles: [] };
+    return { aquaJson: null, aquaChainFiles: [], assetFiles: [] };
   }
 }
 
