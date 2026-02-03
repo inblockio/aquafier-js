@@ -705,6 +705,25 @@ export async function saveRevisionInAquaTree(revisionData: SaveRevisionForUser, 
                         reference_count: 0
                     }
                 })
+
+                // Check if this link revision makes the aqua tree a workflow
+                // by checking if any of the link_verification_hashes are known workflow template hashes
+                const linkVerificationHashes = revisionData.revision.link_verification_hashes || [];
+                const isLinkingToWorkflow = linkVerificationHashes.some(
+                    (hash: string) => systemTemplateHashes.includes(hash)
+                );
+
+                if (isLinkingToWorkflow) {
+                    // Update the is_workflow flag in Latest table
+                    await tx.latest.updateMany({
+                        where: {
+                            hash: filePubKeyHash
+                        },
+                        data: {
+                            is_workflow: true
+                        }
+                    });
+                }
             }
 
             if (revisionData.revision.revision_type == "file" || revisionData.revision.revision_type == "form") {

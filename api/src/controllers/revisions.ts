@@ -1250,29 +1250,128 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
             } else {
                 // Default: date-based sorting from Latest table
-                const whereClause: any = {
-                    AND: {
+
+                if (fileType === 'user_files') {
+                    // For user_files, we need to exclude actual workflows at the database level
+                    // First, find all Latest hashes that belong to workflow chains
+
+                    // Step 1: Find all link revisions that point to system workflow templates
+                    const workflowLinkRevisions = await prisma.link.findMany({
+                        where: {
+                            hash: {
+                                startsWith: userAddress
+                            },
+                            link_verification_hashes: {
+                                hasSome: systemTemplateHashes
+                            }
+                        },
+                        select: {
+                            hash: true
+                        }
+                    });
+
+                    // Step 2: For each workflow link, find the Latest record for that chain
+                    const workflowLatestHashes = new Set<string>();
+
+                    // First, add all records explicitly marked as workflows
+                    const explicitWorkflows = await prisma.latest.findMany({
+                        where: {
+                            user: userAddress,
+                            is_workflow: true
+                        },
+                        select: { hash: true }
+                    });
+                    explicitWorkflows.forEach(w => workflowLatestHashes.add(w.hash));
+
+                    // Then, for each workflow link, trace to find its Latest record
+                    for (const linkRev of workflowLinkRevisions) {
+                        // Find the latest revision in this chain by following children
+                        let currentHash = linkRev.hash;
+                        let maxIterations = 100; // Safety limit
+
+                        while (maxIterations > 0) {
+                            const revision = await prisma.revision.findUnique({
+                                where: { pubkey_hash: currentHash },
+                                select: { children: true }
+                            });
+
+                            if (!revision || !revision.children || revision.children.length === 0) {
+                                break;
+                            }
+
+                            // Follow the first child (linear chain assumption)
+                            currentHash = revision.children[0];
+                            maxIterations--;
+                        }
+
+                        // currentHash is now the latest revision in this chain
+                        // Check if there's a Latest record for it
+                        const latestRecord = await prisma.latest.findFirst({
+                            where: {
+                                user: userAddress,
+                                hash: currentHash
+                            },
+                            select: { hash: true }
+                        });
+
+                        if (latestRecord) {
+                            workflowLatestHashes.add(latestRecord.hash);
+                        }
+                    }
+
+                    // Step 3: Query Latest table excluding workflow hashes
+                    const whereClause: any = {
                         user: userAddress,
                         template_id: null,
-                        is_workflow: fileType === 'all' || fileType == "user_files" ? false : undefined
-                    }
-                };
+                        is_workflow: false,
+                        ...(workflowLatestHashes.size > 0 ? {
+                            hash: {
+                                notIn: Array.from(workflowLatestHashes)
+                            }
+                        } : {})
+                    };
 
-                totalCount = await prisma.latest.count({ where: whereClause });
+                    totalCount = await prisma.latest.count({ where: whereClause });
 
-                const latestRecords = await prisma.latest.findMany({
-                    where: whereClause,
-                    select: {
-                        hash: true
-                    },
-                    skip: skip,
-                    take: limitNum,
-                    orderBy: {
-                        createdAt: 'desc'
-                    }
-                });
+                    const latestRecords = await prisma.latest.findMany({
+                        where: whereClause,
+                        select: {
+                            hash: true
+                        },
+                        skip: skip,
+                        take: limitNum,
+                        orderBy: {
+                            createdAt: 'desc'
+                        }
+                    });
 
-                revisionHashes = latestRecords.map(r => r.hash);
+                    revisionHashes = latestRecords.map(r => r.hash);
+
+                } else {
+                    // For 'all' fileType, use the original approach
+                    const whereClause: any = {
+                        AND: {
+                            user: userAddress,
+                            template_id: null
+                        }
+                    };
+
+                    totalCount = await prisma.latest.count({ where: whereClause });
+
+                    const latestRecords = await prisma.latest.findMany({
+                        where: whereClause,
+                        select: {
+                            hash: true
+                        },
+                        skip: skip,
+                        take: limitNum,
+                        orderBy: {
+                            createdAt: 'desc'
+                        }
+                    });
+
+                    revisionHashes = latestRecords.map(r => r.hash);
+                }
             }
 
             // Build aqua trees for the revision hashes
@@ -1300,6 +1399,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
             if (fileType === 'user_files') {
                 // Filter out any workflow files that might have slipped through
+                // Note: This is a safety net for records where is_workflow flag doesn't match actual content
                 let filteredDisplayData: Array<{
                     aquaTree: AquaTree,
                     fileObject: FileObject[]
@@ -1313,7 +1413,10 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
                 }
                 displayData = filteredDisplayData;
-                totalCount = displayData.length;
+                // Note: We intentionally do NOT update totalCount here.
+                // totalCount reflects the database count. If items are filtered out here,
+                // it indicates a data consistency issue where is_workflow flag doesn't match
+                // the actual aqua tree content. This should be fixed at the data layer.
             }
 
             const queryEnd = performance.now()
