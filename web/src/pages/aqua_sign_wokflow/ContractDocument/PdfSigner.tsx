@@ -1203,12 +1203,12 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   console.log("TODO:Notification received: ", message)
                   console.log("TODO: Notification received: ", message)
                   // Handle notification reload specifically
-                  if (message.type === 'notification_reload' && message.data && message.data.target === "aqua_sign_workflow") {
-                        updateSelectedFileInfo()
-                  }
-                  if(message.type=="aqua_sign_workflow"){
-                        updateSelectedFileInfo()
-                  }
+                  // if (message.type === 'notification_reload' && message.data && message.data.target === "aqua_sign_workflow") {
+                  //       updateSelectedFileInfo()
+                  // }
+                  // if(message.type=="aqua_sign_workflow"){
+                  // }
+                  updateSelectedFileInfo()
             });
             return unsubscribe;
       }, []);

@@ -79,7 +79,7 @@ const SharePage = () => {
             if (params.identifier && session?.nonce) {
                   loadPageData()
             }
-      }, [session, identifier])
+      }, [session, identifier, backend_url])
 
       const showProperWidget = () => {
             if (hasError) {
