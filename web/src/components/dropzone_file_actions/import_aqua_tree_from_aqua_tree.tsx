@@ -112,7 +112,7 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                   const revisionHashes = Object.keys(revisions)
                   const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
 
-                  const res = await axios.post(
+                   await axios.post(
                         url,
                         {
                               latestRevisionHash: latestRevisionHash,
@@ -125,22 +125,21 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                         }
                   )
 
-                  if (res.status === 200) {
-                        toast.success('Aqua Chain imported successfully')
 
-                        // Use setTimeout to ensure state is updated before navigation
-                        const aquaSystemFileNames = await loadSystemAquaFileNames()
-                        const { isWorkFlow, workFlow } = isWorkFlowData(fileInfo.aquaTree!, aquaSystemFileNames)
+                  toast.success('Aqua Chain imported successfully')
 
-                        if (isWorkFlow && workFlow == "aqua_sign") {
-                              setSelectedFileInfo(fileInfo)
-                              navigate('/app/pdf/workflow/2')
-                        } else {
-                              navigate('/app')
-                        }
+                  // Use setTimeout to ensure state is updated before navigation
+                  const aquaSystemFileNames = await loadSystemAquaFileNames()
+                  const { isWorkFlow, workFlow } = isWorkFlowData(fileInfo.aquaTree!, aquaSystemFileNames)
+
+                  if (isWorkFlow && workFlow == "aqua_sign") {
+                        //todo check if am in the signer only then navigate to 2
+                        setSelectedFileInfo(fileInfo)
+                        navigate('/app/pdf/workflow/2')
                   } else {
-                        toast.error('Failed to import chain')
+                        navigate('/app')
                   }
+
 
                   setUploading(false)
                   setUploaded(true)

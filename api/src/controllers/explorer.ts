@@ -1025,7 +1025,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             // Transfer the chain to the target user (session.address)
             const transferResult = await transferRevisionChainData(
                 session.address,
-                entireChain[0],
+                entireChain[0],null, false    
             );
 
             if (!transferResult.success) {

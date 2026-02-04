@@ -129,7 +129,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   const url = `${backend_url}/tree/user/all`
                   const actualUrlToFetch = ensureDomainUrlHasSSL(url)
 
-                   await axios.post(
+                  await axios.post(
                         actualUrlToFetch,
                         {
                               revisions: revisions,
@@ -347,6 +347,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
             }
 
       }
+      let hi = 0;// fix for breakpoint
       const shareRevisionsToOwnerAnOtherSignersOfDocument = async (aquaTrees: AquaTree[]) => {
             //get genesis hash
             const genesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
@@ -356,6 +357,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   const sender: string | undefined = revision['forms_sender']
                   const signers: string | undefined = revision['forms_signers']
 
+                  console.log(`Sharing revisions to other signers       ... sender ${sender}  signers ${signers} `)
                   if (sender == undefined) {
                         showError('Workflow sender not found')
                         return
@@ -366,20 +368,42 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         return
                   }
 
+                  if (sender == signers) {
+                        console.log("Only sender involved, no need to share revisions")
+                        return
+                  }
+
                   if (signers.includes(',')) {
                         const allSigners: string[] = signers.split(',')
 
                         for (const aSigner of allSigners) {
                               // dont resend the revision to the user as this was handled before this function call
-                              if (aSigner != session?.address) {
+                              if (aSigner != sender) {
                                     await saveAllRevisionsToServerForUser(aquaTrees, aSigner)
+
+                                    triggerWebsockets(aSigner, {
+                                          target: "aqua_sign_workflow",
+                                          genesisHash: genesisHash,
+                                    })
+
                               }
+                        }
+                  } else {
+                        if (signers != sender) {
+                              // only one signer
+                              await saveAllRevisionsToServerForUser(aquaTrees, signers)
+
+                              triggerWebsockets(signers, {
+                                    target: "aqua_sign_workflow",
+                                    genesisHash: genesisHash,
+                              })
                         }
                   }
 
 
-                  // if pdf signer creator is not in the signers list
-                  // send him the revisions
+
+                  // sender could be another user too
+                  //  
                   if (!signers.split(',').includes(sender)) {
                         //send the signatures to workflow creator
                         await saveAllRevisionsToServerForUser(aquaTrees, sender)
@@ -391,6 +415,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                               genesisHash: genesisHash,
                         })
                   }
+
+
+
+
+
             }
       }
 
@@ -534,39 +563,39 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         }
                   )
 
-               
-                        // if (apiResponse.data.data) {
-                        //       const genHashOfApiFileInf = getGenesisHash(selectedFileInfo!.aquaTree!)
-                        //       console.log("genHashOfApiFileInf", genHashOfApiFileInf)
-                        //       console.log("selectedFileInfo ", JSON.stringify(selectedFileInfo, null,2))
-                        //       const userAquaTrees: ApiFileInfo[] = apiResponse.data.data.data
-                        //       console.log("apiResponse.data.data.data", JSON.stringify(apiResponse.data.data.data, null,2))
 
-                        //       let hasBeenFound = false;
-                        //       for (const userAquaTree of userAquaTrees) {
-                        //             const currentGenHash = getGenesisHash(userAquaTree.aquaTree!)
-                        //             console.log("currentGenHash", currentGenHash)
-                        //             console.log("userAquaTree ", JSON.stringify(userAquaTree, null,2))
-                        //             if (currentGenHash == genHashOfApiFileInf) {
-                                          // const newApiFileInfo: ApiFileInfo = structuredClone(selectedFileInfo)
-                                          // newApiFileInfo.aquaTree = userAquaTree.aquaTree
-                                          // newApiFileInfo.fileObject = userAquaTree.fileObject
-                                          // setSelectedFileInfo(newApiFileInfo)
-                                          // setActiveStep(1)
-                                          // toast.success("Document signed successfully")
-                        //                   hasBeenFound = true;
-                        //                   break
-                        //             }
-                        //       }
-                        //       if (!hasBeenFound) {    
-                        //             console.error('Signed document not found in server response..')
-                        //             toast.error("Error saving signed document, please reload..")
-                        //       }
-                        // }else{
-                        //       console.error('No data returned from saveAllRevisionsToServer API')
-                        //       toast.error("Error saving signed document, please reload")
-                        // }
-                  
+                  // if (apiResponse.data.data) {
+                  //       const genHashOfApiFileInf = getGenesisHash(selectedFileInfo!.aquaTree!)
+                  //       console.log("genHashOfApiFileInf", genHashOfApiFileInf)
+                  //       console.log("selectedFileInfo ", JSON.stringify(selectedFileInfo, null,2))
+                  //       const userAquaTrees: ApiFileInfo[] = apiResponse.data.data.data
+                  //       console.log("apiResponse.data.data.data", JSON.stringify(apiResponse.data.data.data, null,2))
+
+                  //       let hasBeenFound = false;
+                  //       for (const userAquaTree of userAquaTrees) {
+                  //             const currentGenHash = getGenesisHash(userAquaTree.aquaTree!)
+                  //             console.log("currentGenHash", currentGenHash)
+                  //             console.log("userAquaTree ", JSON.stringify(userAquaTree, null,2))
+                  //             if (currentGenHash == genHashOfApiFileInf) {
+                  // const newApiFileInfo: ApiFileInfo = structuredClone(selectedFileInfo)
+                  // newApiFileInfo.aquaTree = userAquaTree.aquaTree
+                  // newApiFileInfo.fileObject = userAquaTree.fileObject
+                  // setSelectedFileInfo(newApiFileInfo)
+                  // setActiveStep(1)
+                  // toast.success("Document signed successfully")
+                  //                   hasBeenFound = true;
+                  //                   break
+                  //             }
+                  //       }
+                  //       if (!hasBeenFound) {    
+                  //             console.error('Signed document not found in server response..')
+                  //             toast.error("Error saving signed document, please reload..")
+                  //       }
+                  // }else{
+                  //       console.error('No data returned from saveAllRevisionsToServer API')
+                  //       toast.error("Error saving signed document, please reload")
+                  // }
+
             } catch (error) {
                   console.error('Error saving all revisions:', error)
                   throw new Error('Error saving all revisions to server')
@@ -663,43 +692,43 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   await shareRevisionsToOwnerAnOtherSignersOfDocument([linkedAquaTreeWithUserSignatureData, linkedAquaTreeWithSignature, metaMaskSignedAquaTree])
 
 
-                   // Step 8: Create notification for the contract sender
+                  // Step 8: Create notification for the contract sender
                   // setTimeout(async () => {
-                       
-                        // Get the genesis hash to find the contract sender
-                        const genesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
-                        if (genesisHash) {
-                              const revision = selectedFileInfo!.aquaTree!.revisions[genesisHash]
-                              const sender = revision['forms_sender']
 
-                              // Only create notification if the current user is not the sender
-                              if (sender && session?.address && sender !== session.address) {
-                                    await createSigningNotification(session.address, sender)
-                              }
+                  // Get the genesis hash to find the contract sender
+                  const genesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
+                  if (genesisHash) {
+                        const revision = selectedFileInfo!.aquaTree!.revisions[genesisHash]
+                        const sender = revision['forms_sender']
 
-                              let signersString = revision['forms_signers']
-                              let signers: string[] = [];
-                              if (signersString.includes(',')) {
-                                    signers = signersString.split(',')
-                              } else {
-                                    signers.push(signersString)
-                              }
-
-                              for (const wallet of signers) {
-
-                                    if (wallet.toLowerCase() !== sender.toLowerCase() || wallet.toLowerCase() !== session?.address.toLowerCase()) {
-                                          await createSigningNotification(session!.address, wallet)
-                                    }
-                              }
-
+                        // Only create notification if the current user is not the sender
+                        if (sender && session?.address && sender !== session.address) {
+                              await createSigningNotification(session.address, sender)
                         }
+
+                        let signersString = revision['forms_signers']
+                        let signers: string[] = [];
+                        if (signersString.includes(',')) {
+                              signers = signersString.split(',')
+                        } else {
+                              signers.push(signersString)
+                        }
+
+                        for (const wallet of signers) {
+
+                              if (wallet.toLowerCase() !== sender.toLowerCase() || wallet.toLowerCase() !== session?.address.toLowerCase()) {
+                                    await createSigningNotification(session!.address, wallet)
+                              }
+                        }
+
+                  }
 
                   // }, 3000)
 
                   // Step 9: Update UI and refresh files
                   await updateUIAfterSuccess()
-                 
-              
+
+
             } catch (error) {
                   console.error('Error in submitSignatureData:', error)
                   showError('An unexpected error occurred during signature submission')
@@ -1238,7 +1267,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                     }}
                               >
                                     {/* Add Signature to document */}
-                                   Place Signature
+                                    Place Signature
                               </Button>
 
                               {canPlaceSignature ? (

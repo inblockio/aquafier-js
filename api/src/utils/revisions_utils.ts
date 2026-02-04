@@ -284,23 +284,14 @@ export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string
     return falseResponse
 }
 
-// export function isAquaTree(content: any): boolean {
-//     // Check if content has the properties of an AquaTree
-//     return content &&
-//         typeof content === 'object' &&
-//         'revisions' in content &&
-//         'file_index' in content;
-// }
+
 
 export async function transferRevisionChainData(
     userAddress: string,
     chainData: {
         aquaTree: AquaTree; fileObject: FileObject[]
     },
-    templateId: string | null = null,
-    isWorkFlow: boolean = false,
-    markLinkedTreesAsWorkflow?: boolean
-): Promise<{ success: boolean, message: string }> {
+    templateId: string | null = null, isWorkFlow: boolean = false): Promise<{ success: boolean, message: string }> {
 
     try {
         let allAquaTrees: AquaTree[] = [];
@@ -341,22 +332,26 @@ export async function transferRevisionChainData(
             if (isAquaTreeData) {
                 let aquaTree = getAquatreeObject(fileObject.fileContent)
 
-                // Use markLinkedTreesAsWorkflow if provided, otherwise fall back to workFlowData.isWorkFlow
-                let shouldAquaTreeBeSavedAsPartOfWorkflow = markLinkedTreesAsWorkflow ?? workFlowData.isWorkFlow
+                let shouldAquaTreeBeSavedAsPartOfWorkflow = workFlowData.isWorkFlow
 
                 let allHashesOfCurrentAquaTreeInLoop = Object.keys(aquaTree.revisions)
-                // Logger.info(`♟️♟️  genHashofCurrentAquaTreeInLoop : ${JSON.stringify(allHashesOfCurrentAquaTreeInLoop, null, 2)}`);
-
-                // for claims email and phone number save the server attestation as a separate file
+                
+                // for claims email and phone number save the  server attesation as a seperate file
                 if (workflowDataToBeseparated.length > 0 && allHashesOfCurrentAquaTreeInLoop.includes(workflowDataToBeseparated)) {
                     shouldAquaTreeBeSavedAsPartOfWorkflow = false
                 }
 
-                // hide system templates from user view (only set to true, don't overwrite to false)
+                // hide system templates from user view
                 let genhash = getGenesisHash(aquaTree);
-                if (genhash && systemTemplateHashes.includes(genhash.trim())) {
-                    shouldAquaTreeBeSavedAsPartOfWorkflow = true
+                if (genhash) {
+                    shouldAquaTreeBeSavedAsPartOfWorkflow = systemTemplateHashes.includes(genhash.trim())
                 }
+
+                // this will hide pdf aqua tree , as it not part  system aqua tree unlike signatures
+                if(workFlowData.isWorkFlow && workFlowData.workFlow.includes("aqua_sign")){  
+                    shouldAquaTreeBeSavedAsPartOfWorkflow= true
+                }
+
 
                 //    await deletLatestIfExistsForAquaTree(aquaTree, userAddress)
                 for (let key of Object.keys(aquaTree.file_index)) {
@@ -441,6 +436,156 @@ export async function transferRevisionChainData(
     }
 
 }
+
+// export async function transferRevisionChainData(
+//     userAddress: string,
+//     chainData: {
+//         aquaTree: AquaTree; fileObject: FileObject[]
+//     },
+//     templateId: string | null = null,
+//     isWorkFlow: boolean = false,
+//     markLinkedTreesAsWorkflow?: boolean
+// ): Promise<{ success: boolean, message: string }> {
+
+//     try {
+//         let allAquaTrees: AquaTree[] = [];
+
+//         let allHashes = Object.keys(chainData.aquaTree.revisions);
+//         if (allHashes.length == 0) {
+//             throw new Error("🎈🎈No revisions found in the aqua tree");
+//         }
+
+//         // Logger.info(`🎈🎈 aquaTree  ${JSON.stringify(chainData.aquaTree, null, 4)}`)
+//         let hashName = new Map<string, string>();
+
+//         await saveAquaTree(chainData.aquaTree, userAddress, templateId, isWorkFlow);
+//         allAquaTrees.push(chainData.aquaTree);
+
+//         for (let key in chainData.aquaTree.file_index) {
+//             const value = chainData.aquaTree.file_index[key];
+//             hashName.set(key, value);
+//         }
+
+
+//         let workFlowData = isWorkFlowData(chainData.aquaTree, systemTemplateHashes);
+//         let workflowDataToBeseparated = ""
+//         if (workFlowData.isWorkFlow && (workFlowData.workFlow.includes("phone_number_claim") || workFlowData.workFlow.includes("email_claim"))) {
+//             let aquaTreereorder = reorderAquaTreeRevisionsProperties(chainData.aquaTree)
+//             let revisionServerSign = Object.values(aquaTreereorder.revisions)[3]
+
+//             if (revisionServerSign && revisionServerSign.revision_type == "link") {
+//                 workflowDataToBeseparated = revisionServerSign.link_verification_hashes![0] ?? ""
+//             }
+//         }
+
+//         // save aquatree in file objects
+//         for (let i = 0; i < chainData.fileObject.length; i++) {
+//             // Ensure the file object has a valid hashe
+//             let fileObject = chainData.fileObject[i]
+//             let isAquaTreeData = isAquaTree(fileObject.fileContent);
+//             if (isAquaTreeData) {
+//                 let aquaTree = getAquatreeObject(fileObject.fileContent)
+
+//                 // Use markLinkedTreesAsWorkflow if provided, otherwise fall back to workFlowData.isWorkFlow
+//                 let shouldAquaTreeBeSavedAsPartOfWorkflow = markLinkedTreesAsWorkflow ?? workFlowData.isWorkFlow
+
+//                 let allHashesOfCurrentAquaTreeInLoop = Object.keys(aquaTree.revisions)
+//                 // Logger.info(`♟️♟️  genHashofCurrentAquaTreeInLoop : ${JSON.stringify(allHashesOfCurrentAquaTreeInLoop, null, 2)}`);
+
+//                 // for claims email and phone number save the server attestation as a separate file
+//                 if (workflowDataToBeseparated.length > 0 && allHashesOfCurrentAquaTreeInLoop.includes(workflowDataToBeseparated)) {
+//                     shouldAquaTreeBeSavedAsPartOfWorkflow = false
+//                 }
+
+//                 // hide system templates from user view (only set to true, don't overwrite to false)
+//                 let genhash = getGenesisHash(aquaTree);
+//                 if (genhash && systemTemplateHashes.includes(genhash.trim())) {
+//                     shouldAquaTreeBeSavedAsPartOfWorkflow = true
+//                 }
+
+//                 //    await deletLatestIfExistsForAquaTree(aquaTree, userAddress)
+//                 for (let key of Object.keys(aquaTree.file_index)) {
+//                     // Ensure the file object has a valid hashes
+//                     const value = aquaTree.file_index[key];
+//                     hashName.set(key, value);
+//                 }
+
+//                 await saveAquaTree(aquaTree, userAddress, null, shouldAquaTreeBeSavedAsPartOfWorkflow);
+//                 allAquaTrees.push(aquaTree);
+//             } else {
+//                 Logger.info(`File object is not an AquaTree: ${JSON.stringify(fileObject, null, 2)}`);
+//             }
+//         }
+
+//         // Logger.info(`🎈🎈 hashName Map: ${JSON.stringify(Array.from(hashName.entries()), null, 2)}`);
+
+//         for (const [key, value] of hashName) {
+//             Logger.info(`🎈🎈 Key: ${key}, Value: ${value}`);
+
+//             // fetch file hash from file object
+//             let fileObjectItem = chainData.fileObject.find(obj => obj.fileName === value);
+//             if (!fileObjectItem) {
+//                 throw new Error(`File hash not found for key: ${key}`);
+//             }
+
+//             // Extract the hash from fileContent URL
+//             const fileUrl = fileObjectItem.fileContent as string;
+//             const fileHash = fileUrl.split('/').pop(); // Gets the last segment of the URL
+//             if (!fileHash) {
+//                 throw new Error(`Invalid file URL (no file hash found): ${fileUrl}`);
+//             }
+//             let hash = key
+
+//             for (let aquaTree of allAquaTrees) {
+//                 let allHashes = Object.keys(aquaTree.revisions);
+//                 if (allHashes.includes(hash)) {
+//                     let selectedRevion = aquaTree.revisions[hash];
+//                     if (selectedRevion.revision_type == "file" || selectedRevion.revision_type == "form") {
+//                         Logger.info(`OK: Revision type is ${selectedRevion.revision_type} for hash ${hash} in aqua tree ${aquaTree.file_index[hash]}`);
+//                     } else {
+//                         let genesisHash = getGenesisHash(aquaTree);
+//                         hash = genesisHash ?? "genesis_hash_error";
+//                     }
+//                 }
+
+//                 const userAddressHash = `${userAddress}_${hash}`;
+
+//                 let existingFileIndex = await prisma.fileIndex.findFirst({
+//                     where: { file_hash: fileHash }
+//                 });
+
+//                 if (!existingFileIndex) {
+//                     throw new Error(`File index  not found for key: ${value}  with file hash: ${fileHash}`);
+//                 }
+
+//                 // Update existing file index
+//                 if (!existingFileIndex.pubkey_hash.includes(userAddressHash)) {
+//                     existingFileIndex.pubkey_hash.push(userAddressHash);
+//                 }
+
+//                 await prisma.fileIndex.update({
+//                     data: { pubkey_hash: existingFileIndex.pubkey_hash },
+//                     where: { file_hash: existingFileIndex.file_hash }
+//                 });
+
+//                 await prisma.fileName.upsert({
+//                     where: { pubkey_hash: userAddressHash },
+//                     create: {
+//                         pubkey_hash: userAddressHash,
+//                         file_name: fileObjectItem.fileName
+//                     },
+//                     update: {}
+//                 });
+//             }
+//         }
+//         return { success: true, message: "This function is not implemented yet" };
+//     } catch (error: any) {
+//         Logger.error("Error in function transfer:", error);
+//         console.log(cliRedify(error))
+//         return { success: false, message: `Error transferring data: ${error.message}` };
+//     }
+
+// }
 
 /**
  * Fetches aqua trees for a user based on their latest revision hashes.
@@ -564,11 +709,11 @@ export async function saveForOtherUserRevisionInAquaTree(revisionData: SaveRevis
         return [400, "revision Data is required"]
     }
     if (!revisionData.revisionHash) {
-        return [400, "revision hash is required"]  
+        return [400, "revision hash is required"]
     }
 
     if (!revisionData.revision.revision_type) {
-        return [400, "revision type is required"] 
+        return [400, "revision type is required"]
     }
 
     if (!revisionData.revision.local_timestamp) {
@@ -579,7 +724,7 @@ export async function saveForOtherUserRevisionInAquaTree(revisionData: SaveRevis
         return [400, "previous revision hash  is required"]
     }
     if (revisionData.originAddress == userAddressToHaveNewRevision) {
-        return [400, "Cannot save revision for same user"] 
+        return [400, "Cannot save revision for same user"]
     }
 
 
@@ -644,7 +789,7 @@ export async function saveForOtherUserRevisionInAquaTree(revisionData: SaveRevis
             let response = await transferRevisionChainData(userAddressToHaveNewRevision, {
                 aquaTree: baseAquaTree,
                 fileObject: baseFileObjects
-            }, null, false, true)
+            }, null, false)
             if (response.success == false) {
                 throw Error(`An error occured transfering chain ${response.message}`)
             }
@@ -663,7 +808,7 @@ export async function saveForOtherUserRevisionInAquaTree(revisionData: SaveRevis
 
             // else proceed to save the revision in updateLatestAndInsertRevision
         } else {
-
+            console.log(` Target user ${userAddressToHaveNewRevision} does not have the previous revision cannot save revision and the aqua tree is not an aqua sign workflow `);
             return [404, `Target user ${userAddressToHaveNewRevision} does not have the previous revision cannot save revision`] // reply.code(400).send({ success: false, message: `Target user ${userAddressToHaveNewRevision} does not have the previous revision cannot save revision` });
         }
     }
@@ -953,7 +1098,7 @@ async function updateLatestAndInsertRevision(revisionData: SaveRevisionForUser, 
     });
 
 }
-async function recusivelySaveLinkedAquaTrees(aquaTree: AquaTree, url: string, userAddressToHaveNewRevision: string, tx: any, originAddress: string ) {
+async function recusivelySaveLinkedAquaTrees(aquaTree: AquaTree, url: string, userAddressToHaveNewRevision: string, tx: any, originAddress: string) {
     console.log(`Recursively checking linked aqua trees for user ${userAddressToHaveNewRevision}...`);
     const allRevisions = Object.values(aquaTree.revisions);
     for (let revision of allRevisions) {
@@ -963,7 +1108,7 @@ async function recusivelySaveLinkedAquaTrees(aquaTree: AquaTree, url: string, us
             const linkVerificationHashes = revision.link_verification_hashes || [];
             for (let linkedHash of linkVerificationHashes) {
                 // Check if this linked hash already exists for the user
-                let existingLatest =  await tx.latest.findFirst({
+                let existingLatest = await tx.latest.findFirst({
                     where: {
                         hash: {
                             contains: `${originAddress}_${linkedHash}`,
@@ -971,26 +1116,26 @@ async function recusivelySaveLinkedAquaTrees(aquaTree: AquaTree, url: string, us
                         }
                     }
                 })
-                
-                    if (!existingLatest) {
-                        Logger.info(`Recursively saving linked aqua tree with hash ${linkedHash} for user ${userAddressToHaveNewRevision}... from origin ${originAddress}`);
-                        const [linkedAquaTree, linkedFileObjects] = await createAquaTreeFromRevisions(linkedHash, url);
-                        await transferRevisionChainData(
-                            userAddressToHaveNewRevision,
-                            {
-                                aquaTree: linkedAquaTree,
-                                fileObject: linkedFileObjects
-                            },  
-                            null,
-                            false
-                        );
 
-                        // Recursively check for further linked aqua trees
-                        recusivelySaveLinkedAquaTrees(linkedAquaTree, url, userAddressToHaveNewRevision, tx, originAddress);
-                    } else {
-                        Logger.info(`Linked aqua tree with hash ${linkedHash} already exists for user ${userAddressToHaveNewRevision}, skipping save.`);
-                    }
-    
+                if (!existingLatest) {
+                    Logger.info(`Recursively saving linked aqua tree with hash ${linkedHash} for user ${userAddressToHaveNewRevision}... from origin ${originAddress}`);
+                    const [linkedAquaTree, linkedFileObjects] = await createAquaTreeFromRevisions(linkedHash, url);
+                    await transferRevisionChainData(
+                        userAddressToHaveNewRevision,
+                        {
+                            aquaTree: linkedAquaTree,
+                            fileObject: linkedFileObjects
+                        },
+                        null,
+                        false
+                    );
+
+                    // Recursively check for further linked aqua trees
+                    recusivelySaveLinkedAquaTrees(linkedAquaTree, url, userAddressToHaveNewRevision, tx, originAddress);
+                } else {
+                    Logger.info(`Linked aqua tree with hash ${linkedHash} already exists for user ${userAddressToHaveNewRevision}, skipping save.`);
+                }
+
             }
         }
     }
@@ -2082,7 +2227,7 @@ export async function saveAquaTree(
             hash: lastPubKeyHash,
             user: userAddress,
             template_id: templateId,
-            is_workflow: isWorkFlow
+            //is_workflow: isWorkFlow // todo confirm
         }
     });
 
