@@ -18,7 +18,7 @@ services:
       retries: 5
 
   filebeat:
-    image: docker.elastic.co/beats/filebeat:9.2.4
+    image: docker.elastic.co/beats/filebeat:9.3.0
     container_name: filebeat
     user: root
     volumes:
