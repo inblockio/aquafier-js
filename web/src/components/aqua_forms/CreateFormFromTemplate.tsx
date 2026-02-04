@@ -182,7 +182,7 @@ const SortableSignerItem = ({
                   )}
             </div>
       )
-}
+} 
  
 // const CreateFormF romTemplate  = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
@@ -1990,7 +1990,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                 <AlertCircle className="h-4 w-4 text-amber-600" />
                                                 <AlertDescription className="text-amber-800">
 
-                                                      You haven't added yourself as a signer. If you need to sign this document, add your wallet address to the signers list.
+                                                      You haven't added yourself as a signer. 
                                                       <Button onClick={() => {
                                                             if (session) {
                                                                   setMultipleAddresses(curr => [...curr, session?.address])

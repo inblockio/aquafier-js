@@ -297,7 +297,10 @@ export async function transferRevisionChainData(
     chainData: {
         aquaTree: AquaTree; fileObject: FileObject[]
     },
-    templateId: string | null = null, isWorkFlow: boolean = false): Promise<{ success: boolean, message: string }> {
+    templateId: string | null = null,
+    isWorkFlow: boolean = false,
+    markLinkedTreesAsWorkflow?: boolean
+): Promise<{ success: boolean, message: string }> {
 
     try {
         let allAquaTrees: AquaTree[] = [];
@@ -338,20 +341,21 @@ export async function transferRevisionChainData(
             if (isAquaTreeData) {
                 let aquaTree = getAquatreeObject(fileObject.fileContent)
 
-                let shouldAquaTreeBeSavedAsPartOfWorkflow = workFlowData.isWorkFlow
+                // Use markLinkedTreesAsWorkflow if provided, otherwise fall back to workFlowData.isWorkFlow
+                let shouldAquaTreeBeSavedAsPartOfWorkflow = markLinkedTreesAsWorkflow ?? workFlowData.isWorkFlow
 
                 let allHashesOfCurrentAquaTreeInLoop = Object.keys(aquaTree.revisions)
                 // Logger.info(`♟️♟️  genHashofCurrentAquaTreeInLoop : ${JSON.stringify(allHashesOfCurrentAquaTreeInLoop, null, 2)}`);
 
-                // for claims email and phone number save the  server attesation as a seperate file
+                // for claims email and phone number save the server attestation as a separate file
                 if (workflowDataToBeseparated.length > 0 && allHashesOfCurrentAquaTreeInLoop.includes(workflowDataToBeseparated)) {
                     shouldAquaTreeBeSavedAsPartOfWorkflow = false
                 }
 
-                // hide system templates from user view
+                // hide system templates from user view (only set to true, don't overwrite to false)
                 let genhash = getGenesisHash(aquaTree);
-                if (genhash) {
-                    shouldAquaTreeBeSavedAsPartOfWorkflow = systemTemplateHashes.includes(genhash.trim())
+                if (genhash && systemTemplateHashes.includes(genhash.trim())) {
+                    shouldAquaTreeBeSavedAsPartOfWorkflow = true
                 }
 
                 //    await deletLatestIfExistsForAquaTree(aquaTree, userAddress)
@@ -499,8 +503,6 @@ export function replaceWalletInPubKeyHash(pubKeyHash: string, newWallet: string)
     return null;
 }
 
-// a drop in replacement for saveARevisionInAquaTree
-// duplicated incase a bug occurs for quick reversal
 export async function saveRevisionInAquaTree(revisionData: SaveRevisionForUser, userAddress: string, url: string): Promise<[number, string]> {
 
     if (!revisionData.revision) {
@@ -527,7 +529,7 @@ export async function saveRevisionInAquaTree(revisionData: SaveRevisionForUser, 
     // if the aqua tree is owned by another user we need to transfer the aqua tree to the user
     // if the aqua tree is owned by the user we need to save the revision
 
-    if (revisionData.orginAddress == userAddress) {
+    if (revisionData.originAddress == userAddress) {
         let oldFilePubKeyHash = `${userAddress}_${revisionData.revision.previous_verification_hash}`
         // update latest
 
@@ -538,9 +540,56 @@ export async function saveRevisionInAquaTree(revisionData: SaveRevisionForUser, 
             }
         });
 
+        // If not found in latest, check if the revision exists and rebuild the chain
         if (existData == null) {
-            return [405, `previous  hash  not found ${oldFilePubKeyHash}`] ///reply.code(401).send({ success: false, message: `previous  hash  not found ${oldFilePubKeyHash}` });
+            console.log(` Latest entry not found for hash ${oldFilePubKeyHash}, checking revisions...`);
+            // return [405, `previous  hash  not found ${oldFilePubKeyHash}`] ///reply.code(401).send({ success: false, message: `previous  hash  not found ${oldFilePubKeyHash}` });  
+            // Check if the previous revision exists in the revision table
+            const previousRevision = await prisma.revision.findUnique({
+                where: {
+                    pubkey_hash: oldFilePubKeyHash
+                }
+            });
 
+            if (!previousRevision) {
+                return [405, `previous hash not found in revisions ${oldFilePubKeyHash}`];
+            }
+
+            // Build the complete aqua tree from the previous revision hash
+            const [baseAquaTree, baseFileObjects] = await createAquaTreeFromRevisions(oldFilePubKeyHash, url);
+
+            if (Object.keys(baseAquaTree.revisions).length == 0) {
+                return [400, `Aqua tree not found for revision hash ${oldFilePubKeyHash}`];
+            }
+
+            // Transfer the complete chain data to ensure user has all revisions
+            let transferResponse = await transferRevisionChainData(userAddress, {
+                aquaTree: baseAquaTree,
+                fileObject: baseFileObjects
+            }, null, true, revisionData.isWorkflow);
+
+            if (transferResponse.success == false) {
+                return [500, `Failed to rebuild chain: ${transferResponse.message}`];
+            }
+
+            // Re-fetch existData after transfer (latest should now exist)
+            existData = await prisma.latest.findFirst({
+                where: {
+                    OR: [
+                        { hash: oldFilePubKeyHash },
+                        {
+                            hash: {
+                                contains: revisionData.revision.previous_verification_hash,
+                                mode: 'insensitive'
+                            }
+                        }
+                    ]
+                }
+            });
+
+            if (existData == null) {
+                return [500, `Failed to create latest entry for ${oldFilePubKeyHash}`];
+            }
         }
 
 
@@ -563,7 +612,7 @@ export async function saveRevisionInAquaTree(revisionData: SaveRevisionForUser, 
                 },
                 data: {
                     hash: filePubKeyHash,
-                    is_workflow: revisionData.isWorkflow ?  revisionData.isWorkflow :  existData.is_workflow
+                    is_workflow: revisionData.isWorkflow ?? existData!.is_workflow
                 }
             });
 
@@ -780,39 +829,6 @@ export async function saveRevisionInAquaTree(revisionData: SaveRevisionForUser, 
             }
         });
 
-        // Handle link chain transfer outside transaction (involves external API calls)
-        if (revisionData.revision.revision_type == "link") {
-            // fetch the other entire chain and bring it to the current user scope
-            if (revisionData.orginAddress != userAddress) {
-                if (revisionData.revision.link_verification_hashes?.length == 0) {
-                    throw Error(`Linke verification hashes length cannot be 0`)
-
-                }
-                let hash = (revisionData.revision.link_verification_hashes && revisionData.revision.link_verification_hashes.length > 0)
-                    ? revisionData.revision.link_verification_hashes[0]
-                    : undefined;
-                if (!hash) {
-                    throw Error(`Linke verification hashes  cannot be undefined`)
-                }
-                let pubKeyHash = `${revisionData.orginAddress}_${hash}`
-
-                // Logger.info(`pubKeyHash ${pubKeyHash}`)
-                let [anAquaTree, fileObject] = await createAquaTreeFromRevisions(pubKeyHash, url);
-
-                // Logger.info(`anAquaTree ${JSON.stringify(anAquaTree, null, 4)}  fileObject  ${JSON.stringify(fileObject, null, 4)}`)
-
-
-                let response = await transferRevisionChainData(userAddress, {
-                    aquaTree: anAquaTree,
-                    fileObject: fileObject
-                }, null, true)
-                if (response.success == false) {
-                    throw Error(`An error occured transfering chain ${response.message}`)
-                }
-
-            }
-        }
-
         return [200, ""]
 
 
@@ -831,7 +847,7 @@ export async function saveRevisionInAquaTree(revisionData: SaveRevisionForUser, 
             return [204, `Previous revision not found in this user context`]
         }
         //checkif the latest has exist or we should start from previous verification hash
-        let fetchAquatreFromHash = `${revisionData.orginAddress}_${revisionData.revisionHash}`;
+        let fetchAquatreFromHash = `${revisionData.originAddress}_${revisionData.revisionHash}`;
 
 
         // buildEntireTreeFromGivenRevisionHash
@@ -845,7 +861,7 @@ export async function saveRevisionInAquaTree(revisionData: SaveRevisionForUser, 
         let response = await transferRevisionChainData(userAddress, {
             aquaTree: baseAquaTree,
             fileObject: baseFileObjects
-        }, null, true)
+        }, null, true, revisionData.isWorkflow)
         if (response.success == false) {
             throw Error(`An error occured transfering chain ${response.message}`)
         }
@@ -855,308 +871,6 @@ export async function saveRevisionInAquaTree(revisionData: SaveRevisionForUser, 
     }
 
 }
-
-
-// old partially unexplainable code 
-export async function saveARevisionInAquaTree(revisionData: SaveRevisionForUser, userAddress: string, url: string): Promise<[number, string]> {
-
-    if (!revisionData.revision) {
-        return [400, "revision Data is required"]//reply.code(400).send({ success: false, message: "revision Data is required" });
-    }
-    if (!revisionData.revisionHash) {
-        return [400, "revision hash is required"]  //reply.code(400).send({ success: false, message: "revision hash is required" });
-    }
-
-    if (!revisionData.revision.revision_type) {
-        return [400, "revision type is required"] // reply.code(400).send({ success: false, message: "revision type is required" });
-    }
-
-    if (!revisionData.revision.local_timestamp) {
-        return [400, "revision timestamp is required"] //reply.code(400).send({ success: false, message: "revision timestamp is required" });
-    }
-
-    if (!revisionData.revision.previous_verification_hash) {
-        return [400, "previous revision hash  is required"] // reply.code(400).send({ success: false, message: "previous revision hash  is required" });
-    }
-
-
-
-
-    let oldFilePubKeyHash = `${userAddress}_${revisionData.revision.previous_verification_hash}`
-
-
-    let existData = await prisma.latest.findFirst({
-        where: {
-            hash: oldFilePubKeyHash
-        }
-    });
-
-    if (existData == null) {
-        return [405, `previous  hash  not found ${oldFilePubKeyHash}`] ///reply.code(401).send({ success: false, message: `previous  hash  not found ${oldFilePubKeyHash}` });
-
-    }
-
-    let filePubKeyHash = `${userAddress}_${revisionData.revisionHash}`
-
-
-    await prisma.latest.updateMany({
-        where: {
-            OR: [
-                { hash: oldFilePubKeyHash },
-                {
-                    hash: {
-                        contains: oldFilePubKeyHash,
-                        mode: 'insensitive'
-                    }
-                }
-            ]
-        },
-        data: {
-            hash: filePubKeyHash
-        }
-    });
-
-    const existingRevision = await prisma.revision.findUnique({
-        where: {
-            pubkey_hash: filePubKeyHash
-        }
-    });
-
-    if (existingRevision) {
-        // Handle the case where the revision already exists
-        // Maybe return an error or update the existing record
-        return [409, "Revision with this hash already exists"]//reply.code(409).send({ success: false, message: "Revision with this hash already exists" });
-    }
-
-    // Insert new revision into the database
-    await prisma.revision.create({
-        data: {
-            pubkey_hash: filePubKeyHash,
-            nonce: revisionData.revision.file_nonce || "",
-            shared: [],
-            // contract: revisionData.witness_smart_contract_address
-            //     ? [{ address: revisionData.witness_smart_contract_address }]
-            //     : [],
-            previous: `${userAddress}_${revisionData.revision.previous_verification_hash}`,
-            children: [],
-            local_timestamp: revisionData.revision.local_timestamp, // revisionData.revision.local_timestamp,
-            revision_type: revisionData.revision.revision_type,
-            verification_leaves: revisionData.revision.leaves || [],
-            file_hash: revisionData.revision.file_hash,
-
-        },
-    });
-
-    // Update previous revision children
-
-    try {
-        await prisma.revision.update({
-            where: {
-                pubkey_hash: `${userAddress}_${revisionData.revision.previous_verification_hash}`
-            },
-            data: {
-                children: {
-                    push: filePubKeyHash
-                }
-            }
-        })
-    } catch (error) {
-        Logger.error(`Error updating previous revision children ${error}`)
-    }
-
-    if (revisionData.revision.revision_type == "form") {
-        let revisioValue = Object.keys(revisionData);
-        for (let formItem in revisioValue) {
-            if (formItem.startsWith("forms_")) {
-                await prisma.aquaForms.create({
-                    data: {
-                        hash: filePubKeyHash,
-                        key: formItem,
-                        value: revisioValue[formItem],
-                        type: typeof revisioValue[formItem]
-                    }
-                });
-            }
-        }
-    }
-
-    if (revisionData.revision.revision_type == "signature") {
-        let signature = "";
-        if (typeof revisionData.revision.signature === "string") {
-            signature = revisionData.revision.signature
-        } else {
-            signature = JSON.stringify(revisionData.revision.signature)
-        }
-
-
-
-        // process.exit(1);
-        await prisma.signature.upsert({
-            where: {
-                hash: filePubKeyHash
-            },
-            update: {
-                reference_count: {
-                    increment: 1
-                }
-            },
-            create: {
-                hash: filePubKeyHash,
-                signature_digest: signature,
-                signature_wallet_address: revisionData.revision.signature_wallet_address,
-                signature_type: revisionData.revision.signature_type,
-                signature_public_key: revisionData.revision.signature_public_key,
-                reference_count: 1
-            }
-        });
-
-    }
-
-
-    if (revisionData.revision.revision_type == "witness") {
-
-        // const witnessTimestamp = new Date();
-        await prisma.witnessEvent.upsert({
-            where: {
-                Witness_merkle_root: revisionData.revision.witness_merkle_root!
-            },
-            update: {
-                Witness_merkle_root: revisionData.revision.witness_merkle_root!,
-                Witness_timestamp: revisionData.revision.witness_timestamp!.toString(),
-                Witness_network: revisionData.revision.witness_network,
-                Witness_smart_contract_address: revisionData.revision.witness_smart_contract_address,
-                Witness_transaction_hash: revisionData.revision.witness_transaction_hash,
-                Witness_sender_account_address: revisionData.revision.witness_sender_account_address
-            },
-            create: {
-                Witness_merkle_root: revisionData.revision.witness_merkle_root!,
-                Witness_timestamp: revisionData.revision.witness_timestamp!.toString(),
-                Witness_network: revisionData.revision.witness_network,
-                Witness_smart_contract_address: revisionData.revision.witness_smart_contract_address,
-                Witness_transaction_hash: revisionData.revision.witness_transaction_hash,
-                Witness_sender_account_address: revisionData.revision.witness_sender_account_address
-
-            }
-        });
-
-
-        await prisma.witness.upsert({
-            where: {
-                hash: filePubKeyHash
-            },
-            update: {
-                reference_count: {
-                    increment: 1
-                }
-            },
-            create: {
-                hash: filePubKeyHash,
-                Witness_merkle_root: revisionData.revision.witness_merkle_root,
-                reference_count: 1  // Starting with 1 since this is the first reference
-            }
-        });
-    }
-
-
-    if (revisionData.revision.revision_type == "link") {
-
-        await prisma.link.create({
-            data: {
-                hash: filePubKeyHash,
-                link_type: "aqua",
-                link_require_indepth_verification: false,
-                link_verification_hashes: revisionData.revision.link_verification_hashes,
-                link_file_hashes: revisionData.revision.link_file_hashes,
-                reference_count: 0
-            }
-        })
-        // fetch the other entire chain and bring it to the current user scope
-        if (revisionData.orginAddress != userAddress) {
-            if (revisionData.revision.link_verification_hashes?.length == 0) {
-                throw Error(`Linke verification hashes length cannot be 0`)
-
-            }
-            let hash = (revisionData.revision.link_verification_hashes && revisionData.revision.link_verification_hashes.length > 0)
-                ? revisionData.revision.link_verification_hashes[0]
-                : undefined;
-            if (!hash) {
-                throw Error(`Linke verification hashes  cannot be undefined`)
-            }
-            let pubKeyHash = `${revisionData.orginAddress}_${hash}`
-
-            // Logger.info(`pubKeyHash ${pubKeyHash}`)
-            let [anAquaTree, fileObject] = await createAquaTreeFromRevisions(pubKeyHash, url);
-
-            // Logger.info(`anAquaTree ${JSON.stringify(anAquaTree, null, 4)}  fileObject  ${JSON.stringify(fileObject, null, 4)}`)
-
-
-            let response = await transferRevisionChainData(userAddress, {
-                aquaTree: anAquaTree,
-                fileObject: fileObject
-            }, null, true)
-            if (response.success == false) {
-                throw Error(`An error occured transfering chain ${response.message}`)
-            }
-
-        }
-    }
-
-    if (revisionData.revision.revision_type == "file" || revisionData.revision.revision_type == "form") {
-
-        let existingFileIndex = await prisma.fileIndex.findFirst({
-            where: {
-                file_hash: revisionData.revision.file_hash
-            }
-        })
-
-        if (!existingFileIndex) {
-            throw Error(`File index not found for ${revisionData.revision.file_hash} this should exist are you are saving for another user.`)
-        }
-        await prisma.fileIndex.update({
-            where: {
-                file_hash: filePubKeyHash,
-            },
-
-            data: {
-                pubkey_hash: [...existingFileIndex.pubkey_hash, filePubKeyHash]
-            }
-        });
-
-        let existingFileName = await prisma.fileName.findFirst({
-
-            where: {
-                pubkey_hash: {
-                    contains: revisionData.revisionHash,
-                    mode: 'insensitive'
-                }
-            }
-        })
-
-        if (!existingFileIndex) {
-            throw Error(`File name not found for hash ${revisionData.revisionHash} this should exist are you are saving for another user.`)
-        }
-
-        await prisma.fileName.upsert({
-            where: {
-                pubkey_hash: filePubKeyHash,
-            },
-            create: {
-
-                pubkey_hash: filePubKeyHash,
-                file_name: existingFileName!.file_name,
-
-            },
-            update: {
-                pubkey_hash: filePubKeyHash,
-                file_name: existingFileName!.file_name
-            }
-        })
-    }
-
-    return [200, ""]
-}
-
-// start of delete
 
 
 // Utility function to generate pubkey hash

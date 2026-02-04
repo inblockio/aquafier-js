@@ -121,15 +121,15 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 return reply.code(202).send({ success: false, message: "use /tree to save revision for a specific user /tree/user is for different address" });
             }
 
-            if (!revisionData.orginAddress) {
+            if (!revisionData.originAddress) {
                 return reply.code(400).send({ success: false, message: "origin address not defined" });
             }
 
-            //  if(revisionData.orginAddress == revisionData.address    ){
+            //  if(revisionData.originAddress == revisionData.address    ){
             //      return reply.code(400).send({ success: false, message: "origin address cannot be the same as address " });
             // }
 
-            //   if(revisionData.orginAddress == session.address    ){
+            //   if(revisionData.originAddress == session.address    ){
             //      return reply.code(400).send({ success: false, message: "origin address cannot be the same as session address " });
             // }
 
@@ -204,7 +204,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
 
 
-            if (!revisionData.orginAddress) {
+            if (!revisionData.originAddress) {
                 return reply.code(400).send({ success: false, message: "origin address not defined.." });
             }
 

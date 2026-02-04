@@ -70,7 +70,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                                           {
                                                 revision: lastRevision,
                                                 revisionHash: lastHash,
-                                                orginAddress: session?.address,
+                                                originAddress: session?.address,
                                           },
                                           {
                                                 headers: {
@@ -215,7 +215,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                                     {
                                           revision: lastRevision,
                                           revisionHash: lastHash,
-                                          orginAddress: session?.address,
+                                          originAddress: session?.address,
                                     },
                                     {
                                           headers: {

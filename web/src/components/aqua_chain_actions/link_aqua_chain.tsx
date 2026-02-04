@@ -99,7 +99,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                               {
                                     revision: lastRevision,
                                     revisionHash: lastHash,
-                                    orginAddress: session?.address,
+                                    originAddress: session?.address,
                               },
                               {
                                     headers: {

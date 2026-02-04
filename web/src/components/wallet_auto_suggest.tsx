@@ -26,7 +26,7 @@ export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
   address,
   multipleAddresses,
   setMultipleAddresses,
-  placeholder = "For autosuggest, enter any details of the contact (Wallet, Name in Identity claim, Email in Email claim, ENS name or user Alias) ...",
+  placeholder = "Add Wallet address or contact details.",//"For autosuggest, enter any details of the contact (Wallet, Name in Identity claim, Email in Email claim, ENS name or user Alias) ...",
   className = "",
   disabled = false 
 }) => {

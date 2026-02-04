@@ -71,8 +71,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   const aquaTree = aquaTrees[index]
 
                   try {
-                        const revisionHashes = Object.keys(aquaTree.revisions)
-                        const lastHash = revisionHashes[revisionHashes.length - 1]
+                        // Use reorderRevisionsInAquaTree to get properly ordered hashes
+                        const orderedHashes = reorderRevisionsInAquaTree(aquaTree)
+                        const lastHash = orderedHashes[orderedHashes.length - 1]
                         const lastRevision = aquaTree.revisions[lastHash]
 
                         const url = `${backend_url}/tree/user`
@@ -84,7 +85,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                     revision: lastRevision,
                                     revisionHash: lastHash,
                                     address: address,
-                                    orginAddress: session?.address,
+                                    originAddress: session?.address,
                                     isWorkflow: true,
                                     templateId: null,
                               },
@@ -387,8 +388,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
             for (let index = 0; index < aquaTrees.length; index++) {
                   const aquaTree = aquaTrees[index]
                   try {
-                        const revisionHashes = Object.keys(aquaTree.revisions)
-                        const lastHash = revisionHashes[revisionHashes.length - 1]
+                        // Use reorderRevisionsInAquaTree to get properly ordered hashes
+                        const orderedHashes = reorderRevisionsInAquaTree(aquaTree)
+                        const lastHash = orderedHashes[orderedHashes.length - 1]
                         const lastRevision = aquaTree.revisions[lastHash]
 
                         const url = `${backend_url}/tree`
@@ -399,7 +401,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                               {
                                     revision: lastRevision,
                                     revisionHash: lastHash,
-                                    orginAddress: session?.address,
+                                    originAddress: session?.address,
                               },
                               {
                                     headers: {
@@ -1118,7 +1120,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                     }}
                               >
                                     {/* Add Signature to document */}
-                                    Sign Document / Place Signature
+                                   Place Signature
                               </Button>
 
                               {canPlaceSignature ? (

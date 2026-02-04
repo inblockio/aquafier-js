@@ -92,7 +92,7 @@ export interface SaveRevisionForUser {
   revision: Revision,
   revisionHash: string,
   address : string,
-  orginAddress :string,
+  originAddress: string,
   templateId : string,
   isWorkflow : boolean
 }

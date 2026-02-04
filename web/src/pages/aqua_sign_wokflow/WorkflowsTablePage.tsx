@@ -275,7 +275,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                                           <OpenAquaSignWorkFlowButton item={apiFileInfo} nonce={session?.nonce ?? ''}>
                                                 <DropdownMenuItem className='cursor-pointer'>
                                                       <FileText className="mr-2 h-4 w-4" />
-                                                      View Document
+                                                      View 
                                                 </DropdownMenuItem>
                                           </OpenAquaSignWorkFlowButton>
                                           {/* <DropdownMenuItem disabled>

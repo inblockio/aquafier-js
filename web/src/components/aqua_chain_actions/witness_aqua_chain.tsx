@@ -59,7 +59,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                                           {
                                                 revision: lastRevision,
                                                 revisionHash: lastHash,
-                                                orginAddress: session?.address,
+                                                originAddress: session?.address,
                                           },
                                           {
                                                 headers: {
@@ -174,7 +174,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                                     {
                                           revision: lastRevision,
                                           revisionHash: lastHash,
-                                          orginAddress: session?.address,
+                                          originAddress: session?.address,
                                     },
                                     {
                                           headers: {
