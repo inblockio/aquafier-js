@@ -24,7 +24,6 @@ import fetchChainController from './controllers/fetch-chain';
 import templatesController from './controllers/templates';
 import { setupPaymentPlans, setUpSystemTemplates } from './utils/api_utils';
 import systemController from './controllers/system';
-import webSocketController from './controllers/websocketController';
 import notificationsController from './controllers/notifications';
 import ApiController from './controllers/api';
 import * as Sentry from "@sentry/node"
@@ -164,7 +163,6 @@ async function buildServer() {
     fastify.register(templatesController);
     fastify.register(chequeApiController);
     fastify.register(systemController);
-    fastify.register(webSocketController);
     fastify.register(enhancedWebSocketController);
     fastify.register(notificationsController);
     fastify.register(ApiController);

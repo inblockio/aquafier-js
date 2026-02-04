@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import appStore from '@/store';
 import { useStore } from 'zustand';
 import { cn } from '@/lib/utils';
+import { ensureDomainUrlHasSSL } from '@/utils/functions';
 
 interface WalletAutosuggestProps {
   field: {
@@ -58,7 +59,8 @@ export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
     setLoadingEns(true);
 
     try {
-      const response = await fetch(`${backend_url}/resolve/${trimmedInput}?useEns=true`, {
+      const url = ensureDomainUrlHasSSL(`${backend_url}/resolve/${trimmedInput}?useEns=true`) 
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'nonce': session.nonce,

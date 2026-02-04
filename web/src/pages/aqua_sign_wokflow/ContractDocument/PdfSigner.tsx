@@ -66,43 +66,88 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
       // PDF viewer container ref
       const pdfMainContainerRef = useRef<HTMLDivElement>(null)
 
-      const saveRevisionsToServerForUser = async (aquaTrees: AquaTree[], address: string) => {
-            for (let index = 0; index < aquaTrees.length; index++) {
-                  const aquaTree = aquaTrees[index]
+      // Old individual revision saving - kept for reference
+      // const saveRevisionsToServerForUser = async (aquaTrees: AquaTree[], address: string) => {
+      //       for (let index = 0; index < aquaTrees.length; index++) {
+      //             const aquaTree = aquaTrees[index]
 
-                  try {
-                        // Use reorderRevisionsInAquaTree to get properly ordered hashes
+      //             try {
+      //                   // Use reorderRevisionsInAquaTree to get properly ordered hashes
+      //                   const orderedHashes = reorderRevisionsInAquaTree(aquaTree)
+      //                   const lastHash = orderedHashes[orderedHashes.length - 1]
+      //                   const lastRevision = aquaTree.revisions[lastHash]
+
+      //                   const url = `${backend_url}/tree/user`
+      //                   const actualUrlToFetch = ensureDomainUrlHasSSL(url)
+
+      //                   const response = await axios.post(
+      //                         actualUrlToFetch,
+      //                         {
+      //                               revision: lastRevision,
+      //                               revisionHash: lastHash,
+      //                               address: address,
+      //                               originAddress: session?.address,
+      //                               isWorkflow: true,
+      //                               templateId: null,
+      //                         },
+      //                         {
+      //                               headers: {
+      //                                     nonce: session?.nonce,
+      //                               },
+      //                         }
+      //                   )
+
+      //                   if (response.status === 200 || response.status === 201) {
+      //                         // todo a method to notify the other user should go here
+      //                   }
+      //             } catch (error) {
+      //                   console.error(`Error saving revision ${index + 1}:`, error)
+      //                   throw new Error(`Error saving revision ${index + 1} to server`)
+      //             }
+      //       }
+      // }
+
+      // New bulk revision saving for other users using /tree/user/all endpoint
+      const saveAllRevisionsToServerForUser = async (aquaTrees: AquaTree[], address: string) => {
+            try {
+                  // Collect all revisions from all aqua trees with their processing order
+                  const revisions: { revision: any, revisionHash: string, index: number }[] = []
+
+                  for (let i = 0; i < aquaTrees.length; i++) {
+                        const aquaTree = aquaTrees[i]
                         const orderedHashes = reorderRevisionsInAquaTree(aquaTree)
                         const lastHash = orderedHashes[orderedHashes.length - 1]
                         const lastRevision = aquaTree.revisions[lastHash]
 
-                        const url = `${backend_url}/tree/user`
-                        const actualUrlToFetch = ensureDomainUrlHasSSL(url)
-
-                        const response = await axios.post(
-                              actualUrlToFetch,
-                              {
-                                    revision: lastRevision,
-                                    revisionHash: lastHash,
-                                    address: address,
-                                    originAddress: session?.address,
-                                    isWorkflow: true,
-                                    templateId: null,
-                              },
-                              {
-                                    headers: {
-                                          nonce: session?.nonce,
-                                    },
-                              }
-                        )
-
-                        if (response.status === 200 || response.status === 201) {
-                              // todo a method to notify the other user should go here
-                        }
-                  } catch (error) {
-                        console.error(`Error saving revision ${index + 1}:`, error)
-                        throw new Error(`Error saving revision ${index + 1} to server`)
+                        revisions.push({
+                              revision: lastRevision,
+                              revisionHash: lastHash,
+                              index: i  // Preserve the order from the input array
+                        })
                   }
+
+                  const url = `${backend_url}/tree/user/all`
+                  const actualUrlToFetch = ensureDomainUrlHasSSL(url)
+
+                   await axios.post(
+                        actualUrlToFetch,
+                        {
+                              revisions: revisions,
+                              address: address,
+                              originAddress: session?.address,
+                              isWorkflow: true
+                        },
+                        {
+                              headers: {
+                                    nonce: session?.nonce,
+                              },
+                        }
+                  )
+
+
+            } catch (error) {
+                  console.error(`Error saving all revisions for user ${address}:`, error)
+                  throw new Error(`Error saving all revisions to server for user ${address}`)
             }
       }
 
@@ -327,7 +372,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         for (const aSigner of allSigners) {
                               // dont resend the revision to the user as this was handled before this function call
                               if (aSigner != session?.address) {
-                                    await saveRevisionsToServerForUser(aquaTrees, aSigner)
+                                    await saveAllRevisionsToServerForUser(aquaTrees, aSigner)
                               }
                         }
                   }
@@ -337,7 +382,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   // send him the revisions
                   if (!signers.split(',').includes(sender)) {
                         //send the signatures to workflow creator
-                        await saveRevisionsToServerForUser(aquaTrees, sender)
+                        await saveAllRevisionsToServerForUser(aquaTrees, sender)
 
                         // send notification to workflow creator
                         //refetch the workflow
@@ -374,81 +419,157 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         }
                   )
 
+                  const url2 = `${backend_url}${API_ENDPOINTS.NOTIFICATIONS_AQUA_SIGN}/${receiverAddress}`
+                  const actualUrlToFetch2 = ensureDomainUrlHasSSL(url2)
+
+                  await axios.post(
+                        actualUrlToFetch2,
+                        {
+                              receiver: receiverAddress,
+                              content: `refetch aqua sign workflow with genesis hash ${getGenesisHash(selectedFileInfo!.aquaTree!)}`,
+                        },
+                        {
+                              headers: {
+                                    'Content-Type': 'application/json',
+                                    nonce: session?.nonce,
+                              },
+                        }
+                  )
+
             } catch (error) {
                   console.error('Error creating signing notification:', error)
                   // Don't show error to user as this is not critical functionality
             }
       }
 
-      // Helper function to save multiple revisions to server
-      const saveRevisionsToServer = async (aquaTrees: AquaTree[]) => {
-            // console.log("saveRevisionsToServer AquaTrees: ", aquaTrees)
+      // Old individual revision saving - kept for reference
+      // const saveRevisionsToServer = async (aquaTrees: AquaTree[]) => {
+      //       let newApiFileInfo: ApiFileInfo = structuredClone(selectedFileInfo)
+      //       for (let index = 0; index < aquaTrees.length; index++) {
+      //             const aquaTree = aquaTrees[index]
+      //             try {
+      //                   const orderedHashes = reorderRevisionsInAquaTree(aquaTree)
+      //                   const lastHash = orderedHashes[orderedHashes.length - 1]
+      //                   const lastRevision = aquaTree.revisions[lastHash]
 
-            let newApiFileInfo: ApiFileInfo = structuredClone(selectedFileInfo)
-            for (let index = 0; index < aquaTrees.length; index++) {
-                  const aquaTree = aquaTrees[index]
-                  try {
-                        // Use reorderRevisionsInAquaTree to get properly ordered hashes
+      //                   const url = `${backend_url}/tree`
+      //                   const actualUrlToFetch = ensureDomainUrlHasSSL(url)
+
+      //                   let apiResponse = await axios.post(
+      //                         actualUrlToFetch,
+      //                         {
+      //                               revision: lastRevision,
+      //                               revisionHash: lastHash,
+      //                               originAddress: session?.address,
+      //                         },
+      //                         {
+      //                               headers: {
+      //                                     nonce: session?.nonce,
+      //                               },
+      //                         }
+      //                   )
+
+      //                   let hasUpdate = false
+      //                   if (index == aquaTrees.length - 1) {
+      //                         if (apiResponse.data.data) {
+      //                               let genHashOfApiFileInf = getGenesisHash(selectedFileInfo!.aquaTree!)
+      //                               let userAquaTrees: ApiFileInfo[] = apiResponse.data.data.data
+      //                               for (const userAquaTree of userAquaTrees) {
+      //                                     let currentGenHash = getGenesisHash(userAquaTree.aquaTree!)
+      //                                     if (currentGenHash == genHashOfApiFileInf) {
+      //                                           newApiFileInfo.aquaTree = userAquaTree.aquaTree
+      //                                           newApiFileInfo.fileObject = userAquaTree.fileObject
+      //                                           hasUpdate = true
+      //                                           break
+      //                                     }
+      //                               }
+      //                         }
+      //                   }
+
+      //                   if (hasUpdate) {
+      //                         setSelectedFileInfo(newApiFileInfo)
+      //                         setActiveStep(1)
+      //                         toast.success("Document signed successfully")
+      //                   }
+      //             } catch (error) {
+      //                   console.error(`Error saving revision ${index + 1}:`, error)
+      //                   throw new Error(`Error saving revision ${index + 1} to server`)
+      //             }
+      //       }
+      // }
+
+      // New bulk revision saving using /tree/all endpoint
+      const saveAllRevisionsToServer = async (aquaTrees: AquaTree[]) => {
+            try {
+                  // Collect all revisions from all aqua trees with their processing order
+                  const revisions: { revision: any, revisionHash: string, index: number }[] = []
+
+                  for (let i = 0; i < aquaTrees.length; i++) {
+                        const aquaTree = aquaTrees[i]
                         const orderedHashes = reorderRevisionsInAquaTree(aquaTree)
                         const lastHash = orderedHashes[orderedHashes.length - 1]
                         const lastRevision = aquaTree.revisions[lastHash]
 
-                        const url = `${backend_url}/tree`
-                        const actualUrlToFetch = ensureDomainUrlHasSSL(url)
-
-                        let apiResponse = await axios.post(
-                              actualUrlToFetch,
-                              {
-                                    revision: lastRevision,
-                                    revisionHash: lastHash,
-                                    originAddress: session?.address,
-                              },
-                              {
-                                    headers: {
-                                          nonce: session?.nonce,
-                                    },
-                              }
-                        )
-
-
-                        let hasUpdate = false
-
-                        if (index == aquaTrees.length - 1) {
-                              // newApiFileInfo.aquaTree = aquaTree
-                              // newApiFileInfo.lastRevisionHash = lastHash
-                              // newApiFileInfo.lastRevision = lastRevision
-
-                              // ensure genesis matche
-                              if (apiResponse.data.data) {
-                                    let genHashOfApiFileInf = getGenesisHash(selectedFileInfo!.aquaTree!)
-                                    let userAquaTrees: ApiFileInfo[] = apiResponse.data.data.data
-                                    // console.log(" apiResponse.data.data: ", JSON.stringify( apiResponse.data.data, null, 2))
-                                    console.log("userAquaTrees: ", JSON.stringify(userAquaTrees, null, 2))
-
-                                    for (const userAquaTree of userAquaTrees) {
-                                          let currentGenHash = getGenesisHash(userAquaTree.aquaTree!)
-                                          if (currentGenHash == genHashOfApiFileInf) {
-                                                newApiFileInfo.aquaTree = userAquaTree.aquaTree
-                                                newApiFileInfo.fileObject = userAquaTree.fileObject
-                                                hasUpdate = true
-                                                break
-                                          }
-                                    }
-
-                              }
-                        }
-
-                        if (hasUpdate) {
-                              console.log("newApiFileInfo: updted",)
-                              setSelectedFileInfo(newApiFileInfo)
-                              setActiveStep(1)
-                              toast.success("Document signed successfully")
-                        }
-
-                  } catch (error) {
-                        console.error(`Error saving revision ${index + 1}:`, error)
-                        throw new Error(`Error saving revision ${index + 1} to server`)
+                        revisions.push({
+                              revision: lastRevision,
+                              revisionHash: lastHash,
+                              index: i  // Preserve the order from the input array
+                        })
                   }
+
+                  const url = `${backend_url}/tree/all`
+                  const actualUrlToFetch = ensureDomainUrlHasSSL(url)
+
+                  await axios.post(
+                        actualUrlToFetch,
+                        {
+                              revisions: revisions,
+                              originAddress: session?.address,
+                              isWorkflow: true
+                        },
+                        {
+                              headers: {
+                                    nonce: session?.nonce,
+                              },
+                        }
+                  )
+
+               
+                        // if (apiResponse.data.data) {
+                        //       const genHashOfApiFileInf = getGenesisHash(selectedFileInfo!.aquaTree!)
+                        //       console.log("genHashOfApiFileInf", genHashOfApiFileInf)
+                        //       console.log("selectedFileInfo ", JSON.stringify(selectedFileInfo, null,2))
+                        //       const userAquaTrees: ApiFileInfo[] = apiResponse.data.data.data
+                        //       console.log("apiResponse.data.data.data", JSON.stringify(apiResponse.data.data.data, null,2))
+
+                        //       let hasBeenFound = false;
+                        //       for (const userAquaTree of userAquaTrees) {
+                        //             const currentGenHash = getGenesisHash(userAquaTree.aquaTree!)
+                        //             console.log("currentGenHash", currentGenHash)
+                        //             console.log("userAquaTree ", JSON.stringify(userAquaTree, null,2))
+                        //             if (currentGenHash == genHashOfApiFileInf) {
+                                          // const newApiFileInfo: ApiFileInfo = structuredClone(selectedFileInfo)
+                                          // newApiFileInfo.aquaTree = userAquaTree.aquaTree
+                                          // newApiFileInfo.fileObject = userAquaTree.fileObject
+                                          // setSelectedFileInfo(newApiFileInfo)
+                                          // setActiveStep(1)
+                                          // toast.success("Document signed successfully")
+                        //                   hasBeenFound = true;
+                        //                   break
+                        //             }
+                        //       }
+                        //       if (!hasBeenFound) {    
+                        //             console.error('Signed document not found in server response..')
+                        //             toast.error("Error saving signed document, please reload..")
+                        //       }
+                        // }else{
+                        //       console.error('No data returned from saveAllRevisionsToServer API')
+                        //       toast.error("Error saving signed document, please reload")
+                        // }
+                  
+            } catch (error) {
+                  console.error('Error saving all revisions:', error)
+                  throw new Error('Error saving all revisions to server')
             }
       }
 
@@ -492,21 +613,22 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
       }
 
       // Helper function to update UI after success
-      // const updateUIAfterSuccess = async () => {
-      //       try {
+      const updateUIAfterSuccess = async () => {
+            try {
 
-      //             updateSelectedFileInfo()
+                  updateSelectedFileInfo()
 
 
-      //       } catch (error) {
-      //             toast.error(`An error occurred, redirecting to home`)
+            } catch (error) {
+                  toast.error(`An error occurred, refresh this tab to see the updated document.`)
+                  console.error("Error updating selected file info after signing: ", error)
 
-      //             setTimeout(() => {
-      //                   window.location.reload()
-      //             }, 150)
-      //             navigate('/')
-      //       }
-      // }
+                  // setTimeout(() => {
+                  //       window.location.reload()
+                  // }, 150)
+                  // navigate('/')
+            }
+      }
 
       const submitSignatureData = async (signaturePosition: SignatureData[]) => {
             setSubmittingSignatureData(true)
@@ -534,18 +656,15 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   const metaMaskSignedAquaTree = await signWithMetaMask(aquafier, structuredClone(linkedAquaTreeWithSignature))
                   if (!metaMaskSignedAquaTree) return
 
-                  // Step 6: Save both revisions to server (only after successful MetaMask signing)
-                  await saveRevisionsToServer([linkedAquaTreeWithUserSignatureData, linkedAquaTreeWithSignature, metaMaskSignedAquaTree])
+                  // Step 6: Save all revisions to server in a single request (bulk save)
+                  await saveAllRevisionsToServer([linkedAquaTreeWithUserSignatureData, linkedAquaTreeWithSignature, metaMaskSignedAquaTree])
 
-
-                  // Step 7:
-                  // check if the owner of the document is a different wallet address send him the above revsions
-                  // send the revision to the other wallet address if possible
+                  // Step 7: Share revisions to owner and other signers (uses bulk endpoint)
                   await shareRevisionsToOwnerAnOtherSignersOfDocument([linkedAquaTreeWithUserSignatureData, linkedAquaTreeWithSignature, metaMaskSignedAquaTree])
 
 
                    // Step 8: Create notification for the contract sender
-                  setTimeout(async () => {
+                  // setTimeout(async () => {
                        
                         // Get the genesis hash to find the contract sender
                         const genesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
@@ -575,12 +694,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
                         }
 
-                  }, 3000)
+                  // }, 3000)
 
                   // Step 9: Update UI and refresh files
-                  // await updateUIAfterSuccess()
-                  // temprarily th ui is updated saveRevisionsToServer after the last revison is submitted
-
+                  await updateUIAfterSuccess()
+                 
               
             } catch (error) {
                   console.error('Error in submitSignatureData:', error)

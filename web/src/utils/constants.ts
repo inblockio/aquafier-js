@@ -156,6 +156,7 @@ export const testWitness = {
 }
  
 export const API_ENDPOINTS = {
+      NOTIFICATIONS_AQUA_SIGN: '/api/notifications/aqua_sign',
       NOTIFICATIONS: '/notifications',
       NOTIFICATIONS_READ_ALL: '/notifications/read-all',
       MARK_NOTIFICATION_AS_READ: '/notifications/:id/read',

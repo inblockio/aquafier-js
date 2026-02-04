@@ -28,7 +28,8 @@ const NotificationsBell = () => {
 
             setIsLoading(true)
             try {
-                  const response = await axios.get(ensureDomainUrlHasSSL(`${backend_url}${API_ENDPOINTS.NOTIFICATIONS}`), {
+                  let url=ensureDomainUrlHasSSL(`${backend_url}${API_ENDPOINTS.NOTIFICATIONS}`)
+                  const response = await axios.get(url, {
                         headers: {
                               nonce: session.nonce,
                         },

@@ -819,7 +819,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                   return
             }
             try {
-                  const response = await fetch(`${backend_url}/resolve/${session?.address}?useEns=true`, {
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/resolve/${session?.address}?useEns=true`)
+                  const response = await fetch(url, {
                         method: 'GET',
                         headers: {
                               metamask_address: session?.address!,
