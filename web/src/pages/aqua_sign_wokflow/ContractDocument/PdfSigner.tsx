@@ -33,7 +33,6 @@ import { getAppKitProvider } from '@/utils/appkit-wallet-utils'
 import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocketContext'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { reloadDB, RELOAD_KEYS } from '../../../utils/reloadDatabase'
-import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 
 interface PdfSignerProps {
       fileData: File | null
@@ -1363,22 +1362,13 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
       )
 
       useEffect(() => {
-            const unsubscribe = subscribe((message) => {
+            subscribe((message) => {
                   console.log("Notification received: ", message)
                   updateSelectedFileInfoRef.current()
             });
+            // #FIX: disabled cleanup function since it was causing chaos
             // return unsubscribe;
       }, [subscribe]);
-
-      // We try with reload watcher
-      // useReloadWatcher({
-      //       key: RELOAD_KEYS.reload_aqua_sign,
-      //       onReload: () => {
-      //             // console.log('Reloading claims and attestations...');
-      //             updateSelectedFileInfoRef.current()
-      //       },
-      //       autoReset: true
-      // });
 
       // Add event listeners for drag operations
       useEffect(() => {
