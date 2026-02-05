@@ -358,7 +358,7 @@ export default function AquaCertWorkflows() {
 
       // Watch for reload triggers
       useReloadWatcher({
-            key: RELOAD_KEYS.aqua_sign,
+            key: RELOAD_KEYS.aqua_certificate,
             onReload: () => {
                   loadWorkflowsData();
             }
@@ -367,8 +367,6 @@ export default function AquaCertWorkflows() {
       useEffect(() => {
             loadWorkflowsData(currentPage);
       }, [currentPage])
-
-      console.log("Drawerinfo: ", drawerInfo)
 
 
       return (
