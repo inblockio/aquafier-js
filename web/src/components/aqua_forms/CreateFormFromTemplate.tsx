@@ -89,6 +89,7 @@ import { useNavigate } from 'react-router-dom'
 import { API_ENDPOINTS } from '@/utils/constants'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { useAquaSystemNames } from '@/hooks/useAquaSystemNames'
+import { cn } from '@/lib/utils'
 
 /** Props for the SortableSignerItem component */
 interface SortableSignerItemProps {
@@ -182,8 +183,8 @@ const SortableSignerItem = ({
                   )}
             </div>
       )
-} 
- 
+}
+
 // const CreateFormF romTemplate  = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       selectedTemplate: FormTemplate;
@@ -1224,7 +1225,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   let apiFileInfoFromSystem = await loadThisTreeFromSystem(signedAquaTree)
                   if (apiFileInfoFromSystem) {
                         setSelectedFileInfo(apiFileInfoFromSystem)
-                        
+
                         let genesisHash = getGenesisHash(signedAquaTree)
                         if (!genesisHash) {
                               toast.error('Genesis hash not found in signed aqua tree')
@@ -1584,6 +1585,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       const renderArrayField = (field: FormField, fieldIndex: number) => {
             const signerIds = getSignerIds()
 
+            const userInSigners = multipleAddresses.some(addr =>
+                  addr.toLowerCase() === session?.address?.toLowerCase()
+            )
+
             return (
                   <div key={`field-${fieldIndex}`} className="space-y-4">
                         <div className="flex items-center justify-between">
@@ -1600,17 +1605,27 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           Drag to reorder signers
                                     </p>
                               </div>
-                              <Button
-                                    variant="outline"
-                                    size="sm"
-                                    type="button"
-                                    className="rounded-lg hover:bg-blue-50 hover:border-blue-300"
-                                    onClick={addAddress}
-                                    data-testid={`multiple_values_${field.name}`}
-                              >
-                                    <Plus className="h-4 w-4 mr-1" />
-                                    Add Signer
-                              </Button>
+                              <div className='flex gap-1'>
+                                    <Button onClick={(e) => {
+                                          e.preventDefault()
+                                          if (session) {
+                                                setMultipleAddresses(curr => [...curr, session?.address])
+                                          }
+                                    }} className={userInSigners ? "hidden" : ""} type='button'>
+                                          Add Yourself
+                                    </Button>
+                                    <Button
+                                          variant="outline"
+                                          // size="sm"
+                                          type="button"
+                                          className="rounded-lg hover:bg-blue-50 hover:border-blue-300"
+                                          onClick={addAddress}
+                                          data-testid={`multiple_values_${field.name}`}
+                                    >
+                                          <Plus className="h-4 w-4 mr-1" />
+                                          Add Signer
+                                    </Button>
+                              </div>
                         </div>
 
                         <DndContext
@@ -1765,6 +1780,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   return renderArrayField(field, fieldIndex)
             }
 
+            if (field.is_hidden || !field.is_editable) {
+                  return null
+            }
+
             return (
                   <div key={`field-${fieldIndex}`} className="space-y-2 sm:space-y-3">
                         <div className="flex items-center gap-2">
@@ -1783,7 +1802,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           data-testid={`input-${field.name}`}
                                           className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
                                           placeholder={getFieldPlaceholder(field)}
-                                          disabled={field.is_editable === false}
+                                          // disabled={field.is_editable === false}
                                           defaultValue={(() => {
                                                 const val = getFieldDefaultValue(field, formData[field.name] as any)
                                                 return val instanceof File || Array.isArray(val) ? undefined : val
@@ -1852,12 +1871,14 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
 
                         {/* Wallet address field */}
-                        {field.type === 'wallet_address' && (
+                        {/* {field.type === 'wallet_address' && (
                               field.is_editable === false ? (
                                     <Input
                                           id={`input-${field.name}`}
                                           data-testid={`input-${field.name}`}
-                                          className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
+                                          className={cn(
+                                                "rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10",
+                                          )}
                                           disabled
                                           defaultValue={(() => {
                                                 const val = getFieldDefaultValue(field, formData[field.name] as any)
@@ -1875,6 +1896,18 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                                     />
                               )
+                        )} */}
+
+                        {field.type === 'wallet_address' && (
+                              <WalletAutosuggest
+                                    field={field}
+                                    index={1}
+                                    address={formData[field.name] ? (formData[field.name] as string) : ''}
+                                    multipleAddresses={[]}
+                                    setMultipleAddresses={(data) => handleWalletAddressSelect(data, field.name)}
+                                    // placeholder="Enter signer wallet address"
+                                    className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                              />
                         )}
 
                         {/* Document, Image, File upload fields */}
@@ -1886,7 +1919,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
                                           type={getInputType(field.type)}
                                           required={field.required}
-                                          disabled={field.is_editable === false}
+                                          // disabled={field.is_editable === false}
                                           accept={field.type === 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
                                           multiple={field.is_array}
                                           placeholder={getFieldPlaceholder(field)}
@@ -1903,7 +1936,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                               </div>
                         )}
 
-                        {field.name === 'sender' && (
+                        {field.name === 'sender' && (!field.is_hidden || !field.is_editable) && (
                               <p className="text-xs text-gray-500">
                                     {field.support_text
                                           ? field.support_text
@@ -1921,9 +1954,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             const otherFields = fields.filter(f => f.type !== 'document')
 
             // Check if user has added themselves to signers
-            const userInSigners = multipleAddresses.some(addr =>
-                  addr.toLowerCase() === session?.address?.toLowerCase()
-            )
+            // const userInSigners = multipleAddresses.some(addr =>
+            //       addr.toLowerCase() === session?.address?.toLowerCase()
+            // )
 
             return (
                   <>
@@ -1989,12 +2022,14 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           <p className="text-sm text-gray-500 mt-1">Specify who needs to sign this document</p>
                                     </div>
 
-                                    {!userInSigners && (
+                                    {otherFields.map((field, idx) => renderSingleField(field, idx))}
+
+                                    {/* {!userInSigners && (
                                           <Alert className="border-amber-200 bg-amber-50">
                                                 <AlertCircle className="h-4 w-4 text-amber-600" />
                                                 <AlertDescription className="text-amber-800">
 
-                                                      You haven't added yourself as a signer. 
+                                                      You haven't added yourself as a signer.
                                                       <Button onClick={() => {
                                                             if (session) {
                                                                   setMultipleAddresses(curr => [...curr, session?.address])
@@ -2004,9 +2039,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                       </Button>
                                                 </AlertDescription>
                                           </Alert>
-                                    )}
-
-                                    {otherFields.map((field, idx) => renderSingleField(field, idx))}
+                                    )} */}
                                     {/* Warning if user hasn't added themselves */}
 
                                     <div className="flex justify-between pt-4">
