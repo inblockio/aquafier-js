@@ -351,6 +351,9 @@ export async function transferRevisionChainData(
                 if (workFlowData.isWorkFlow && workFlowData.workFlow.includes("aqua_sign")) {
                     shouldAquaTreeBeSavedAsPartOfWorkflow = true
                 }
+                if (workFlowData.isWorkFlow && workFlowData.workFlow.includes("user_signature")) {
+                    shouldAquaTreeBeSavedAsPartOfWorkflow = true
+                }
 
 
                 //    await deletLatestIfExistsForAquaTree(aquaTree, userAddress)
@@ -775,7 +778,7 @@ export async function saveForOtherUserRevisionInAquaTree(revisionData: SaveRevis
     if (!targetUserHasPreviousRevision) {
 
         console.log(` Previous revision not found in user ${revisionData.originAddress} cannot save for user ${revisionData.address}`);
-        console.log(` This can be caused by the other no importing an aqua sign `);
+        console.log(` This can be caused by the other not importing an aqua sign `);
         console.log(` This can also be caused by  the user in local scope extending the aqua tree without sharing the previous revision `);
         // to attempt to reconcile this we check if the  entire aqua tree  is a workflow of type aqua sign
         // else we throw an error
@@ -786,6 +789,21 @@ export async function saveForOtherUserRevisionInAquaTree(revisionData: SaveRevis
         console.log("Workflow check on workflow endpoint isWorkFlow = " + isWorkFlow + " name " + workFlow)
 
         if (isWorkFlow && workFlow.includes("aqua_sign")) {
+
+            // check if the target user has genessis revision if not we cannot transfer the chain as it will be orphaned and we will have no way to link it to the user
+            let genesisHash = getGenesisHash(baseAquaTree)
+            let genesisPubkeyHashForTargetUser = `${userAddressToHaveNewRevision}_${genesisHash}`
+            let targetUserHasGenesisRevision = await prisma.revision.findFirst({
+                where: {
+                    pubkey_hash: {
+                        equals: genesisPubkeyHashForTargetUser
+                    }
+                }
+            })
+            if (!targetUserHasGenesisRevision) {
+                console.log(` Target user ${userAddressToHaveNewRevision} does not have the genesis revision of the chain cannot save revision and the aqua tree is an aqua sign workflow `);
+                return [404, `Target user ${userAddressToHaveNewRevision} does not have the genesis revision of the chain cannot save revision and the aqua tree is an aqua sign workflow`] // reply.code(400).send({ success: false, message: `Target user ${userAddressToHaveNewRevision} does not have the genesis revision of the chain cannot save revision and the aqua tree is an aqua sign workflow` });
+            }
 
             // proceed to transfer the entire chain
             let response = await transferRevisionChainData(userAddressToHaveNewRevision, {
@@ -858,8 +876,11 @@ async function updateLatestAndInsertRevision(revisionData: SaveRevisionForUser, 
         //save the revision
 
         // Insert new revision into the database
-        await tx.revision.create({
-            data: {
+        await tx.revision.upsert({
+            where: {
+                pubkey_hash: filePubKeyHash
+            },
+            create: {
                 pubkey_hash: filePubKeyHash,
                 nonce: revisionData.revision.file_nonce || "",
                 shared: [],
@@ -874,6 +895,10 @@ async function updateLatestAndInsertRevision(revisionData: SaveRevisionForUser, 
                 file_hash: revisionData.revision.file_hash,
 
             },
+            update: {
+
+            }
+
         });
 
         // Update the previous revision's children to include this new revision
@@ -984,14 +1009,27 @@ async function updateLatestAndInsertRevision(revisionData: SaveRevisionForUser, 
         if (revisionData.revision.revision_type == "link") {
 
             console.log(`Saving link revision with hash ${filePubKeyHash} for user ${userAddressToHaveNewRevision}...`)
-            await tx.link.create({
-                data: {
+            await tx.link.upsert({
+                where: {
+                    hash: filePubKeyHash
+                },
+                update: {
                     hash: filePubKeyHash,
                     link_type: "aqua",
                     link_require_indepth_verification: false,
                     link_verification_hashes: revisionData.revision.link_verification_hashes,
                     link_file_hashes: revisionData.revision.link_file_hashes,
-                    reference_count: 0
+                    reference_count: {
+                        increment: 1
+                    }
+                } ,
+                create: {
+                    hash: filePubKeyHash,
+                    link_type: "aqua",
+                    link_require_indepth_verification: false,
+                    link_verification_hashes: revisionData.revision.link_verification_hashes,
+                    link_file_hashes: revisionData.revision.link_file_hashes,
+                    reference_count: 1
                 }
             })
 
@@ -1050,7 +1088,7 @@ async function updateLatestAndInsertRevision(revisionData: SaveRevisionForUser, 
                     );
 
                     // add  recursive function if linkedAquaTree contains link revisions fetch the aqua tree and save it to userAddressToHaveNewRevision
-                    recusivelySaveLinkedAquaTrees(linkedAquaTree, url, userAddressToHaveNewRevision, tx, revisionData.originAddress);
+                    recusivelySaveLinkedAquaTrees(linkedAquaTree, url, userAddressToHaveNewRevision, revisionData.originAddress);
                 }
             }
 
@@ -1111,7 +1149,7 @@ async function updateLatestAndInsertRevision(revisionData: SaveRevisionForUser, 
     });
 
 }
-async function recusivelySaveLinkedAquaTrees(aquaTree: AquaTree, url: string, userAddressToHaveNewRevision: string, tx: any, originAddress: string) {
+async function recusivelySaveLinkedAquaTrees(aquaTree: AquaTree, url: string, userAddressToHaveNewRevision: string, originAddress: string) {
     console.log(`🔥🔥 Recursively checking linked aqua trees for user ${userAddressToHaveNewRevision}...`);
     const allRevisions = Object.values(aquaTree.revisions);
     for (let revision of allRevisions) {
@@ -1121,7 +1159,7 @@ async function recusivelySaveLinkedAquaTrees(aquaTree: AquaTree, url: string, us
             const linkVerificationHashes = revision.link_verification_hashes || [];
             for (let linkedHash of linkVerificationHashes) {
                 // Check if this linked hash already exists for the user
-                let existingLatest = await tx.latest.findFirst({
+                let existingLatest = await prisma.latest.findFirst({
                     where: {
                         hash: {
                             contains: `${originAddress}_${linkedHash}`,
@@ -1150,7 +1188,7 @@ async function recusivelySaveLinkedAquaTrees(aquaTree: AquaTree, url: string, us
                     );
 
                     // Recursively check for further linked aqua trees
-                    recusivelySaveLinkedAquaTrees(linkedAquaTree, url, userAddressToHaveNewRevision, tx, originAddress);
+                    recusivelySaveLinkedAquaTrees(linkedAquaTree, url, userAddressToHaveNewRevision, originAddress);
                 }
 
             }

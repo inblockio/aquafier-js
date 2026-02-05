@@ -147,7 +147,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
             } catch (error) {
                   console.error(`Error saving all revisions for user ${address}:`, error)
-                  throw new Error(`Error saving all revisions to server for user ${address}`)
+                  // Don't throw error to avoid breaking the flow if one user fails, just log it
+                 
             }
       }
 
@@ -389,7 +390,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                               }
                         }
                   } else {
-                        if (signers != sender) {
+                        // single signer case
+                        // if sigle signer is not the session user, remeber the session user has already been handled in /tree/all call
+                        if (signers != session?.address) {
                               // only one signer
                               await saveAllRevisionsToServerForUser(aquaTrees, signers)
 
