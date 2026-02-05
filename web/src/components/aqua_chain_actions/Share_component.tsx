@@ -265,13 +265,13 @@ const ShareComponent = () => {
                         height: "calc(100% - 140px)"
                   }}>
                         {/* Warning */}
-                        <div className="flex gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                              <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                                    <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                        <div className="flex gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                              <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                               </div>
                               <div>
-                                    <p className="text-sm font-medium text-amber-800">Important</p>
-                                    <p className="text-sm text-amber-700 mt-1">
+                                    <p className="text-sm font-medium text-blue-800">Important</p>
+                                    <p className="text-sm text-blue-700 mt-1">
                                           Once shared, don't delete this file as it will break the shared link for recipients.
                                     </p>
                               </div>
@@ -284,10 +284,10 @@ const ShareComponent = () => {
                                     Who can access
                               </h3>
 
-                              <div className="grid gap-3">
+                              <div className="flex gap-2 w-100">
                                     {/* Public Option */}
                                     <div
-                                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${recipientType !== 'specific'
+                                          className={`p-4 flex-1 rounded-lg border-2 cursor-pointer transition-all ${recipientType !== 'specific'
                                                 ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500/20'
                                                 : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                                 }`}
@@ -312,7 +312,7 @@ const ShareComponent = () => {
 
                                     {/* Specific Wallet Option */}
                                     <div
-                                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${recipientType === 'specific'
+                                          className={`p-4 flex-1 rounded-lg border-2 cursor-pointer transition-all ${recipientType === 'specific'
                                                 ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500/20'
                                                 : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                                 }`}

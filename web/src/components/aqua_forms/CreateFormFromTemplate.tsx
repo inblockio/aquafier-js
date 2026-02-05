@@ -2046,7 +2046,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           <Button
                                                 type="button"
                                                 variant="outline"
-                                                onClick={() => setAquaSignStep(1)}
+                                                onClick={() => {
+                                                      setAquaSignStep(1)
+                                                      setModalFormErorMessae("")
+                                                }}
                                                 className="px-6"
                                           >
                                                 Back
