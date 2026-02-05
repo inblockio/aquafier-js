@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useStore } from 'zustand'
 import appStore from '../store'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { ApiFileInfo } from '../models/FileInfo'
 // import { ClipLoader } from "react-spinners";
 import { IDrawerStatus } from '../models/AquaTreeDetails'
@@ -45,7 +45,7 @@ const SharePage = () => {
 
             try {
                   const url = ensureDomainUrlHasSSL(`${backend_url}/share_data/${params.identifier}`)
-                  const response = await axios.get(url, {
+                  const response = await apiClient.get(url, {
                         headers: {
                               'Content-Type': 'application/x-www-form-urlencoded',
                               nonce: session?.nonce ?? '',

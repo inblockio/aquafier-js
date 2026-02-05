@@ -8,7 +8,7 @@ import {
 } from '../../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../../store'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { ApiFileInfo } from '../../models/FileInfo'
 import Aquafier, { AquaTreeWrapper, FileObject } from 'aqua-js-sdk'
 import { IShareButton } from '../../types/types'
@@ -94,7 +94,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                         // send to server
                         const url = ensureDomainUrlHasSSL(`${backend_url}/tree`)
 
-                        await axios.post(
+                        await apiClient.post(
                               url,
                               {
                                     revision: lastRevision,

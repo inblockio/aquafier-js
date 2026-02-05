@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react'
 import {LuMessageCircleWarning} from 'react-icons/lu'
 import {useStore} from 'zustand'
 import appStore from '../store'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import VersionDetails from '../models/VersionDetails'
 import {IVersionAndDisclaimer} from '../types/index'
 import versionInfo from '../version-info.json'
@@ -30,7 +30,7 @@ export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }:
                   //`${backend_url}/version`
                   const url = ensureDomainUrlHasSSL(`${backend_url}/version`)
 
-                  const response = await axios.get(url)
+                  const response = await apiClient.get(url)
 
                   const res: VersionDetails = await response.data
 

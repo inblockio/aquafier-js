@@ -1,7 +1,7 @@
 import { useStore } from 'zustand'
 import appStore from '../store'
 import { useEffect, useState } from 'react'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import VersionDetails from '@/models/VersionDetails'
 import { ensureDomainUrlHasSSL } from '../utils/functions'
 import { toast } from 'sonner'
@@ -28,7 +28,7 @@ const InfoPage = () => {
             try {
                   const url = ensureDomainUrlHasSSL(`${backend_url}/version`)
 
-                  const response = await axios.get(url)
+                  const response = await apiClient.get(url)
 
                   const res: VersionDetails = await response.data
 

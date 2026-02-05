@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { ensureDomainUrlHasSSL, getGenesisHash } from '@/utils/functions'
 import { useStore } from 'zustand'
 import appStore from '@/store'
@@ -73,7 +73,7 @@ const LoadLinkedFiles = ({ genesisHash }: { genesisHash: string | null }) => {
             if (!genesisHash || !backend_url || !session) return
             setIsLoading(true)
             const url = ensureDomainUrlHasSSL(`${backend_url}${API_ENDPOINTS.LINKED_FILES}`)
-            axios.get(url, {
+            apiClient.get(url, {
                   params: {
                         genesis_hash: genesisHash,
                   },
@@ -152,7 +152,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                   const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!)
                   const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
                   const url = ensureDomainUrlHasSSL(`${backendUrl}/explorer_delete_file`)
-                  const response = await axios.post(
+                  const response = await apiClient.post(
                         url,
                         {
                               revisionHash: lastRevisionHash,

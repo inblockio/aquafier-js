@@ -6,7 +6,7 @@ import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
 import { ensureDomainUrlHasSSL, getGenesisHash, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
 import { ClipLoader } from 'react-spinners'
 import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileInfo'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { Contract, ICompleteClaimInformation } from '@/types/types'
 import { SharedContract } from '../files_share/files_shared_contracts_item'
 import AttestationEntry from './AttestationEntry'
@@ -45,7 +45,7 @@ export default function ClaimsWorkflowPage() {
             try {
                   //`${backend_url}/contracts`
                   const url = ensureDomainUrlHasSSL(`${backend_url}/contracts`)
-                  const response = await axios.get(url, {
+                  const response = await apiClient.get(url, {
                         params: {
                               sender: session?.address,
                               // genesis_hash: genesisHash,
@@ -295,7 +295,7 @@ export default function ClaimsWorkflowPage() {
                         wallet_address: walletAddress,
                         use_wallet: session?.address,
                   }
-                  const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
+                  const filesDataQuery = await apiClient.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
                         headers: {
                               'Content-Type': 'application/json',
                               'nonce': `${session!.nonce}`

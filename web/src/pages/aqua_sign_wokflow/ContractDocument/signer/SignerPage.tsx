@@ -11,7 +11,7 @@ import { ensureDomainUrlHasSSL } from '@/utils/functions'
 import { toast } from 'sonner'
 import { useStore } from 'zustand'
 import appStore from '@/store'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { API_ENDPOINTS } from '@/utils/constants'
 import { downloadPdfWithAnnotations } from '@/utils/pdf-downloader'
 // import { ScrollArea } from '@/components/ui/scroll-area';
@@ -175,7 +175,7 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, l
             let documentBackupID: string | null = null
             try {
                   const endpoint = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.CREATE_SERVER_ACCOUNT_BACKUP}`)
-                  const res = await axios.post(endpoint, {
+                  const res = await apiClient.post(endpoint, {
                         latestRevisionHash: latestRevisionHash,
                   }, {
                         headers: {

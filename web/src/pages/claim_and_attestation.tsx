@@ -24,7 +24,7 @@ import { FileObject } from 'aqua-js-sdk'
 import { DownloadAquaChain } from '../components/aqua_chain_actions/download_aqua_chain'
 import { DeleteAquaChain } from '../components/aqua_chain_actions/delete_aqua_chain'
 import { Contract, IWorkflowItem } from '@/types/types'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { OpenClaimsWorkFlowButton } from '@/components/aqua_chain_actions/open_identity_claim_workflow'
 import { useNavigate } from 'react-router-dom'
 import { ApiFileInfo } from '@/models/FileInfo'
@@ -70,7 +70,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
       const loadSharedContractsData = async (_latestRevisionHash: string, _genesisHash: string) => {
             try {
                   const url = ensureDomainUrlHasSSL(`${backend_url}/contracts`)
-                  const response = await axios.get(url, {
+                  const response = await apiClient.get(url, {
                         params: {
                               sender: session?.address,
                               // genesis_hash: genesisHash,
@@ -268,7 +268,7 @@ const ClaimsAndAttestationPage = () => {
                         claim_types: JSON.stringify(IDENTITY_CLAIMS),
                         wallet_address: session?.address
                   }
-                  const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
+                  const filesDataQuery = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
                         headers: {
                               'Content-Type': 'application/json',
                               'nonce': `${session!.nonce}`

@@ -22,7 +22,7 @@ import { FaCircleInfo } from 'react-icons/fa6'
 import { Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { API_ENDPOINTS } from '@/utils/constants'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { ApiFileInfo } from '@/models/FileInfo'
 
 
@@ -218,7 +218,7 @@ export default function PdfWorkflowPage() {
                         setLoadingFromApiSelectedFileInfo(true)
                         try {
                               const url = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`)
-                              const res = await axios.post(url, {
+                              const res = await apiClient.post(url, {
                                     revisionHashes: [targetHash]
                               }, {
                                     headers: {
