@@ -42,7 +42,7 @@ const ActionsDropdown = ({ children, apiFileInfo, index }: IActionsDropdown) => 
                         revision=""
                         index={index}
                     >
-                        <DropdownMenuItem variant='destructive' className="cursor-pointer">
+                        <DropdownMenuItem variant='destructive' className="cursor-pointer" onSelect={(e) => e.preventDefault()}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete
                         </DropdownMenuItem>

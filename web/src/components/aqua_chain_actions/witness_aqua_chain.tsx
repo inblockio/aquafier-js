@@ -1,9 +1,8 @@
 import { LuGlasses } from 'react-icons/lu'
-import { dummyCredential, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash, getLastRevisionVerificationHash } from '../../utils/functions'
+import { dummyCredential, ensureDomainUrlHasSSL, getLastRevisionVerificationHash } from '../../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import apiClient from '@/api/axiosInstance'
-import { ApiFileInfo } from '../../models/FileInfo'
 import { useState } from 'react'
 import Aquafier, { AquaTreeWrapper, WitnessNetwork } from 'aqua-js-sdk'
 import { RevionOperation } from '../../models/RevisionOperation'
@@ -13,7 +12,7 @@ import { getAppKitProvider, switchNetworkWalletConnect } from '@/utils/appkit-wa
 import { triggerWorkflowReload, RELOAD_KEYS } from '@/utils/reloadDatabase'
 
 export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: RevionOperation) => {
-      const { setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo, user_profile, backend_url, session, webConfig } = useStore(appStore)
+      const { metamaskAddress, user_profile, session, webConfig } = useStore(appStore)
       const [witnessing, setWitnessing] = useState(false)
 
       const witnessFileHandler = async () => {
@@ -54,7 +53,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: R
                                     // send to server
                                     const url = ensureDomainUrlHasSSL(`${backendUrl}/tree`)
 
-                                    const response = await apiClient.post(
+                                    await apiClient.post(
                                           url,
                                           {
                                                 revision: lastRevision,
@@ -67,29 +66,29 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: R
                                                 },
                                           }
                                     )
+                                    // #FIX: Remove selected file info update for now, incase required we can update this
+                                    // if (response.status === 200 || response.status === 201) {
+                                    //       const urlPath = `${backend_url}/explorer_files`
+                                    //       const url2 = ensureDomainUrlHasSSL(urlPath)
 
-                                    if (response.status === 200 || response.status === 201) {
-                                          const urlPath = `${backend_url}/explorer_files`
-                                          const url2 = ensureDomainUrlHasSSL(urlPath)
-
-                                          const filesApi = await fetchFiles(session!.address, url2, session!.nonce)
-                                          setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+                                    //       const filesApi = await fetchFiles(session!.address, url2, session!.nonce)
+                                    //       setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
 
 
-                                          const newFiles: ApiFileInfo[] = filesApi.files
+                                    //       const newFiles: ApiFileInfo[] = filesApi.files
 
-                                          if (selectedFileInfo) {
-                                                const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
-                                                for (let i = 0; i < newFiles.length; i++) {
-                                                      const newFile = newFiles[i]
-                                                      const newGenesisHash = getGenesisHash(newFile.aquaTree!)
-                                                      if (newGenesisHash == genesisHash) {
-                                                            setSelectedFileInfo(newFile)
-                                                      }
-                                                }
-                                          }
-                                    }
+                                    //       if (selectedFileInfo) {
+                                    //             const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
+                                    //             for (let i = 0; i < newFiles.length; i++) {
+                                    //                   const newFile = newFiles[i]
+                                    //                   const newGenesisHash = getGenesisHash(newFile.aquaTree!)
+                                    //                   if (newGenesisHash == genesisHash) {
+                                    //                         setSelectedFileInfo(newFile)
+                                    //                   }
+                                    //             }
+                                    //       }
+                                    // }
 
                                     toast.success(`Witnessing successfull`)
                               }
@@ -169,7 +168,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: R
                               // send to server
                               const url = ensureDomainUrlHasSSL(`${backendUrl}/tree`)
 
-                              const response = await apiClient.post(
+                              await apiClient.post(
                                     url,
                                     {
                                           revision: lastRevision,
@@ -183,29 +182,30 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: R
                                     }
                               )
 
-                              if (response.status === 200 || response.status === 201) {
+                              // #FIX: Remove selected file info update for now, incase required we can update this
+                              // if (response.status === 200 || response.status === 201) {
 
 
-                                    const urlPath = `${backend_url}/explorer_files`
-                                    const url2 = ensureDomainUrlHasSSL(urlPath)
+                              //       const urlPath = `${backend_url}/explorer_files`
+                              //       const url2 = ensureDomainUrlHasSSL(urlPath)
 
-                                    const filesApi = await fetchFiles(session!.address, url2, session!.nonce)
-                                    setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+                              //       const filesApi = await fetchFiles(session!.address, url2, session!.nonce)
+                              //       setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
 
-                                    const newFiles: ApiFileInfo[] = filesApi.files
+                              //       const newFiles: ApiFileInfo[] = filesApi.files
 
-                                    if (selectedFileInfo) {
-                                          const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
-                                          for (let i = 0; i < newFiles.length; i++) {
-                                                const newFile = newFiles[i]
-                                                const newGenesisHash = getGenesisHash(newFile.aquaTree!)
-                                                if (newGenesisHash == genesisHash) {
-                                                      setSelectedFileInfo(newFile)
-                                                }
-                                          }
-                                    }
-                              }
+                              //       if (selectedFileInfo) {
+                              //             const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
+                              //             for (let i = 0; i < newFiles.length; i++) {
+                              //                   const newFile = newFiles[i]
+                              //                   const newGenesisHash = getGenesisHash(newFile.aquaTree!)
+                              //                   if (newGenesisHash == genesisHash) {
+                              //                         setSelectedFileInfo(newFile)
+                              //                   }
+                              //             }
+                              //       }
+                              // }
 
                               toast.success(`Witnessing successfull`)
                         }

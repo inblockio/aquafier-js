@@ -61,7 +61,7 @@ export const DeleteAquaChainDialog = ({
       )
 }
 
-const LoadLinkedFiles = ({ genesisHash }: { genesisHash: string | null }) => {
+const LoadLinkedFiles = ({ genesisHash, allRevisionHashes }: { genesisHash: string | null, allRevisionHashes: string[] }) => {
 
       const { backend_url, session } = useStore(appStore)
 
@@ -76,6 +76,7 @@ const LoadLinkedFiles = ({ genesisHash }: { genesisHash: string | null }) => {
             apiClient.get(url, {
                   params: {
                         genesis_hash: genesisHash,
+                        allRevisionHashes: JSON.stringify(allRevisionHashes)
                   },
                   headers: {
                         nonce: session.nonce,
@@ -252,7 +253,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                                     </AlertDialogDescription>
                               </AlertDialogHeader>
                               <div>
-                                    <LoadLinkedFiles genesisHash={getGenesisHash(apiFileInfo.aquaTree!)} />
+                                    <LoadLinkedFiles allRevisionHashes={Object.keys(apiFileInfo.aquaTree?.revisions!)} genesisHash={getGenesisHash(apiFileInfo.aquaTree!)} />
                               </div>
                               <AlertDialogFooter>
                                     <Button

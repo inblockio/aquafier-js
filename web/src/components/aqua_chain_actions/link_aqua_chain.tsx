@@ -5,12 +5,13 @@ import {
       fetchFiles,
       getAquaTreeFileObject,
       getGenesisHash,
+      reorderRevisionsInAquaTree,
 } from '../../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import apiClient from '@/api/axiosInstance'
 import { ApiFileInfo } from '../../models/FileInfo'
-import Aquafier, { AquaTreeWrapper, FileObject } from 'aqua-js-sdk'
+import Aquafier, { AquaTreeWrapper, FileObject, reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk'
 import { IShareButton } from '../../types/types'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { AlertCircle, Link as LinkIcon, Loader2 } from 'lucide-react'
@@ -73,7 +74,7 @@ export const LinkButton = ({ item, nonce, index, children }: IShareButton) => {
                   for (let i = 0; i < linkItems.length; i++) {
                         let currentItem = linkItems[i]
                         const linkAquaTreeWrapper: AquaTreeWrapper = {
-                              aquaTree: currentItem.aquaTree!,
+                              aquaTree: reorderAquaTreeRevisionsProperties(currentItem.aquaTree!),
                               revision: '',
                               fileObject: primaryFileObject,
                         }

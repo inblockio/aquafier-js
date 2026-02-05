@@ -630,7 +630,7 @@ const FilesPage = () => {
 
                                                             {fileData.isLoading ? (
                                                                   <button
-                                                                        className="flex items-center gap-2 text-white text-sm font-medium bg-gray-800 w-[100px] px-2 py-1 rounded cursor-not-allowed"
+                                                                        className="flex items-center gap-2 text-white text-sm font-medium bg-gray-800 w-25 px-2 py-1 rounded cursor-not-allowed"
                                                                         disabled
                                                                   >
                                                                         <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
