@@ -1224,9 +1224,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   let apiFileInfoFromSystem = await loadThisTreeFromSystem(signedAquaTree)
                   if (apiFileInfoFromSystem) {
                         setSelectedFileInfo(apiFileInfoFromSystem)
-                        // navigate('/app/pdf/workflow')
+                        
+                        let genesisHash = getGenesisHash(signedAquaTree)
+                        if (!genesisHash) {
+                              toast.error('Genesis hash not found in signed aqua tree')
+                              return
+                        }
                         try {
-                              let genesisHash = getGenesisHash(signedAquaTree)
                               if (genesisHash && session?.address) {
                                     let genesisRevision = signedAquaTree.revisions[genesisHash]
                                     let signers = genesisRevision?.forms_signers
@@ -1235,15 +1239,15 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           let activeUserAddress = session.address.toLocaleLowerCase()
                                           let isUserSigner = signersArray.find((signer: string) => signer === activeUserAddress)
                                           if (isUserSigner) {
-                                                navigate('/app/pdf/workflow/2')
+                                                navigate('/app/pdf/workflow/2/' + genesisHash)
                                           }
                                     } else {
 
-                                          navigate('/app/pdf/workflow')
+                                          navigate('/app/pdf/workflow/1/' + genesisHash)
                                     }
                               }
                         } catch (error: any) {
-                              navigate('/app/pdf/workflow')
+                              navigate('/app/pdf/workflow/1/' + genesisHash)
                         }
                   }
             }

@@ -178,6 +178,7 @@ const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer
             <>
                   <TableRow key={`${workflowName}-${index}`} className="hover:bg-muted/50 h-fit cursor-pointer" onClick={e => {
                         e.preventDefault()
+                        //todo fix me
                         // setSelectedFileInfo(apiFileInfo)
                         // navigate('/app/pdf/workflow')
                   }}>

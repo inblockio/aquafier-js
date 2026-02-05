@@ -195,8 +195,31 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
             <>
                   <TableRow key={`${workflowName}-${index}`} className="hover:bg-muted/50 h-fit cursor-pointer" onClick={e => {
                         e.preventDefault()
-                        setSelectedFileInfo(apiFileInfo)
-                        navigate('/app/pdf/workflow')
+                        setSelectedFileInfo(apiFileInfo);
+                        let genesisHash = getGenesisHash(apiFileInfo.aquaTree!)
+                              if (!genesisHash) {
+                                    toast.error('Could not determine genesis hash for this workflow.')
+                                    return
+                              }
+                              let gensesiRevision = apiFileInfo.aquaTree?.revisions[genesisHash]
+                              let signers = gensesiRevision?.forms_signers
+
+                              // check if am in the signer only then navigate to 2
+                              if (signers) {
+
+                                    let signersArray = signers.split(",").map((item: string) => item.trim().toLocaleLowerCase())
+                                    let activeUserAddress = session?.address?.toLocaleLowerCase()
+                                    let isUserSigner = signersArray.find((signer: string) => signer === activeUserAddress)
+                                    if (isUserSigner) {
+
+                                          navigate('/app/pdf/workflow/2/' + genesisHash)
+                                          return
+                                    }
+                              }else{
+
+                                    navigate('/app/pdf/workflow/1/' + genesisHash)
+                                    return
+                              }
                   }}>
                         <TableCell className="font-medium w-[300px] max-w-[300px] min-w-[300px]">
                               <div className="w-full flex items-center gap-3">
