@@ -5,6 +5,7 @@ import { authenticate, AuthenticatedRequest } from "../middleware/auth_middlewar
 import { PrismaClient } from "@prisma/client";
 import { sendNotificationReloadToWallet } from "./websocketController2";
 import { createNotificationAndSendWebSocketNotification } from "../utils/notification_utils";
+import { cliRedify } from "aqua-js-sdk";
 
 const prisma = new PrismaClient();
 
@@ -91,6 +92,7 @@ export default async function notificationsController(fastify: FastifyInstance) 
         }
         // const sender = request.user?.address;
 
+        console.log(cliRedify(`Target user: ${receiver}\n${JSON.stringify(content, null, 4)}`))
         sendNotificationReloadToWallet(receiver, content);
         return reply.code(200).send({ message: 'Notification reload triggered' });
     })

@@ -61,11 +61,11 @@ export default function FilesListItem({
             if (systemAquaFileNames.length === 0) {
                   return
             }
-            console.log('systemAquaFileNames', systemAquaFileNames)
+            // console.log('systemAquaFileNames', systemAquaFileNames)
             const fileObject = getAquaTreeFileObject(file)
             setCurrentFileObject(fileObject)
             const workFlow = isWorkFlowData(file.aquaTree!, systemAquaFileNames)
-            console.log('workFlow', workFlow)
+            // console.log('workFlow', workFlow)
             setWorkFlowInfo(workFlow)
       }
 

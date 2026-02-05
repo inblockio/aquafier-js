@@ -33,6 +33,7 @@ import { getAppKitProvider } from '@/utils/appkit-wallet-utils'
 import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocketContext'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { reloadDB, RELOAD_KEYS } from '../../../utils/reloadDatabase'
+import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 
 interface PdfSignerProps {
       fileData: File | null
@@ -62,6 +63,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
       // Get wallet address from store
       const { session, backend_url, webConfig } = useStore(appStore)
+
+      // Ref to always call the latest updateSelectedFileInfo from the subscription callback
+      const updateSelectedFileInfoRef = useRef<() => void>(() => { })
 
       // PDF viewer container ref
       const pdfMainContainerRef = useRef<HTMLDivElement>(null)
@@ -417,17 +421,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         target: "aqua_sign_workflow",
                         genesisHash: genesisHash,
                   })
-
-
-
-
-
-
             }
       }
 
       // Function to create a notification for contract signing
-      const createSigningNotification = async (senderAddress: string, receiverAddress: string) => {
+      const createSigningNotification = async (senderAddress: string, receiverAddress: string, genesisHash: string) => {
             try {
                   // Don't create notification if sender and receiver are the same
                   if (senderAddress === receiverAddress) {
@@ -437,36 +435,48 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   const url = `${backend_url}${API_ENDPOINTS.NOTIFICATIONS}`
                   const actualUrlToFetch = ensureDomainUrlHasSSL(url)
 
-                  await axios.post(
-                        actualUrlToFetch,
-                        {
-                              receiver: receiverAddress,
-                              content: `Has signed the shared contract`,
-                        },
-                        {
-                              headers: {
-                                    'Content-Type': 'application/json',
-                                    nonce: session?.nonce,
+                  try {
+                        await axios.post(
+                              actualUrlToFetch,
+                              {
+                                    receiver: receiverAddress,
+                                    content: `Has signed the shared contract`,
                               },
-                        }
-                  )
+                              {
+                                    headers: {
+                                          'Content-Type': 'application/json',
+                                          nonce: session?.nonce,
+                                    },
+                              }
+                        )
+                  } catch (error: any) {
+                        console.log("Error posting normal notification: ", error)
+                  }
 
                   const url2 = `${backend_url}${API_ENDPOINTS.NOTIFICATIONS_AQUA_SIGN}/${receiverAddress}`
                   const actualUrlToFetch2 = ensureDomainUrlHasSSL(url2)
 
-                  await axios.post(
-                        actualUrlToFetch2,
-                        {
-                              receiver: receiverAddress,
-                              content: `refetch aqua sign workflow with genesis hash ${getGenesisHash(selectedFileInfo!.aquaTree!)}`,
-                        },
-                        {
-                              headers: {
-                                    'Content-Type': 'application/json',
-                                    nonce: session?.nonce,
+                  try {
+                        await axios.post(
+                              actualUrlToFetch2,
+                              {
+                                    receiver: receiverAddress,
+                                    // content: `refetch aqua sign workflow with genesis hash ${getGenesisHash(selectedFileInfo!.aquaTree!)}`,
+                                    content: {
+                                          target: "aqua_sign_workflow",
+                                          genesisHash: genesisHash,
+                                    }
                               },
-                        }
-                  )
+                              {
+                                    headers: {
+                                          'Content-Type': 'application/json',
+                                          nonce: session?.nonce,
+                                    },
+                              }
+                        )
+                  } catch (error: any) {
+                        console.log("Error creating websocket notification: ", error)
+                  }
 
             } catch (error) {
                   console.error('Error creating signing notification:', error)
@@ -644,6 +654,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
             }
       }
 
+      // Keep the ref in sync so the subscription callback always calls the latest version
+      updateSelectedFileInfoRef.current = updateSelectedFileInfo
+
       // Helper function to update UI after success
       const updateUIAfterSuccess = async () => {
             try {
@@ -704,9 +717,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         const revision = selectedFileInfo!.aquaTree!.revisions[genesisHash]
                         const sender = revision['forms_sender']
 
-                        // Only create notification if the current user is not the sender
+                        // Notify the document sender that the current user has signed
                         if (sender && session?.address && sender !== session.address) {
-                              await createSigningNotification(session.address, sender)
+                              await createSigningNotification(session.address, sender, genesisHash)
                         }
 
                         let signersString = revision['forms_signers']
@@ -719,8 +732,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
                         for (const wallet of signers) {
 
-                              if (wallet.toLowerCase() !== sender.toLowerCase() || wallet.toLowerCase() !== session?.address.toLowerCase()) {
-                                    await createSigningNotification(session!.address, wallet)
+                              if (wallet.toLowerCase() !== sender.toLowerCase() && wallet.toLowerCase() !== session?.address.toLowerCase()) {
+                                    await createSigningNotification(session!.address, wallet, genesisHash)
                               }
                         }
 
@@ -1359,18 +1372,21 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
       useEffect(() => {
             const unsubscribe = subscribe((message) => {
-                  console.log("TODO:Notification received: ", message)
-                  console.log("TODO: Notification received: ", message)
-                  // Handle notification reload specifically
-                  // if (message.type === 'notification_reload' && message.data && message.data.target === "aqua_sign_workflow") {
-                  //       updateSelectedFileInfo()
-                  // }
-                  // if(message.type=="aqua_sign_workflow"){
-                  // }
-                  updateSelectedFileInfo()
+                  console.log("Notification received: ", message)
+                  updateSelectedFileInfoRef.current()
             });
             return unsubscribe;
-      }, []);
+      }, [subscribe]);
+
+      // We try with reload watcher
+      useReloadWatcher({
+            key: RELOAD_KEYS.reload_aqua_sign,
+            onReload: () => {
+                  // console.log('Reloading claims and attestations...');
+                  updateSelectedFileInfoRef.current()
+            },
+            autoReset: true
+      });
 
       // Add event listeners for drag operations
       useEffect(() => {
