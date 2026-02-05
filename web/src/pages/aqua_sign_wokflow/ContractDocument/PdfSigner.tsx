@@ -456,7 +456,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         actualUrlToFetch2,
                         {
                               receiver: receiverAddress,
-                              content: `refetch aqua sign workflow with genesis hash ${getGenesisHash(selectedFileInfo!.aquaTree!)}`,
+                              // content: `refetch aqua sign workflow with genesis hash ${getGenesisHash(selectedFileInfo!.aquaTree!)}`,
+                              content: {
+                                    target: "reload_aqua_sign",
+                                    genesisHash: genesisHash
+                              },
                         },
                         {
                               headers: {
@@ -629,7 +633,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                               // console.log("TODO: incomingAquaTree", JSON.stringify(incomingAquaTree, null,2))
                               setSelectedFileInfo(incomingAquaTree)
                               setActiveStep(1)
-                              toast.success("Document signed successfully")
+                              // toast.success("Document signed successfully")
                         }
 
 
@@ -1363,18 +1367,18 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   console.log("Notification received: ", message)
                   updateSelectedFileInfoRef.current()
             });
-            return unsubscribe;
+            // return unsubscribe;
       }, [subscribe]);
 
       // We try with reload watcher
-      useReloadWatcher({
-            key: RELOAD_KEYS.reload_aqua_sign,
-            onReload: () => {
-                  // console.log('Reloading claims and attestations...');
-                  updateSelectedFileInfoRef.current()
-            },
-            autoReset: true
-      });
+      // useReloadWatcher({
+      //       key: RELOAD_KEYS.reload_aqua_sign,
+      //       onReload: () => {
+      //             // console.log('Reloading claims and attestations...');
+      //             updateSelectedFileInfoRef.current()
+      //       },
+      //       autoReset: true
+      // });
 
       // Add event listeners for drag operations
       useEffect(() => {

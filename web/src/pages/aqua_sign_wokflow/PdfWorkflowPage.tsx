@@ -247,6 +247,13 @@ export default function PdfWorkflowPage() {
                   setSelectedFileInfoLocal(selectedFileInfo)
             }
       }, [])
+
+      useEffect(() => {
+            if(selectedFileInfo){
+                  setSelectedFileInfoLocal(selectedFileInfo)
+            }
+      }, [JSON.stringify(selectedFileInfo)])
+
       useEffect(() => {
             if (page && timeLineItems.length > 0) {
                   updateStepOnPageParam()

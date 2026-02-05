@@ -30,9 +30,9 @@ export const NotificationWebSocketProvider: React.FC<{ children: React.ReactNode
       console.log("WEbsocket message: ", message)
       // Broadcast to all subscribers
       subscribersRef.current.forEach(callback => callback(message));
-      if (message.action) {
-        await triggerWorkflowReload(message.action ?? RELOAD_KEYS.contacts, true)
-      }
+      // if (message.action) {
+      //   await triggerWorkflowReload(message.action ?? RELOAD_KEYS.contacts, true)
+      // }
     },
     onNotificationReload: () => {
       // Broadcast reload event
