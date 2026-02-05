@@ -61,7 +61,8 @@ const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
             let processedValue = value
             let cssClass = {}
             if (key === 'forms_wallet_address') {
-                  processedValue = formatCryptoAddress(processedValue, 6, 4)
+                  // Disable wallet minification
+                  // processedValue = formatCryptoAddress(processedValue, 6, 4)
                   cssClass = 'font-mono'
             }
 
