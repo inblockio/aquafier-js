@@ -89,7 +89,6 @@ import { useNavigate } from 'react-router-dom'
 import { API_ENDPOINTS } from '@/utils/constants'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { useAquaSystemNames } from '@/hooks/useAquaSystemNames'
-import { cn } from '@/lib/utils'
 
 /** Props for the SortableSignerItem component */
 interface SortableSignerItemProps {
@@ -1730,7 +1729,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             <div className="space-y-3">
                   <div
                         ref={containerRef}
-                        className="border border-gray-200 rounded-lg w-full h-[200px] bg-white relative"
+                        className="border border-gray-200 rounded-lg w-full h-50 bg-white relative"
                   >
                         <SignatureCanvas
                               ref={signatureRef}
@@ -2269,7 +2268,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       }
 
       if (!selectedTemplate) {
-            return <div className="min-h-[100%] px-2 sm:px-4">
+            return <div className="min-h-full px-2 sm:px-4">
                   Selected template not found, check db migrations.
             </div>
       }
@@ -2434,7 +2433,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                     </Button>
                               </div>
                               <DialogHeader
-                                    className="h-[60px] min-h-[60px] max-h-[60px] flex justify-center items-start px-6">
+                                    className="h-15 min-h-15 max-h-15 flex justify-center items-start px-6">
                                     <DialogTitle>{dialogData?.title}</DialogTitle>
                               </DialogHeader>
                               <div className=" h-[calc(100%-60px)] pb-1">

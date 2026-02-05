@@ -642,7 +642,7 @@ const FilesPage = () => {
                                                             ) : (
                                                                   <button
                                                                         data-testid="action-upload-51-button"
-                                                                        className="flex items-center gap-1 text-white hover:text-white-700 text-sm font-medium bg-gray-800 w-[80px] px-2 py-1 rounded"
+                                                                        className="flex items-center gap-1 text-white hover:text-white-700 text-sm font-medium bg-gray-800 w-20 px-2 py-1 rounded"
                                                                         onClick={() => {
                                                                               handleDirectUpload(fileData, index)
                                                                         }}
@@ -654,7 +654,7 @@ const FilesPage = () => {
 
                                                             <button
                                                                   data-testid="action-upload-51-button"
-                                                                  className="flex items-center gap-1 text-white hover:text-white-700 text-sm font-medium bg-red-600 w-[80px] px-2 py-1 rounded"
+                                                                  className="flex items-center gap-1 text-white hover:text-white-700 text-sm font-medium bg-red-600 w-20 px-2 py-1 rounded"
                                                                   onClick={() => {
                                                                         if (fileData.isLoading) {
                                                                               toast.info('File is uploading, please wait')

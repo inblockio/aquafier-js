@@ -12,7 +12,7 @@ import { ETH_CHAINID_MAP } from '@/utils/constants'
 import { getAppKitProvider, switchNetworkWalletConnect } from '@/utils/appkit-wallet-utils'
 import { triggerWorkflowReload, RELOAD_KEYS } from '@/utils/reloadDatabase'
 
-export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
+export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: RevionOperation) => {
       const { setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo, user_profile, backend_url, session, webConfig } = useStore(appStore)
       const [witnessing, setWitnessing] = useState(false)
 
@@ -69,8 +69,8 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                                     )
 
                                     if (response.status === 200 || response.status === 201) {
-                                         const urlPath = `${backend_url}/explorer_files`
-                                         const url2 = ensureDomainUrlHasSSL(urlPath)
+                                          const urlPath = `${backend_url}/explorer_files`
+                                          const url2 = ensureDomainUrlHasSSL(urlPath)
 
                                           const filesApi = await fetchFiles(session!.address, url2, session!.nonce)
                                           setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
@@ -184,7 +184,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                               )
 
                               if (response.status === 200 || response.status === 201) {
-                                 
+
 
                                     const urlPath = `${backend_url}/explorer_files`
                                     const url2 = ensureDomainUrlHasSSL(urlPath)
@@ -220,6 +220,20 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
             // Trigger actions
             await triggerWorkflowReload(RELOAD_KEYS.user_files, true)
             await triggerWorkflowReload(RELOAD_KEYS.all_files, true)
+      }
+
+      if (children) {
+            return (
+                  <div onClick={() => {
+                        if (!witnessing) {
+                              witnessFileHandler()
+                        } else {
+                              toast.info('Witnessing is already in progress')
+                        }
+                  }}>
+                        {children}
+                  </div>
+            )
       }
 
       return (

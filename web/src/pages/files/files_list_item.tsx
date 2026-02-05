@@ -13,12 +13,11 @@ import {
       isWorkFlowData
 } from '@/utils/functions'
 import { FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
-import { Album, Download, Eye, FileText, Trash2 } from 'lucide-react'
+import { Album, Download, Eye, FileText } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { SignAquaChain } from '../../components/aqua_chain_actions/sign_aqua_chain'
 import { WitnessAquaChain } from '../../components/aqua_chain_actions/witness_aqua_chain'
 import { DownloadAquaChain } from '../../components/aqua_chain_actions/download_aqua_chain'
-import { DeleteAquaChain } from '../../components/aqua_chain_actions/delete_aqua_chain'
 import { ShareButton } from '../../components/aqua_chain_actions/share_aqua_chain'
 import { OpenAquaSignWorkFlowButton } from '../../components/aqua_chain_actions/open_aqua_sign_workflow'
 import { LinkButton } from '../../components/aqua_chain_actions/link_aqua_chain'
@@ -32,8 +31,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import WalletAdrressClaim from '../v2_claims_workflow/WalletAdrressClaim'
 import ActionsDropdown from './ActionsDropdown'
-import { DropdownMenuSeparator, DropdownMenuItem } from '@/components/ui/dropdown-menu'
-import { LuShare2 } from 'react-icons/lu'
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
+import { LuBookOpen, LuGlasses, LuLink2, LuShare2, LuSignature } from 'react-icons/lu'
 
 export default function FilesListItem({
       showWorkFlowsOnly,
@@ -188,7 +187,7 @@ export default function FilesListItem({
                               </DownloadAquaChain>
                         </ActionsDropdown>
 
-                        <div className="flex flex-wrap gap-1">
+                        {/* <div className="flex flex-wrap gap-1">
 
                               <div className="w-25">
                                     <AttestAquaClaim file={file} index={index} />
@@ -209,7 +208,7 @@ export default function FilesListItem({
                               <div className="w-25">
                                     <DownloadAquaChain file={file} index={index} />
                               </div>
-                        </div>
+                        </div> */}
 
                   </>
             )
@@ -234,7 +233,34 @@ export default function FilesListItem({
 
             return (
                   <>
-                        <div className="flex flex-wrap gap-1">
+                        <ActionsDropdown apiFileInfo={file} index={index}>
+                              <OpenClaimsWorkFlowButton item={identityClaimfile!} nonce={nonce} index={index}>
+                                    <DropdownMenuItem className='cursor-pointer'>
+                                          <LuBookOpen className="mr-2 h-4 w-4" />
+                                          View
+                                    </DropdownMenuItem>
+                              </OpenClaimsWorkFlowButton>
+                              <OpenSelectedFileDetailsButton file={file} index={index}>
+                                    <DropdownMenuItem className='cursor-pointer'>
+                                          <Eye className="mr-2 h-4 w-4" />
+                                          Details
+                                    </DropdownMenuItem>
+                              </OpenSelectedFileDetailsButton>
+                              <ShareButton item={file} index={index}>
+                                    <DropdownMenuItem className='cursor-pointer'>
+                                          <LuShare2 className="mr-2 h-4 w-4" />
+                                          Share
+                                    </DropdownMenuItem>
+                              </ShareButton>
+                              <DownloadAquaChain file={file} index={index}>
+                                    <DropdownMenuItem className='cursor-pointer'>
+                                          <Download className="mr-2 h-4 w-4" />
+                                          Download
+                                    </DropdownMenuItem>
+                              </DownloadAquaChain>
+                        </ActionsDropdown>
+
+                        {/* <div className="flex flex-wrap gap-1">
                               {identityClaimfile ? (
                                     <div className="w-50.5">
                                           <OpenClaimsWorkFlowButton item={identityClaimfile} nonce={nonce} index={index} />
@@ -248,16 +274,14 @@ export default function FilesListItem({
                                     <ShareButton item={file} nonce={nonce} index={index} />
                               </div>
 
-                              {/* Delete Button */}
                               <div className="w-25">
                                     <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
                               </div>
 
-                              {/* Download Button - Smaller width */}
                               <div className="w-25">
                                     <DownloadAquaChain file={file} index={index} />
                               </div>
-                        </div>
+                        </div> */}
                   </>
             )
       }
@@ -267,7 +291,51 @@ export default function FilesListItem({
       } | undefined) => {
             return (
                   <>
-                        <div className="flex flex-wrap gap-1">
+
+                        <ActionsDropdown apiFileInfo={file} index={index}>
+                              <OpenClaimsWorkFlowButton item={file!} nonce={nonce} index={index}>
+                                    <DropdownMenuItem className='cursor-pointer'>
+                                          <LuBookOpen className="mr-2 h-4 w-4" />
+                                          View
+                                    </DropdownMenuItem>
+                              </OpenClaimsWorkFlowButton>
+                              {
+                                    workflowInfo && ['identity_claim', 'phone_number_claim', 'email_claim', 'user_signature', 'aqua_certificate'].includes(workflowInfo.workFlow) && session?.address != getTheWalletAddressFromWorkflow() ? (
+                                          <AttestAquaClaim file={file} index={index}>
+                                                <DropdownMenuItem className='cursor-pointer'>
+                                                      <Album className="mr-2 h-4 w-4" />
+                                                      Attest
+                                                </DropdownMenuItem>
+                                          </AttestAquaClaim>
+                                    ) : null
+                              }
+                              <OpenSelectedFileDetailsButton file={file} index={index}>
+                                    <DropdownMenuItem className='cursor-pointer'>
+                                          <Eye className="mr-2 h-4 w-4" />
+                                          Details
+                                    </DropdownMenuItem>
+                              </OpenSelectedFileDetailsButton>
+                              <LinkButton item={file} nonce={nonce} index={index}>
+                                    <DropdownMenuItem className='cursor-pointer' onSelect={(e) => e.preventDefault()}>
+                                          <LuLink2 className="mr-2 h-4 w-4" />
+                                          Link
+                                    </DropdownMenuItem>
+                              </LinkButton>
+                              <ShareButton item={file} index={index}>
+                                    <DropdownMenuItem className='cursor-pointer'>
+                                          <LuShare2 className="mr-2 h-4 w-4" />
+                                          Share
+                                    </DropdownMenuItem>
+                              </ShareButton>
+                              <DownloadAquaChain file={file} index={index}>
+                                    <DropdownMenuItem className='cursor-pointer'>
+                                          <Download className="mr-2 h-4 w-4" />
+                                          Download
+                                    </DropdownMenuItem>
+                              </DownloadAquaChain>
+                        </ActionsDropdown>
+
+                        {/* <div className="flex flex-wrap gap-1">
                               <div className="w-50.5">
                                     <OpenClaimsWorkFlowButton item={file} nonce={nonce} index={index} />
                               </div>
@@ -288,21 +356,18 @@ export default function FilesListItem({
                                     <ShareButton item={file} nonce={nonce} index={index} />
                               </div>
 
-                              {/* Delete Button */}
                               <div className="w-25">
                                     <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
                               </div>
 
-                              {/* Download Button - Smaller width */}
                               <div className="w-25">
                                     <DownloadAquaChain file={file} index={index} />
                               </div>
 
-                              {/* Link Button */}
                               <div className="w-25">
                                     <LinkButton item={file} nonce={nonce} index={index} />
                               </div>
-                        </div>
+                        </div> */}
                   </>
             )
       }
@@ -332,50 +397,77 @@ export default function FilesListItem({
       const workFileActions = () => {
             return (
                   <>
+                        <ActionsDropdown apiFileInfo={file} index={index}>
+                              <OpenSelectedFileDetailsButton file={file} index={index}>
+                                    <DropdownMenuItem className='cursor-pointer'>
+                                          <Eye className="mr-2 h-4 w-4" />
+                                          Details
+                                    </DropdownMenuItem>
+                              </OpenSelectedFileDetailsButton>
+                              <SignAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index}>
+                                    <DropdownMenuItem className='cursor-pointer'>
+                                          <LuSignature className="mr-2 h-4 w-4" />
+                                          Sign
+                                    </DropdownMenuItem>
+                              </SignAquaChain>
+                              <WitnessAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index}>
+                                    <DropdownMenuItem className='cursor-pointer'>
+                                          <LuGlasses className="mr-2 h-4 w-4" />
+                                          Witness
+                                    </DropdownMenuItem>
+                              </WitnessAquaChain>
+                              <LinkButton item={file} nonce={nonce} index={index}>
+                                    <DropdownMenuItem className='cursor-pointer' onSelect={(e) => e.preventDefault()}>
+                                          <LuLink2 className="mr-2 h-4 w-4" />
+                                          Link
+                                    </DropdownMenuItem>
+                              </LinkButton>
+                              <ShareButton item={file} index={index}>
+                                    <DropdownMenuItem className='cursor-pointer'>
+                                          <LuShare2 className="mr-2 h-4 w-4" />
+                                          Share
+                                    </DropdownMenuItem>
+                              </ShareButton>
+                              <DownloadAquaChain file={file} index={index}>
+                                    <DropdownMenuItem className='cursor-pointer'>
+                                          <Download className="mr-2 h-4 w-4" />
+                                          Download
+                                    </DropdownMenuItem>
+                              </DownloadAquaChain>
+                        </ActionsDropdown>
                         {/* Grid layout for action buttons with equal widths */}
-                        <div className="flex flex-wrap gap-1">
+                        {/* <div className="flex flex-wrap gap-1">
 
 
-                              {/* Details Button */}
                               <div className="w-25">
                                     <OpenSelectedFileDetailsButton file={file} index={index} />
                               </div>
 
-                              {/* Sign Button */}
                               <div className="w-25">
                                     <SignAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
                               </div>
 
-                              {/* Witness Button */}
                               <div className="w-25">
                                     <WitnessAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
                               </div>
 
-                              {/* Link Button */}
                               <div className="w-25">
                                     <LinkButton item={file} nonce={nonce} index={index} />
                               </div>
 
-                              {/* Share Button */}
                               <div className="w-25">
                                     <ShareButton item={file} nonce={nonce} index={index} />
                               </div>
 
-                              {/* Delete Button */}
                               <div className="w-25">
                                     <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
                               </div>
 
-                              {/* Download Button */}
                               <div className="w-25">
                                     <DownloadAquaChain file={file} index={index} />
                               </div>
-                        </div>
+                        </div> */}
 
-                        {/* Third row - 1 smaller button */}
-                        {/* <div className="flex">
-                        
-                    </div> */}
                   </>
             )
       }
@@ -474,7 +566,7 @@ export default function FilesListItem({
                                     return 'Not available'
                               })()}
                         </td>
-                        <td className="py-3">{showActionsButton()}</td>
+                        <td className="py-3 align-center justify-center flex">{showActionsButton()}</td>
                   </tr>
             )
       }

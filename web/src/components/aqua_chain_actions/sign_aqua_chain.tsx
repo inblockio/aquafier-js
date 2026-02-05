@@ -14,7 +14,7 @@ import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 
 
 
-export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionOperation) => {
+export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index, children }: RevionOperation) => {
       const { files, setFiles, setSelectedFileInfo, selectedFileInfo, user_profile, session, backend_url, webConfig } = useStore(appStore)
       const [signing, setSigning] = useState(false)
       const { } = useAppKit()
@@ -230,7 +230,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
 
                                           try {
                                                 const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
-                                                
+
 
                                                 const filesApi = await fetchFiles(session!.address, url, session!.nonce)
                                                 setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
@@ -286,6 +286,20 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
             await triggerWorkflowReload(RELOAD_KEYS.user_files, true)
             await triggerWorkflowReload(RELOAD_KEYS.all_files, true)
 
+      }
+
+      if (children) {
+            return (
+                  <div onClick={() => {
+                        if (!signing) {
+                              signFileHandler()
+                        } else {
+                              toast.info('Signing is already in progress')
+                        }
+                  }}>
+                        {children}
+                  </div>
+            )
       }
 
       return (

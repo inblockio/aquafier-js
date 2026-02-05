@@ -8,7 +8,6 @@ export const ShareButton = ({ item, index, autoOpenShareDialog, children }: ISha
 
       if (autoOpenShareDialog) return null
 
-      if (children) return <>{children}</>
 
       const handleShare = () => {
             setSelectedFileInfo(item)
@@ -19,6 +18,7 @@ export const ShareButton = ({ item, index, autoOpenShareDialog, children }: ISha
                   onConfirm: () => { },
             })
       }
+      if (children) return <div onClick={handleShare}>{children}</div>
 
       return (
             <button
