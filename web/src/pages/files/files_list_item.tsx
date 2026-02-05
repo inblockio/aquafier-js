@@ -372,6 +372,7 @@ export default function FilesListItem({
             )
       }
 
+      // All actions compressed down to a dropdown
       const showActionsButton = () => {
             // return <>-- {workflowInfo?.workFlow}</>
             if (filesListProps.showFileActions == false) {
