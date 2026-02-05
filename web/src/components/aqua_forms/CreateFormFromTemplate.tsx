@@ -279,6 +279,24 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
       }, []);
 
+      // Set default values for hidden/non-editable fields outside of render
+      useEffect(() => {
+            if (!selectedTemplate?.fields) return
+            const defaults: Record<string, CustomInputType> = {}
+            for (const field of selectedTemplate.fields) {
+                  if (field.is_hidden || !field.is_editable) {
+                        const val = getFieldDefaultValue(field, formData[field.name] as any)
+                        const cleanedValue = val instanceof File || Array.isArray(val) ? undefined : val
+                        if (cleanedValue !== undefined) {
+                              defaults[field.name] = cleanedValue as any
+                        }
+                  }
+            }
+            if (Object.keys(defaults).length > 0) {
+                  setFormData(prev => ({ ...prev, ...defaults }))
+            }
+      }, [selectedTemplate])
+
       const getFieldDefaultValue = (field: FormField, currentState: CustomInputType | undefined
       ): string | number | File | File[] => {
             if (field.type === 'number') {
@@ -1773,7 +1791,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
       /** Renders a single form field - extracted for reuse in aqua_sign steps */
       const renderSingleField = (field: FormField, fieldIndex: number) => {
-            if (field.is_hidden) return null
+            // if (field.is_hidden) return null
 
             // Use helper function for array fields (multiple signers)
             if (field.is_array && field.name !== "document") {
