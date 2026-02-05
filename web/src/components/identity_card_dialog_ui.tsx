@@ -16,7 +16,7 @@ import {
 } from "@/utils/functions"
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, OrderRevisionInAquaTree } from "aqua-js-sdk"
 import { toast } from "sonner"
-import axios from "axios"
+import apiClient from '@/api/axiosInstance'
 import { useAquaSystemNames } from "@/hooks/useAquaSystemNames"
 import { RELOAD_KEYS, triggerWorkflowReload } from "@/utils/reloadDatabase"
 import FilesList from "@/pages/files/files_list"
@@ -79,7 +79,7 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
     setLoading(true)
     try {
       // Fetch all files with a large limit to get workflows
-      const response = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
+      const response = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
         headers: {
           'nonce': session?.nonce,
         },
@@ -159,7 +159,7 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
 
       // throw new Error('Debugging stop')
 
-      const response = await axios.post(url, formData, {
+      const response = await apiClient.post(url, formData, {
         headers: {
           nonce: session?.nonce,
         },
@@ -245,7 +245,7 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
       // Link identity card template
       try {
         const url = ensureDomainUrlHasSSL(`${backend_url}/fetch_template_aqua_tree`)
-        const response = await axios.post(url, {
+        const response = await apiClient.post(url, {
           template_name: 'identity_card',
           name: 'Identity Card Template',
         }, {
@@ -390,7 +390,7 @@ setSelectedWorkflows([]);
     let similarWorkFlowExists = false
     try {
       // Fetch all files with a large limit to get workflows
-      const response = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
+      const response = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
         headers: {
           'nonce': session?.nonce,
         },

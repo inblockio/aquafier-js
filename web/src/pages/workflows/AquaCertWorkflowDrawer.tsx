@@ -20,7 +20,8 @@ import { ApiFileInfo } from "@/models/FileInfo"
 import { useStore } from "zustand"
 import appStore from "@/store"
 import { API_ENDPOINTS } from "@/utils/constants"
-import axios, { AxiosResponse } from "axios"
+import apiClient from '@/api/axiosInstance'
+import { AxiosResponse } from 'axios'
 import { getLatestVH } from "aqua-js-sdk"
 
 export default function AquaCertWorkflowDrawer({ open, onClose, attestors, fileInfo }: IAquaCertWorkflowDrawer) {
@@ -34,7 +35,7 @@ export default function AquaCertWorkflowDrawer({ open, onClose, attestors, fileI
 
     const generateFileFetchPromis = (targetHash: string) => {
         const url = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`)
-        const res = axios.post(url, {
+        const res = apiClient.post(url, {
             revisionHashes: [targetHash]
         }, {
             headers: {

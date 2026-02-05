@@ -6,7 +6,7 @@ import {toast} from 'sonner'
 import {Album} from 'lucide-react'
 import {Revision} from 'aqua-js-sdk'
 import {Button} from '../ui/button'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { API_ENDPOINTS } from '@/utils/constants'
 
 export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; index: number; children?: React.ReactNode }) => {
@@ -35,7 +35,7 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
                 // filter_by: "date",//
                 // wallet_address: session?.address
             }
-            const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${endpoint}`), {
+            const filesDataQuery = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${endpoint}`), {
                 headers: {
                     'Content-Type': 'application/json',
                     'nonce': `${session!.nonce}`

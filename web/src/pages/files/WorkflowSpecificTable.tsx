@@ -3,7 +3,7 @@ import appStore from "@/store"
 import { GlobalPagination } from "@/types"
 import { API_ENDPOINTS } from "@/utils/constants"
 import { ensureDomainUrlHasSSL } from "@/utils/functions"
-import axios from "axios"
+import apiClient from '@/api/axiosInstance'
 import { useEffect, useState } from "react"
 import { useStore } from "zustand"
 import { RenderFilesList, RenderFilesListCard } from "./commons"
@@ -57,7 +57,7 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
                 params.fileType = workflowName
             }
 
-            const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${endpoint}`), {
+            const filesDataQuery = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${endpoint}`), {
                 headers: {
                     'Content-Type': 'application/json',
                     'nonce': `${session!.nonce}`

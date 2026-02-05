@@ -5,7 +5,7 @@ import { PDFDocument } from 'pdf-lib'
 import { FaPlus } from 'react-icons/fa'
 import appStore from '../../../store'
 import { useStore } from 'zustand'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { ApiFileInfo } from '../../../models/FileInfo'
 import {
       dummyCredential,
@@ -80,7 +80,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
       //                   const url = `${backend_url}/tree/user`
       //                   const actualUrlToFetch = ensureDomainUrlHasSSL(url)
 
-      //                   const response = await axios.post(
+      //                   const response = await apiClient.post(
       //                         actualUrlToFetch,
       //                         {
       //                               revision: lastRevision,
@@ -129,7 +129,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   const url = `${backend_url}/tree/user/all`
                   const actualUrlToFetch = ensureDomainUrlHasSSL(url)
 
-                  await axios.post(
+                  await apiClient.post(
                         actualUrlToFetch,
                         {
                               revisions: revisions,
@@ -437,7 +437,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   const url = `${backend_url}${API_ENDPOINTS.NOTIFICATIONS}`
                   const actualUrlToFetch = ensureDomainUrlHasSSL(url)
 
-                  await axios.post(
+                  await apiClient.post(
                         actualUrlToFetch,
                         {
                               receiver: receiverAddress,
@@ -454,7 +454,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   const url2 = `${backend_url}${API_ENDPOINTS.NOTIFICATIONS_AQUA_SIGN}/${receiverAddress}`
                   const actualUrlToFetch2 = ensureDomainUrlHasSSL(url2)
 
-                  await axios.post(
+                  await apiClient.post(
                         actualUrlToFetch2,
                         {
                               receiver: receiverAddress,
@@ -487,7 +487,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
       //                   const url = `${backend_url}/tree`
       //                   const actualUrlToFetch = ensureDomainUrlHasSSL(url)
 
-      //                   let apiResponse = await axios.post(
+      //                   let apiResponse = await apiClient.post(
       //                         actualUrlToFetch,
       //                         {
       //                               revision: lastRevision,
@@ -552,7 +552,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   const url = `${backend_url}/tree/all`
                   const actualUrlToFetch = ensureDomainUrlHasSSL(url)
 
-                  await axios.post(
+                  await apiClient.post(
                         actualUrlToFetch,
                         {
                               revisions: revisions,
@@ -611,7 +611,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   const orderedRevisionHashes = reorderRevisionsInAquaTree(selectedFileInfo!.aquaTree!)
 
                   const url = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`)
-                  const res = await axios.post(url, {
+                  const res = await apiClient.post(url, {
                         revisionHashes: orderedRevisionHashes
                   }, {
                         headers: {
@@ -803,7 +803,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   }
 
                   const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_aqua_file_upload`)
-                  await axios.post(url, formData, {
+                  await apiClient.post(url, formData, {
                         headers: {
                               nonce: session?.nonce,
                               // Don't set Content-Type header - axios will set it automatically with the correct boundary
@@ -921,7 +921,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         claim_types: JSON.stringify(["user_signature"]),
                         wallet_address: session?.address,
                   };
-                  const signaturesQuery = await axios.get(url, {
+                  const signaturesQuery = await apiClient.get(url, {
                         headers: {
                               nonce: session?.nonce,
                         },
@@ -1512,7 +1512,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
             let documentBackupID: string | null = null
             try {
                   const endpoint = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.CREATE_SERVER_ACCOUNT_BACKUP}`)
-                  const res = await axios.post(endpoint, {
+                  const res = await apiClient.post(endpoint, {
                         latestRevisionHash: hash,
                   }, {
                         headers: {

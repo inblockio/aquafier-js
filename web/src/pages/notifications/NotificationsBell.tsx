@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Bell } from 'lucide-react'
 
 import NotificationsHolder from './NotificaitonsHolder'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { INotification } from '../../types/index'
 import appStore from '../../store'
 import { API_ENDPOINTS } from '../../utils/constants'
@@ -29,7 +29,7 @@ const NotificationsBell = () => {
             setIsLoading(true)
             try {
                   let url=ensureDomainUrlHasSSL(`${backend_url}${API_ENDPOINTS.NOTIFICATIONS}`)
-                  const response = await axios.get(url, {
+                  const response = await apiClient.get(url, {
                         headers: {
                               nonce: session.nonce,
                         },
@@ -48,7 +48,7 @@ const NotificationsBell = () => {
             if (!session?.address) return
 
             try {
-                  await axios.patch(
+                  await apiClient.patch(
                         ensureDomainUrlHasSSL(`${backend_url}${API_ENDPOINTS.NOTIFICATIONS_READ_ALL}`),
                         {},
                         {

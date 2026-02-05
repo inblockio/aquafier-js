@@ -4,7 +4,7 @@ import {
     Shield,
     CheckCircle
 } from 'lucide-react';
-import axios from 'axios';
+import apiClient from '@/api/axiosInstance'
 import { useStore } from 'zustand';
 import appStore from '@/store';
 import { API_ENDPOINTS, getClaimIcon } from '@/utils/constants';
@@ -30,7 +30,7 @@ const UserStats = () => {
     const getUserStats = async () => {
         if (session) {
             try {
-                let result = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.USER_STATS}`), {
+                let result = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.USER_STATS}`), {
                     headers: {
                         'nonce': session.nonce,
                         'metamask_address': session.address

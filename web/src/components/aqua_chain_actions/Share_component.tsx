@@ -3,7 +3,7 @@ import { Contract } from '@/types/types'
 import { SYSTEM_WALLET_ADDRESS } from '@/utils/constants'
 import { ensureDomainUrlHasSSL, fetchFiles, getGenesisHash, isValidEthereumAddress, timeToHumanFriendly } from '@/utils/functions'
 import { getAquaTreeFileObject } from 'aqua-js-sdk'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { Share2, X, Users, ExternalLink, Check, Copy, Lock, Trash2, Plus } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
@@ -140,7 +140,7 @@ const ShareComponent = () => {
                   return
             }
 
-            const response = await axios.post(
+            const response = await apiClient.post(
                   url,
                   {
                         latest: latest,
@@ -181,7 +181,7 @@ const ShareComponent = () => {
                         return
                   }
 
-                  const response = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/contracts`), {
+                  const response = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/contracts`), {
                         params: {
                               genesis_hash: getGenesisHash(selectedFileInfo.aquaTree!),
                               sender: session?.address

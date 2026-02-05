@@ -16,7 +16,7 @@ import {
       readFileContent
 } from '@/utils/functions'
 import { API_ENDPOINTS, maxFileSizeForUpload } from '@/utils/constants'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -103,7 +103,7 @@ const FilesPage = () => {
                   if (stats.filesCount === 0) {
                         setLoading(true)
                   }
-                  const result = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.USER_STATS}`), {
+                  const result = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.USER_STATS}`), {
                         headers: {
                               'nonce': session.nonce,
                               'metamask_address': session.address
@@ -168,7 +168,7 @@ const FilesPage = () => {
                   formData.append('account', `${metamaskAddress}`)
 
                   const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
-                  await axios.post(url, formData, {
+                  await apiClient.post(url, formData, {
                         headers: {
                               'Content-Type': 'multipart/form-data',
                               nonce: session?.nonce,
@@ -408,7 +408,7 @@ const FilesPage = () => {
 
             const urlPath = `${backend_url}/explorer_files`
             const url2 = ensureDomainUrlHasSSL(urlPath)
-            await axios.post(url2, formData, {
+            await apiClient.post(url2, formData, {
                   headers: {
                         'Content-Type': 'multipart/form-data',
                         nonce: session?.nonce,

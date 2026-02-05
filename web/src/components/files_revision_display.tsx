@@ -5,7 +5,7 @@ import {AquaTreeDetailsData} from '@/models/AquaTreeDetails'
 import appStore from '@/store'
 import {displayTime, ensureDomainUrlHasSSL, fetchFiles, formatCryptoAddress} from '@/utils/functions'
 import {LogTypeEmojis} from 'aqua-js-sdk/web'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import {useCallback, useEffect, useMemo, useState} from 'react'
 import {LuCheck, LuTrash, LuX} from 'react-icons/lu'
 import {ClipLoader} from 'react-spinners'
@@ -121,7 +121,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
             try {
                   const url = ensureDomainUrlHasSSL(`${backend_url}/tree/revisions/${revisionHash}`)
 
-                    await axios.delete(url, {
+                    await apiClient.delete(url, {
                         headers: {
                               metamask_address: session?.address,
                               nonce: session?.nonce,

@@ -1,4 +1,4 @@
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { useEffect } from 'react'
 import { ensureDomainUrlHasSSL, fetchSystemFiles, generateAvatar, getCookie } from '../utils/functions'
 import { useStore } from 'zustand'
@@ -16,7 +16,7 @@ const LoadConfiguration = () => {
                   try {
 
                         const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
-                        const response = await axios.get(url, {
+                        const response = await apiClient.get(url, {
                               params: { nonce: nonce }, // This is the correct way to pass query params
                               headers: {
                                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -67,7 +67,7 @@ const LoadConfiguration = () => {
             //`${backend_url}/explorer_fetch_user_settings`
             const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_fetch_user_settings`)
 
-            const response = await axios.get(url, {
+            const response = await apiClient.get(url, {
                   headers: {
                         metamask_address: address,
                         nonce: nonce,
@@ -113,7 +113,7 @@ const LoadConfiguration = () => {
       const loadTemplates = async () => {
             try {
                   const url = ensureDomainUrlHasSSL(`${backend_url}/templates`)
-                  const response = await axios.get(url, {
+                  const response = await apiClient.get(url, {
                         headers: {
                               nonce: session?.nonce,
                         },
@@ -140,7 +140,7 @@ const LoadConfiguration = () => {
 
             try {
                   const url = ensureDomainUrlHasSSL(`${backend_url}/admin/check`)
-                  const response = await axios.get(url, {
+                  const response = await apiClient.get(url, {
                         headers: {
                               nonce: session.nonce,
                         },

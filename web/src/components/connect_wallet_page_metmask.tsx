@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ensureDomainUrlHasSSL, fetchFiles, generateAvatar, setCookie } from '../utils/functions'
 import { generateNonce, SiweMessage } from 'siwe'
 import { SESSION_COOKIE_NAME } from '../utils/constants'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { useStore } from 'zustand'
 import appStore from '../store'
 import { BrowserProvider, ethers } from 'ethers'
@@ -466,7 +466,7 @@ export const ConnectWalletPageMetamask = () => {
       )
 
       const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
-      const response = await axios.post(url, {
+      const response = await apiClient.post(url, {
         message,
         signature,
         domain: window.location.host,
