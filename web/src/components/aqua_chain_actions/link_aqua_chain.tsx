@@ -4,8 +4,7 @@ import {
       ensureDomainUrlHasSSL,
       fetchFiles,
       getAquaTreeFileObject,
-      getGenesisHash,
-      reorderRevisionsInAquaTree,
+      getGenesisHash
 } from '../../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../../store'

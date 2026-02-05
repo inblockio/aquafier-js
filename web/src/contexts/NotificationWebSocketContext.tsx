@@ -6,7 +6,6 @@ import apiClient from '@/api/axiosInstance'
 import { API_ENDPOINTS } from '@/utils/constants';
 import { toast } from 'sonner';
 import { ensureDomainUrlHasSSL } from '@/utils/functions';
-import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase';
 
 interface NotificationWebSocketContextType {
   isConnected: boolean;
