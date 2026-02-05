@@ -284,7 +284,7 @@ const ShareComponent = () => {
                                     Who can access
                               </h3>
 
-                              <div className="flex gap-2 w-100">
+                              <div className="flex gap-2 w-full">
                                     {/* Public Option */}
                                     <div
                                           className={`p-4 flex-1 rounded-lg border-2 cursor-pointer transition-all ${recipientType !== 'specific'
@@ -316,7 +316,12 @@ const ShareComponent = () => {
                                                 ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500/20'
                                                 : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                                 }`}
-                                          onClick={() => { setRecipientType('specific'); addAddress() }}
+                                          onClick={() => { 
+                                                setRecipientType('specific'); 
+                                                if(multipleAddresses.length === 0){
+                                                      addAddress()
+                                                }
+                                           }}
                                     >
                                           <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
@@ -408,10 +413,10 @@ const ShareComponent = () => {
                               <h3 className="text-base font-medium text-gray-900">Version to share</h3>
                               <p className="text-sm text-gray-600">Choose whether recipients get the current version or receive updates automatically.</p>
 
-                              <div className="grid gap-3">
+                              <div className="flex w-full gap-2">
                                     {/* Latest Option */}
                                     <div
-                                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${optionType === 'latest'
+                                          className={`p-4 flex-1 rounded-lg border-2 cursor-pointer transition-all ${optionType === 'latest'
                                                 ? 'border-green-500 bg-green-50 ring-2 ring-green-500/20'
                                                 : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                                 }`}
@@ -434,7 +439,7 @@ const ShareComponent = () => {
 
                                     {/* Current Option */}
                                     <div
-                                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${optionType === 'current'
+                                          className={`p-4 flex-1 rounded-lg border-2 cursor-pointer transition-all ${optionType === 'current'
                                                 ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-500/20'
                                                 : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                                 }`}
