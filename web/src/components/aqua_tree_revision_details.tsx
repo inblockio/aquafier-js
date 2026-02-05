@@ -225,7 +225,8 @@ const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string, fileObject
 
                   return (
                         <span className="text-sm">
-                              Deep Link previous {revision.previous_verification_hash} revisionHash {revisionHash}
+                              {/* Deep Link previous {revision.previous_verification_hash} revisionHash {revisionHash} */}
+                              Linked File not found
                         </span>
                   )
             } else {
