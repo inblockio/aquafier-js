@@ -335,7 +335,7 @@ export async function transferRevisionChainData(
                 let shouldAquaTreeBeSavedAsPartOfWorkflow = workFlowData.isWorkFlow
 
                 let allHashesOfCurrentAquaTreeInLoop = Object.keys(aquaTree.revisions)
-                
+
                 // for claims email and phone number save the  server attesation as a seperate file
                 if (workflowDataToBeseparated.length > 0 && allHashesOfCurrentAquaTreeInLoop.includes(workflowDataToBeseparated)) {
                     shouldAquaTreeBeSavedAsPartOfWorkflow = false
@@ -348,8 +348,8 @@ export async function transferRevisionChainData(
                 }
 
                 // this will hide pdf aqua tree , as it not part  system aqua tree unlike signatures
-                if(workFlowData.isWorkFlow && workFlowData.workFlow.includes("aqua_sign")){  
-                    shouldAquaTreeBeSavedAsPartOfWorkflow= true
+                if (workFlowData.isWorkFlow && workFlowData.workFlow.includes("aqua_sign")) {
+                    shouldAquaTreeBeSavedAsPartOfWorkflow = true
                 }
 
 
@@ -783,13 +783,15 @@ export async function saveForOtherUserRevisionInAquaTree(revisionData: SaveRevis
         const [baseAquaTree, baseFileObjects] = await createAquaTreeFromRevisions(originAddessNewRevisionPubkeyhash, url);
 
         const { workFlow, isWorkFlow } = isWorkFlowData(baseAquaTree, systemTemplateHashes)
-        Logger.info("Workflow check on workflow endpoint isWorkFlow = " + isWorkFlow + " name " + workFlow)
+        console.log("Workflow check on workflow endpoint isWorkFlow = " + isWorkFlow + " name " + workFlow)
+
         if (isWorkFlow && workFlow.includes("aqua_sign")) {
+
             // proceed to transfer the entire chain
             let response = await transferRevisionChainData(userAddressToHaveNewRevision, {
                 aquaTree: baseAquaTree,
                 fileObject: baseFileObjects
-            }, null, false)
+            }, null, true)
             if (response.success == false) {
                 throw Error(`An error occured transfering chain ${response.message}`)
             }
@@ -830,6 +832,7 @@ export async function saveForOtherUserRevisionInAquaTree(revisionData: SaveRevis
 async function updateLatestAndInsertRevision(revisionData: SaveRevisionForUser, filePubKeyHash: string, oldFilePubKeyHash: string, userAddressToHaveNewRevision: string, url: string) {
     // Wrap all database operations in a transaction to ensure atomicity
     // This prevents race conditions where getUserApiFileInfo reads stale data
+    console.log(`🤫🤫 Starting transaction to update latest and insert revision for user ${userAddressToHaveNewRevision} with new hash ${filePubKeyHash} replacing old hash ${oldFilePubKeyHash}`);
     await prisma.$transaction(async (tx) => {
         await tx.latest.updateMany({
             where: {
@@ -935,7 +938,7 @@ async function updateLatestAndInsertRevision(revisionData: SaveRevisionForUser, 
 
         if (revisionData.revision.revision_type == "witness") {
 
-            // const witnessTimestamp = new Date();
+
             await tx.witnessEvent.upsert({
                 where: {
                     Witness_merkle_root: revisionData.revision.witness_merkle_root!
@@ -980,6 +983,7 @@ async function updateLatestAndInsertRevision(revisionData: SaveRevisionForUser, 
 
         if (revisionData.revision.revision_type == "link") {
 
+            console.log(`Saving link revision with hash ${filePubKeyHash} for user ${userAddressToHaveNewRevision}...`)
             await tx.link.create({
                 data: {
                     hash: filePubKeyHash,
@@ -1019,11 +1023,22 @@ async function updateLatestAndInsertRevision(revisionData: SaveRevisionForUser, 
                             mode: 'insensitive'
                         }
                     }
+
+
                 });
 
                 if (!existingLatest) {
-                    Logger.info(`Linked aqua tree with hash ${linkedHash} not found for user ${userAddressToHaveNewRevision}, fetching and saving...`);
-                    const [linkedAquaTree, linkedFileObjects] = await createAquaTreeFromRevisions(linkedHash, url);
+                    Logger.info(`🤯Linked aqua tree with hash ${revisionData.originAddress}_${linkedHash} not found for user ${revisionData.originAddress}, fetching and saving...`);
+                    throw Error(`🤯 Linked aqua tree with hash ${revisionData.originAddress}_${linkedHash} not found for user ${revisionData.originAddress}, cannot save link revision for ${userAddressToHaveNewRevision}.`);
+
+                } else {
+
+                    Logger.info(`✅ Linked aqua tree with hash ${revisionData.originAddress}_${linkedHash} found for user ${revisionData.originAddress}, fetching and saving...`);
+                    const [linkedAquaTree, linkedFileObjects] = await createAquaTreeFromRevisions(`${revisionData.originAddress}_${linkedHash}`, url);
+
+                    console.log(`🐐 Fetched linked aqua tree: ${JSON.stringify(linkedAquaTree, null, 2)}`);
+                    console.log(`🐐🐐 Fetched linked aqua tree fileobjects : ${JSON.stringify(linkedFileObjects, null, 2)}`);
+
                     await transferRevisionChainData(
                         userAddressToHaveNewRevision,
                         {
@@ -1031,13 +1046,11 @@ async function updateLatestAndInsertRevision(revisionData: SaveRevisionForUser, 
                             fileObject: linkedFileObjects
                         },
                         null,
-                        false
+                        true // Mark linked trees as workflow if the parent link revision is a workflow, this will hide the linked tree from user view and only show the parent link revision in the UI
                     );
 
                     // add  recursive function if linkedAquaTree contains link revisions fetch the aqua tree and save it to userAddressToHaveNewRevision
                     recusivelySaveLinkedAquaTrees(linkedAquaTree, url, userAddressToHaveNewRevision, tx, revisionData.originAddress);
-                } else {
-                    Logger.info(`Linked aqua tree with hash ${linkedHash} already exists for user ${userAddressToHaveNewRevision}, skipping save.`);
                 }
             }
 
@@ -1099,10 +1112,10 @@ async function updateLatestAndInsertRevision(revisionData: SaveRevisionForUser, 
 
 }
 async function recusivelySaveLinkedAquaTrees(aquaTree: AquaTree, url: string, userAddressToHaveNewRevision: string, tx: any, originAddress: string) {
-    console.log(`Recursively checking linked aqua trees for user ${userAddressToHaveNewRevision}...`);
+    console.log(`🔥🔥 Recursively checking linked aqua trees for user ${userAddressToHaveNewRevision}...`);
     const allRevisions = Object.values(aquaTree.revisions);
     for (let revision of allRevisions) {
-        console.log(`Checking revision of type ${revision.revision_type}... ${JSON.stringify(revision, null, 2)}`);
+        console.log(` Checking revision of type ${revision.revision_type}... ${JSON.stringify(revision, null, 2)}`);
         if (revision.revision_type === "link") {
             console.log(`Found link revision, processing linked hashes...`);
             const linkVerificationHashes = revision.link_verification_hashes || [];
@@ -1118,8 +1131,14 @@ async function recusivelySaveLinkedAquaTrees(aquaTree: AquaTree, url: string, us
                 })
 
                 if (!existingLatest) {
-                    Logger.info(`Recursively saving linked aqua tree with hash ${linkedHash} for user ${userAddressToHaveNewRevision}... from origin ${originAddress}`);
-                    const [linkedAquaTree, linkedFileObjects] = await createAquaTreeFromRevisions(linkedHash, url);
+
+                    Logger.info(` ⚠️⚠️ Linked aqua tree with hash ${originAddress}_${linkedHash} already exists for user ${originAddress}, skipping save.`);
+                } else {
+
+                    Logger.info(`🪿🪿 Recursively saving linked aqua tree with hash ${linkedHash} for user ${userAddressToHaveNewRevision}... from origin ${originAddress}`);
+                    const [linkedAquaTree, linkedFileObjects] = await createAquaTreeFromRevisions(`${originAddress}_${linkedHash}`, url);
+                    console.log(`🪿🪿 Fetched linked aqua tree: ${JSON.stringify(linkedAquaTree, null, 2)}`);
+                    console.log(`🪿🪿 Fetched linked aqua tree fileobjects : ${JSON.stringify(linkedFileObjects, null, 2)}`);
                     await transferRevisionChainData(
                         userAddressToHaveNewRevision,
                         {
@@ -1127,13 +1146,11 @@ async function recusivelySaveLinkedAquaTrees(aquaTree: AquaTree, url: string, us
                             fileObject: linkedFileObjects
                         },
                         null,
-                        false
+                        true // Mark linked trees as workflow if the parent link revision is a workflow, this will hide the linked tree from user view and only show the parent link revision in the UI
                     );
 
                     // Recursively check for further linked aqua trees
                     recusivelySaveLinkedAquaTrees(linkedAquaTree, url, userAddressToHaveNewRevision, tx, originAddress);
-                } else {
-                    Logger.info(`Linked aqua tree with hash ${linkedHash} already exists for user ${userAddressToHaveNewRevision}, skipping save.`);
                 }
 
             }
