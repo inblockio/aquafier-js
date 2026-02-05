@@ -2,7 +2,7 @@ import { LuSignature } from 'react-icons/lu'
 import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash, getLastRevisionVerificationHash, stringToHex } from '../../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../../store'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { ApiFileInfo } from '../../models/FileInfo'
 import { useState } from 'react'
 import Aquafier, { AquaTreeWrapper, OrderRevisionInAquaTree } from 'aqua-js-sdk'
@@ -65,7 +65,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                                     // send to server
                                     const url = ensureDomainUrlHasSSL(`${backendUrl}/tree`)
 
-                                    const response = await axios.post(
+                                    const response = await apiClient.post(
                                           url,
                                           {
                                                 revision: lastRevision,
@@ -210,7 +210,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                               // send to server
                               const url = ensureDomainUrlHasSSL(`${backendUrl}/tree`)
 
-                              const response = await axios.post(
+                              const response = await apiClient.post(
                                     url,
                                     {
                                           revision: lastRevision,

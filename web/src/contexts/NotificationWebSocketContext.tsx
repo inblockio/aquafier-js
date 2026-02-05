@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState } from 'react';
 import { useNotificationWebSocket } from '../hooks/useNotificationWebSocket';
 import appStore from '../store';
 import { useStore } from 'zustand';
-import axios from 'axios';
+import apiClient from '@/api/axiosInstance'
 import { API_ENDPOINTS } from '@/utils/constants';
 import { toast } from 'sonner';
 import { ensureDomainUrlHasSSL } from '@/utils/functions';
@@ -51,7 +51,7 @@ export const NotificationWebSocketProvider: React.FC<{ children: React.ReactNode
 
   const triggerWebsockets = async (receiver: string, content: Object) => {
     try {
-      await axios.post(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.TRIGGER_WEBSOCKET}`), {
+      await apiClient.post(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.TRIGGER_WEBSOCKET}`), {
         receiver,
         content
       }, {

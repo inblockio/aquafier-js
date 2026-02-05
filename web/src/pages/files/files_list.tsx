@@ -5,7 +5,7 @@ import { useStore } from 'zustand'
 import appStore from '../../store'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { emptyUserStats, FilesListProps, IUserStats } from '@/types/types'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { API_ENDPOINTS } from '@/utils/constants'
 import { ensureDomainUrlHasSSL } from '@/utils/functions'
 import WorkflowSpecificTable from './WorkflowSpecificTable'
@@ -62,7 +62,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const getUserStats = async () => {
             if (session) {
                   try {
-                        let result = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.USER_STATS}`), {
+                        let result = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.USER_STATS}`), {
                               headers: {
                                     'nonce': session.nonce,
                                     'metamask_address': session.address

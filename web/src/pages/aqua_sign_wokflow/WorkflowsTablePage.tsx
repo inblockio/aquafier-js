@@ -44,7 +44,7 @@ import { IWorkflowItem } from '@/types/types'
 import WalletAdrressClaim from '../v2_claims_workflow/WalletAdrressClaim'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { toast } from 'sonner'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { API_ENDPOINTS } from '@/utils/constants'
 import { GlobalPagination } from '@/types'
 import CustomPagination from '@/components/common/CustomPagination'
@@ -166,7 +166,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                   const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!)
                   const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
                   const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_delete_file`)
-                  const response = await axios.post(
+                  const response = await apiClient.post(
                         url,
                         { revisionHash: lastRevisionHash },
                         { headers: { nonce: session?.nonce } }
@@ -381,7 +381,7 @@ export default function WorkflowsTablePage() {
                         limit: 10,
                         claim_types: workflowType ? JSON.stringify([workflowType]) : JSON.stringify(['aqua_sign']) //default to aqua_sign if no type provided
                   }
-                  const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
+                  const filesDataQuery = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
                         headers: {
                               'Content-Type': 'application/json',
                               'nonce': `${session!.nonce}`

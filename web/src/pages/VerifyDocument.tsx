@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { PDFDocument, PDFName, PDFString, PDFHexString, PDFDict } from 'pdf-lib'
 import { useStore } from 'zustand'
 import appStore from '../store'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { ApiFileInfo } from '../models/FileInfo'
 // import { ClipLoader } from "react-spinners";
 import { IDrawerStatus } from '../models/AquaTreeDetails'
@@ -301,7 +301,7 @@ const VerifyDocument = () => {
                   try {
                         setLoading(true)
                         const url = ensureDomainUrlHasSSL(`${backend_url}/share_data/${documentId}`)
-                        const response = await axios.get(url, {
+                        const response = await apiClient.get(url, {
                               headers: {
                                     'Content-Type': 'application/x-www-form-urlencoded',
                                     nonce: "RANDOM_NONCE",

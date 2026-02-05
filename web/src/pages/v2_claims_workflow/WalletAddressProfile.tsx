@@ -26,7 +26,7 @@ import { useNavigate } from 'react-router-dom'
 import { ClipLoader } from 'react-spinners'
 import { toast } from 'sonner'
 import { useStore } from 'zustand'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { getDNSStatusBadge, IDnsVerificationResult, verifyDNS } from '@/utils/verifiy_dns'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
@@ -491,7 +491,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         formData.append('has_asset', 'false')
                   }
 
-                  const response = await axios.post(url, formData, {
+                  const response = await apiClient.post(url, formData, {
                         headers: {
                               nonce: session?.nonce,
                               // Don't set Content-Type header - axios will set it automatically with the correct boundary
@@ -597,7 +597,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                   try {
                         const url = ensureDomainUrlHasSSL(`${backend_url}/fetch_template_aqua_tree`)
-                        const response = await axios.post(url, {
+                        const response = await apiClient.post(url, {
                               template_name: 'user_profile',
                               name: `User Profile Template`,
                         }, {
@@ -786,7 +786,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             }
             //`${backend_url}/${API_ENDPOINTS.CREATE_ENS_CLAIM}`
             const createENSClaimUrl = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.CREATE_ENS_CLAIM}`)
-            const res = await axios.post(createENSClaimUrl, {}, {
+            const res = await apiClient.post(createENSClaimUrl, {}, {
                   headers: {
                         metamask_address: session.address,
                         nonce: `${session.nonce}`

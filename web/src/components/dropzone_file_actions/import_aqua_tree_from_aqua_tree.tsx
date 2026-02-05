@@ -1,5 +1,5 @@
 import { LuCheck, LuChevronRight, LuImport, LuMinus, LuX } from 'react-icons/lu'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import { useEffect, useState } from 'react'
@@ -112,7 +112,7 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                   const revisionHashes = Object.keys(revisions)
                   const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
 
-                   await axios.post(
+                   await apiClient.post(
                         url,
                         {
                               latestRevisionHash: latestRevisionHash,
@@ -198,7 +198,7 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                   const revisionHashes = Object.keys(reorderedRevisions.revisions)
                   const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
 
-                  const res = await axios.post(
+                  const res = await apiClient.post(
                         url,
                         {
                               latestRevisionHash: latestRevisionHash,
@@ -278,7 +278,7 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                   const orderedRevisionHashes = reorderRevisionsInAquaTree(fileInfo.aquaTree!)
                   setUploading(true)
                   const url = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`)
-                  const res = await axios.post(url, {
+                  const res = await apiClient.post(url, {
                         revisionHashes: orderedRevisionHashes
                   }, {
                         headers: {

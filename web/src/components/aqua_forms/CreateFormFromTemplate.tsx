@@ -28,7 +28,7 @@ import Aquafier, {
       getLatestVH,
       Revision
 } from 'aqua-js-sdk'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { generateNonce } from 'siwe'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog'
@@ -230,7 +230,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             try {
                   const url = ensureDomainUrlHasSSL(`${backend_url}/app_info`);
 
-                  const response = await axios.get(url)
+                  const response = await apiClient.get(url)
 
                   const res: ApiInfoData = await response.data
 
@@ -356,7 +356,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         file_name: name,
                   }
 
-                  await axios({
+                  await apiClient({
                         method,
                         url,
                         data,
@@ -446,7 +446,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         formData.append('has_asset', 'false')
                   }
 
-                  const response = await axios.post(url, formData, {
+                  const response = await apiClient.post(url, formData, {
                         headers: {
                               nonce: session?.nonce,
                               // Don't set Content-Type header - axios will set it automatically with the correct boundary
@@ -1124,7 +1124,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   const orderedRevisionHashes = reorderRevisionsInAquaTree(aquaTree!)
 
                   const url = `${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`
-                  const res = await axios.post(url, {
+                  const res = await apiClient.post(url, {
                         revisionHashes: orderedRevisionHashes
                   }, {
                         headers: {
@@ -1343,7 +1343,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
                               try {
                                     const url = `${backend_url}/verify_code`
-                                    const response = await axios.post(
+                                    const response = await apiClient.post(
                                           url,
                                           {
                                                 email_or_phone_number: filledValue,
@@ -1405,7 +1405,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
                         try {
                               const url = ensureDomainUrlHasSSL(`${backend_url}/scrape_data`)
-                              const response = await axios.post(url, {
+                              const response = await apiClient.post(url, {
                                     domain: completeFormData['url']
                               },
                                     {
@@ -2167,7 +2167,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
             try {
                   const url = `${backend_url}/send_code`
-                  const response = await axios.post(
+                  const response = await apiClient.post(
                         url,
                         {
                               email_or_phone_number: filledValue,

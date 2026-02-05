@@ -2,7 +2,7 @@ import { LuGlasses } from 'react-icons/lu'
 import { dummyCredential, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash, getLastRevisionVerificationHash } from '../../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../../store'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { ApiFileInfo } from '../../models/FileInfo'
 import { useState } from 'react'
 import Aquafier, { AquaTreeWrapper, WitnessNetwork } from 'aqua-js-sdk'
@@ -54,7 +54,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                                     // send to server
                                     const url = ensureDomainUrlHasSSL(`${backendUrl}/tree`)
 
-                                    const response = await axios.post(
+                                    const response = await apiClient.post(
                                           url,
                                           {
                                                 revision: lastRevision,
@@ -169,7 +169,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                               // send to server
                               const url = ensureDomainUrlHasSSL(`${backendUrl}/tree`)
 
-                              const response = await axios.post(
+                              const response = await apiClient.post(
                                     url,
                                     {
                                           revision: lastRevision,

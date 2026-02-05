@@ -20,7 +20,7 @@ import {AquaTreeDetailsData, RevisionDetailsSummaryData} from '../models/AquaTre
 import {ItemDetail} from './item_details'
 import appStore from '../store'
 import {useStore} from 'zustand'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import {toast} from 'sonner'
 import {ApiFileInfo} from '../models/FileInfo'
 
@@ -343,7 +343,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
             try {
                  
  const url = ensureDomainUrlHasSSL(`${backend_url}/tree/revisions/${revisionHash}`)
-                  const response = await axios.delete(url, {
+                  const response = await apiClient.delete(url, {
                         headers: {
                               metamask_address: session?.address,
                               nonce: session?.nonce,
