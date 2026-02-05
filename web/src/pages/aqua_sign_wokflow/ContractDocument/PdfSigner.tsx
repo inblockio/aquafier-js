@@ -148,7 +148,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
             } catch (error) {
                   console.error(`Error saving all revisions for user ${address}:`, error)
                   // Don't throw error to avoid breaking the flow if one user fails, just log it
-                 
+
             }
       }
 
@@ -348,7 +348,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
             }
 
       }
-      let hi = 0;// fix for breakpoint
+
       const shareRevisionsToOwnerAnOtherSignersOfDocument = async (aquaTrees: AquaTree[]) => {
             //get genesis hash
             const genesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
@@ -406,18 +406,18 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
 
                   // sender could be another user too
-                  //  
-                  if (!signers.split(',').includes(sender)) {
-                        //send the signatures to workflow creator
-                        await saveAllRevisionsToServerForUser(aquaTrees, sender)
+                  //  if (sender is not the session user, remember the session user has already been handled in /tree/all call)
 
-                        // send notification to workflow creator
-                        //refetch the workflow
-                        triggerWebsockets(sender, {
-                              target: "aqua_sign_workflow",
-                              genesisHash: genesisHash,
-                        })
-                  }
+                  //send the signatures to workflow creator
+                  await saveAllRevisionsToServerForUser(aquaTrees, sender)
+
+                  // send notification to workflow creator
+                  //refetch the workflow
+                  triggerWebsockets(sender, {
+                        target: "aqua_sign_workflow",
+                        genesisHash: genesisHash,
+                  })
+
 
 
 
