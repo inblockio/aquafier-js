@@ -163,7 +163,7 @@ function App() {
                         <Route path="admin/dashboard" element={<Dashboard />} />
                         <Route path="admin/list/:type" element={<AdminEntityList />} />
 
-                        <Route path="pdf/workflow/:page?" element={<PdfWorkflowPage />} />
+                        <Route path="pdf/workflow/:page?/:genesisHash?" element={<PdfWorkflowPage />} />
                         <Route path="files_workflows" element={<FilesPage />} />
 
 

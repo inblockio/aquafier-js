@@ -4,7 +4,7 @@ import { useStore } from 'zustand'
 import appStore from '../../store'
 import { useEffect, useState } from 'react'
 import { ApiFileInfo } from '../../models/FileInfo'
-import { ensureDomainUrlHasSSL, formatCryptoAddress, isWorkFlowData, reorderRevisionsInAquaTree } from '../../utils/functions'
+import { ensureDomainUrlHasSSL, formatCryptoAddress, getGenesisHash, isWorkFlowData, reorderRevisionsInAquaTree } from '../../utils/functions'
 import { analyzeAndMergeRevisions } from '../../utils/aqua_funcs'
 import { RevisionsComparisonResult } from '../../models/revision_merge'
 import { OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk'
@@ -133,9 +133,32 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                   const { isWorkFlow, workFlow } = isWorkFlowData(fileInfo.aquaTree!, aquaSystemFileNames)
 
                   if (isWorkFlow && workFlow == "aqua_sign") {
-                        //todo check if am in the signer only then navigate to 2
                         setSelectedFileInfo(fileInfo)
-                        navigate('/app/pdf/workflow/2')
+                        let genesisHash = getGenesisHash(fileInfo.aquaTree!)
+                        if (!genesisHash) {
+                              toast.error('Could not determine genesis hash for this workflow.')
+                              return
+                        }
+                        let gensesiRevision = fileInfo.aquaTree?.revisions[genesisHash]
+                        let signers = gensesiRevision?.forms_signers
+
+                        // check if am in the signer only then navigate to 2
+                        if (signers) {
+
+                              let signersArray = signers.split(",").map((item: string) => item.trim().toLocaleLowerCase())
+                              let activeUserAddress = session?.address?.toLocaleLowerCase()
+                              let isUserSigner = signersArray.find((signer: string) => signer === activeUserAddress)
+                              if (isUserSigner) {
+                                    
+                                    navigate('/app/pdf/workflow/2/' + genesisHash)
+                                    return
+                              }
+                        }else{
+                              
+                              navigate('/app/pdf/workflow/1/' + genesisHash)
+                              return
+                        }
+                      
                   } else {
                         navigate('/app')
                   }
@@ -199,7 +222,32 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
 
                         if (isWorkFlow && workFlow == "aqua_sign") {
                               setSelectedFileInfo(fileInfo)
-                              navigate('/app/pdf/workflow/2')
+                              let genesisHash = getGenesisHash(fileInfo.aquaTree!)
+                              if (!genesisHash) {
+                                    toast.error('Could not determine genesis hash for this workflow.')
+                                    return
+                              }
+                              let gensesiRevision = fileInfo.aquaTree?.revisions[genesisHash]
+                              let signers = gensesiRevision?.forms_signers
+
+                              // check if am in the signer only then navigate to 2
+                              if (signers) {
+
+                                    let signersArray = signers.split(",").map((item: string) => item.trim().toLocaleLowerCase())
+                                    let activeUserAddress = session?.address?.toLocaleLowerCase()
+                                    let isUserSigner = signersArray.find((signer: string) => signer === activeUserAddress)
+                                    if (isUserSigner) {
+
+                                          navigate('/app/pdf/workflow/2/' + genesisHash)
+                                          return
+                                    }
+                              }else{
+
+                                    navigate('/app/pdf/workflow/1/' + genesisHash)
+                                    return
+                              }
+
+                       
                         } else {
                               navigate('/app')
                         }
