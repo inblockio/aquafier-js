@@ -127,7 +127,7 @@ export interface Session {
 
 export interface IShareButton {
       item: ApiFileInfo
-      nonce: string
+      nonce?: string
       children?: React.ReactNode
       index?: number,
       autoOpenShareDialog?: boolean

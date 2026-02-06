@@ -630,7 +630,7 @@ const FilesPage = () => {
 
                                                             {fileData.isLoading ? (
                                                                   <button
-                                                                        className="flex items-center gap-2 text-white text-sm font-medium bg-gray-800 w-[100px] px-2 py-1 rounded cursor-not-allowed"
+                                                                        className="flex items-center gap-2 text-white text-sm font-medium bg-gray-800 w-25 px-2 py-1 rounded cursor-not-allowed"
                                                                         disabled
                                                                   >
                                                                         <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -642,7 +642,7 @@ const FilesPage = () => {
                                                             ) : (
                                                                   <button
                                                                         data-testid="action-upload-51-button"
-                                                                        className="flex items-center gap-1 text-white hover:text-white-700 text-sm font-medium bg-gray-800 w-[80px] px-2 py-1 rounded"
+                                                                        className="flex items-center gap-1 text-white hover:text-white-700 text-sm font-medium bg-gray-800 w-20 px-2 py-1 rounded"
                                                                         onClick={() => {
                                                                               handleDirectUpload(fileData, index)
                                                                         }}
@@ -654,7 +654,7 @@ const FilesPage = () => {
 
                                                             <button
                                                                   data-testid="action-upload-51-button"
-                                                                  className="flex items-center gap-1 text-white hover:text-white-700 text-sm font-medium bg-red-600 w-[80px] px-2 py-1 rounded"
+                                                                  className="flex items-center gap-1 text-white hover:text-white-700 text-sm font-medium bg-red-600 w-20 px-2 py-1 rounded"
                                                                   onClick={() => {
                                                                         if (fileData.isLoading) {
                                                                               toast.info('File is uploading, please wait')

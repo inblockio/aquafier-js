@@ -3,6 +3,7 @@ import { connectedClients } from "../store/store";
 import { FastifyInstance } from 'fastify';
 import { WebSocket as WSWebSocket } from 'ws';
 import Logger from "../utils/logger";
+import { cliYellowfy } from "aqua-js-sdk";
 
 // Define SocketStream manually
 export interface SocketStream {
@@ -469,9 +470,12 @@ export default async function enhancedWebSocketController(fastify: FastifyInstan
      // REST endpoint to trigger notification reload for specific wallet
     fastify.post('/api/notifications/aqua_sign/:wallet_address', async (request, reply) => {
         const { wallet_address } = request.params as { wallet_address: string };
-        const { data } = request.body as { data?: any };
+        console.log("Request body: ", request.body)
+        const data = request.body as {receiver: string, content: any}
 
-        const result = sendNotificationReloadToAquaSign(wallet_address, data);
+        console.log(cliYellowfy(`Notification data: ${JSON.stringify(data, null, 4)}`))
+
+        const result = sendNotificationReloadToAquaSign(wallet_address, data.content);
         
         if (result.success) {
             return reply.code(200).send({

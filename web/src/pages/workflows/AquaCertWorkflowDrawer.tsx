@@ -88,7 +88,7 @@ export default function AquaCertWorkflowDrawer({ open, onClose, attestors, fileI
                 open={open}
                 onClose={onClose}
             >
-                <DrawerContent className="rounded-tl-2xl rounded-bl-2xl max-w-none! w-full! sm:w-100! md:w-125! lg:w-200!">
+                <DrawerContent className="rounded-tl-2xl rounded-bl-2xl max-w-none! w-[calc(100vw-2rem)]! sm:w-[calc(100vw-4rem)]! md:w-[calc(100vw-6rem)]! h-[calc(100vh-2rem)]! my-auto mr-0">
                     <DrawerHeader>
                         <div className="flex justify-between">
                             <div>

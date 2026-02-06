@@ -221,20 +221,20 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                                     return
                               }
                   }}>
-                        <TableCell className="font-medium w-[300px] max-w-[300px] min-w-[300px]">
+                        <TableCell className="font-medium w-75 max-w-75 min-w-75">
                               <div className="w-full flex items-center gap-3">
                                     <div className="shrink-0">
                                           <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
                                                 <FileText className="h-5 w-5 text-blue-600" />
                                           </div>
                                     </div>
-                                    <div className="flex-grow min-w-0">
-                                          <div className="font-medium text-sm break-words whitespace-normal">{currentFileObject?.fileName}</div>
+                                    <div className="grow min-w-0">
+                                          <div className="font-medium text-sm wrap-break-word whitespace-normal">{currentFileObject?.fileName}</div>
                                           <div className="text-xs text-muted-foreground">Created at {getTimeInfo()}</div>
                                     </div>
                               </div>
                         </TableCell>
-                        <TableCell className="w-[200px]">
+                        <TableCell className="w-50">
                               <div className="flex items-center gap-2 w-fit" onClick={e => {
                                     e.stopPropagation()
                               }}>
@@ -256,7 +256,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                                     </div>
                               </div>
                         </TableCell>
-                        <TableCell className="w-[150px]">
+                        <TableCell className="w-37.5">
                               <div className="space-y-1">
                                     <div className="flex items-center justify-between text-sm">
                                           <span>
@@ -275,13 +275,13 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                                     )}
                               </div>
                         </TableCell>
-                        <TableCell className="w-[100px]">
+                        <TableCell className="w-25">
                               <Badge variant="outline" className={`${getStatusColor(signersStatus.filter(e => e.status == 'pending').length > 0 ? 'pending' : 'completed')} capitalize`}>
                                     {getStatusIcon(signersStatus.filter(e => e.status == 'pending').length > 0 ? 'pending' : 'completed')}
                                     <span className="ml-1">{signersStatus.filter(e => e.status == 'pending').length > 0 ? 'pending' : 'completed'}</span>
                               </Badge>
                         </TableCell>
-                        <TableCell className="text-right w-[100px]">
+                        <TableCell className="text-right w-25">
                               <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                           <Button
@@ -476,7 +476,7 @@ export default function WorkflowsTablePage() {
                                           <Table>
                                                 <TableHeader>
                                                       <TableRow>
-                                                            <TableHead className="w-[300px] max-w-[300px] min-w-[300px] break-words overflow-hidden">Document</TableHead>
+                                                            <TableHead className="w-75 max-w-75 min-w-75 wrap-break-word overflow-hidden">Document</TableHead>
                                                             {/* <TableHead>Workflow Type</TableHead> */}
                                                             <TableHead>Signers</TableHead>
                                                             <TableHead>Progress</TableHead>
@@ -487,7 +487,7 @@ export default function WorkflowsTablePage() {
                                                 <TableBody>
                                                       {isLoading ? (
                                                             <TableRow>
-                                                                  <TableCell colSpan={6} className="h-[400px] text-center">
+                                                                  <TableCell colSpan={6} className="h-100 text-center">
                                                                         <div className="flex items-center justify-center gap-2">
                                                                               <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
                                                                               <span>Loading AquaSign - PDF Signature...</span>
@@ -496,7 +496,7 @@ export default function WorkflowsTablePage() {
                                                             </TableRow>
                                                       ) : workflowsUi.length === 0 ? (
                                                             <TableRow>
-                                                                  <TableCell colSpan={6} className="h-[400px] text-center">
+                                                                  <TableCell colSpan={6} className="h-100 text-center">
                                                                         No workflows found
                                                                   </TableCell>
                                                             </TableRow>

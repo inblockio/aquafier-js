@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useRef } from 'react';
 import { useNotificationWebSocket } from '../hooks/useNotificationWebSocket';
 import appStore from '../store';
 import { useStore } from 'zustand';
@@ -18,36 +18,35 @@ interface NotificationWebSocketContextType {
 const NotificationWebSocketContext = createContext<NotificationWebSocketContextType | null>(null);
 
 export const NotificationWebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [subscribers, setSubscribers] = useState<Set<(message: any) => void>>(new Set());
+  const subscribersRef = useRef<Set<(message: any) => void>>(new Set());
   const { session, backend_url } = useStore(appStore);
 
   // Single WebSocket connection
   const wsHook = useNotificationWebSocket({
     walletAddress: session?.address,
     userId: session?.address,
-    onMessage: (message) => {
+    onMessage: async (message) => {
       console.log("WEbsocket message: ", message)
       // Broadcast to all subscribers
-      subscribers.forEach(callback => callback(message));
+      subscribersRef.current.forEach(callback => callback(message));
+      // if (message.action) {
+      //   await triggerWorkflowReload(message.action ?? RELOAD_KEYS.contacts, true)
+      // }
     },
     onNotificationReload: () => {
       // Broadcast reload event
-      subscribers.forEach(callback => callback({ type: 'notification_reload' }));
+      subscribersRef.current.forEach(callback => callback({ type: 'notification_reload' }));
     }
   });
 
-  const subscribe = (callback: (message: any) => void) => {
-    setSubscribers(prev => new Set([...prev, callback]));
-    
+  const subscribe = useCallback((callback: (message: any) => void) => {
+    subscribersRef.current.add(callback);
+
     // Return unsubscribe function
     return () => {
-      setSubscribers(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(callback);
-        return newSet;
-      });
+      subscribersRef.current.delete(callback);
     };
-  };
+  }, []);
 
   const triggerWebsockets = async (receiver: string, content: Object) => {
     try {
@@ -61,7 +60,7 @@ export const NotificationWebSocketProvider: React.FC<{ children: React.ReactNode
         }
       })
 
-    }catch (error) {
+    } catch (error) {
       toast.error('Error triggering websockets');
       console.error('Error triggering websockets:', error);
     }
