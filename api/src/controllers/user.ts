@@ -18,6 +18,7 @@ import { saveAquaTree } from '../utils/revisions_utils';
 import { saveFileAndCreateOrUpdateFileIndex } from '../utils/aqua_tree_utils';
 import Aquafier, { cliRedify } from 'aqua-js-sdk';
 import { calculateStorageUsage } from '../utils/stats';
+import { usageService } from '../services/usageService';
 
 export default async function userController(fastify: FastifyInstance) {
 
@@ -806,6 +807,11 @@ export default async function userController(fastify: FastifyInstance) {
                     user_pub_key: userAddress
                 }
             });
+
+            // Step 9: Recalculate usage stats after bulk deletion
+            usageService.recalculateUserUsage(userAddress).catch(err =>
+                Logger.error('Failed to recalculate usage after user data deletion:', err)
+            );
 
             return reply.code(200).send({
                 success: true,

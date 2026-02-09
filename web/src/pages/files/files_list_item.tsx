@@ -131,28 +131,33 @@ export default function FilesListItem({
                                     </DropdownMenuItem>
                               </DownloadAquaChain>
                         </ActionsDropdown>
+                  </>
+            )
+      }
 
-                        {/* <div className="flex flex-wrap gap-1">
-                              <div className="w-50.5">
-                                    <OpenAquaSignWorkFlowButton item={file} nonce={nonce} index={index} />
-                              </div>
-
-                              <div className="w-25">
-                                    <OpenSelectedFileDetailsButton file={file} index={index} />
-                              </div>
-
-                              <div className="w-25">
-                                    <ShareButton item={file} nonce={nonce} index={index} />
-                              </div>
-
-                              <div className="w-25">
-                                    <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
-                              </div>
-
-                              <div className="w-25">
-                                    <DownloadAquaChain file={file} index={index} />
-                              </div>
-                        </div> */}
+       const workflowAquafierLicenceActions = () => {
+            return (
+                  <>
+                        <ActionsDropdown apiFileInfo={file} index={index}>
+                              <OpenSelectedFileDetailsButton file={file} index={index}>
+                                    <DropdownMenuItem className='cursor-pointer'>
+                                          <Eye className="mr-2 h-4 w-4" />
+                                          Details
+                                    </DropdownMenuItem>
+                              </OpenSelectedFileDetailsButton>
+                              <ShareButton item={file} index={index}>
+                                    <DropdownMenuItem className='cursor-pointer'>
+                                          <LuShare2 className="mr-2 h-4 w-4" />
+                                          Share
+                                    </DropdownMenuItem>
+                              </ShareButton>
+                              <DownloadAquaChain file={file} index={index}>
+                                    <DropdownMenuItem className='cursor-pointer'>
+                                          <Download className="mr-2 h-4 w-4" />
+                                          Download
+                                    </DropdownMenuItem>
+                              </DownloadAquaChain>
+                        </ActionsDropdown>
                   </>
             )
       }
@@ -380,6 +385,9 @@ export default function FilesListItem({
             }
             if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'aqua_sign') {
                   return workFlowAquaSignActions()
+            }
+            if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'aquafier_licence') {
+                  return workflowAquafierLicenceActions()
             }
 
             if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'aqua_certificate') {

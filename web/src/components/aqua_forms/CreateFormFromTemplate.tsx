@@ -504,6 +504,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   } else {
                         if (field.name === 'signers' && selectedTemplate.name === 'aqua_sign') {
                               completeFormData[field.name] = multipleAddresses.join(',')
+                        } else if (field.name === 'receiver' && selectedTemplate.name === 'aquafier_licence') {
+                              completeFormData[field.name] = multipleAddresses.join(',')
                         } else if (field.name === 'delegated_wallets' && selectedTemplate.name === 'dba_claim') {
                               completeFormData[field.name] = multipleAddresses.join(',')
                         } else if (field.name === 'delegated_wallets' && selectedTemplate && selectedTemplate.name === 'dba_claim') {
@@ -527,6 +529,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
       // Wallet address validation function
       const validateWalletAddress = (valueInput: CustomInputType, fieldItem: FormField) => {
+            console.log(valueInput, fieldItem)
+            if(!fieldItem.required){
+                  return
+            }
             if (typeof valueInput !== 'string') {
                   throw new Error(`${valueInput} provided at ${fieldItem.name} is not a string`)
             }
