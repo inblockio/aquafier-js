@@ -87,6 +87,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useNavigate } from 'react-router-dom'
 import { API_ENDPOINTS } from '@/utils/constants'
+import { fetchSubscriptionPlans } from '@/api/subscriptionApi'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { useAquaSystemNames } from '@/hooks/useAquaSystemNames'
 
@@ -596,7 +597,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       }
 
       // Field validation function
-      const validateFields = (completeFormData: Record<string, CustomInputType>, selectedTemplate: FormTemplate) => {
+      const validateFields = async (completeFormData: Record<string, CustomInputType>, selectedTemplate: FormTemplate) => {
 
             validateRequiredFields(completeFormData, selectedTemplate)
 
@@ -605,6 +606,14 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
                   if (fieldItem.type === 'wallet_address') {
                         validateWalletAddress(valueInput, fieldItem)
+                  }
+
+                  if (fieldItem.name === 'package_id' && selectedTemplate.name.includes("aquafier_licence")) {
+                        const plans = await fetchSubscriptionPlans()
+                        const validPlanIds = plans.map(plan => plan.id)
+                        if (!validPlanIds.includes(valueInput as string)) {
+                              throw new Error(`"${valueInput}" is not a valid package ID. Valid plans: ${plans.map(p => `${p.display_name} (${p.id})`).join(', ')}`)
+                        }
                   }
 
                   if (fieldItem.type === 'domain') {
@@ -1353,7 +1362,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   setFormData(completeFormData)
 
                   // Step 2: Validate fields
-                  validateFields(completeFormData, selectedTemplate)
+                  await validateFields(completeFormData, selectedTemplate)
 
 
 
