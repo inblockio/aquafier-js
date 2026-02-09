@@ -1,0 +1,46 @@
+[
+   {
+
+       "name": "sender",
+       "label": "Sender",
+       "type": "wallet_address",
+       "required": true,
+       "isArray": false
+       
+    },
+     {
+        "name": "receiver",
+        "label": "Receiver",
+        "type": "wallet_address",
+        "required": false,
+        "isArray": true
+    },
+     {
+        "name": "created_at",
+        "label": "Created At",
+        "type": "date",
+        "required": true,
+        "isArray": false
+    },
+    {
+        "name": "duration_days",
+        "label": "Duration (in Days)",
+        "type": "number",
+        "required": true,
+        "isArray": false
+    },
+    {
+        "name": "users_subscription_limit",
+        "label": "Users Subscription Limit",
+        "type": "number",
+        "required": true,
+        "isArray": false
+    },
+   {
+        "name": "package_id",
+        "label": "Package ID",
+        "type": "number",
+        "required": true,
+        "isArray": false
+    }
+]

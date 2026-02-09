@@ -305,7 +305,7 @@ export default async function shareController(fastify: FastifyInstance) {
         return reply.code(200).send({ success: true, contracts });
     })
 
-
+ 
 
     fastify.delete('/contracts/:hash', async (request, reply) => {
         // Extract the hash parameter from the URL
@@ -477,7 +477,7 @@ export default async function shareController(fastify: FastifyInstance) {
 
         return reply.code(200).send({ success: true, contracts });
     });
-
+ 
     // Original, DO NOT DELETE
     // fastify.get('/contracts', async (request, reply) => {
     //     const { sender, receiver, hash } = request.query as { sender?: string, receiver?: string, hash?: string };

@@ -89,7 +89,7 @@ async function buildServer() {
     await setUpSystemTemplates();
 
     // Setup payment plans
-    await setupPaymentPlans()
+    await setupPaymentPlans() 
 
 
     let corsAllowedOrigins = process.env.ALLOWED_CORS ? [process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()), ...ensureDomainViewForCors(process.env.FRONTEND_URL)] : [

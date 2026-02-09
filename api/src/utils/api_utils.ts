@@ -273,7 +273,7 @@ export async function checkFolderExists(folderPath: string) {
     } catch (error: any) {
         return false;
     }
-}
+}  
 
 const setUpSystemTemplates = async () => {
 
@@ -331,7 +331,7 @@ const setUpSystemTemplates = async () => {
     //     "ens_claim",
     //     "aqua_certificate",
     // ]
-
+ 
     let templates = Object.keys(TEMPLATE_HASHES)
     for (let index = 0; index < templates.length; index++) {
         const templateItem = templates[index];

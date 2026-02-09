@@ -1,5 +1,5 @@
 import { ConnectWallet } from '../components/connect_wallet_button'
-import { ConnectWalletPage } from '../components/connect_wallet_page'
+import { ConnectWalletPage } from '../components/connect_wallet_page' 
 import { Separator } from '../components/ui/separator'
 import NotificationsBell from '../pages/notifications/NotificationsBell'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar'
@@ -209,6 +209,9 @@ export default function NewShadcnLayoutWithSidebar() {
 
 
 
+                                  
+
+
 
 
                                     {openDialog?.dialogType === 'form_template_editor' && (
@@ -217,6 +220,19 @@ export default function NewShadcnLayoutWithSidebar() {
                                                       setOpenDialog(null)
                                                 }}
                                           />)}
+
+                                    {openDialog?.dialogType === 'aquafier_licence' && (
+                                          <CreateFormFromTemplate
+                                                selectedTemplate={formTemplates.find(template => template.name === 'aquafier_licence')!}
+                                                callBack={async function (): Promise<void> {
+                                                      await triggerWorkflowReload(RELOAD_KEYS.aquafier_licence, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
+                                                      setOpenDialog(null)
+                                                }}
+                                                openCreateTemplatePopUp={false}
+                                          />
+                                    )}
 
                                     {openDialog?.dialogType === 'aqua_certificate' && (
                                           <CreateFormFromTemplate
@@ -230,6 +246,10 @@ export default function NewShadcnLayoutWithSidebar() {
                                                 openCreateTemplatePopUp={false}
                                           />
                                     )}
+
+                                      
+                                      
+
 
                                     {openDialog?.dialogType === 'aqua_sign' && (
                                           <CreateFormFromTemplate

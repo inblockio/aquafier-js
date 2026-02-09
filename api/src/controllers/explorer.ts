@@ -35,7 +35,7 @@ import { systemTemplateHashes } from '../models/constants';
 
 /**
  * Registers Explorer-related HTTP routes on the provided Fastify instance.
- *
+ * 
  * This controller attaches endpoints for importing, uploading, listing, deleting,
  * transferring, and merging AquaTree revisions and their associated files. Routes
  * include nonce-based authentication, multipart handling, ZIP and file processing,
