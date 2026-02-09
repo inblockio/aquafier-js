@@ -1115,7 +1115,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   <div className="w-full bg-card border-l rounded-xl p-4 h-full flex flex-col">
                         <div className="space-y-2">
                               <div className="flex items-center justify-between pb-2">
-                                    <h3 className="text-base font-medium">Signatures in Document..</h3>
+                                    <h3 className="text-base font-medium">Signatures in Document.</h3>
                               </div>
                               <div>{signaturePositions.length > 0 ? <>{renderProfileAnnotationEditor()}</> : <p className="text-muted-foreground text-sm text-center py-4">No signatures yet.</p>}</div>
                         </div>
@@ -1227,7 +1227,74 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                                       </div>
                                                 </div>
                                           </div>
-                                          <div className="flex flex-col">
+                                          {/* <div className="flex flex-col">
+                                                <h4 className="font-bold mt-2">Other Signatures:</h4>
+                                                <div className="max-h-[200px] overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md">
+                                                      <div className="flex flex-col">
+                                                            {documentSignatures ? (
+                                                                  documentSignatures.map(signature => (
+                                                                        <div
+                                                                              key={signature.id}
+                                                                              className={`p-2 cursor-pointer ${selectedSignatureId === signature.id ? 'bg-blue-50' : 'bg-transparent'} hover:bg-gray-50`}
+                                                                        >
+                                                                              <div className="flex items-center space-x-3">
+                                                                                    <div
+                                                                                          className="w-[60px] h-[40px] bg-contain bg-no-repeat bg-center border border-gray-200 rounded-sm"
+                                                                                          style={{
+                                                                                                backgroundImage: `url(${signature.dataUrl})`,
+                                                                                          }}
+                                                                                    />
+                                                                                    <div className="flex flex-col space-y-0">
+                                                                                          <p className="text-sm font-medium">{signature.name}</p>
+                                                                                          
+                                                                                          <WalletAddressClaim walletAddress={signature.walletAddress} />
+                                                                                    </div>
+                                                                              </div>
+                                                                        </div>
+                                                                  ))
+                                                            ) : (
+                                                                  <></>
+                                                            )}
+                                                      </div>
+                                                </div>
+                                          </div> */}
+                                    </>
+                              )}
+
+                              <Button
+                                    data-testid="action-signature-to-document-button"
+                                    onClick={() => {
+                                          setSelectedTool('signature')
+                                          //   setSelectedSignatureHash(selectedSignatureHash as any)
+                                          setCanPlaceSignature(true)
+                                    }}
+                              >
+                                    {/* Add Signature to document */}
+                                    Place Signature
+                              </Button>
+
+                              {canPlaceSignature ? (
+                                    // <Alert className='bg-blue-500 text-blue-600'>
+                                    <Alert className="" variant={"destructive"}>
+                                          <LuInfo />
+                                          <AlertDescription>Click on the document to place your signature.</AlertDescription>
+                                    </Alert>
+                              ) : null}
+
+
+                              {annotationSidebar()}
+
+                              <Button
+                                    data-testid="action-sign-document-button"
+                                    disabled={signaturePositions.length === 0 || submittingSignatureData}
+                                    onClick={handleSignatureSubmission}
+                                    className={signaturePositions.length === 0 || submittingSignatureData ? '' : 'bg-green-600 hover:bg-green-700 text-white'}
+                              >
+                                    Sign document
+                              </Button>
+
+
+                              <div className="flex flex-col">
                                                 <h4 className="font-bold mt-2">Other Signatures:</h4>
                                                 <div className="max-h-[200px] overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md">
                                                       <div className="flex flex-col">
@@ -1262,35 +1329,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                                       </div>
                                                 </div>
                                           </div>
-                                    </>
-                              )}
-
-                              <Button
-                                    data-testid="action-signature-to-document-button"
-                                    onClick={() => {
-                                          setSelectedTool('signature')
-                                          //   setSelectedSignatureHash(selectedSignatureHash as any)
-                                          setCanPlaceSignature(true)
-                                    }}
-                              >
-                                    {/* Add Signature to document */}
-                                    Place Signature
-                              </Button>
-
-                              {canPlaceSignature ? (
-                                    // <Alert className='bg-blue-500 text-blue-600'>
-                                    <Alert className="" variant={"destructive"}>
-                                          <LuInfo />
-                                          <AlertDescription>Click on the document to place your signature.</AlertDescription>
-                                    </Alert>
-                              ) : null}
-
-
-                              {annotationSidebar()}
-
-                              <Button data-testid="action-sign-document-button" disabled={signaturePositions.length === 0 || submittingSignatureData} onClick={handleSignatureSubmission}>
-                                    Sign document
-                              </Button>
                         </div>
                   </div>
             )

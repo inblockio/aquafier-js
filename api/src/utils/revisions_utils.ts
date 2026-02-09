@@ -11,7 +11,9 @@ import { prisma } from '../database/db';
 import { AquaForms, FileIndex, Link, Revision as DBRevision, Signature, WitnessEvent, FileName } from '@prisma/client';
 import * as fs from "fs"
 import { AquaJsonInZip, AquaNameWithHash, SaveRevisionForUser } from '../models/request_models';
-import { getAquaTreeFileName } from './api_utils';
+import { getAquaTreeFileName, getHost, getPort } from './api_utils';
+import { InvoiceUtils } from './invoice_utils';
+import { InvoiceData } from '../models/invoice';
 import { createAquaTreeFromRevisions, deleteChildrenFieldFromAquaTrees } from './revisions_operations_utils';
 import { getGenesisHash } from './aqua_tree_utils';
 import JSZip from 'jszip';
@@ -23,6 +25,7 @@ import Logger from './logger';
 import { orderUserChain } from './quick_revision_utils';
 import { usageService } from '../services/usageService';
 import { fetchCompleteRevisionChain } from './quick_utils';
+import { createNotificationAndSendWebSocketNotification } from './notification_utils';
 
 // import { PrismaClient } from '@prisma/client';
 
@@ -2241,6 +2244,194 @@ async function processGenesisRevision(revisionData: any, userAddress: string, aq
     }
 }
 
+
+async function createSubscriptionFromAquafierLicence(aquaTree: AquaTree, userAddress: string){
+   
+    const genesisHash  = getGenesisHash(aquaTree)
+    if (!genesisHash) {
+        Logger.warn('No genesis hash found for aquafier licence aqua tree')
+        return
+    }
+
+    const genesisRevision = aquaTree.revisions[genesisHash]
+    if (!genesisRevision) {
+        Logger.warn(`Genesis revision not found for hash ${genesisHash}`)
+        return
+    }
+
+    const licenceUserLimit = Number(genesisRevision.forms_users_subscription_limit) || 0 // if 0 its limitless
+    const packageId = genesisRevision.forms_package_id
+    const durationDays = Number(genesisRevision.forms_duration_days) || 30
+
+    // 1. Check if the package_id is valid - if null/undefined, do nothing
+    if (!packageId) {
+        Logger.info(`Licence has no package_id, skipping subscription creation for user ${userAddress}`)
+        return
+    }
+
+    // 2. Query the subscription plan by package_id
+    const incomingPlan = await prisma.subscriptionPlan.findUnique({
+        where: { id: String(packageId) }
+    })
+
+    if (!incomingPlan) {
+        Logger.warn(`Subscription plan not found for package_id ${packageId}`)
+        return
+    }
+
+    // 3. Skip the licence sender - they don't get a subscription from their own licence
+    if (genesisRevision.forms_sender === userAddress) {
+        return
+    }
+
+    // 4. Prior checks: receivers list vs user limit
+    const receivers = (genesisRevision.forms_receiver ?? '').toString().trim()
+
+    if (receivers.length > 0) {
+        // Receivers are specified - only allow users in the comma-separated list
+        const receiverList = receivers.split(',').map((r: string) => r.trim().toLowerCase())
+        if (!receiverList.includes(userAddress.toLowerCase())) {
+            Logger.info(`User ${userAddress} is not in the licence receiver list, skipping subscription`)
+            return
+        }
+    } else {
+        // No specific receivers - use the user limit to control access
+        const currentSubscriptionCountUsingThisLicense = await prisma.subscription.count({
+            where: {
+                licence_genesis_hash: genesisHash
+            }
+        })
+
+        if (licenceUserLimit !== 0 && currentSubscriptionCountUsingThisLicense >= licenceUserLimit) {
+            Logger.info(`Licence user limit reached (${currentSubscriptionCountUsingThisLicense}/${licenceUserLimit}) for licence ${genesisHash}`)
+            await createNotificationAndSendWebSocketNotification(
+                'system',
+                userAddress,
+                `The Aquafier licence you received has reached its user limit (${licenceUserLimit}). Please contact the licence issuer for assistance.`
+            )
+            return
+        }
+    }
+
+    // 5. Check if user already has a subscription from this same licence
+    const existingLicenceSubscription = await prisma.subscription.findFirst({
+        where: {
+            user_address: userAddress,
+            licence_genesis_hash: genesisHash
+        }
+    })
+
+    if (existingLicenceSubscription) {
+        Logger.info(`User ${userAddress} already has a subscription from licence ${genesisHash}`)
+        return
+    }
+
+    // 6. Fetch the user's current active subscription to compare plans
+    const currentActiveSubscription = await prisma.subscription.findFirst({
+        where: {
+            user_address: userAddress,
+            status: 'ACTIVE'
+        },
+        include: {
+            Plan: true
+        },
+        orderBy: { createdAt: 'desc' }
+    })
+
+    // 7. If user already has an active subscription, check if the incoming plan is better
+    if (currentActiveSubscription && currentActiveSubscription.Plan) {
+        const currentPlan = currentActiveSubscription.Plan
+        // Compare using sort_order (higher = better), storage, files, contracts, templates
+        const incomingIsBetter =
+            incomingPlan.sort_order > currentPlan.sort_order ||
+            incomingPlan.max_storage_gb > currentPlan.max_storage_gb ||
+            incomingPlan.max_files > currentPlan.max_files ||
+            incomingPlan.max_contracts > currentPlan.max_contracts ||
+            incomingPlan.max_templates > currentPlan.max_templates
+
+        if (!incomingIsBetter) {
+            Logger.info(`User ${userAddress} already has an equal or better plan (${currentPlan.name}), skipping licence subscription`)
+            return
+        }
+
+        // Cancel the current active subscription since the incoming one is better
+        await prisma.subscription.updateMany({
+            where: {
+                user_address: userAddress,
+                status: 'ACTIVE'
+            },
+            data: {
+                status: 'CANCELED',
+            }
+        })
+
+        Logger.info(`Canceled existing subscription for user ${userAddress} in favor of better licence plan ${incomingPlan.name}`)
+    }
+
+    // 8. Create the new subscription from the aquafier licence
+    const now = new Date()
+    const periodEnd = new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000)
+
+    await prisma.subscription.create({
+        data: {
+            user_address: userAddress,
+            plan_id: incomingPlan.id,
+            status: 'ACTIVE',
+            payment_method: 'AQUAFIER',
+            billing_period: 'MONTHLY',
+            licence_genesis_hash: genesisHash,
+            current_period_start: now,
+            current_period_end: periodEnd,
+        }
+    })
+
+    Logger.info(`Subscription created from aquafier licence for user ${userAddress}, plan ${incomingPlan.name}, expires ${periodEnd.toISOString()}`)
+
+    // 9. Generate and save invoice for the user
+    try {
+        const paymentsCount = await prisma.payment.count()
+        const invoiceNumber = `INV-${paymentsCount + 1}`
+
+        const invoiceData: InvoiceData = {
+            invoiceNumber,
+            date: new Date(),
+            status: 'PAID',
+            billingTo: {
+                name: userAddress,
+                address: 'Aquafier Instance',
+            },
+            billingFrom: {
+                name: 'Inblokcio GmbH Assets',
+                address: '456 Business Rd\nTech City',
+                email: 'billing@inblockio.com',
+                website: 'www.inblockio.com'
+            },
+            items: [
+                { description: `${incomingPlan.display_name} (Aquafier Licence)`, quantity: 1, unitPrice: parseFloat(incomingPlan.price_monthly_usd?.toString() ?? "0.00"), amount: parseFloat(incomingPlan.price_monthly_usd?.toString() ?? "0.00") },
+            ],
+            subtotal: parseFloat(incomingPlan.price_monthly_usd?.toString() ?? "0.00"),
+            total: parseFloat(incomingPlan.price_monthly_usd?.toString() ?? "0.00"),
+            currency: 'USD',
+            notes: 'Subscription activated via Aquafier Licence.'
+        }
+
+        const protocol = process.env.BACKEND_URL?.startsWith('https') ? 'https' : 'http'
+        const url = `${protocol}://${getHost()}:${getPort()}`
+
+        await InvoiceUtils.createAndSaveInvoice(
+            invoiceData,
+            userAddress,
+            url,
+            protocol,
+            true
+        )
+
+        Logger.info(`Invoice ${invoiceNumber} generated for aquafier licence subscription for user ${userAddress}`)
+    } catch (error: any) {
+        Logger.error("Error generating invoice for aquafier licence subscription: ", error)
+    }
+}
+
 // =====================================================
 // REFACTORED MAIN FUNCTIONS
 // =====================================================
@@ -2263,6 +2454,13 @@ export async function saveAquaTree(
 
     if (allHash.length === 0) {
         throw new Error("No revisions found in the aqua tree");
+    }
+
+    // check if aquafier_licence, then create a SUBSCRIPTION for the user
+    const workFlow = isWorkFlowData(aquaTree, systemTemplateHashes)
+
+    if(workFlow.isWorkFlow && workFlow.workFlow === "aquafier_licence.json"){
+        await createSubscriptionFromAquafierLicence(aquaTree, userAddress)
     }
 
     // The last hash in the sorted array is the latest

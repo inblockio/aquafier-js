@@ -92,6 +92,15 @@ export default function SubscriptionPage() {
     });
   };
 
+  const getPaymentMethod = (method: string) => {
+    if(method === "STRIPE"){
+      return "Credit Card"
+    }else if(method === "CRYPTO"){
+      return "Crypto"
+    }
+    return "Aquafier Licence"
+  }
+
   // const getStatusColor = (status: string) => {
   //   switch (status) {
   //     case 'ACTIVE':
@@ -107,6 +116,7 @@ export default function SubscriptionPage() {
   //   }
   // };
 
+  
   if (!currentSubscription && !isFreeTier) {
     return (
       <div className="max-w-4xl mx-auto p-6">
@@ -116,6 +126,7 @@ export default function SubscriptionPage() {
       </div>
     );
   }
+
 
   const plan = currentSubscription?.Plan;
 
@@ -239,7 +250,7 @@ export default function SubscriptionPage() {
                       Payment Method
                     </span>
                     <span className="font-semibold text-gray-900 dark:text-white inline-flex items-center">
-                      {currentSubscription.payment_method === 'STRIPE' ? 'Credit Card' : 'Crypto'}
+                      {getPaymentMethod(currentSubscription.payment_method)}
                     </span>
                   </div>
 
@@ -285,7 +296,7 @@ export default function SubscriptionPage() {
             {isFreeTier ? 'Upgrade to Pro' : 'Change Plan'}
           </button>
 
-          {currentSubscription && !currentSubscription.cancel_at_period_end && (
+          {currentSubscription && currentSubscription.Plan.name !== "free" && !currentSubscription.cancel_at_period_end && (
             <button
               onClick={handleCancelSubscription}
               disabled={cancelLoading}

@@ -1,0 +1,8 @@
+{
+    "sender": "0x...",
+    "receiver": "0x...,0x...",
+    "created_at": "2022-01-01",
+    "duration_days": 30,
+    "users_subscription_limit": 10,
+    "package_id": 1
+}

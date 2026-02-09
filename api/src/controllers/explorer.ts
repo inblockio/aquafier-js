@@ -21,6 +21,7 @@ import {
 } from '../utils/revisions_utils';
 import { getHost, getPort } from '../utils/api_utils';
 import { DeleteRevision } from '../models/request_models';
+import { usageService } from '../services/usageService';
 import { getGenesisHash, removeFilePathFromFileIndex, saveFileAndCreateOrUpdateFileIndex, validateAquaTree } from '../utils/aqua_tree_utils';
 // import { systemTemplateHashes } from '../models/constants';
 import { dummyCredential, getServerWalletInformation, saveAttestationFileAndAquaTree } from '../utils/server_utils';
@@ -35,7 +36,7 @@ import { systemTemplateHashes } from '../models/constants';
 
 /**
  * Registers Explorer-related HTTP routes on the provided Fastify instance.
- *
+ * 
  * This controller attaches endpoints for importing, uploading, listing, deleting,
  * transferring, and merging AquaTree revisions and their associated files. Routes
  * include nonce-based authentication, multipart handling, ZIP and file processing,
@@ -464,6 +465,10 @@ export default async function explorerController(fastify: FastifyInstance) {
                     Logger.error(`Attestation Error ${e}`);
                 }
             }
+
+            usageService.recalculateUserUsage(walletAddress).catch(err =>
+                Logger.error('Failed to recalculate usage after aqua file upload:', err)
+            );
 
             return reply.code(200).send({
                 success: true,
@@ -917,6 +922,10 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             }
 
+            usageService.recalculateUserUsage(session.address).catch(err =>
+                Logger.error('Failed to recalculate usage after file upload:', err)
+            );
+
             // Return success response
             return reply.code(200).send({
                 aquaTree: resData,
@@ -954,6 +963,12 @@ export default async function explorerController(fastify: FastifyInstance) {
         }
 
         let response = await deleteAquaTreeFromSystem(session.address, revisionDataPar.revisionHash)
+
+        if (response[0] === 200) {
+            usageService.recalculateUserUsage(session.address).catch(err =>
+                Logger.error('Failed to recalculate usage after file deletion:', err)
+            );
+        }
 
         return reply.code(response[0]).send({ success: response[0] == 200 ? true : false, message: response[1] });
     });

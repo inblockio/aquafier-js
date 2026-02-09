@@ -436,6 +436,9 @@ model Subscription {
   crypto_currency         String? // "BTC", "ETH", "USDT", etc.
   crypto_last_payment_hash String? // Last successful transaction hash
 
+  // Aquafier Licences
+  licence_genesis_hash    String?
+
   // Subscription period
   current_period_start    DateTime
   current_period_end      DateTime
@@ -574,6 +577,7 @@ enum SubscriptionStatus {
 enum PaymentMethod {
   STRIPE        // Credit/debit card via Stripe
   CRYPTO        // Cryptocurrency via NOWPayments
+  AQUAFIER      // Aquafier licence via admin dashboard
 }
 
 enum PaymentStatus {

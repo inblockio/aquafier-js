@@ -38,6 +38,7 @@ import { NotificationWebSocketProvider } from './contexts/NotificationWebSocketC
 import UserStats from './pages/user_settings/UserStats'
 import Dashboard from './pages/dashboard/Dashboard'
 import AdminEntityList from './pages/dashboard/AdminEntityList'
+import AdminPlans from './pages/dashboard/AdminPlans'
 import EnsResolverPage from './pages/ens_resolver.page'
 import PricingPage from './pages/pricing/PricingPage'
 import SubscriptionPage from './pages/subscription/SubscriptionPage'
@@ -161,6 +162,7 @@ function App() {
                         <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2 />} />
                         <Route path="dashboard" element={<UserStats />} />
                         <Route path="admin/dashboard" element={<Dashboard />} />
+                        <Route path="admin/plans" element={<AdminPlans />} />
                         <Route path="admin/list/:type" element={<AdminEntityList />} />
 
                         <Route path="pdf/workflow/:page?/:genesisHash?" element={<PdfWorkflowPage />} />
