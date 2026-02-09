@@ -293,6 +293,11 @@ export function formatCryptoAddress(address?: string, start: number = 10, end: n
       return `${firstPart}...${lastPart}`
 }
 
+export function formatAddressForFilename(address?: string): string {
+      if (!address || address.length < 8) return ''
+      return `_${address.slice(0, 4)}_${address.slice(-4)}`
+}
+
 export function remove0xPrefix(input: string): string {
       // Check if the input string starts with '0x'
       if (input.startsWith('0x')) {
