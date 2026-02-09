@@ -55,7 +55,7 @@ export default function FilesListItem({
       filesListProps: FilesListProps
 }) {
       // const [_selectedFiles, setSelectedFiles] = useState<number[]>([]);
-      const { files, session } = useStore(appStore)
+      const { files, session, setSelectedFileInfo, setOpenDialog } = useStore(appStore)
       const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined)
       const [workflowInfo, setWorkFlowInfo] = useState<{ isWorkFlow: boolean; workFlow: string } | undefined>(undefined)
 
@@ -135,7 +135,7 @@ export default function FilesListItem({
             )
       }
 
-       const workflowAquafierLicenceActions = () => {
+      const workflowAquafierLicenceActions = () => {
             return (
                   <>
                         <ActionsDropdown apiFileInfo={file} index={index}>
@@ -480,6 +480,7 @@ export default function FilesListItem({
                   </>
             )
       }
+
       const renderTableView = () => {
 
 
@@ -539,7 +540,13 @@ export default function FilesListItem({
                         </td> : null
 
                         }
-                        <td className="py-3 flex items-center px-4">
+                        <td className="py-3 flex items-center px-4" onClick={(e) => {
+                              e.preventDefault()
+                              if (viewMode === "table") {
+                                    setSelectedFileInfo(file)
+                                    setOpenDialog({ dialogType: 'aqua_file_details', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
+                              }
+                        }}>
                               {/* <FileText className="w-5 h-5 text-blue-500" /> */}
                               <div className="flex flex-col">
                                     <span className="font-medium text-sm">{getAquaTreeFileName(file.aquaTree!)}</span>
@@ -552,9 +559,27 @@ export default function FilesListItem({
                               </div>
                         </td>
 
-                        {showWorkFlowsOnly ? <td className="py-3 px-3 text-sm text-gray-500">{workflowInfo?.workFlow || 'Not a workflow'}</td> : null}
-                        <td className="py-3 text-sm text-gray-500">{getFileCategory(getFileExtension(getAquaTreeFileName(file.aquaTree!)))}</td>
-                        <td className="py-3 text-sm text-gray-500">
+                        {showWorkFlowsOnly ? <td className="py-3 px-3 text-sm text-gray-500" onClick={(e) => {
+                              e.preventDefault()
+                              if (viewMode === "table") {
+                                    setSelectedFileInfo(file)
+                                    setOpenDialog({ dialogType: 'aqua_file_details', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
+                              }
+                        }}>{workflowInfo?.workFlow || 'Not a workflow'}</td> : null}
+                        <td className="py-3 text-sm text-gray-500" onClick={(e) => {
+                              e.preventDefault()
+                              if (viewMode === "table") {
+                                    setSelectedFileInfo(file)
+                                    setOpenDialog({ dialogType: 'aqua_file_details', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
+                              }
+                        }}>{getFileCategory(getFileExtension(getAquaTreeFileName(file.aquaTree!)))}</td>
+                        <td className="py-3 text-sm text-gray-500" onClick={(e) => {
+                              e.preventDefault()
+                              if (viewMode === "table") {
+                                    setSelectedFileInfo(file)
+                                    setOpenDialog({ dialogType: 'aqua_file_details', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
+                              }
+                        }}>
                               {(() => {
                                     const genRevision = getGenesisHash(file.aquaTree!)
                                     if (genRevision) {
@@ -566,7 +591,13 @@ export default function FilesListItem({
                                     return 'Not available'
                               })()}
                         </td>
-                        <td className="py-3 text-sm text-gray-500">
+                        <td className="py-3 text-sm text-gray-500" onClick={(e) => {
+                              e.preventDefault()
+                              if (viewMode === "table") {
+                                    setSelectedFileInfo(file)
+                                    setOpenDialog({ dialogType: 'aqua_file_details', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
+                              }
+                        }}>
                               {(() => {
                                     const fileObject = getAquaTreeFileObject(file)
                                     if (fileObject) {
