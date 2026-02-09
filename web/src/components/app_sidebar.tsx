@@ -208,6 +208,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                                             }
                                                       }}
                                                 />
+                                                <CustomNavLink
+                                                      item={{ label: 'Manage Plans', icon: CreditCard, id: '/app/admin/plans' }}
+                                                      index={21}
+                                                      callBack={() => {
+                                                            const isMobileView = window.innerWidth < 768
+                                                            if (isMobileView) {
+                                                                  toggleSidebar()
+                                                            }
+                                                      }}
+                                                />
                                           </div>
                                     </div>
                               )}

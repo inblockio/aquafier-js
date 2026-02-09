@@ -35,6 +35,7 @@ import metricsController from './controllers/metrics';
 import workflowsController from './controllers/workflow';
 import enhancedWebSocketController from './controllers/websocketController2';
 import adminController from './controllers/admin';
+import plansController from './controllers/plans';
 import subscriptionsController from './controllers/subscriptions';
 import paymentsController from './controllers/payments';
 import { prisma } from './database/db';
@@ -170,6 +171,7 @@ async function buildServer() {
     fastify.register(metricsController);
     fastify.register(workflowsController);
     fastify.register(adminController);
+    fastify.register(plansController);
     fastify.register(subscriptionsController);
     fastify.register(paymentsController);
 
