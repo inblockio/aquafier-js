@@ -38,7 +38,7 @@ export const RenderFilesList = ({ filteredFiles, filesListProps, view, loading =
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-30">Type</th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-40">Uploaded At</th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-24">File Size</th>
-                {filesListProps.showFileActions == true ? <th className="min-w-[370px] py-3 px-4 text-left text-sm font-medium text-gray-700 w-1/4 rounded-tr-md">Actions</th> : null}
+                {filesListProps.showFileActions == true ? <th className="w-25 py-3 px-4 text-sm font-medium text-gray-700 rounded-tr-md text-center">Actions</th> : null}
             </tr>
         </thead>
         <tbody>

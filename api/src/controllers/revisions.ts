@@ -1646,7 +1646,12 @@ export default async function revisionsController(fastify: FastifyInstance) {
         preHandler: authenticate
     }, async (request: AuthenticatedRequest, reply) => {
         const userAddress = request.user?.address;
-        const { genesis_hash } = request.query as { genesis_hash: string };
+        const { genesis_hash, allRevisionHashes: revHashes } = request.query as { genesis_hash: string, allRevisionHashes: string };
+        let allRevisionHashes: string[] = []
+
+        try{
+            allRevisionHashes = JSON.parse(revHashes)
+        }catch(error){}
 
         if (!genesis_hash) {
             return reply.code(400).send({ error: 'genesis_hash query parameter is required' });
@@ -1660,6 +1665,30 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
         // Find all link revisions that have this genesis_hash in their link_verification_hashes
         // Using Prisma relation to perform inner join between Revision and Link tables
+        const orConditions: any[] = [
+            {
+                Link: {
+                    some: {
+                        link_verification_hashes: {
+                            has: genesis_hash,
+                        }
+                    }
+                }
+            }
+        ];
+
+        if (allRevisionHashes && allRevisionHashes.length > 0) {
+            orConditions.push({
+                Link: {
+                    some: {
+                        link_verification_hashes: {
+                            hasSome: allRevisionHashes
+                        }
+                    }
+                }
+            });
+        }
+
         const linkRevisions = await prisma.revision.findMany({
             select: {
                 pubkey_hash: true,
@@ -1669,13 +1698,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                     startsWith: userAddress
                 },
                 revision_type: 'link',
-                Link: {
-                    some: {
-                        link_verification_hashes: {
-                            has: genesis_hash
-                        }
-                    }
-                }
+                OR: orConditions
             },
             orderBy: {
                 createdAt: 'desc'

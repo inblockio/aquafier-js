@@ -321,13 +321,14 @@ export const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string, fil
                   }
 
                   return (
-                        <div className="inline-flex rounded-[50px] items-center px-2.5 py-0.5 text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200 max-w-full w-full" style={{
+                        <div className="inline-flex rounded-[50px] items-center px-2.5 py-0.5 text-xs font-medium bg-red-50 text-red-700 border border-red-200 max-w-full w-full" style={{
                               wordBreak: 'break-word',
                               overflowWrap: 'break-word',
                               whiteSpace: 'normal',
                               lineHeight: '1.2'
                         }}>
-                              Deep Link previous {revision.previous_verification_hash} revisionHash {revisionHash}
+                              {/* Deep Link previous {revision.previous_verification_hash} revisionHash {revisionHash} */}
+                              Linked File Not Found
                         </div>
                   )
             } else {

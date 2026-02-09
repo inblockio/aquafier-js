@@ -5,7 +5,8 @@
       "label": "Sender",
       "type": "wallet_address",
       "required": true,
-      "isArray": false
+      "isArray": false,
+      "isHidden": false
     },
     {
       "name": "receiver",
