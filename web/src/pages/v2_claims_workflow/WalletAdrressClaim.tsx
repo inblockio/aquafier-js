@@ -80,6 +80,9 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
             useEffect(() => {
                   if (session) {
                         loadClaimsFileData()
+                  } else {
+                        console.warn('No active session found. Cannot load claims data.');
+                        setIsLoading(false)
                   }
             }, [walletAddress, session?.nonce])
 

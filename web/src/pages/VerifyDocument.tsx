@@ -17,7 +17,7 @@ import { ensureDomainUrlHasSSL } from '@/utils/functions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EasyPDFRenderer } from '@/pages/aqua_sign_wokflow/ContractDocument/signer/SignerPage'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle, FileText, User, Calendar, Link, Hash, ShieldCheck, AlertCircle, Loader2, X, ShieldCheckIcon, Wallet2, Copy, InfoIcon, ShieldUser } from 'lucide-react'
+import { CheckCircle, FileText, User, Calendar, Link, Hash, ShieldCheck, AlertCircle, Loader2, X, ShieldCheckIcon, Wallet2, Copy, InfoIcon, ShieldUser, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import WalletAdrressClaim from './v2_claims_workflow/WalletAdrressClaim'
 
@@ -278,7 +278,7 @@ const CustomPDFMetada = ({ metadata, drawerStatus }: { metadata: IMetadata | nul
 
       )
 } 
-
+ 
 const VerifyDocument = () => {
       const { backend_url, metamaskAddress, session } = useStore(appStore)
       const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
@@ -337,6 +337,7 @@ const VerifyDocument = () => {
       }
 
       const loadPDFMetadata = async (file: File) => {
+            console.log('Loading PDF metadata for file:', file.name, 'size:', file.size, 'type:', file.type)
             try {
                   setLoading(true)
                   const arrayBuffer = await file.arrayBuffer()
@@ -451,9 +452,17 @@ const VerifyDocument = () => {
                                                 console.warn(`Hash mismatch for ${nameHash.name}: expected ${nameHash.hash}, got ${calculatedHash}`)
                                           }
 
+                                          // SDK expects aqua tree fileContent as parsed object, not string
+                                          let parsedContent: any = aquaFile.content;
+                                          try {
+                                                parsedContent = JSON.parse(aquaFile.content);
+                                          } catch {
+                                                // Keep as string if not valid JSON
+                                          }
+
                                           fileObjects.push({
                                                 fileName: nameHash.name,
-                                                fileContent: aquaFile.content,
+                                                fileContent: parsedContent,
                                                 fileSize: aquaFile.content.length,
                                           })
                                     } else {
@@ -461,12 +470,16 @@ const VerifyDocument = () => {
                                           console.log('Processing asset file:', nameHash.name)
                                           const assetFile = embeddedData.assetFiles.find(f => f.filename === nameHash.name)
                                           if (assetFile) {
+                                                // Convert ArrayBuffer to Uint8Array for binary files (SDK expects string | Uint8Array)
+                                                const content = assetFile.content instanceof ArrayBuffer
+                                                      ? new Uint8Array(assetFile.content)
+                                                      : assetFile.content;
                                                 fileObjects.push({
                                                       fileName: nameHash.name,
-                                                      fileContent: assetFile.content,
+                                                      fileContent: content,
                                                       fileSize: typeof assetFile.content === 'string' ? assetFile.content.length : (assetFile.content as ArrayBuffer).byteLength,
                                                 })
-                                                console.log(`Added asset file: ${nameHash.name}`)
+                                                console.log(`Added asset file: ${nameHash.name} (type: ${typeof content === 'string' ? 'string' : 'Uint8Array'})`)
                                           } else {
                                                 console.warn(`Asset file not found in PDF: ${nameHash.name} (file hash verification may fail)`)
                                           }
@@ -484,7 +497,11 @@ const VerifyDocument = () => {
                                     owner: metadata.signerWallet || '',
                               }
 
-                              console.log('Setting fileInfo and completing verification')
+                              console.log('[VerifyDocument] Setting fileInfo with mockFileInfo:', {
+                                    hasAquaTree: !!mockFileInfo.aquaTree,
+                                    revisionCount: Object.keys(mockFileInfo.aquaTree?.revisions || {}).length,
+                                    fileObjectCount: mockFileInfo.fileObject.length,
+                              })
                               setFileInfo(mockFileInfo)
                               setLoading(false)
                               return
@@ -525,9 +542,12 @@ const VerifyDocument = () => {
       }
 
       useEffect(() => {
+            console.log('pdfFile state changed:', pdfFile)
             if (pdfFile) {
+                  console.log('PDF file selected:', pdfFile.name, 'size:', pdfFile.size, 'type:', pdfFile.type)
                   loadPDFMetadata(pdfFile)
             } else {
+                  console.log('PDF file cleared')
                   setPDFFile(null)
                   setFileInfo(null)
                   setPdfMetadata(null)
@@ -536,6 +556,7 @@ const VerifyDocument = () => {
       }, [pdfFile])
 
       const updateDrawerStatus = (_drawerStatus: IDrawerStatus) => {
+            console.log('[VerifyDocument] updateDrawerStatus called with:', _drawerStatus)
             setDrawerStatus(_drawerStatus)
       }
 
@@ -562,8 +583,17 @@ const VerifyDocument = () => {
                               <Alert className="mb-6 border-amber-200 bg-amber-50 dark:bg-amber-950/20">
                                     <AlertCircle className="h-4 w-4 text-amber-600" />
                                     <AlertTitle className="text-amber-800 dark:text-amber-200">Login Required</AlertTitle>
-                                    <AlertDescription className="text-amber-700 dark:text-amber-300">
-                                          You need to be logged in to verify documents and view full details.
+                                    <AlertDescription className="text-amber-700 dark:text-amber-300 flex items-center justify-between">
+                                          <span>You need to be logged in to verify documents and view full details.</span>
+                                          <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="ml-4 border-amber-300 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-900/30"
+                                                onClick={() => window.location.href = '/app'}
+                                          >
+                                                <LogIn className="h-4 w-4 mr-2" />
+                                                Login
+                                          </Button>
                                     </AlertDescription>
                               </Alert>
                         )}

@@ -13,6 +13,9 @@ import forge from 'node-forge';
 import { PDFDocument, PDFName, PDFString, PDFHexString, PDFDict, PDFArray, PDFNumber } from 'pdf-lib';
 import appStore from '../store';
 import Aquafier from 'aqua-js-sdk';
+import { isAquaTree, getAquatreeObject, isValidUrl, isHttpUrl, ensureDomainUrlHasSSL, getGenesisHash } from './functions';
+import { getCorrectUTF8JSONString } from '../lib/utils';
+import { ApiFileInfo } from '../models/FileInfo';
 
 // Platform identification
 const PLATFORM_NAME = 'Aquafier';
@@ -47,6 +50,33 @@ export interface DigitalSignatureResult {
     platform: string;
     certificateFingerprint: string;
   };
+}
+
+/**
+ * Helper to get MIME type from filename extension
+ */
+function getMimeTypeFromFilename(filename: string): string {
+  const ext = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+  const mimeTypes: Record<string, string> = {
+    '.pdf': 'application/pdf',
+    '.json': 'application/json',
+    '.txt': 'text/plain',
+    '.html': 'text/html',
+    '.css': 'text/css',
+    '.js': 'text/javascript',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.svg': 'image/svg+xml',
+    '.doc': 'application/msword',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    '.xls': 'application/vnd.ms-excel',
+    '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    '.zip': 'application/zip',
+  };
+  return mimeTypes[ext] || 'application/octet-stream';
 }
 
 /**
@@ -286,7 +316,8 @@ async function addSingleSignature(
  */
 export async function signPdfDocument(
   pdfBytes: Uint8Array,
-  options: SignatureOptions
+  options: SignatureOptions,
+  fileInfo?: ApiFileInfo
 ): Promise<DigitalSignatureResult> {
   const signedAt = new Date();
   const { signerInfo } = options;
@@ -296,6 +327,8 @@ export async function signPdfDocument(
   if (options.additionalSigners && options.additionalSigners.length > 0) {
     allSigners.push(...options.additionalSigners);
   }
+
+  console.log('All signers for this document:', allSigners);
 
   // Collect names and wallets for metadata
   const allSignerNames = allSigners.map(s => s.name);
@@ -334,16 +367,38 @@ export async function signPdfDocument(
     }
   }
 
-  // Get selectedFileInfo from store and embed aqua chain data
-  const { selectedFileInfo } = appStore.getState();
+  // Use passed fileInfo if available, fall back to store
+  const resolvedFileInfo = fileInfo ?? appStore.getState().selectedFileInfo;
 
-  if (selectedFileInfo && selectedFileInfo.aquaTree) {
+  console.log('resolvedFileInfo for PDF attachments:', {
+    source: fileInfo ? 'passed as parameter' : 'from store',
+    exists: !!resolvedFileInfo,
+    hasAquaTree: !!resolvedFileInfo?.aquaTree,
+    hasFileObject: !!resolvedFileInfo?.fileObject,
+    fileObjectLength: resolvedFileInfo?.fileObject?.length,
+    hasLinkedFileObjects: !!resolvedFileInfo?.linkedFileObjects,
+    linkedFileObjectsLength: resolvedFileInfo?.linkedFileObjects?.length,
+  });
+
+  if (resolvedFileInfo && resolvedFileInfo.aquaTree) {
     try {
       const aquafier = new Aquafier();
 
+
+      // resolvedFileInfo.aquaTree.file_index[Object.keys(resolvedFileInfo.aquaTree.file_index)[0]],
+      let genesisHash = getGenesisHash(resolvedFileInfo.aquaTree);
+      if (!genesisHash) {
+        console.warn('Genesis hash not found in aquaTree, using fallback');
+        throw new Error('Genesis hash not found in aquaTree');
+      }
+      let fileName = resolvedFileInfo.aquaTree.file_index[genesisHash] ;
+      if (!fileName) {
+        console.warn('File name for genesis hash not found in aquaTree file_index, using fallback');
+         throw new Error('File name for genesis hash not found in aquaTree file_index');
+      } 
       // Create aqua.json metadata
       const aquaJsonData = {
-        genesis: selectedFileInfo.aquaTree.file_index[Object.keys(selectedFileInfo.aquaTree.file_index)[0]],
+        genesis: fileName,
         name_with_hash: [] as Array<{ name: string; hash: string }>,
         createdAt: new Date().toISOString(),
         type: 'aqua_file_backup',
@@ -352,8 +407,8 @@ export async function signPdfDocument(
       };
 
       // Process file objects to create name_with_hash
-      if (selectedFileInfo.fileObject && selectedFileInfo.fileObject.length > 0) {
-        for (const fileObj of selectedFileInfo.fileObject) {
+      if (resolvedFileInfo.fileObject && resolvedFileInfo.fileObject.length > 0) {
+        for (const fileObj of resolvedFileInfo.fileObject) {
           let hashData: string;
 
           if (typeof fileObj.fileContent === 'string') {
@@ -387,80 +442,71 @@ export async function signPdfDocument(
         }
       );
 
+      console.log('Embedded aqua.json with content:', JSON.stringify(aquaJsonData, null, 2));
+      console.log('Embedded resolved file info:', JSON.stringify(resolvedFileInfo, null, 2));
+      // throw new Error('Test error to verify error handling'); // <-- Test error, remove in production
       // Embed all file objects (both .aqua.json metadata and actual asset files)
-      if (selectedFileInfo.fileObject && selectedFileInfo.fileObject.length > 0) {
-        for (const fileObj of selectedFileInfo.fileObject) {
-          try {
-            // Skip files that are URLs - we can't embed remote content
-            if (typeof fileObj.fileContent === 'string' &&
-                (fileObj.fileContent.startsWith('http://') || fileObj.fileContent.startsWith('https://'))) {
-              console.log(`Skipping URL-based file: ${fileObj.fileName}`);
-              continue;
-            }
+      // Mirrors the logic in download_aqua_chain.tsx for consistency
+      if (resolvedFileInfo.fileObject && resolvedFileInfo.fileObject.length > 0) {
+        const { session } = appStore.getState();
 
+        for (const fileObj of resolvedFileInfo.fileObject) {
+          try {
             let fileBytes: Uint8Array;
+            let fileName = fileObj.fileName;
             let mimeType = 'application/octet-stream';
             let description = 'Aquafier asset file';
 
-            if (fileObj.fileName.endsWith('.aqua.json')) {
-              // Handle aqua tree files
-              const fileContent = typeof fileObj.fileContent === 'string'
-                ? fileObj.fileContent
-                : JSON.stringify(fileObj.fileContent);
-              fileBytes = new Uint8Array(new TextEncoder().encode(fileContent));
+            const isAquaTreeData = isAquaTree(fileObj.fileContent);
+
+            if (typeof fileObj.fileContent === 'string' && isValidUrl(fileObj.fileContent) && isHttpUrl(fileObj.fileContent)) {
+              // Fetch URL-based files instead of skipping them (matches ZIP behavior)
+              try {
+                const actualUrlToFetch = ensureDomainUrlHasSSL(fileObj.fileContent);
+                const response = await fetch(actualUrlToFetch, {
+                  method: 'GET',
+                  headers: {
+                    Nonce: session?.nonce ?? '--error--',
+                  },
+                });
+                const blob = await response.blob();
+                const arrayBuffer = await blob.arrayBuffer();
+                fileBytes = new Uint8Array(arrayBuffer);
+                mimeType = blob.type || getMimeTypeFromFilename(fileObj.fileName);
+                description = 'Aquafier fetched asset';
+              } catch (fetchError) {
+                console.error(`Failed to fetch URL-based file ${fileObj.fileName}:`, fetchError);
+                continue;
+              }
+            } else if (isAquaTreeData) {
+              // Use content-based detection and proper parsing (matches ZIP behavior)
+              const jsonContent = getAquatreeObject(fileObj.fileContent);
+              fileName = fileObj.fileName.endsWith('.aqua.json')
+                ? fileObj.fileName
+                : `${fileObj.fileName}.aqua.json`;
+              fileBytes = getCorrectUTF8JSONString(jsonContent);
               mimeType = 'application/json';
               description = 'Aquafier chain file';
-            } else if (fileObj.fileName.endsWith('.json')) {
-              // Handle JSON files
-              const fileContent = typeof fileObj.fileContent === 'string'
-                ? fileObj.fileContent
-                : JSON.stringify(fileObj.fileContent);
-              fileBytes = new Uint8Array(new TextEncoder().encode(fileContent));
-              mimeType = 'application/json';
-              description = 'Aquafier JSON asset';
-            } else if (fileObj.fileName.endsWith('.png')) {
-              mimeType = 'image/png';
-              description = 'Aquafier image asset';
-              if (fileObj.fileContent instanceof ArrayBuffer) {
-                fileBytes = new Uint8Array(fileObj.fileContent);
-              } else if (typeof fileObj.fileContent === 'string') {
-                // Check if it's base64 encoded
-                if (fileObj.fileContent.startsWith('data:')) {
-                  const base64Data = fileObj.fileContent.split(',')[1];
-                  fileBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-                } else {
-                  fileBytes = new Uint8Array(new TextEncoder().encode(fileObj.fileContent));
-                }
-              } else {
-                console.warn(`Skipping ${fileObj.fileName} - unsupported content type`);
-                continue;
-              }
-            } else if (fileObj.fileName.endsWith('.pdf')) {
-              mimeType = 'application/pdf';
-              description = 'Aquafier PDF asset';
-              if (fileObj.fileContent instanceof ArrayBuffer) {
-                fileBytes = new Uint8Array(fileObj.fileContent);
-              } else if (typeof fileObj.fileContent === 'string') {
-                fileBytes = new Uint8Array(new TextEncoder().encode(fileObj.fileContent));
-              } else {
-                console.warn(`Skipping ${fileObj.fileName} - unsupported content type`);
-                continue;
-              }
+            } else if (typeof fileObj.fileContent === 'string') {
+              fileBytes = new Uint8Array(new TextEncoder().encode(fileObj.fileContent));
+              mimeType = getMimeTypeFromFilename(fileObj.fileName);
+              description = 'Aquafier text asset';
+            } else if (fileObj.fileContent instanceof Uint8Array || fileObj.fileContent instanceof ArrayBuffer) {
+              fileBytes = fileObj.fileContent instanceof ArrayBuffer
+                ? new Uint8Array(fileObj.fileContent)
+                : fileObj.fileContent;
+              mimeType = getMimeTypeFromFilename(fileObj.fileName);
+              description = 'Aquafier binary asset';
             } else {
-              // Handle other file types
-              if (typeof fileObj.fileContent === 'string') {
-                fileBytes = new Uint8Array(new TextEncoder().encode(fileObj.fileContent));
-              } else if (fileObj.fileContent instanceof ArrayBuffer) {
-                fileBytes = new Uint8Array(fileObj.fileContent);
-              } else {
-                console.warn(`Skipping ${fileObj.fileName} - unsupported content type`);
-                continue;
-              }
+              // For other types (objects, etc.), use getCorrectUTF8JSONString
+              fileBytes = getCorrectUTF8JSONString(JSON.stringify(fileObj.fileContent));
+              mimeType = getMimeTypeFromFilename(fileObj.fileName);
+              description = 'Aquafier asset file';
             }
 
             await tempDoc.attach(
               fileBytes,
-              fileObj.fileName,
+              fileName,
               {
                 mimeType,
                 description,
@@ -468,7 +514,7 @@ export async function signPdfDocument(
                 modificationDate: signedAt,
               }
             );
-            console.log(`Attached file: ${fileObj.fileName} (${fileBytes.length} bytes)`);
+            console.log(`Attached file: ${fileName} (${fileBytes.length} bytes)`);
           } catch (error) {
             console.error(`Failed to attach ${fileObj.fileName}:`, error);
           }
@@ -476,49 +522,75 @@ export async function signPdfDocument(
       }
 
       // Also embed linkedFileObjects if they exist and have content
-      if (selectedFileInfo.linkedFileObjects && selectedFileInfo.linkedFileObjects.length > 0) {
-        for (const linkedFileObj of selectedFileInfo.linkedFileObjects) {
-          if (linkedFileObj.fileObject) {
-            for (const fileObj of linkedFileObj.fileObject) {
-              try {
-                // Skip files that are URLs
-                if (typeof fileObj.fileContent === 'string' &&
-                    (fileObj.fileContent.startsWith('http://') || fileObj.fileContent.startsWith('https://'))) {
-                  continue;
-                }
+      // if (resolvedFileInfo.linkedFileObjects && resolvedFileInfo.linkedFileObjects.length > 0) {
+      //   const { session: linkedSession } = appStore.getState();
 
-                let fileBytes: Uint8Array;
-                let mimeType = 'application/octet-stream';
+      //   for (const linkedFileObj of resolvedFileInfo.linkedFileObjects) {
+      //     if (linkedFileObj.fileObject) {
+      //       for (const fileObj of linkedFileObj.fileObject) {
+      //         try {
+      //           let fileBytes: Uint8Array;
+      //           let fileName = fileObj.fileName;
+      //           let mimeType = 'application/octet-stream';
 
-                if (typeof fileObj.fileContent === 'string') {
-                  fileBytes = new Uint8Array(new TextEncoder().encode(fileObj.fileContent));
-                  if (fileObj.fileName.endsWith('.json')) {
-                    mimeType = 'application/json';
-                  }
-                } else if (fileObj.fileContent instanceof ArrayBuffer) {
-                  fileBytes = new Uint8Array(fileObj.fileContent);
-                } else {
-                  continue;
-                }
+      //           const isAquaTreeData = isAquaTree(fileObj.fileContent);
 
-                await tempDoc.attach(
-                  fileBytes,
-                  fileObj.fileName,
-                  {
-                    mimeType,
-                    description: 'Aquafier linked asset',
-                    creationDate: signedAt,
-                    modificationDate: signedAt,
-                  }
-                );
-                console.log(`Attached linked file: ${fileObj.fileName} (${fileBytes.length} bytes)`);
-              } catch (error) {
-                console.error(`Failed to attach linked file ${fileObj.fileName}:`, error);
-              }
-            }
-          }
-        }
-      }
+      //           if (typeof fileObj.fileContent === 'string' && isValidUrl(fileObj.fileContent) && isHttpUrl(fileObj.fileContent)) {
+      //             // Fetch URL-based files instead of skipping them
+      //             try {
+      //               const actualUrlToFetch = ensureDomainUrlHasSSL(fileObj.fileContent);
+      //               const response = await fetch(actualUrlToFetch, {
+      //                 method: 'GET',
+      //                 headers: {
+      //                   Nonce: linkedSession?.nonce ?? '--error--',
+      //                 },
+      //               });
+      //               const blob = await response.blob();
+      //               const arrayBuffer = await blob.arrayBuffer();
+      //               fileBytes = new Uint8Array(arrayBuffer);
+      //               mimeType = blob.type || getMimeTypeFromFilename(fileObj.fileName);
+      //             } catch (fetchError) {
+      //               console.error(`Failed to fetch linked URL-based file ${fileObj.fileName}:`, fetchError);
+      //               continue;
+      //             }
+      //           } else if (isAquaTreeData) {
+      //             const jsonContent = getAquatreeObject(fileObj.fileContent);
+      //             fileName = fileObj.fileName.endsWith('.aqua.json')
+      //               ? fileObj.fileName
+      //               : `${fileObj.fileName}.aqua.json`;
+      //             fileBytes = getCorrectUTF8JSONString(jsonContent);
+      //             mimeType = 'application/json';
+      //           } else if (typeof fileObj.fileContent === 'string') {
+      //             fileBytes = new Uint8Array(new TextEncoder().encode(fileObj.fileContent));
+      //             mimeType = getMimeTypeFromFilename(fileObj.fileName);
+      //           } else if (fileObj.fileContent instanceof Uint8Array || fileObj.fileContent instanceof ArrayBuffer) {
+      //             fileBytes = fileObj.fileContent instanceof ArrayBuffer
+      //               ? new Uint8Array(fileObj.fileContent)
+      //               : fileObj.fileContent;
+      //             mimeType = getMimeTypeFromFilename(fileObj.fileName);
+      //           } else {
+      //             fileBytes = getCorrectUTF8JSONString(JSON.stringify(fileObj.fileContent));
+      //             mimeType = getMimeTypeFromFilename(fileObj.fileName);
+      //           }
+
+      //           await tempDoc.attach(
+      //             fileBytes,
+      //             fileName,
+      //             {
+      //               mimeType,
+      //               description: 'Aquafier linked asset',
+      //               creationDate: signedAt,
+      //               modificationDate: signedAt,
+      //             }
+      //           );
+      //           console.log(`Attached linked file: ${fileName} (${fileBytes.length} bytes)`);
+      //         } catch (error) {
+      //           console.error(`Failed to attach linked file ${fileObj.fileName}:`, error);
+      //         }
+      //       }
+      //     }
+      //   }
+      // }
     } catch (error) {
       console.error('Failed to embed aqua chain data:', error);
     }
@@ -570,8 +642,15 @@ export async function signPdfWithAquafier(
   signerName: string,
   walletAddress: string,
   additionalSigners?: Array<{ name: string; walletAddress: string }>,
-  documentId?: string
+  documentId?: string,
+  fileInfo?: ApiFileInfo
 ): Promise<DigitalSignatureResult> {
+  console.log('signPdfWithAquafier - fileInfo received:', {
+    exists: !!fileInfo,
+    hasAquaTree: !!fileInfo?.aquaTree,
+    fileObjectLength: fileInfo?.fileObject?.length,
+  });
+
   const signersList = signerName + (additionalSigners ? ', ' + additionalSigners.map((s) => s.name).join(', ') : '');
 
   // Convert additional signers to SignerInfo format
@@ -593,8 +672,10 @@ export async function signPdfWithAquafier(
     },
     additionalSigners: additionalSignerInfos,
   };
+  console.log('Signing PDF with options:', options);
+  const res = await signPdfDocument(pdfBytes, options, fileInfo);
 
-  return signPdfDocument(pdfBytes, options);
+  return res;
 }
 
 /**
@@ -707,43 +788,48 @@ export async function extractEmbeddedAquaData(
         // Zlib header starts with 0x78 followed by compression level byte
         const isZlibCompressed = fileBytes[0] === 0x78;
 
-        let content: string;
+        // Determine if this file is text-based (JSON) or binary (PNG, PDF, etc.)
+        const isTextFile = filename.endsWith('.json');
+
+        let rawBytes: Uint8Array;
 
         if (isZlibCompressed) {
           console.log(`File ${filename} appears to be zlib compressed, attempting to decompress with pako...`);
           try {
-            // Use pako to decompress zlib data
             const pako = await import('pako');
-            const decompressed = pako.inflate(fileBytes);
-            content = new TextDecoder('utf-8').decode(decompressed);
+            rawBytes = pako.inflate(fileBytes);
             console.log(`Successfully decompressed ${filename} with pako`);
           } catch (error) {
             console.error(`Failed to decompress ${filename} with pako:`, error);
-            // Try decoding as plain text
-            content = new TextDecoder('utf-8').decode(fileBytes);
+            rawBytes = fileBytes;
           }
         } else {
-          // Not compressed, decode as plain text
-          content = new TextDecoder('utf-8').decode(fileBytes);
+          rawBytes = fileBytes;
         }
 
-        console.log(`Extracted ${filename}: ${content.length} characters`);
+        console.log(`Extracted ${filename}: ${rawBytes.length} bytes, isTextFile: ${isTextFile}`);
 
         if (filename === 'aqua.json') {
           try {
-            aquaJson = JSON.parse(content);
+            const textContent = new TextDecoder('utf-8').decode(rawBytes);
+            aquaJson = JSON.parse(textContent);
             console.log('Successfully parsed aqua.json');
           } catch (error) {
             console.error('Failed to parse aqua.json:', error);
-            console.log('First 100 chars:', content.substring(0, 100));
           }
         } else if (filename.endsWith('.aqua.json')) {
-          aquaChainFiles.push({ filename, content });
+          const textContent = new TextDecoder('utf-8').decode(rawBytes);
+          aquaChainFiles.push({ filename, content: textContent });
           console.log(`Added ${filename} to aquaChainFiles`);
+        } else if (isTextFile) {
+          // Non-aqua JSON asset file — decode as text
+          const textContent = new TextDecoder('utf-8').decode(rawBytes);
+          assetFiles.push({ filename, content: textContent });
+          console.log(`Added ${filename} to assetFiles (text)`);
         } else {
-          // This is an asset file (non-aqua.json)
-          assetFiles.push({ filename, content });
-          console.log(`Added ${filename} to assetFiles`);
+          // Binary asset file (PNG, PDF, etc.) — keep as raw bytes
+          assetFiles.push({ filename, content: rawBytes.buffer as ArrayBuffer });
+          console.log(`Added ${filename} to assetFiles (binary, ${rawBytes.length} bytes)`);
         }
       } catch (error) {
         console.error('Failed to process embedded file at index', i, ':', error);

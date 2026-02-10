@@ -50,7 +50,7 @@ interface PdfRendererProps {
       onDownload?: () => void
 }
 
-function PdfRendererComponent({
+export function PdfRendererComponent({
       pdfFile,
       annotations,
       annotationsInDocument,
@@ -147,7 +147,7 @@ function PdfRendererComponent({
 //   );
 // });
 
-export const PdfRenderer = PdfRendererComponent
+// export const PdfRenderer = PdfRendererComponent
 
 interface EasyPDFRendererProps {
       latestRevisionHash: string
@@ -224,7 +224,7 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, l
       };
 
       return (
-            <PdfRenderer
+            <PdfRendererComponent
                   pdfFile={pdfFile}
                   annotations={mappedAnnotations}
                   annotationsInDocument={annotationsInDocument}
@@ -341,6 +341,7 @@ export default function SignerPage({
 
       // FEATURE: This method will help us do the download of the pdf
       const handleDownload = async () => {
+            console.log('>>> SignerPage handleDownload CALLED (no fileInfo available here)');
             if (!pdfFile) {
                   toast.error("No PDF - Please upload or load a PDF file first.");
                   return;
@@ -361,7 +362,8 @@ export default function SignerPage({
                   // or just let the utility handle the signing without a fresh backup if that's the intent.
                   // Looking at old code: using `documentId` directly. 
                   // Ideally we pass a wrapper that returns documentId.
-                  backupFn: async () => documentId ?? null
+                  backupFn: async () => documentId ?? null,
+                  fileInfo: fil
             });
 
             /* 
@@ -648,7 +650,7 @@ export default function SignerPage({
                               <div className="bg-gray-100 col-span-12 md:col-span-9 overflow-x-auto overflow-y-scroll h-full">
                                     <div className="h-auto md:h-full p-0 m-0">
 
-                                          <PdfRenderer
+                                          <PdfRendererComponent
                                                 pdfFile={pdfFile}
                                                 annotations={annotations}
                                                 annotationsInDocument={annotationsInDocument}

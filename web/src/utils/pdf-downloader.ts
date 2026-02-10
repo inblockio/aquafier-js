@@ -4,6 +4,7 @@ import { signPdfWithAquafier } from './pdf-digital-signature';
 import { Annotation, ImageAnnotation, ProfileAnnotation, TextAnnotation } from '../pages/aqua_sign_wokflow/ContractDocument/signer/types';
 import appStore from '../store';
 import { formatAddressForFilename } from './functions';
+import { ApiFileInfo } from '../models/FileInfo';
 
 /**
  * Parses a font size string (e.g., "12pt", "16px") to points.
@@ -59,6 +60,7 @@ export interface DownloadPdfOptions {
     annotations: Annotation[];
     fileName?: string;
     backupFn?: () => Promise<string | null>;
+    fileInfo?: ApiFileInfo;
 }
 
 /**
@@ -79,8 +81,15 @@ export const downloadPdfWithAnnotations = async ({
     pdfFile,
     annotations,
     fileName,
-    backupFn
+    backupFn,
+    fileInfo
 }: DownloadPdfOptions) => {
+    console.log('downloadPdfWithAnnotations - fileInfo received:', {
+        exists: !!fileInfo,
+        hasAquaTree: !!fileInfo?.aquaTree,
+        fileObjectLength: fileInfo?.fileObject?.length,
+    });
+
     if (!pdfFile) {
         toast.error("No PDF - Please upload or load a PDF file first.");
         return;
@@ -290,15 +299,19 @@ export const downloadPdfWithAnnotations = async ({
             let docBackupId = "";
             if (backupFn) {
                 const id = await backupFn();
-                if (id) docBackupId = id;
+                if (id) {
+                    docBackupId = id;
+                }
             }
+            console.log("Initiating digital signature with primary signer:", primarySigner);
 
             const { signedPdf, signatureInfo } = await signPdfWithAquafier(
                 pdfBytes,
                 primarySigner.name,
                 primarySigner.walletAddress,
                 additionalSigners,
-                docBackupId
+                docBackupId,
+                fileInfo
             );
 
             // Update selectedFileInfo with the signed PDF blob and metadata

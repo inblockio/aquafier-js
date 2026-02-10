@@ -70,7 +70,16 @@ export const CompleteChainView = ({ callBack, selectedFileInfo, hideFilePreview 
 
       useEffect(() => {
             const verify = async () => {
-                  if (!selectedFileInfo?.aquaTree || !selectedFileInfo.fileObject || isProcessing) return
+                  console.log('[CompleteChainView] verify() called', {
+                        hasAquaTree: !!selectedFileInfo?.aquaTree,
+                        hasFileObject: !!selectedFileInfo?.fileObject,
+                        fileObjectCount: selectedFileInfo?.fileObject?.length,
+                        isProcessing,
+                  })
+                  if (!selectedFileInfo?.aquaTree || !selectedFileInfo.fileObject || isProcessing) {
+                        console.log('[CompleteChainView] verify() early return — missing data or already processing')
+                        return
+                  }
                   setIsProcessing(true)
                   try {
                         const aquafier = new Aquafier()
@@ -107,6 +116,11 @@ export const CompleteChainView = ({ callBack, selectedFileInfo, hideFilePreview 
                         // We wait for all the file promises to resolve and get the file objects to use
                         const filesResult = await Promise.all(filePromises)
 
+                        console.log('[CompleteChainView] filesResult for verification:', filesResult.map(f => ({
+                              fileName: f.fileName,
+                              contentType: typeof f.fileContent === 'string' ? 'string' : (f.fileContent instanceof Uint8Array ? 'Uint8Array' : typeof f.fileContent),
+                              contentLength: typeof f.fileContent === 'string' ? f.fileContent.length : (f.fileContent instanceof Uint8Array ? f.fileContent.length : 'unknown'),
+                        })))
                         const revisionHashes = Object.keys(selectedFileInfo.aquaTree.revisions || {})
 
                         const reorderedAquaTree = OrderRevisionInAquaTree(selectedFileInfo.aquaTree!)
@@ -129,22 +143,44 @@ export const CompleteChainView = ({ callBack, selectedFileInfo, hideFilePreview 
                               })
                         )
 
+                        console.log('[CompleteChainView] verification complete, detailed results:')
+                        verificationResults.forEach(r => {
+                              console.log(`  revision ${r.hash.substring(0, 16)}... => ${r.isSuccessful ? 'OK' : 'FAILED'}`)
+                              if (!r.isSuccessful && Array.isArray(r.logs)) {
+                                    r.logs.forEach((log: any) => console.log('    LOG:', JSON.stringify(log)))
+                              }
+                        })
                         setVerificationResults(verificationResults)
                         // setAllLogs(verificationResults.flatMap(r => r.logs))
 
+                        const allSuccessful = isVerificationSuccessful(verificationResults)
+                        console.log('[CompleteChainView] calling callBack with isVerificationSuccessful:', allSuccessful)
                         callBack({
                               fileName,
                               colorLight: '',
                               colorDark: '',
-                              isVerificationSuccessful: isVerificationSuccessful(verificationResults),
+                              isVerificationSuccessful: allSuccessful,
                         })
                   } catch (e) {
-                        console.error('Verification error:', e)
+                        console.error('[CompleteChainView] Verification error:', e)
+                        const fallbackFileName = selectedFileInfo?.aquaTree ? getFileName(selectedFileInfo.aquaTree) : 'unknown'
+                        console.log('[CompleteChainView] calling callBack from CATCH with isVerificationSuccessful: false')
+                        callBack({
+                              fileName: fallbackFileName,
+                              colorLight: '',
+                              colorDark: '',
+                              isVerificationSuccessful: false,
+                        })
                   } finally {
                         setIsProcessing(false)
                   }
             }
 
+            console.log('[CompleteChainView] useEffect triggered, selectedFileInfo:', {
+                  exists: !!selectedFileInfo,
+                  hasAquaTree: !!selectedFileInfo?.aquaTree,
+                  revisionKeys: Object.keys(selectedFileInfo?.aquaTree?.revisions || {}),
+            })
             if (selectedFileInfo) {
                   setAllLogs([])
                   verify()
