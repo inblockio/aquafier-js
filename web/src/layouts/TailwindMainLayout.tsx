@@ -1,82 +1,115 @@
 import { Button } from '@/components/ui/button'
-import { Github } from 'lucide-react'
+import { Github, Sun, Moon } from 'lucide-react'
 import { BsTwitterX } from 'react-icons/bs'
 import { FaFacebook, FaLinkedin } from 'react-icons/fa6'
 import { Link, Outlet } from 'react-router-dom'
 import appStore from '../store'
 import { useStore } from 'zustand'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { WebConfig } from '@/types/types'
 
-const Header = () => (
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container flex h-16 max-w-screen-2xl items-center mx-auto px-2">
-                  <nav className="hidden flex-1 md:flex items-center space-x-4 lg:space-x-6 justify-between">
-                        <Link to="/" className="flex items-center space-x-2 group">
-                              <div className="relative overflow-hidden p-1 ">
-                                    <img className="h-[40px]" src="/images/logo.png" />
-                              </div>
-                        </Link>
-                        <div className="flex items-center space-x-6 lg:space-x-8">
-                              <a
-                                    href="/#features"
-                                    className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-orange-500 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-gradient-to-r after:from-primary after:to-orange-500 after:transition-all after:duration-300 hover:after:w-full"
-                              >
-                                    Features
-                              </a>
-                              <a
-                                    href="/#how-it-works"
-                                    className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-orange-500 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-gradient-to-r after:from-primary after:to-orange-500 after:transition-all after:duration-300 hover:after:w-full"
-                              >
-                                    How It Works
-                              </a>
-                              <a
-                                    href="/#prototypes"
-                                    className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-orange-500 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-gradient-to-r after:from-primary after:to-orange-500 after:transition-all after:duration-300 hover:after:w-full"
-                              >
-                                    Prototypes
-                              </a>
-                              <a
-                                    href="/#vision"
-                                    className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-orange-500 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-gradient-to-r after:from-primary after:to-orange-500 after:transition-all after:duration-300 hover:after:w-full"
-                              >
-                                    Vision
-                              </a>
-                              <a
-                                    href="/#contact"
-                                    className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-orange-500 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-gradient-to-r after:from-primary after:to-orange-500 after:transition-all after:duration-300 hover:after:w-full"
-                              >
-                                    Contact
-                              </a>
-                                 <a
-                                    href="/app/verify-document"
-                                    className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-orange-500 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-gradient-to-r after:from-primary after:to-orange-500 after:transition-all after:duration-300 hover:after:w-full"
-                              >
-                                    Verify Document
-                              </a>
-                        </div>
-                  </nav>
-                  <nav className="flex items-center space-x-2 group md:hidden">
-                        <Link to="/" className="flex items-center space-x-2 group">
-                              <div className="relative overflow-hidden">
-                                    <img className="h-[34px]" src="/images/logo.png" />
-                              </div>
-                        </Link>
-                  </nav>
-                  <div className="flex flex-1 items-center justify-end space-x-3">
-                        <Button variant="outline" asChild className="border-orange-500/30 hover:border-orange-500 hover:bg-orange-500/5 transition-all duration-300">
-                              <Link to="https://github.com/inblockio" target="_blank" rel="noopener noreferrer">
-                                    <Github className="mr-2 h-4 w-4 text-orange-500" />
-                                    GitHub
+const Header = () => {
+      const [isDark, setIsDark] = useState(() => {
+            if (typeof window === 'undefined') return false
+            const stored = localStorage.getItem('theme')
+            return stored === 'dark'
+      })
+
+      useEffect(() => {
+            if (isDark) {
+                  document.documentElement.classList.add('dark')
+            } else {
+                  document.documentElement.classList.remove('dark')
+            }
+      }, [isDark])
+
+      const toggleTheme = useCallback(() => {
+            setIsDark((prev) => {
+                  const next = !prev
+                  localStorage.setItem('theme', next ? 'dark' : 'light')
+                  return next
+            })
+      }, [])
+
+      return (
+            <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                  <div className="container flex h-16 max-w-screen-2xl items-center mx-auto px-2">
+                        <nav className="hidden flex-1 md:flex items-center space-x-4 lg:space-x-6 justify-between">
+                              <Link to="/" className="flex items-center space-x-2 group">
+                                    <div className="relative overflow-hidden p-1 ">
+                                          <img className="h-[40px]" src="/images/logo.png" />
+                                    </div>
                               </Link>
-                        </Button>
-                        <Button asChild className="bg-gradient-to-r from-primary to-orange-600 hover:from-orange-600 hover:to-primary text-white transition-all duration-300 shadow-md hover:shadow-lg">
-                              <Link to="/app">Go to App</Link>
-                        </Button>
+                              <div className="flex items-center space-x-6 lg:space-x-8">
+                                    <a
+                                          href="/#features"
+                                          className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-orange-500 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-gradient-to-r after:from-primary after:to-orange-500 after:transition-all after:duration-300 hover:after:w-full"
+                                    >
+                                          Features
+                                    </a>
+                                    <a
+                                          href="/#how-it-works"
+                                          className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-orange-500 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-gradient-to-r after:from-primary after:to-orange-500 after:transition-all after:duration-300 hover:after:w-full"
+                                    >
+                                          How It Works
+                                    </a>
+                                    <a
+                                          href="/#prototypes"
+                                          className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-orange-500 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-gradient-to-r after:from-primary after:to-orange-500 after:transition-all after:duration-300 hover:after:w-full"
+                                    >
+                                          Prototypes
+                                    </a>
+                                    <a
+                                          href="/#vision"
+                                          className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-orange-500 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-gradient-to-r after:from-primary after:to-orange-500 after:transition-all after:duration-300 hover:after:w-full"
+                                    >
+                                          Vision
+                                    </a>
+                                    <a
+                                          href="/#contact"
+                                          className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-orange-500 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-gradient-to-r after:from-primary after:to-orange-500 after:transition-all after:duration-300 hover:after:w-full"
+                                    >
+                                          Contact
+                                    </a>
+                                       <a
+                                          href="/app/verify-document"
+                                          className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-orange-500 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-gradient-to-r after:from-primary after:to-orange-500 after:transition-all after:duration-300 hover:after:w-full"
+                                    >
+                                          Verify Document
+                                    </a>
+                              </div>
+                        </nav>
+                        <nav className="flex items-center space-x-2 group md:hidden">
+                              <Link to="/" className="flex items-center space-x-2 group">
+                                    <div className="relative overflow-hidden">
+                                          <img className="h-[34px]" src="/images/logo.png" />
+                                    </div>
+                              </Link>
+                        </nav>
+                        <div className="flex flex-1 items-center justify-end space-x-3">
+                              <Button variant="outline" asChild className="border-orange-500/30 hover:border-orange-500 hover:bg-orange-500/5 transition-all duration-300">
+                                    <Link to="https://github.com/inblockio" target="_blank" rel="noopener noreferrer">
+                                          <Github className="mr-2 h-4 w-4 text-orange-500" />
+                                          GitHub
+                                    </Link>
+                              </Button>
+                              <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={toggleTheme}
+                                    aria-label="Toggle theme"
+                                    className="border-orange-500/30 hover:border-orange-500 hover:bg-orange-500/5 transition-all duration-300"
+                              >
+                                    {isDark ? <Sun className="h-4 w-4 text-orange-500" /> : <Moon className="h-4 w-4 text-orange-500" />}
+                              </Button>
+                              <Button asChild className="bg-gradient-to-r from-primary to-orange-600 hover:from-orange-600 hover:to-primary text-white transition-all duration-300 shadow-md hover:shadow-lg">
+                                    <Link to="/app">Go to App</Link>
+                              </Button>
+                        </div>
                   </div>
-            </div>
-      </header>
-)
+            </header>
+      )
+}
 
 const Footer = () => (
       <footer className="bg-gradient-to-b from-orange-900 to-orange-950 text-orange-100/80">
@@ -224,20 +257,14 @@ const TailwindMainLayout = () => {
       //       }
       // }, [])
 
+      const isCustomLanding = webConfigData.CUSTOM_LANDING_PAGE_URL === 'true' || webConfigData.CUSTOM_LANDING_PAGE_URL === true
+
       return (
-            <>
-                  {/* {
-                        loadingConfig ? (
-                              <div className="min-h-screen flex items-center justify-center">
-                                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500">
-                                          <ClipLoader color="#000" loading={loadingConfig} size={100} />
-                                    </div>
-                              </div>
-                        ) : null
-                  } */}
-                  {
-                        webConfigData.CUSTOM_LANDING_PAGE_URL === 'true' || webConfigData.CUSTOM_LANDING_PAGE_URL === true ?
-                              <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50 flex items-center justify-center p-4">
+            <div className="bg-background text-foreground font-body flex flex-col min-h-screen">
+                  <Header />
+                  <main className="flex-grow">
+                        {isCustomLanding ? (
+                              <section className="bg-gradient-to-br from-orange-50 via-background to-orange-50/20 dark:from-orange-950/20 dark:via-background dark:to-orange-950/10 flex items-center justify-center p-4 py-20 md:py-32">
                                     <div className="max-w-2xl mx-auto text-center space-y-8">
                                           {/* Logo Section */}
                                           <div className="flex justify-center mb-8">
@@ -250,19 +277,19 @@ const TailwindMainLayout = () => {
                                                 ) : null}
                                           </div>
 
-                                          {/* Welcome Section */}
+                                          {/* Hero Section */}
                                           <div className="space-y-4">
-                                                <h1 className="text-4xl md:text-5xl font-bold text-gray-900 font-headline">
+                                                <h1 className="text-4xl md:text-5xl font-bold text-foreground font-headline">
                                                       Welcome to {webConfigData.CUSTOM_NAME}.
                                                 </h1>
-                                                <p className="text-xl text-gray-600 leading-relaxed max-w-xl mx-auto">
+                                                <p className="text-xl text-muted-foreground leading-relaxed max-w-xl mx-auto">
                                                       {webConfigData.CUSTOM_DESCRIPTION}
                                                 </p>
                                           </div>
 
                                           {/* Description */}
-                                          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-orange-100">
-                                                <p className="text-gray-700 text-lg leading-relaxed">
+                                          <div className="bg-white/70 dark:bg-white/5 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-orange-100 dark:border-orange-900/30">
+                                                <p className="text-muted-foreground text-lg leading-relaxed">
                                                       Experience the future of data verification and integrity.
                                                       Our protocol ensures your data remains tamper-proof and verifiable
                                                       through advanced cryptographic techniques.
@@ -277,35 +304,21 @@ const TailwindMainLayout = () => {
                                                       className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                                                 >
                                                       <Link to="/app" className="flex items-center space-x-2">
-                                                            <span>Launch Application</span>
+                                                            <span>Get Started</span>
                                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                                             </svg>
                                                       </Link>
                                                 </Button>
                                           </div>
-
-                                          {/* Footer Note */}
-                                          <div className="pt-8">
-                                                <p className="text-sm text-gray-500">
-                                                      {webConfigData.CUSTOM_NAME} © {new Date().getFullYear()}. All rights reserved.
-                                                </p>
-                                          </div>
                                     </div>
-                              </div>
-                              : <>
-                                    <div className="bg-background text-foreground font-body flex flex-col min-h-screen">
-                                          <Header />
-                                          <main className="flex-grow">
-                                                <Outlet />
-                                          </main>
-                                          <Footer />
-                                    </div>
-                              </>
-                  }
-
-            </>
-
+                              </section>
+                        ) : (
+                              <Outlet />
+                        )}
+                  </main>
+                  <Footer />
+            </div>
       )
 }
 

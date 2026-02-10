@@ -2040,7 +2040,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                 className="bg-blue-600 hover:bg-blue-700 text-white px-6"
                                                 disabled={!formData['document']}
                                           >
-                                                Go to Add signers
+                                                Go to add signers
                                           </Button>
                                     </div>
                               </div>
