@@ -843,6 +843,9 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
       useEffect(() => {
             if (walletAddress && session?.nonce) {
                   loadWorkflows()
+            } else {
+                  setIsLoading(false)
+                  setLoading(false)
             }
       }, [walletAddress, session?.nonce, files])
 
