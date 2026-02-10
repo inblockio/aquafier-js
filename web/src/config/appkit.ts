@@ -77,6 +77,7 @@ export const appKit = createAppKit({
   projectId,
   siweConfig,
   metadata,
+  themeMode: 'light',
   features: {
     email: true,
     socials: [

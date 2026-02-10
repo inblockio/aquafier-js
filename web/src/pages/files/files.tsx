@@ -557,20 +557,6 @@ const FilesPage = () => {
                                     </Tooltip>
 
                                     <ClaimTypesDropdownButton />
-
-                                    <div className="inline-block">
-                                          <Button
-                                                className="flex items-center gap-1 sm:gap-2 text-gray-700 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer whitespace-nowrap shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                                onClick={() => {
-                                                      setOpenDialog({ dialogType: 'form_template_editor', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
-                                                }}
-                                          >
-                                                <FolderPlus className="w-4 h-4" />
-                                                <span>Create Template</span>
-                                          </Button>
-                                    </div>
-
-
                               </div>
                         </div>
                   </div>
