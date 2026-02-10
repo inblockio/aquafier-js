@@ -35,7 +35,7 @@ const HeroSection = () => (
             <div className="container mx-auto text-center px-4 relative z-10">
                   <div className="max-w-4xl mx-auto">
                         <h1 className="text-4xl font-bold font-headline tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
-                              <span className="bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent">Aqua</span> Secure Document Signing & Verification Protocol
+                              <span className="bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent">AquaFire App</span> Portable and Secure Document Managment, e-Signature and Identity Solution.
                         </h1>
                         <div className="h-1 w-24 bg-gradient-to-r from-orange-600 to-orange-400 mx-auto my-6"></div>
                         <p className="mt-6 text-lg text-muted-foreground md:text-xl">

@@ -119,10 +119,10 @@ export default function NewShadcnLayoutWithSidebar() {
                                                       <Crown className="w-8 h-8 text-orange-600" />
                                                 </div>
                                                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                                                      Free Pilot Version
+                                                      Free Version
                                                 </h2>
                                                 <p className="text-gray-600 leading-relaxed mb-4">
-                                                      You are using a free pilot version of the{' '}
+                                                      You are using a free version <br /> of the{' '}
 
                                                       <a href="https://aquafier.inblock.io"
                                                             target="_blank"
