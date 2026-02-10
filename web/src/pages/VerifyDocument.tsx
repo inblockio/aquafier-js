@@ -9,7 +9,6 @@ import { IDrawerStatus } from '../models/AquaTreeDetails'
 import { ImportAquaChainFromChain } from '../components/dropzone_file_actions/import_aqua_tree_from_aqua_tree'
 import { toast } from 'sonner'
 import { extractEmbeddedAquaData } from '@/utils/pdf-digital-signature'
-import Aquafier  from 'aqua-js-sdk'
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert'
 import { PdfDropzone } from '@/components/ui/pdf-dropzone'
 import { CompleteChainView } from '../components/files_chain_details'
@@ -420,7 +419,7 @@ const VerifyDocument = () => {
                               }
 
                               // Create Aquafier instance for validation
-                              const aquafier = new Aquafier()
+                              // const aquafier = new Aquafier()
 
                               // Validate all files in name_with_hash exist and match hashes
                               const fileObjects: any[] = []
@@ -434,7 +433,7 @@ const VerifyDocument = () => {
                                           }
 
                                           // Validate hash
-                                          const calculatedHash = aquafier.getFileHash(aquaFile.content)
+                                          // const calculatedHash = aquafier.getFileHash(aquaFile.content)
 
                                           // SDK expects aqua tree fileContent as parsed object, not string
                                           let parsedContent: any = aquaFile.content;

@@ -362,7 +362,7 @@ export default function SignerPage({
                   // Looking at old code: using `documentId` directly. 
                   // Ideally we pass a wrapper that returns documentId.
                   backupFn: async () => documentId ?? null,
-                  fileInfo: fil
+                  // fileInfo: fil
             });
 
             /* 
