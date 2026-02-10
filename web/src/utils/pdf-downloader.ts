@@ -84,12 +84,6 @@ export const downloadPdfWithAnnotations = async ({
     backupFn,
     fileInfo
 }: DownloadPdfOptions) => {
-    console.log('downloadPdfWithAnnotations - fileInfo received:', {
-        exists: !!fileInfo,
-        hasAquaTree: !!fileInfo?.aquaTree,
-        fileObjectLength: fileInfo?.fileObject?.length,
-    });
-
     if (!pdfFile) {
         toast.error("No PDF - Please upload or load a PDF file first.");
         return;

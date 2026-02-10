@@ -1567,7 +1567,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
       }
 
       const handleDownload = async () => {
-            console.log('>>> PdfSigner handleDownload CALLED');
             if (!pdfFile) {
                   toast.error("No PDF - Please upload or load a PDF file first.");
                   return;

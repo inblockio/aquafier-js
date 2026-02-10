@@ -337,7 +337,6 @@ const VerifyDocument = () => {
       }
 
       const loadPDFMetadata = async (file: File) => {
-            console.log('Loading PDF metadata for file:', file.name, 'size:', file.size, 'type:', file.type)
             try {
                   setLoading(true)
                   const arrayBuffer = await file.arrayBuffer()
@@ -386,14 +385,11 @@ const VerifyDocument = () => {
                   setPdfMetadata(metadata)
 
                   // Try to extract embedded aqua data first
-                  console.log('Attempting to extract embedded aqua data...')
                   const uint8Array = new Uint8Array(arrayBuffer)
                   const embeddedData = await extractEmbeddedAquaData(uint8Array)
-                  console.log('Embedded data extraction result:', embeddedData)
 
                   // If embedded aqua.json exists, use it for verification
                   if (embeddedData.aquaJson) {
-                        console.log('Found embedded aqua.json:', embeddedData.aquaJson)
                         toast.success('Using embedded aqua chain data for verification', {
                               description: 'Verifying document from embedded metadata (offline)',
                               duration: 4000,
@@ -407,18 +403,13 @@ const VerifyDocument = () => {
                                     throw new Error('Invalid aqua.json structure: missing genesis or name_with_hash')
                               }
 
-                              console.log('aqua.json validated. Genesis:', aquaJson.genesis, 'Files:', aquaJson.name_with_hash.length)
-
                               // Get the main aqua tree file
                               const mainAquaTreeFileName = `${aquaJson.genesis}.aqua.json`
                               const mainAquaTreeFile = embeddedData.aquaChainFiles.find(f => f.filename === mainAquaTreeFileName)
 
                               if (!mainAquaTreeFile) {
-                                    console.error('Available files:', embeddedData.aquaChainFiles.map(f => f.filename))
                                     throw new Error(`Main aqua tree file not found: ${mainAquaTreeFileName}`)
                               }
-
-                              console.log('Found main aqua tree file:', mainAquaTreeFileName)
 
                               // Parse the main aqua tree
                               const aquaTreeData = JSON.parse(mainAquaTreeFile.content)
@@ -428,8 +419,6 @@ const VerifyDocument = () => {
                                     throw new Error('Invalid aqua tree structure: missing revisions or file_index')
                               }
 
-                              console.log('Aqua tree validated. Revisions:', Object.keys(aquaTreeData.revisions).length)
-
                               // Create Aquafier instance for validation
                               const aquafier = new Aquafier()
 
@@ -438,19 +427,14 @@ const VerifyDocument = () => {
 
                               for (const nameHash of aquaJson.name_with_hash) {
                                     if (nameHash.name.endsWith('.aqua.json')) {
-                                          console.log('Processing aqua chain file:', nameHash.name)
                                           // For aqua tree files, find them in embedded files
                                           const aquaFile = embeddedData.aquaChainFiles.find(f => f.filename === nameHash.name)
                                           if (!aquaFile) {
-                                                console.warn(`Aqua chain file not found: ${nameHash.name}`)
                                                 continue // Skip if not found instead of throwing
                                           }
 
                                           // Validate hash
                                           const calculatedHash = aquafier.getFileHash(aquaFile.content)
-                                          if (nameHash.hash && calculatedHash !== nameHash.hash) {
-                                                console.warn(`Hash mismatch for ${nameHash.name}: expected ${nameHash.hash}, got ${calculatedHash}`)
-                                          }
 
                                           // SDK expects aqua tree fileContent as parsed object, not string
                                           let parsedContent: any = aquaFile.content;
@@ -467,7 +451,6 @@ const VerifyDocument = () => {
                                           })
                                     } else {
                                           // This is an asset file - check if it's embedded
-                                          console.log('Processing asset file:', nameHash.name)
                                           const assetFile = embeddedData.assetFiles.find(f => f.filename === nameHash.name)
                                           if (assetFile) {
                                                 // Convert ArrayBuffer to Uint8Array for binary files (SDK expects string | Uint8Array)
@@ -479,14 +462,9 @@ const VerifyDocument = () => {
                                                       fileContent: content,
                                                       fileSize: typeof assetFile.content === 'string' ? assetFile.content.length : (assetFile.content as ArrayBuffer).byteLength,
                                                 })
-                                                console.log(`Added asset file: ${nameHash.name} (type: ${typeof content === 'string' ? 'string' : 'Uint8Array'})`)
-                                          } else {
-                                                console.warn(`Asset file not found in PDF: ${nameHash.name} (file hash verification may fail)`)
                                           }
                                     }
                               }
-
-                              console.log('Processed file objects:', fileObjects.length, '(aqua chain + asset files)')
 
                               // Create ApiFileInfo from embedded data
                               const mockFileInfo: ApiFileInfo = {
@@ -497,36 +475,26 @@ const VerifyDocument = () => {
                                     owner: metadata.signerWallet || '',
                               }
 
-                              console.log('[VerifyDocument] Setting fileInfo with mockFileInfo:', {
-                                    hasAquaTree: !!mockFileInfo.aquaTree,
-                                    revisionCount: Object.keys(mockFileInfo.aquaTree?.revisions || {}).length,
-                                    fileObjectCount: mockFileInfo.fileObject.length,
-                              })
                               setFileInfo(mockFileInfo)
                               setLoading(false)
                               return
 
                         } catch (error) {
-                              console.error('Failed to process embedded aqua chain data:', error)
                               toast.error('Failed to process embedded data', {
                                     description: error instanceof Error ? error.message : 'Falling back to online verification',
                               })
                               setLoading(false)
                         }
-                  } else {
-                        console.log('No embedded aqua.json found')
                   }
 
                   // Fallback to loading from backend if documentId exists and no embedded data
                   if (metadata.documentId && !embeddedData.aquaJson) {
-                        console.log('Falling back to online verification with documentId:', metadata.documentId)
                         toast.info('Checking document metadata online', {
                               description: 'Verifying document via backend API',
                               duration: 3000,
                         })
                         loadPageData(metadata.documentId)
                   } else if (!metadata.documentId && !embeddedData.aquaJson) {
-                        console.log('No verification data available')
                         toast.warning('No verification data found', {
                               description: 'This PDF does not contain Aquafier signature data',
                               duration: 5000,
@@ -535,19 +503,15 @@ const VerifyDocument = () => {
                   }
 
             } catch (error) {
-                  console.error('Failed to read PDF metadata:', error)
                   toast.error('Failed to read PDF metadata')
                   setLoading(false)
             }
       }
 
       useEffect(() => {
-            console.log('pdfFile state changed:', pdfFile)
             if (pdfFile) {
-                  console.log('PDF file selected:', pdfFile.name, 'size:', pdfFile.size, 'type:', pdfFile.type)
                   loadPDFMetadata(pdfFile)
             } else {
-                  console.log('PDF file cleared')
                   setPDFFile(null)
                   setFileInfo(null)
                   setPdfMetadata(null)
@@ -556,7 +520,6 @@ const VerifyDocument = () => {
       }, [pdfFile])
 
       const updateDrawerStatus = (_drawerStatus: IDrawerStatus) => {
-            console.log('[VerifyDocument] updateDrawerStatus called with:', _drawerStatus)
             setDrawerStatus(_drawerStatus)
       }
 

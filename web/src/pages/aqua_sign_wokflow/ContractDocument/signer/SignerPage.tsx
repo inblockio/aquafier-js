@@ -341,7 +341,6 @@ export default function SignerPage({
 
       // FEATURE: This method will help us do the download of the pdf
       const handleDownload = async () => {
-            console.log('>>> SignerPage handleDownload CALLED (no fileInfo available here)');
             if (!pdfFile) {
                   toast.error("No PDF - Please upload or load a PDF file first.");
                   return;
