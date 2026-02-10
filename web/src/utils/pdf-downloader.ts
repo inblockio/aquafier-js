@@ -4,6 +4,7 @@ import { signPdfWithAquafier } from './pdf-digital-signature';
 import { Annotation, ImageAnnotation, ProfileAnnotation, TextAnnotation } from '../pages/aqua_sign_wokflow/ContractDocument/signer/types';
 import appStore from '../store';
 import { formatAddressForFilename } from './functions';
+import { ApiFileInfo } from '../models/FileInfo';
 
 /**
  * Parses a font size string (e.g., "12pt", "16px") to points.
@@ -59,6 +60,7 @@ export interface DownloadPdfOptions {
     annotations: Annotation[];
     fileName?: string;
     backupFn?: () => Promise<string | null>;
+    fileInfo?: ApiFileInfo;
 }
 
 /**
@@ -74,12 +76,13 @@ const sanitizeTextForWinAnsi = (text: string): string => {
     // We'll filter out anything else for safety to avoid crash.
     return text.replace(/[^\x20-\x7E\xA0-\xFF]/g, '?');
 };
-
+ 
 export const downloadPdfWithAnnotations = async ({
     pdfFile,
     annotations,
     fileName,
-    backupFn
+    backupFn,
+    fileInfo
 }: DownloadPdfOptions) => {
     if (!pdfFile) {
         toast.error("No PDF - Please upload or load a PDF file first.");
@@ -290,19 +293,42 @@ export const downloadPdfWithAnnotations = async ({
             let docBackupId = "";
             if (backupFn) {
                 const id = await backupFn();
-                if (id) docBackupId = id;
+                if (id) {
+                    docBackupId = id;
+                }
             }
+            console.log("Initiating digital signature with primary signer:", primarySigner);
 
             const { signedPdf, signatureInfo } = await signPdfWithAquafier(
                 pdfBytes,
                 primarySigner.name,
                 primarySigner.walletAddress,
                 additionalSigners,
-                docBackupId
+                docBackupId,
+                fileInfo
             );
 
+            // Update selectedFileInfo with the signed PDF blob and metadata
+            const { selectedFileInfo, setSelectedFileInfo } = appStore.getState();
+            if (selectedFileInfo) {
+                // Create a File object from the signed PDF
+                const signedPdfFile = new File(
+                    [signedPdf as any],
+                    fileName || (pdfFile.name ? `${pdfFile.name.replace('.pdf', '')}_signed.pdf` : 'signed_document.pdf'),
+                    { type: 'application/pdf' }
+                );
+
+                // Update the selectedFileInfo with the signed PDF
+                setSelectedFileInfo({
+                    ...selectedFileInfo,
+                    signedPdfBlob: signedPdfFile,
+                    signatureInfo: signatureInfo,
+                    lastSignedAt: new Date().toISOString(),
+                });
+            }
+
             // Download the digitally signed PDF
-            const blob = new Blob([signedPdf as BlobPart], { type: 'application/pdf' });
+            const blob = new Blob([signedPdf as any], { type: 'application/pdf' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             const addressSuffix = formatAddressForFilename(appStore.getState().session?.address);
@@ -329,7 +355,7 @@ export const downloadPdfWithAnnotations = async ({
         } catch (signError) {
             console.warn("Digital signature failed, downloading without signature:", signError);
             // Fallback: download without digital signature
-            const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
+            const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             const addressSuffix = formatAddressForFilename(appStore.getState().session?.address);

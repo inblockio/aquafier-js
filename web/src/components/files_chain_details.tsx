@@ -140,6 +140,13 @@ export const CompleteChainView = ({ callBack, selectedFileInfo, hideFilePreview 
                         })
                   } catch (e) {
                         console.error('Verification error:', e)
+                        const fallbackFileName = selectedFileInfo?.aquaTree ? getFileName(selectedFileInfo.aquaTree) : 'unknown'
+                        callBack({
+                              fileName: fallbackFileName,
+                              colorLight: '',
+                              colorDark: '',
+                              isVerificationSuccessful: false,
+                        })
                   } finally {
                         setIsProcessing(false)
                   }

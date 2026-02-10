@@ -24,6 +24,7 @@ import { toast } from 'sonner'
 import { API_ENDPOINTS } from '@/utils/constants'
 import apiClient from '@/api/axiosInstance'
 import { ApiFileInfo } from '@/models/FileInfo'
+import { set } from 'date-fns'
 
 
 export default function PdfWorkflowPage() {
@@ -235,6 +236,7 @@ export default function PdfWorkflowPage() {
                               // }
                               // const fileInfoFromApi: ApiFileInfo = files[0];
                               setSelectedFileInfoLocal(fileInfoFromApi)
+                              setSelectedFileInfo(fileInfoFromApi)
                         } catch (error) {
                               console.error("Error fetching file info from API:", error)
                               setErrorMessage("Error fetching file info from server.")

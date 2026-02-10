@@ -24,7 +24,7 @@ import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject 
 import { SignatureData } from '../../../types/types'
 import { LuInfo, LuTrash } from 'react-icons/lu'
 import { Annotation } from './signer/types'
-import { PdfRenderer } from './signer/SignerPage'
+import { PdfRendererComponent } from './signer/SignerPage'
 import { downloadPdfWithAnnotations } from '@/utils/pdf-downloader'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
@@ -1605,11 +1605,18 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
             const allAnnotations = [...existingSigs, ...newSigs];
 
+            console.log('PdfSigner handleDownload - selectedFileInfo:', {
+                  exists: !!selectedFileInfo,
+                  hasAquaTree: !!selectedFileInfo?.aquaTree,
+                  fileObjectLength: selectedFileInfo?.fileObject?.length,
+            });
+
             await downloadPdfWithAnnotations({
                   pdfFile,
                   annotations: allAnnotations as any,
                   fileName: `${pdfFile.name.replace('.pdf', '')}_signed.pdf`,
-                  backupFn: createFileBackupOnServer
+                  backupFn: createFileBackupOnServer,
+                  fileInfo: selectedFileInfo
             });
       };
 
@@ -1629,7 +1636,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                                       <div className="col-span-12 md:col-span-9 bg-gray-100 overflow-x-auto overflow-y-scroll h-full">
                                                             <div className="h-auto md:h-full p-0 m-0">
                                                                   {/* This is a custom component do not convert to tailwind, we will convert it separately */}
-                                                                  <PdfRenderer
+                                                                  <PdfRendererComponent
                                                                         pdfFile={pdfFile}
                                                                         annotations={signaturePositions}
                                                                         annotationsInDocument={documentSignatures ?? []}
