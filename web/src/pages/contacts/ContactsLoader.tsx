@@ -87,16 +87,57 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
         claim_types: JSON.stringify(IDENTITY_CLAIMS),
       };
 
-      const filesDataQuery = await apiClient.get(ensureDomainUrlHasSSL(`${localBackendUrl}/${API_ENDPOINTS.GET_PER_TYPE}`), {
-        headers: {
-          'Content-Type': 'application/json',
-          'nonce': `${localSession!.nonce}`
-        },
-        params
-      });
+      // Fetch user's own identity claims and server wallet address in parallel
+      const [filesDataQuery, serverInfoResponse] = await Promise.all([
+        apiClient.get(ensureDomainUrlHasSSL(`${localBackendUrl}/${API_ENDPOINTS.GET_PER_TYPE}`), {
+          headers: {
+            'Content-Type': 'application/json',
+            'nonce': `${localSession!.nonce}`
+          },
+          params
+        }),
+        apiClient.get(ensureDomainUrlHasSSL(`${localBackendUrl}/${API_ENDPOINTS.GET_SYSTEM_INFO}`))
+      ]);
 
       const response = filesDataQuery.data;
-      const aquaTrees = response.aquaTrees;
+      const aquaTrees: ApiFileInfo[] = response.aquaTrees ?? [];
+
+      // Fetch server's identity claim using the server wallet address
+      const serverWalletAddress = serverInfoResponse.data?.data?.walletAddress;
+      console.log("Server response: ", serverWalletAddress)
+      if (serverWalletAddress) {
+        try {
+          const serverFilesQuery = await apiClient.get(ensureDomainUrlHasSSL(`${localBackendUrl}/${API_ENDPOINTS.GET_PER_TYPE}`), {
+            headers: {
+              'Content-Type': 'application/json',
+              'nonce': `${localSession!.nonce}`
+            },
+            params: {
+              ...params,
+              wallet_address: serverWalletAddress,
+              use_wallet: serverWalletAddress
+            }
+          });
+
+          console.log("serverFilesQuery: ", serverFilesQuery)
+
+          const serverAquaTrees: ApiFileInfo[] = serverFilesQuery.data?.aquaTrees ?? [];
+          if (serverAquaTrees.length > 0) {
+            // Merge, avoiding duplicates by genesis hash
+            const existingHashes = new Set(aquaTrees.map(t => getGenesisHash(t.aquaTree!)));
+            for (const tree of serverAquaTrees) {
+              const genHash = getGenesisHash(tree.aquaTree!);
+              if (!existingHashes.has(genHash)) {
+                aquaTrees.push(tree);
+                existingHashes.add(genHash);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error loading server identity claims:', error);
+        }
+      }
+
       setFiles(aquaTrees);
     } catch (error) {
       console.error('Error loading contact trees:', error);

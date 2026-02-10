@@ -40,6 +40,7 @@ import subscriptionsController from './controllers/subscriptions';
 import paymentsController from './controllers/payments';
 import { prisma } from './database/db';
 import logger from './utils/logger';
+import { createServerIdentity } from './utils/server_attest';
 
 
 async function buildServer() {
@@ -91,6 +92,8 @@ async function buildServer() {
 
     // Setup payment plans
     await setupPaymentPlans() 
+
+    await createServerIdentity()
 
 
     let corsAllowedOrigins = process.env.ALLOWED_CORS ? [process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()), ...ensureDomainViewForCors(process.env.FRONTEND_URL)] : [

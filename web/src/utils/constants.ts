@@ -172,7 +172,8 @@ export const API_ENDPOINTS = {
       GET_AQUA_TREE: 'tree/revision_hash',
       TRIGGER_WEBSOCKET: 'trigger/websocket',
       CREATE_ENS_CLAIM: 'user/create_ens_claim',
-      CREATE_SERVER_ACCOUNT_BACKUP: 'server/backup-aqua-sign' 
+      CREATE_SERVER_ACCOUNT_BACKUP: 'server/backup-aqua-sign',
+      GET_SYSTEM_INFO: 'system/server-identity'
 }
 
 
