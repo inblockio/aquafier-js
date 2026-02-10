@@ -5,11 +5,10 @@ import { AquaTree, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisions
 import { getHost, getPort } from '../utils/api_utils';
 import { fetchAquaTreeWithForwardRevisions } from '../utils/revisions_utils';
 import { SYSTEM_WALLET_ADDRESS } from '../models/constants';
-import { sendToUserWebsockerAMessage } from './websocketController';
 import WebSocketActions from '../constants/constants';
 import { createAquaTreeFromRevisions } from '../utils/revisions_operations_utils';
 import Logger from "../utils/logger";
-import { sendNotificationReloadToWallet } from './websocketController2';
+import { sendNotificationReloadToWallet, sendMessageToWallet, sendToUserWebsockerAMessage } from './websocketController2';
 import { ethers } from 'ethers';
 
 export default async function shareController(fastify: FastifyInstance) {
@@ -306,7 +305,7 @@ export default async function shareController(fastify: FastifyInstance) {
         return reply.code(200).send({ success: true, contracts });
     })
 
-
+ 
 
     fastify.delete('/contracts/:hash', async (request, reply) => {
         // Extract the hash parameter from the URL
@@ -478,7 +477,7 @@ export default async function shareController(fastify: FastifyInstance) {
 
         return reply.code(200).send({ success: true, contracts });
     });
-
+ 
     // Original, DO NOT DELETE
     // fastify.get('/contracts', async (request, reply) => {
     //     const { sender, receiver, hash } = request.query as { sender?: string, receiver?: string, hash?: string };

@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { LuCopy, LuExternalLink, LuShare2 } from 'react-icons/lu'
 import { useStore } from 'zustand'
 import appStore from '../../store'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { Link, useNavigate } from 'react-router-dom'
 import { IAccountContracts } from '../../types/index'
 import { toast } from 'sonner'
@@ -21,7 +21,7 @@ export default function AccountContracts({ inline, open, updateOpenStatus }: IAc
             }
             try {
                   const url = ensureDomainUrlHasSSL(`${backend_url}/contracts`)
-                  const response = await axios.get(url, {
+                  const response = await apiClient.get(url, {
                         params: {
                               receiver: session?.address,
                         },

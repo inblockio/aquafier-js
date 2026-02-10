@@ -1,7 +1,15 @@
 import { ClientConnection } from "../models/types";
+import { connectedClients } from "../store/store";
 import { FastifyInstance } from 'fastify';
 import { WebSocket as WSWebSocket } from 'ws';
 import Logger from "../utils/logger";
+import { cliYellowfy } from "aqua-js-sdk";
+
+// Define SocketStream manually
+export interface SocketStream {
+    socket: WSWebSocket;
+    raw: import('http').IncomingMessage;
+}
 
 // Enhanced interface for client connection with wallet address
 export interface EnhancedClientConnection extends ClientConnection {
@@ -31,6 +39,90 @@ export interface WebSocketMessage {
     timestamp: number;
     targetWallet?: string;
 }
+
+// ============= Legacy functions from websocketController.ts =============
+
+// Function to broadcast message to all connected clients (legacy)
+export function broadcastToAllClients(action: string) {
+    try {
+        let message = {
+            "action": action
+        }
+        const messageString = JSON.stringify(message);
+
+        connectedClients.forEach((client, userId) => {
+
+            if (client?.socket && client.socket.readyState === WebSocket.OPEN) {
+                Logger.info(`Pinging clients ${userId} `)
+                client.socket.send(messageString, (err) => {
+                    if (err) {
+                        Logger.error(`Error sending message to user ${userId}:`, err);
+                    } else {
+                        Logger.info(`Message sent successfully to user ${userId}`);
+                    }
+                });
+            } else {
+                // Remove invalid or disconnected clients
+
+                Logger.warn(`Removing invalid or disconnected client: ${userId}`);
+                connectedClients.delete(userId);
+            }
+        });
+    } catch (e) {
+        Logger.error(`WebSocket BroadcastToAllClients failed: ${e}`);
+    }
+}
+
+// Function to send message to specific user (legacy)
+export function sendToUserWebsockerAMessage(userId: string, action: string) {
+    const client = connectedClients.get(userId);
+
+    if (!client) {
+        return { success: false, error: 'User not connected' };
+    }
+
+    if (client.socket.readyState === WSWebSocket.OPEN) {
+        console.log(`Sending message to user ${userId}: ${action}`);
+        let message = {
+            "action": action
+        }
+        const messageString = JSON.stringify(message);
+
+        client.socket.send(messageString);
+        return { success: true };
+    } else {
+        console.log(`Removing disconnected client: ${userId}`);
+        connectedClients.delete(userId);
+        return { success: false, error: 'User connection is closed' };
+    }
+}
+
+// Function to send message to multiple users (legacy)
+export function sendToManyUsersWebocketAMessage(userIds: string[], message: string) {
+    const results: { [userId: string]: { success: boolean; error?: string } } = {};
+    const messageString = JSON.stringify(message);
+
+    userIds.forEach(userId => {
+        const client = connectedClients.get(userId);
+
+        if (!client) {
+            results[userId] = { success: false, error: 'User not connected' };
+            return;
+        }
+
+        if (client.socket.readyState === WSWebSocket.OPEN) {
+            client.socket.send(messageString);
+            results[userId] = { success: true };
+        } else {
+            connectedClients.delete(userId);
+            results[userId] = { success: false, error: 'User connection is closed' };
+        }
+    });
+
+    return results;
+}
+
+// ============= Enhanced functions for wallet-based messaging =============
 
 // Function to send notification reload message to specific wallet address
 export function sendNotificationReloadToWallet(walletAddress: string, notificationData?: any) {
@@ -82,6 +174,55 @@ export function sendNotificationReloadToWallet(walletAddress: string, notificati
     }
 }
 
+
+export function sendNotificationReloadToAquaSign(walletAddress: string, notificationData?: any) {
+    try {
+        const userId = walletToUserMap.get(walletAddress);
+        
+        if (!userId) {
+            Logger.warn(`No user found for wallet address: ${walletAddress}`);
+            return { success: false, error: 'Wallet address not connected' };
+        }
+
+        const client = enhancedConnectedClients.get(userId);
+        
+        if (!client) {
+            Logger.warn(`No client connection found for user: ${userId}`);
+            walletToUserMap.delete(walletAddress); // Clean up stale mapping
+            return { success: false, error: 'User not connected' };
+        }
+
+        if (client.socket.readyState === WSWebSocket.OPEN) {
+            const message: WebSocketMessage = {
+                type: MessageType.NOTIFICATION_RELOAD,
+                action: 'reload_aqua_sign',
+                data: notificationData || {},
+                timestamp: Date.now(),
+                targetWallet: walletAddress
+            };
+
+            const messageString = JSON.stringify(message);
+            
+            client.socket.send(messageString, (err) => {
+                if (err) {
+                    Logger.error(`Error sending notification reload to wallet ${walletAddress}:`, err);
+                } else {
+                    Logger.info(`Notification reload sent successfully to wallet ${walletAddress}`);
+                }
+            });
+
+            return { success: true };
+        } else {
+            // Clean up disconnected client
+            enhancedConnectedClients.delete(userId);
+            walletToUserMap.delete(walletAddress);
+            return { success: false, error: 'Client connection is closed' };
+        }
+    } catch (error) {
+        Logger.error(`Error in sendNotificationReloadToWallet: ${error}`);
+        return { success: false, error: 'Internal server error' };
+    }
+}
 // Function to send message to wallet address with custom action
 export function sendMessageToWallet(walletAddress: string, messageType: MessageType, action: string, data?: any) {
     try {
@@ -326,6 +467,29 @@ export default async function enhancedWebSocketController(fastify: FastifyInstan
         }
     });
 
+     // REST endpoint to trigger notification reload for specific wallet
+    fastify.post('/api/notifications/aqua_sign/:wallet_address', async (request, reply) => {
+        const { wallet_address } = request.params as { wallet_address: string };
+        console.log("Request body: ", request.body)
+        const data = request.body as {receiver: string, content: any}
+
+        console.log(cliYellowfy(`Notification data: ${JSON.stringify(data, null, 4)}`))
+
+        const result = sendNotificationReloadToAquaSign(wallet_address, data.content);
+        
+        if (result.success) {
+            return reply.code(200).send({
+                success: true,
+                message: `Notification reload sent to wallet ${wallet_address}`
+            });
+        } else {
+            return reply.code(404).send({
+                success: false,
+                error: result.error
+            });
+        }
+    });
+
     // REST endpoint to send custom message to wallet
     fastify.post('/api/wallet/message/:wallet_address', async (request, reply) => {
         const { wallet_address } = request.params as { wallet_address: string };
@@ -371,7 +535,7 @@ export default async function enhancedWebSocketController(fastify: FastifyInstan
     fastify.get('/api/wallet/info/:wallet_address', async (request, reply) => {
         const { wallet_address } = request.params as { wallet_address: string };
         const info = getWalletConnectionInfo(wallet_address);
-        
+
         if (info) {
             return reply.code(200).send({
                 success: true,
@@ -383,5 +547,115 @@ export default async function enhancedWebSocketController(fastify: FastifyInstan
                 error: 'Wallet not connected'
             });
         }
+    });
+
+    // ============= Legacy WebSocket routes from websocketController.ts =============
+
+    // Legacy WebSocket route
+    fastify.get('/ws', { websocket: true }, (connection, req) => {
+        // Extract user ID from query parameters
+        const userId = (req.query as { userId?: string })?.userId;
+
+        const ws = connection;
+
+        if (!userId) {
+            Logger.error('WebSocket connection rejected: No user ID provided');
+            ws.close(1008, 'User ID is required');
+            return;
+        }
+
+        Logger.info(`Client connected to WebSocket with user ID: ${userId}`);
+
+        // Check if user is already connected
+        if (connectedClients.has(userId)) {
+            Logger.info(`User ${userId} is already connected, closing previous connection`);
+            const existingConnection = connectedClients.get(userId);
+            existingConnection?.socket.close(1000, 'New connection established');
+        }
+
+        // Add client to connected clients map
+        const clientConnection: ClientConnection = {
+            socket: ws,
+            userId: userId,
+            connectedAt: new Date()
+        };
+        connectedClients.set(userId, clientConnection);
+
+        ws.on('message', (message) => {
+            Logger.info(`Received message from user ${userId}:`, message.toString());
+
+            try {
+                const parsedMessage = JSON.parse(message.toString());
+
+                // Handle different message types
+                if (parsedMessage.type === 'ping') {
+                    // Respond to ping with pong
+                    ws.send(JSON.stringify({
+                        type: 'pong',
+                        data: 'Server is alive',
+                        timestamp: new Date().toISOString(),
+                        userId: userId
+                    }));
+                } else {
+                    // Echo message back to client
+                    ws.send(JSON.stringify({
+                        type: 'echo',
+                        data: parsedMessage,
+                        timestamp: new Date().toISOString(),
+                        userId: userId
+                    }));
+                }
+            } catch (error : any) {
+                // Handle non-JSON messages
+                ws.send(JSON.stringify({
+                    type: 'echo - error',
+                    data: message.toString(),
+                    timestamp: new Date().toISOString(),
+                    userId: userId
+                }));
+            }
+        });
+
+        ws.on('close', () => {
+            Logger.info(`Client ${userId} disconnected from WebSocket`);
+            connectedClients.delete(userId);
+        });
+
+        ws.on('error', (error) => {
+            Logger.error(`WebSocket error for user ${userId}:`, error);
+            connectedClients.delete(userId);
+        });
+
+        // Send welcome message
+        ws.send(JSON.stringify({
+            type: 'welcome',
+            data: `Connected to WebSocket server as user ${userId}`,
+            timestamp: new Date().toISOString(),
+            userId: userId,
+            connectedClients: connectedClients.size
+        }));
+    });
+
+    // Get connected clients information (legacy)
+    fastify.get('/ws/clients', async (request, reply) => {
+        const clientsInfo = Array.from(connectedClients.entries()).map(([userId, client]) => ({
+            userId: userId,
+            connectedAt: client.connectedAt,
+            connectionDuration: Date.now() - client.connectedAt.getTime()
+        }));
+
+        return {
+            connectedClients: connectedClients.size,
+            clients: clientsInfo,
+            timestamp: new Date().toISOString()
+        };
+    });
+
+    // Ping all connections (legacy)
+    fastify.get('/ping/all', async (request, reply) => {
+        broadcastToAllClients("ping all conections get request ")
+        return reply.code(200).send({
+            data: "ping all"
+        });
     });
 }

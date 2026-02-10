@@ -6,6 +6,7 @@ import { authenticate, AuthenticatedRequest } from '../middleware/auth_middlewar
 import Aquafier, { AquaTree, FileObject } from 'aqua-js-sdk';
 import { deleteAquaTreeFromSystem, saveAquaTree } from '../utils/revisions_utils';
 import Logger from "../utils/logger";
+import { usageService } from '../services/usageService';
 
 export default async function templatesController(fastify: FastifyInstance) {
 
@@ -160,6 +161,10 @@ export default async function templatesController(fastify: FastifyInstance) {
                 }
             });
 
+            usageService.recalculateUserUsage(request.user!.address!).catch(err =>
+                Logger.error('Failed to recalculate usage after template deletion:', err)
+            );
+
             return reply.code(200).send({ success: true });
         } catch (error: any) {
             return reply.code(500).send({ success: false, error: "Failed to delete template" });
@@ -287,6 +292,10 @@ export default async function templatesController(fastify: FastifyInstance) {
                     fileObject: [identityFileObject]
 
                 }
+                usageService.recalculateUserUsage(request.user!.address!).catch(err =>
+                    Logger.error('Failed to recalculate usage after template creation:', err)
+                );
+
                 return reply.code(200).send({ success: true, data: apiFileInfo });
             } else {
                 return reply.code(500).send({ success: true, logs: resIdentityAquaTree.data });

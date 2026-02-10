@@ -30,7 +30,7 @@ interface ResizeState {
       initialAnnotation: Annotation
       initialPageDimensions: { width: number; height: number }
       startX: number
-      startY: number
+      startY: number 
       initialPixelWidth: number
       initialPixelHeight: number
       initialAnnotationXPercent: number

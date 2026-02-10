@@ -24,7 +24,6 @@ import fetchChainController from './controllers/fetch-chain';
 import templatesController from './controllers/templates';
 import { setupPaymentPlans, setUpSystemTemplates } from './utils/api_utils';
 import systemController from './controllers/system';
-import webSocketController from './controllers/websocketController';
 import notificationsController from './controllers/notifications';
 import ApiController from './controllers/api';
 import * as Sentry from "@sentry/node"
@@ -36,6 +35,7 @@ import metricsController from './controllers/metrics';
 import workflowsController from './controllers/workflow';
 import enhancedWebSocketController from './controllers/websocketController2';
 import adminController from './controllers/admin';
+import plansController from './controllers/plans';
 import subscriptionsController from './controllers/subscriptions';
 import paymentsController from './controllers/payments';
 import { prisma } from './database/db';
@@ -90,7 +90,7 @@ async function buildServer() {
     await setUpSystemTemplates();
 
     // Setup payment plans
-    await setupPaymentPlans()
+    await setupPaymentPlans() 
 
 
     let corsAllowedOrigins = process.env.ALLOWED_CORS ? [process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()), ...ensureDomainViewForCors(process.env.FRONTEND_URL)] : [
@@ -164,7 +164,6 @@ async function buildServer() {
     fastify.register(templatesController);
     fastify.register(chequeApiController);
     fastify.register(systemController);
-    fastify.register(webSocketController);
     fastify.register(enhancedWebSocketController);
     fastify.register(notificationsController);
     fastify.register(ApiController);
@@ -172,6 +171,7 @@ async function buildServer() {
     fastify.register(metricsController);
     fastify.register(workflowsController);
     fastify.register(adminController);
+    fastify.register(plansController);
     fastify.register(subscriptionsController);
     fastify.register(paymentsController);
 

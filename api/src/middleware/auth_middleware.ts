@@ -23,7 +23,7 @@ export async function authenticate(
     });
     
     if (session == null) {
-      throw reply.code(403).send({ success: false, message: "Nonce is invalid" });
+      throw reply.code(401).send({ success: false, message: "Nonce is invalid" });
     }
     
     // Attach the user info to the request for later use

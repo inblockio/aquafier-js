@@ -28,7 +28,7 @@ import Aquafier, {
       getLatestVH,
       Revision
 } from 'aqua-js-sdk'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { generateNonce } from 'siwe'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog'
@@ -87,6 +87,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useNavigate } from 'react-router-dom'
 import { API_ENDPOINTS } from '@/utils/constants'
+import { fetchSubscriptionPlans } from '@/api/subscriptionApi'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { useAquaSystemNames } from '@/hooks/useAquaSystemNames'
 
@@ -163,7 +164,7 @@ const SortableSignerItem = ({
                               address={address}
                               multipleAddresses={multipleAddresses}
                               setMultipleAddresses={setMultipleAddresses}
-                              placeholder="Enter signer wallet address"
+                              // placeholder="Enter signer wallet address"
                               className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                         />
                   </div>
@@ -230,7 +231,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             try {
                   const url = ensureDomainUrlHasSSL(`${backend_url}/app_info`);
 
-                  const response = await axios.get(url)
+                  const response = await apiClient.get(url)
 
                   const res: ApiInfoData = await response.data
 
@@ -277,6 +278,24 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
 
       }, []);
+
+      // Set default values for hidden/non-editable fields outside of render
+      useEffect(() => {
+            if (!selectedTemplate?.fields) return
+            const defaults: Record<string, CustomInputType> = {}
+            for (const field of selectedTemplate.fields) {
+                  if (field.is_hidden || !field.is_editable) {
+                        const val = getFieldDefaultValue(field, formData[field.name] as any)
+                        const cleanedValue = val instanceof File || Array.isArray(val) ? undefined : val
+                        if (cleanedValue !== undefined) {
+                              defaults[field.name] = cleanedValue as any
+                        }
+                  }
+            }
+            if (Object.keys(defaults).length > 0) {
+                  setFormData(prev => ({ ...prev, ...defaults }))
+            }
+      }, [selectedTemplate])
 
       const getFieldDefaultValue = (field: FormField, currentState: CustomInputType | undefined
       ): string | number | File | File[] => {
@@ -356,7 +375,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         file_name: name,
                   }
 
-                  await axios({
+                  await apiClient({
                         method,
                         url,
                         data,
@@ -446,7 +465,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         formData.append('has_asset', 'false')
                   }
 
-                  const response = await axios.post(url, formData, {
+                  const response = await apiClient.post(url, formData, {
                         headers: {
                               nonce: session?.nonce,
                               // Don't set Content-Type header - axios will set it automatically with the correct boundary
@@ -486,6 +505,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   } else {
                         if (field.name === 'signers' && selectedTemplate.name === 'aqua_sign') {
                               completeFormData[field.name] = multipleAddresses.join(',')
+                        } else if (field.name === 'receiver' && selectedTemplate.name === 'aquafier_licence') {
+                              completeFormData[field.name] = multipleAddresses.join(',')
                         } else if (field.name === 'delegated_wallets' && selectedTemplate.name === 'dba_claim') {
                               completeFormData[field.name] = multipleAddresses.join(',')
                         } else if (field.name === 'delegated_wallets' && selectedTemplate && selectedTemplate.name === 'dba_claim') {
@@ -509,6 +530,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
       // Wallet address validation function
       const validateWalletAddress = (valueInput: CustomInputType, fieldItem: FormField) => {
+            console.log(valueInput, fieldItem)
+            if(!fieldItem.required){
+                  return
+            }
             if (typeof valueInput !== 'string') {
                   throw new Error(`${valueInput} provided at ${fieldItem.name} is not a string`)
             }
@@ -572,7 +597,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       }
 
       // Field validation function
-      const validateFields = (completeFormData: Record<string, CustomInputType>, selectedTemplate: FormTemplate) => {
+      const validateFields = async (completeFormData: Record<string, CustomInputType>, selectedTemplate: FormTemplate) => {
 
             validateRequiredFields(completeFormData, selectedTemplate)
 
@@ -581,6 +606,14 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
                   if (fieldItem.type === 'wallet_address') {
                         validateWalletAddress(valueInput, fieldItem)
+                  }
+
+                  if (fieldItem.name === 'package_id' && selectedTemplate.name.includes("aquafier_licence")) {
+                        const plans = await fetchSubscriptionPlans()
+                        const validPlanIds = plans.map(plan => plan.id)
+                        if (!validPlanIds.includes(valueInput as string)) {
+                              throw new Error(`"${valueInput}" is not a valid package ID. Valid plans: ${plans.map(p => `${p.display_name} (${p.id})`).join(', ')}`)
+                        }
                   }
 
                   if (fieldItem.type === 'domain') {
@@ -603,7 +636,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             let allSystemFiles = systemFileInfo
 
             if (systemFileInfo.length === 0) {
-                  const url3 = `${backend_url}/system/aqua_tree`
+                  const url3 = ensureDomainUrlHasSSL(`${backend_url}/system/aqua_tree`)
+
                   const systemFiles = await fetchSystemFiles(url3, sessionAddress)
                   allSystemFiles = systemFiles
             } else {
@@ -1123,7 +1157,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   const orderedRevisionHashes = reorderRevisionsInAquaTree(aquaTree!)
 
                   const url = `${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`
-                  const res = await axios.post(url, {
+                  const res = await apiClient.post(url, {
                         revisionHashes: orderedRevisionHashes
                   }, {
                         headers: {
@@ -1223,9 +1257,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   let apiFileInfoFromSystem = await loadThisTreeFromSystem(signedAquaTree)
                   if (apiFileInfoFromSystem) {
                         setSelectedFileInfo(apiFileInfoFromSystem)
-                        // navigate('/app/pdf/workflow')
+
+                        let genesisHash = getGenesisHash(signedAquaTree)
+                        if (!genesisHash) {
+                              toast.error('Genesis hash not found in signed aqua tree')
+                              return
+                        }
                         try {
-                              let genesisHash = getGenesisHash(signedAquaTree)
                               if (genesisHash && session?.address) {
                                     let genesisRevision = signedAquaTree.revisions[genesisHash]
                                     let signers = genesisRevision?.forms_signers
@@ -1234,15 +1272,15 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           let activeUserAddress = session.address.toLocaleLowerCase()
                                           let isUserSigner = signersArray.find((signer: string) => signer === activeUserAddress)
                                           if (isUserSigner) {
-                                                navigate('/app/pdf/workflow/2')
+                                                navigate('/app/pdf/workflow/2/' + genesisHash)
                                           }
                                     } else {
 
-                                          navigate('/app/pdf/workflow')
+                                          navigate('/app/pdf/workflow/1/' + genesisHash)
                                     }
                               }
                         } catch (error: any) {
-                              navigate('/app/pdf/workflow')
+                              navigate('/app/pdf/workflow/1/' + genesisHash)
                         }
                   }
             }
@@ -1324,7 +1362,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   setFormData(completeFormData)
 
                   // Step 2: Validate fields
-                  validateFields(completeFormData, selectedTemplate)
+                  await validateFields(completeFormData, selectedTemplate)
 
 
 
@@ -1338,7 +1376,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
                               try {
                                     const url = `${backend_url}/verify_code`
-                                    const response = await axios.post(
+                                    const response = await apiClient.post(
                                           url,
                                           {
                                                 email_or_phone_number: filledValue,
@@ -1400,7 +1438,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
                         try {
                               const url = ensureDomainUrlHasSSL(`${backend_url}/scrape_data`)
-                              const response = await axios.post(url, {
+                              const response = await apiClient.post(url, {
                                     domain: completeFormData['url']
                               },
                                     {
@@ -1579,6 +1617,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       const renderArrayField = (field: FormField, fieldIndex: number) => {
             const signerIds = getSignerIds()
 
+            const userInSigners = multipleAddresses.some(addr =>
+                  addr.toLowerCase() === session?.address?.toLowerCase()
+            )
+
             return (
                   <div key={`field-${fieldIndex}`} className="space-y-4">
                         <div className="flex items-center justify-between">
@@ -1595,17 +1637,27 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           Drag to reorder signers
                                     </p>
                               </div>
-                              <Button
-                                    variant="outline"
-                                    size="sm"
-                                    type="button"
-                                    className="rounded-lg hover:bg-blue-50 hover:border-blue-300"
-                                    onClick={addAddress}
-                                    data-testid={`multiple_values_${field.name}`}
-                              >
-                                    <Plus className="h-4 w-4 mr-1" />
-                                    Add Signer
-                              </Button>
+                              <div className='flex gap-1'>
+                                    <Button onClick={(e) => {
+                                          e.preventDefault()
+                                          if (session) {
+                                                setMultipleAddresses(curr => [...curr, session?.address])
+                                          }
+                                    }} className={userInSigners ? "hidden" : ""} type='button'>
+                                          Add Yourself
+                                    </Button>
+                                    <Button
+                                          variant="outline"
+                                          // size="sm"
+                                          type="button"
+                                          className="rounded-lg hover:bg-blue-50 hover:border-blue-300"
+                                          onClick={addAddress}
+                                          data-testid={`multiple_values_${field.name}`}
+                                    >
+                                          <Plus className="h-4 w-4 mr-1" />
+                                          Add Signer
+                                    </Button>
+                              </div>
                         </div>
 
                         <DndContext
@@ -1692,7 +1744,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             <div className="space-y-3">
                   <div
                         ref={containerRef}
-                        className="border border-gray-200 rounded-lg w-full h-[200px] bg-white relative"
+                        className="border border-gray-200 rounded-lg w-full h-50 bg-white relative"
                   >
                         <SignatureCanvas
                               ref={signatureRef}
@@ -1753,11 +1805,15 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
       /** Renders a single form field - extracted for reuse in aqua_sign steps */
       const renderSingleField = (field: FormField, fieldIndex: number) => {
-            if (field.is_hidden) return null
+            // if (field.is_hidden) return null
 
             // Use helper function for array fields (multiple signers)
             if (field.is_array && field.name !== "document") {
                   return renderArrayField(field, fieldIndex)
+            }
+
+            if (field.is_hidden || !field.is_editable) {
+                  return null
             }
 
             return (
@@ -1778,7 +1834,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           data-testid={`input-${field.name}`}
                                           className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
                                           placeholder={getFieldPlaceholder(field)}
-                                          disabled={field.is_editable === false}
+                                          // disabled={field.is_editable === false}
                                           defaultValue={(() => {
                                                 const val = getFieldDefaultValue(field, formData[field.name] as any)
                                                 return val instanceof File || Array.isArray(val) ? undefined : val
@@ -1847,12 +1903,14 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
 
                         {/* Wallet address field */}
-                        {field.type === 'wallet_address' && (
+                        {/* {field.type === 'wallet_address' && (
                               field.is_editable === false ? (
                                     <Input
                                           id={`input-${field.name}`}
                                           data-testid={`input-${field.name}`}
-                                          className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
+                                          className={cn(
+                                                "rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10",
+                                          )}
                                           disabled
                                           defaultValue={(() => {
                                                 const val = getFieldDefaultValue(field, formData[field.name] as any)
@@ -1866,10 +1924,22 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           address={formData[field.name] ? (formData[field.name] as string) : ''}
                                           multipleAddresses={[]}
                                           setMultipleAddresses={(data) => handleWalletAddressSelect(data, field.name)}
-                                          placeholder="Enter signer wallet address"
+                                          // placeholder="Enter signer wallet address"
                                           className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                                     />
                               )
+                        )} */}
+
+                        {field.type === 'wallet_address' && (
+                              <WalletAutosuggest
+                                    field={field}
+                                    index={1}
+                                    address={formData[field.name] ? (formData[field.name] as string) : ''}
+                                    multipleAddresses={[]}
+                                    setMultipleAddresses={(data) => handleWalletAddressSelect(data, field.name)}
+                                    // placeholder="Enter signer wallet address"
+                                    className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                              />
                         )}
 
                         {/* Document, Image, File upload fields */}
@@ -1881,7 +1951,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
                                           type={getInputType(field.type)}
                                           required={field.required}
-                                          disabled={field.is_editable === false}
+                                          // disabled={field.is_editable === false}
                                           accept={field.type === 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
                                           multiple={field.is_array}
                                           placeholder={getFieldPlaceholder(field)}
@@ -1898,7 +1968,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                               </div>
                         )}
 
-                        {field.name === 'sender' && (
+                        {field.name === 'sender' && (!field.is_hidden || !field.is_editable) && (
                               <p className="text-xs text-gray-500">
                                     {field.support_text
                                           ? field.support_text
@@ -1916,9 +1986,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             const otherFields = fields.filter(f => f.type !== 'document')
 
             // Check if user has added themselves to signers
-            const userInSigners = multipleAddresses.some(addr =>
-                  addr.toLowerCase() === session?.address?.toLowerCase()
-            )
+            // const userInSigners = multipleAddresses.some(addr =>
+            //       addr.toLowerCase() === session?.address?.toLowerCase()
+            // )
 
             return (
                   <>
@@ -1984,12 +2054,14 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           <p className="text-sm text-gray-500 mt-1">Specify who needs to sign this document</p>
                                     </div>
 
-                                    {!userInSigners && (
+                                    {otherFields.map((field, idx) => renderSingleField(field, idx))}
+
+                                    {/* {!userInSigners && (
                                           <Alert className="border-amber-200 bg-amber-50">
                                                 <AlertCircle className="h-4 w-4 text-amber-600" />
                                                 <AlertDescription className="text-amber-800">
 
-                                                      You haven't added yourself as a signer. If you need to sign this document, add your wallet address to the signers list.
+                                                      You haven't added yourself as a signer.
                                                       <Button onClick={() => {
                                                             if (session) {
                                                                   setMultipleAddresses(curr => [...curr, session?.address])
@@ -1999,16 +2071,17 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                       </Button>
                                                 </AlertDescription>
                                           </Alert>
-                                    )}
-
-                                    {otherFields.map((field, idx) => renderSingleField(field, idx))}
+                                    )} */}
                                     {/* Warning if user hasn't added themselves */}
 
                                     <div className="flex justify-between pt-4">
                                           <Button
                                                 type="button"
                                                 variant="outline"
-                                                onClick={() => setAquaSignStep(1)}
+                                                onClick={() => {
+                                                      setAquaSignStep(1)
+                                                      setModalFormErorMessae("")
+                                                }}
                                                 className="px-6"
                                           >
                                                 Back
@@ -2162,7 +2235,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
             try {
                   const url = `${backend_url}/send_code`
-                  const response = await axios.post(
+                  const response = await apiClient.post(
                         url,
                         {
                               email_or_phone_number: filledValue,
@@ -2210,7 +2283,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       }
 
       if (!selectedTemplate) {
-            return <div className="min-h-[100%] px-2 sm:px-4">
+            return <div className="min-h-full px-2 sm:px-4">
                   Selected template not found, check db migrations.
             </div>
       }
@@ -2375,7 +2448,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                     </Button>
                               </div>
                               <DialogHeader
-                                    className="h-[60px] min-h-[60px] max-h-[60px] flex justify-center items-start px-6">
+                                    className="h-15 min-h-15 max-h-15 flex justify-center items-start px-6">
                                     <DialogTitle>{dialogData?.title}</DialogTitle>
                               </DialogHeader>
                               <div className=" h-[calc(100%-60px)] pb-1">

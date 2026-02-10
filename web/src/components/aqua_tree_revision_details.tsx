@@ -20,7 +20,7 @@ import {AquaTreeDetailsData, RevisionDetailsSummaryData} from '../models/AquaTre
 import {ItemDetail} from './item_details'
 import appStore from '../store'
 import {useStore} from 'zustand'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import {toast} from 'sonner'
 import {ApiFileInfo} from '../models/FileInfo'
 
@@ -225,7 +225,8 @@ const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string, fileObject
 
                   return (
                         <span className="text-sm">
-                              Deep Link previous {revision.previous_verification_hash} revisionHash {revisionHash}
+                              {/* Deep Link previous {revision.previous_verification_hash} revisionHash {revisionHash} */}
+                              Linked File not found
                         </span>
                   )
             } else {
@@ -343,7 +344,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
             try {
                  
  const url = ensureDomainUrlHasSSL(`${backend_url}/tree/revisions/${revisionHash}`)
-                  const response = await axios.delete(url, {
+                  const response = await apiClient.delete(url, {
                         headers: {
                               metamask_address: session?.address,
                               nonce: session?.nonce,

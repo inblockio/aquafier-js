@@ -212,7 +212,7 @@ const ContractSummaryDetails = ({ data, goToSecondPage, isValidTree }: IContract
                                           onClick={goToSecondPage}
                                     >
                                           <FiFileText className="mr-2 h-4 w-4" />
-                                          View Contract Document
+                                          View Contract Informatioon
                                     </Button>
                               </div>
                         </div>

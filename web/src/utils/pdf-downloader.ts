@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { signPdfWithAquafier } from './pdf-digital-signature';
 import { Annotation, ImageAnnotation, ProfileAnnotation, TextAnnotation } from '../pages/aqua_sign_wokflow/ContractDocument/signer/types';
 import appStore from '../store';
+import { formatAddressForFilename } from './functions';
 
 /**
  * Parses a font size string (e.g., "12pt", "16px") to points.
@@ -323,7 +324,14 @@ export const downloadPdfWithAnnotations = async ({
             const blob = new Blob([signedPdf as any], { type: 'application/pdf' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = fileName || (pdfFile.name ? `${pdfFile.name.replace('.pdf', '')}_signed.pdf` : 'signed_document.pdf');
+            const addressSuffix = formatAddressForFilename(appStore.getState().session?.address);
+            let downloadName = fileName || (pdfFile.name ? `${pdfFile.name.replace('.pdf', '')}_signed.pdf` : 'signed_document.pdf');
+            if (downloadName.toLowerCase().endsWith('.pdf')) {
+                downloadName = downloadName.slice(0, -4) + addressSuffix + '.pdf';
+            } else {
+                downloadName = downloadName + addressSuffix;
+            }
+            link.download = downloadName;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -336,14 +344,21 @@ export const downloadPdfWithAnnotations = async ({
 
             message += `via ${signatureInfo.platform}`;
             toast.success("Download Started - " + message);
-        
+
         } catch (signError) {
             console.warn("Digital signature failed, downloading without signature:", signError);
             // Fallback: download without digital signature
             const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = fileName || (pdfFile.name ? `${pdfFile.name.replace('.pdf', '')}_signed.pdf` : 'document_signed.pdf');
+            const addressSuffix = formatAddressForFilename(appStore.getState().session?.address);
+            let downloadName = fileName || (pdfFile.name ? `${pdfFile.name.replace('.pdf', '')}_signed.pdf` : 'document_signed.pdf');
+            if (downloadName.toLowerCase().endsWith('.pdf')) {
+                downloadName = downloadName.slice(0, -4) + addressSuffix + '.pdf';
+            } else {
+                downloadName = downloadName + addressSuffix;
+            }
+            link.download = downloadName;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

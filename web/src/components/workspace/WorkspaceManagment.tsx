@@ -5,7 +5,7 @@ import { ApiFileInfo } from '@/models/FileInfo'
 import appStore from '@/store'
 import { isValidUrl, ensureDomainUrlHasSSL, isWorkFlowData } from '@/utils/functions'
 import { getGenesisHash, getAquaTreeFileName, isAquaTree, AquaTree } from 'aqua-js-sdk'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import JSZip from 'jszip'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -48,7 +48,7 @@ const WorkspaceManagment = () => {
             // setOperationFileName("")
 
             // Fetch list of all files (limit=1000000)
-            const listResponse = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/explorer_files?limit=1000000`), {
+            const listResponse = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/explorer_files?limit=1000000`), {
                 headers: {
                     'nonce': session.nonce
                 }
@@ -104,7 +104,7 @@ const WorkspaceManagment = () => {
                             if (typeof fileObj.fileContent === 'string' && isValidUrl(fileObj.fileContent)) {
                                 const actualUrl = ensureDomainUrlHasSSL(fileObj.fileContent)
                                 // Fetch file content
-                                const fileResponse = await axios.get(actualUrl, {
+                                const fileResponse = await apiClient.get(actualUrl, {
                                     responseType: 'arraybuffer',
                                     headers: { 'nonce': session.nonce }
                                 })
@@ -459,7 +459,7 @@ const WorkspaceManagment = () => {
             // setOperationProgress(0)
             // setOperationFileName(file.name) // Set filename for display
 
-            const response = await axios.post(ensureDomainUrlHasSSL(`${backend_url}/explorer_workspace_upload`), formData, {
+            const response = await apiClient.post(ensureDomainUrlHasSSL(`${backend_url}/explorer_workspace_upload`), formData, {
                 headers: {
                     'nonce': session.nonce,
                     'Content-Type': 'multipart/form-data'

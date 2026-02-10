@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { useStore } from 'zustand';
 import appStore from '../store';
+import { ensureDomainUrlHasSSL } from '@/utils/functions';
 
 const EnsResolverPage = () => {
   const [address, setAddress] = useState('');
@@ -31,7 +32,8 @@ const EnsResolverPage = () => {
     setEnsType(null);
 
     try {
-      const response = await fetch(`${backend_url}/resolve/${trimmedInput}?useEns=true`, {
+      let url = ensureDomainUrlHasSSL(`${backend_url}/resolve/${trimmedInput}?useEns=true`)
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'nonce': session.nonce,

@@ -4,7 +4,7 @@ import { FaEthereum, FaFileContract } from 'react-icons/fa6'
 import appStore from '@/store'
 import { useStore } from 'zustand'
 import { toast } from 'sonner'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { ensureDomainUrlHasSSL } from '@/utils/functions'
 import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
@@ -57,7 +57,7 @@ const DeleteUserData = () => {
 
                   setDeleting(true)
                   const url = ensureDomainUrlHasSSL(`${backend_url}/user_data`)
-                  const response = await axios.delete(url, {
+                  const response = await apiClient.delete(url, {
                         headers: {
                               nonce: session.nonce,
                         },
@@ -144,7 +144,7 @@ export default function SettingsPage() {
 
             const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_update_user_settings`)
 
-            const response = await axios.post(
+            const response = await apiClient.post(
                   url,
                   {
                         ens_name: ensName,

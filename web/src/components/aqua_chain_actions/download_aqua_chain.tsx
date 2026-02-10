@@ -1,11 +1,11 @@
 import { LuDownload } from 'react-icons/lu'
-import { ensureDomainUrlHasSSL, extractFileHash, getAquatreeObject, getGenesisHash, isAquaTree, isHttpUrl, isValidUrl } from '../../utils/functions'
+import { ensureDomainUrlHasSSL, extractFileHash, formatAddressForFilename, getAquatreeObject, getGenesisHash, isAquaTree, isHttpUrl, isValidUrl } from '../../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import { ApiFileInfo } from '../../models/FileInfo'
 
 import { useState } from 'react'
-import Aquafier, {Revision } from 'aqua-js-sdk'
+import Aquafier, { Revision } from 'aqua-js-sdk'
 import JSZip from 'jszip'
 import { AquaJsonInZip, AquaNameWithHash } from '../../models/Aqua'
 // import { toaster } from "@/components/ui/use-toast"
@@ -150,7 +150,7 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
             // //add main aqua file
             const nameWithHashes: Array<AquaNameWithHash> = []
 
-         
+
             const fileObjects = file.fileObject
 
             for (let i = 0; i < fileObjects.length; i++) {
@@ -206,7 +206,7 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                               console.log("ONE: ", fileObj.fileName)
                               // It's an AquaTree, so stringify it as JSON
                               const jsonContent = getAquatreeObject(fileObj.fileContent)
-                              
+
                               fileName = fileObj.fileName.endsWith('.aqua.json') ? fileObj.fileName : `${fileObj.fileName}.aqua.json`
                               zip.file(fileName, getCorrectUTF8JSONString(jsonContent))
                               hashData = aquafier.getFileHash(JSON.stringify(jsonContent))
@@ -254,7 +254,7 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                   type: 'aqua_file_backup',
                   version: '1.0.0',
             }
-            
+
             zip.file('aqua.json', JSON.stringify(aquaObject))
 
             const nameWithoutExtension = mainAquaFileName.replace(/\.[^/.]+$/, '')
@@ -264,7 +264,7 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                   const link = document.createElement('a')
                   link.href = URL.createObjectURL(blob)
 
-                  link.download = `${nameWithoutExtension}.zip`
+                  link.download = `${nameWithoutExtension}${formatAddressForFilename(session?.address)}.zip`
                   document.body.appendChild(link)
                   link.click()
                   document.body.removeChild(link)
@@ -304,7 +304,9 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                                           // Create temporary anchor and trigger download
                                           const a = document.createElement('a')
                                           a.href = url
-                                          a.download = fileObj.fileName
+                                          const nameWithoutExtension = fileObj.fileName.replace(/\.[^/.]+$/, '')
+                                          const extension = fileObj.fileName.substring(fileObj.fileName.lastIndexOf('.'))
+                                          a.download = `${nameWithoutExtension}${formatAddressForFilename(session?.address)}${extension}`
                                           document.body.appendChild(a)
                                           a.click()
 
@@ -324,8 +326,8 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                               // console.log("2. Downloading file from fileContent: ", fileObj.fileContent)
                               const _isAquaTree = isAquaTree(fileObj.fileContent)
                               try {
-                                    let blob:Blob|File;
-                                    let fileName:string = ""
+                                    let blob: Blob | File;
+                                    let fileName: string = ""
 
                                     // Handle different types of fileContent based on file extension
                                     if (fileObj.fileContent instanceof Blob || fileObj.fileContent instanceof File) {
@@ -381,7 +383,9 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                                           // Create temporary anchor and trigger download
                                           const a = document.createElement('a')
                                           a.href = url
-                                          a.download = fileName
+                                          const nameWithoutExtension = fileName.replace(/\.[^/.]+$/, '')
+                                          const extension = fileName.substring(fileName.lastIndexOf('.'))
+                                          a.download = `${nameWithoutExtension}${formatAddressForFilename(session?.address)}${extension}`
                                           document.body.appendChild(a)
                                           a.click()
 

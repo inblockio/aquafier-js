@@ -1,5 +1,5 @@
 import { LuUpload } from 'react-icons/lu'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import { useEffect, useRef, useState } from 'react'
@@ -55,7 +55,7 @@ export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload, autoU
 
                   
                   const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
-                  const response = await axios.post(url, formData, {
+                  const response = await apiClient.post(url, formData, {
                         headers: {
                               'Content-Type': 'multipart/form-data',
                               nonce: session?.nonce,

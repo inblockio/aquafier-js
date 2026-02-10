@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useStore } from 'zustand'
 import appStore from '../store'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { ApiFileInfo } from '../models/FileInfo'
 // import { ClipLoader } from "react-spinners";
 import { IDrawerStatus } from '../models/AquaTreeDetails'
@@ -32,47 +32,54 @@ const SharePage = () => {
                   return
             }
             if (!session?.nonce || !params?.identifier) {
+                  console.log('Missing session nonce or identifier:', { nonce: session?.nonce, identifier: params?.identifier })
                   return
             }
-            if (!backend_url.includes('0.0.0.0')) {
-                  try {
-                        setLoading(true)
-                        const url = ensureDomainUrlHasSSL(`${backend_url}/share_data/${params.identifier}`)
-                        const response = await axios.get(url, {
-                              headers: {
-                                    'Content-Type': 'application/x-www-form-urlencoded',
-                                    nonce: session?.nonce ?? '',
-                              },
-                        })
+            // if (backend_url.includes('0.0.0.0')) {
+            //       console.log('Backend URL contains 0.0.0.0, skipping fetch')
+            //       return
+            // }
 
-                        if (response.status === 200) {
-                              setFileInfo(response.data.data.displayData[0])
-                              setContractData(response.data.data.contractData)
-                        }
-                        setLoading(false)
-                  } catch (error: any) {
-                        if (error.response.status == 401) {
-                        } else if (error.response.status == 404) {
-                              setHasError(`File could not be found (probably it was deleted)`)
-                        } else if (error.response.status == 412) {
-                              setHasError(`File not found or no permission for access granted.`)
-                        } else {
-                              setHasError(`Error : ${error}`)
-                        }
-                        console.error(error)
+            setLoading(true)
+            setHasError(null)
 
-                        toast.error(`Error fetching data`)
+            try {
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/share_data/${params.identifier}`)
+                  const response = await apiClient.get(url, {
+                        headers: {
+                              'Content-Type': 'application/x-www-form-urlencoded',
+                              nonce: session?.nonce ?? '',
+                        },
+                  })
+
+                  if (response.status === 200) {
+                        setFileInfo(response.data.data.displayData[0])
+                        setContractData(response.data.data.contractData)
                   }
+            } catch (error: any) {
+                  console.error('Error fetching share data:', error)
+
+                  if (error.response?.status === 401) {
+                        setHasError('Unauthorized. Please log in again.')
+                  } else if (error.response?.status === 404) {
+                        setHasError('File could not be found (probably it was deleted)')
+                  } else if (error.response?.status === 412) {
+                        setHasError('File not found or no permission for access granted.')
+                  } else {
+                        setHasError(`Error: ${error.message || error}`)
+                  }
+
+                  toast.error('Error fetching data')
+            } finally {
+                  setLoading(false)
             }
       }
 
       useEffect(() => {
-            if (params.identifier) {
+            if (params.identifier && session?.nonce) {
                   loadPageData()
             }
-            setHasError(null)
-            // }, [params, session])
-      }, [session, identifier])
+      }, [session, identifier, backend_url])
 
       const showProperWidget = () => {
             if (hasError) {
@@ -103,6 +110,19 @@ const SharePage = () => {
                               </div>
                         ) : null}
                         {showProperWidget()}
+                        {loading ? (
+                              <div className="flex justify-center items-center py-10">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                    <span className="ml-3">Loading shared file...</span>
+                              </div>
+                        ) : null}
+                        {!loading && !hasError && !fileInfo && session && !backend_url.includes("0.0.0.0") ? (
+                              <div className="flex justify-center items-center">
+                                    <Alert className="w-auto">
+                                          <AlertDescription>No file data available. Please check the share link.</AlertDescription>
+                                    </Alert>
+                              </div>
+                        ) : null}
                         {fileInfo ? (
                               <div className="w-full mt-10">
                                     <div className="flex flex-col space-y-10">

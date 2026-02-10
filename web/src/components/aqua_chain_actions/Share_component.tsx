@@ -3,7 +3,7 @@ import { Contract } from '@/types/types'
 import { SYSTEM_WALLET_ADDRESS } from '@/utils/constants'
 import { ensureDomainUrlHasSSL, fetchFiles, getGenesisHash, isValidEthereumAddress, timeToHumanFriendly } from '@/utils/functions'
 import { getAquaTreeFileObject } from 'aqua-js-sdk'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { Share2, X, Users, ExternalLink, Check, Copy, Lock, Trash2, Plus } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
@@ -140,7 +140,7 @@ const ShareComponent = () => {
                   return
             }
 
-            const response = await axios.post(
+            const response = await apiClient.post(
                   url,
                   {
                         latest: latest,
@@ -181,7 +181,7 @@ const ShareComponent = () => {
                         return
                   }
 
-                  const response = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/contracts`), {
+                  const response = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/contracts`), {
                         params: {
                               genesis_hash: getGenesisHash(selectedFileInfo.aquaTree!),
                               sender: session?.address
@@ -265,13 +265,13 @@ const ShareComponent = () => {
                         height: "calc(100% - 140px)"
                   }}>
                         {/* Warning */}
-                        <div className="flex gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                              <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                                    <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                        <div className="flex gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                              <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                               </div>
                               <div>
-                                    <p className="text-sm font-medium text-amber-800">Important</p>
-                                    <p className="text-sm text-amber-700 mt-1">
+                                    <p className="text-sm font-medium text-blue-800">Important</p>
+                                    <p className="text-sm text-blue-700 mt-1">
                                           Once shared, don't delete this file as it will break the shared link for recipients.
                                     </p>
                               </div>
@@ -284,10 +284,10 @@ const ShareComponent = () => {
                                     Who can access
                               </h3>
 
-                              <div className="grid gap-3">
+                              <div className="flex gap-2 w-full">
                                     {/* Public Option */}
                                     <div
-                                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${recipientType !== 'specific'
+                                          className={`p-4 flex-1 rounded-lg border-2 cursor-pointer transition-all ${recipientType !== 'specific'
                                                 ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500/20'
                                                 : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                                 }`}
@@ -312,11 +312,16 @@ const ShareComponent = () => {
 
                                     {/* Specific Wallet Option */}
                                     <div
-                                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${recipientType === 'specific'
+                                          className={`p-4 flex-1 rounded-lg border-2 cursor-pointer transition-all ${recipientType === 'specific'
                                                 ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500/20'
                                                 : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                                 }`}
-                                          onClick={() => { setRecipientType('specific'); addAddress() }}
+                                          onClick={() => { 
+                                                setRecipientType('specific'); 
+                                                if(multipleAddresses.length === 0){
+                                                      addAddress()
+                                                }
+                                           }}
                                     >
                                           <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
@@ -408,10 +413,10 @@ const ShareComponent = () => {
                               <h3 className="text-base font-medium text-gray-900">Version to share</h3>
                               <p className="text-sm text-gray-600">Choose whether recipients get the current version or receive updates automatically.</p>
 
-                              <div className="grid gap-3">
+                              <div className="flex w-full gap-2">
                                     {/* Latest Option */}
                                     <div
-                                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${optionType === 'latest'
+                                          className={`p-4 flex-1 rounded-lg border-2 cursor-pointer transition-all ${optionType === 'latest'
                                                 ? 'border-green-500 bg-green-50 ring-2 ring-green-500/20'
                                                 : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                                 }`}
@@ -434,7 +439,7 @@ const ShareComponent = () => {
 
                                     {/* Current Option */}
                                     <div
-                                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${optionType === 'current'
+                                          className={`p-4 flex-1 rounded-lg border-2 cursor-pointer transition-all ${optionType === 'current'
                                                 ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-500/20'
                                                 : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                                 }`}

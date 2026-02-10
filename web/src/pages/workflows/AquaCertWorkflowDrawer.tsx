@@ -20,7 +20,8 @@ import { ApiFileInfo } from "@/models/FileInfo"
 import { useStore } from "zustand"
 import appStore from "@/store"
 import { API_ENDPOINTS } from "@/utils/constants"
-import axios, { AxiosResponse } from "axios"
+import apiClient from '@/api/axiosInstance'
+import { AxiosResponse } from 'axios'
 import { getLatestVH } from "aqua-js-sdk"
 
 export default function AquaCertWorkflowDrawer({ open, onClose, attestors, fileInfo }: IAquaCertWorkflowDrawer) {
@@ -34,7 +35,7 @@ export default function AquaCertWorkflowDrawer({ open, onClose, attestors, fileI
 
     const generateFileFetchPromis = (targetHash: string) => {
         const url = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`)
-        const res = axios.post(url, {
+        const res = apiClient.post(url, {
             revisionHashes: [targetHash]
         }, {
             headers: {
@@ -87,7 +88,7 @@ export default function AquaCertWorkflowDrawer({ open, onClose, attestors, fileI
                 open={open}
                 onClose={onClose}
             >
-                <DrawerContent className="rounded-tl-2xl rounded-bl-2xl max-w-none! w-full! sm:w-100! md:w-125! lg:w-200!">
+                <DrawerContent className="rounded-tl-2xl rounded-bl-2xl max-w-none! w-[calc(100vw-2rem)]! sm:w-[calc(100vw-4rem)]! md:w-[calc(100vw-6rem)]! h-[calc(100vh-2rem)]! my-auto mr-0">
                     <DrawerHeader>
                         <div className="flex justify-between">
                             <div>

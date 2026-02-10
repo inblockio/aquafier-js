@@ -15,8 +15,12 @@ export const OpenAquaSignWorkFlowButton = ({ item, children, index }: IShareButt
             
             setSelectedFileInfo(item)
 
+            let genesisHash = getGenesisHash(item.aquaTree!)
+            if (!genesisHash) {
+                  toast.error('Could not determine genesis hash for this workflow.')
+                  return
+            }
             try {
-                  let genesisHash = getGenesisHash(item.aquaTree!)
                  
                   if (genesisHash && session?.address) {
                         let genesisRevision = item.aquaTree?.revisions[genesisHash]
@@ -29,14 +33,14 @@ export const OpenAquaSignWorkFlowButton = ({ item, children, index }: IShareButt
                               let isUserSigner = signersArray.find((signer: string) => signer === activeUserAddress)
                               if (isUserSigner) {
                                     
-                                    navigate('/app/pdf/workflow/2')
+                                    navigate('/app/pdf/workflow/2/' + genesisHash)
                               }else{
-                                    navigate('/app/pdf/workflow')
+                                    navigate('/app/pdf/workflow/1/' + genesisHash)
                               }
                         } else {
                              
 
-                              navigate('/app/pdf/workflow')
+                              navigate('/app/pdf/workflow/1/' + genesisHash)
                         }
                   }else{
                         
@@ -44,7 +48,7 @@ export const OpenAquaSignWorkFlowButton = ({ item, children, index }: IShareButt
                   }
             } catch (error: any) {
                   console.error('Error parsing signers or navigating:', error)
-                  navigate('/app/pdf/workflow')
+                  navigate('/app/pdf/workflow/1/' + genesisHash)
             }
       }
 

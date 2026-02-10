@@ -92,9 +92,29 @@ export interface SaveRevisionForUser {
   revision: Revision,
   revisionHash: string,
   address : string,
-  orginAddress :string,
+  originAddress: string,
   templateId : string,
   isWorkflow : boolean
+}
+
+// Bulk revision saving interfaces
+export interface RevisionItem {
+  revision: Revision,
+  revisionHash: string,
+  index: number  // Order in which revisions should be processed (0-based)
+}
+
+export interface SaveAllRevisionsRequest {
+  revisions: RevisionItem[],
+  originAddress: string,
+  isWorkflow: boolean
+}
+
+export interface SaveAllRevisionsForUserRequest {
+  revisions: RevisionItem[],
+  address: string,
+  originAddress: string,
+  isWorkflow: boolean
 }
 
 export interface AquaNameWithHash {

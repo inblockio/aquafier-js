@@ -12,9 +12,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from './ui/tooltip';
+import { FaCertificate } from 'react-icons/fa6';
 
 export default function ClaimTypesDropdownButton() {
-  const { setOpenDialog, user_profile } = useStore(appStore)
+  const { setOpenDialog, user_profile , isAdmin} = useStore(appStore)
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
 
@@ -47,7 +48,7 @@ export default function ClaimTypesDropdownButton() {
   const filesRemaining = (limits?.max_files || 0) - (usage?.files_count || 0)
   const buttonRef = useRef<HTMLDivElement>(null);
 
-  const handleItemClick = (item: 'identity_claim' | 'dns_claim' | 'user_signature' | 'email_claim' | 'phone_number_claim' | 'dba_claim' | 'identity_card' | 'aqua_certificate') => {
+  const handleItemClick = (item: 'identity_claim' | 'dns_claim' | 'user_signature' | 'email_claim' | 'phone_number_claim' | 'dba_claim' | 'identity_card' | 'aqua_certificate' | 'aquafier_licence') => {
     setIsOpen(false);
 
     setOpenDialog({ dialogType: item, isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
@@ -206,6 +207,17 @@ export default function ClaimTypesDropdownButton() {
             <Blinds className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
             Create Identity card
           </button>
+
+          {isAdmin && (
+            <button
+              data-testid="create-phone-number-claim-dropdown-button-item"
+              onClick={() => handleItemClick('aquafier_licence')}
+              className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+            >
+              <FaCertificate className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+              Create Aquafier Licence
+            </button>
+          )}
         </div>
       </div>
     </>

@@ -17,9 +17,10 @@ export const systemTemplateHashes = [
     '0x5285900dcc1586d6f22bb2a16a15ef7fff78c9c8506d7745a947c50d2545a6d6', // identity card
     '0x421c9bf06117814badfba270092c8b1070eb2d0968a27dd267fd3c2bc0249193', // ens_claim
     '0xa8d724f58d432b98347f1fd52caf40402fc668bea8f7a5a7266922874b5ab522', // aqua_certificate
+    '0x60667270798ca396f9803389a24184a108505edad2400a7a67362958460e84e3', // aquafier licence
 ]
  
-
+ 
 
 export const TEMPLATE_HASHES = {
     access_agreement: "0x6ff9a00f08f675cf17eb6ce8572a7fdcbd9d43ff6b043f2b233e7b70e2d9c15f",
@@ -36,7 +37,8 @@ export const TEMPLATE_HASHES = {
     identity_card: "0x5285900dcc1586d6f22bb2a16a15ef7fff78c9c8506d7745a947c50d2545a6d6",
     ens_claim: "0x421c9bf06117814badfba270092c8b1070eb2d0968a27dd267fd3c2bc0249193",
     aqua_certificate: "0xa8d724f58d432b98347f1fd52caf40402fc668bea8f7a5a7266922874b5ab522",
-}
+    aquafier_licence: "0x60667270798ca396f9803389a24184a108505edad2400a7a67362958460e84e3",
+} 
 
 
 export const AQUA_VERSION = "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar"

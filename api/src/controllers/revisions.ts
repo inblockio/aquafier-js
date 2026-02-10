@@ -1,6 +1,6 @@
 import { canDeleteRevision, deleteRevisionAndChildren } from '../utils/quick_revision_utils';
 import { prisma } from '../database/db';
-import { DeleteRevision, FetchAquaTreeRequest, SaveRevisionForUser } from '../models/request_models';
+import { DeleteRevision, FetchAquaTreeRequest, SaveRevisionForUser, SaveAllRevisionsRequest, SaveAllRevisionsForUserRequest } from '../models/request_models';
 import { getAquaTreeFileName, getHost, getPort } from '../utils/api_utils';
 import {
     buildEntireTreeFromGivenRevisionHash,
@@ -8,11 +8,12 @@ import {
     getSignatureAquaTrees,
     getUserApiFileInfo,
     isWorkFlowData,
-    saveRevisionInAquaTree
+    saveForOtherUserRevisionInAquaTree,
+    saveMyRevisionInAquaTree
 } from '../utils/revisions_utils';
 import { AquaTree, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
-import { sendToUserWebsockerAMessage } from './websocketController';
+import { sendToUserWebsockerAMessage } from './websocketController2';
 import WebSocketActions from '../constants/constants';
 import { createAquaTreeFromRevisions, deleteChildrenFieldFromAquaTrees } from '../utils/revisions_operations_utils';
 import Logger from "../utils/logger";
@@ -77,7 +78,177 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
     });
 
-    //save revision for other user 
+  
+    // save revision for the user in the session
+    fastify.post('/tree', async (request, reply) => {
+        try {
+            // Read `nonce` from headers
+            const nonce = request.headers['nonce']; // Headers are case-insensitive
+
+            // Check if `nonce` is missing or empty
+            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+            }
+
+            const session = await prisma.siweSession.findUnique({
+                where: { nonce }
+            });
+
+            if (!session) {
+                return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+            }
+
+            const revisionData = request.body as SaveRevisionForUser
+
+            if (!revisionData.revision) {
+                return reply.code(400).send({ success: false, message: "revision Data is required" });
+            }
+            if (!revisionData.revisionHash) {
+                return reply.code(400).send({ success: false, message: "revision hash is required" });
+            }
+
+            if (!revisionData.revision.revision_type) {
+                return reply.code(400).send({ success: false, message: "revision type is required" });
+            }
+
+            if (!revisionData.revision.local_timestamp) {
+                return reply.code(400).send({ success: false, message: "revision timestamp is required" });
+            }
+
+            if (!revisionData.revision.previous_verification_hash) {
+                return reply.code(400).send({ success: false, message: "previous revision hash  is required" });
+            }
+
+
+            if (!revisionData.originAddress) {
+                return reply.code(400).send({ success: false, message: "origin address not defined.." });
+            }
+
+            // Get the host from the request headers
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
+
+            // Get the protocol (http or https)
+            const protocol = request.protocol || 'https'
+
+            // Construct the full URL
+            const url = `${protocol}://${host}`;
+
+            const [httpCode, message] = await saveMyRevisionInAquaTree(revisionData, session.address, url);
+
+            if (httpCode != 200) {
+                return reply.code(httpCode).send({ success: false, message: message });
+            }
+
+            return reply.code(200).send({
+                success: true,  
+            });
+
+        } catch (error: any) {
+            request.log.error(error);
+            return reply.code(500).send({ error: `Failed to process revisions ${error}` });
+        }
+    });
+
+    // Save all revisions for the current user in a single request
+    fastify.post('/tree/all', async (request, reply) => {
+        try {
+            // Read `nonce` from headers
+            const nonce = request.headers['nonce'];
+
+            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+            }
+
+            const session = await prisma.siweSession.findUnique({
+                where: { nonce }
+            });
+
+            if (!session) {
+                return reply.code(403).send({ success: false, message: "Nonce is invalid" });
+            }
+
+            const requestData = request.body as SaveAllRevisionsRequest;
+
+            if (!requestData.revisions || !Array.isArray(requestData.revisions) || requestData.revisions.length === 0) {
+                return reply.code(400).send({ success: false, message: "revisions array is required and must not be empty" });
+            }
+
+            if (!requestData.originAddress) {
+                return reply.code(400).send({ success: false, message: "originAddress is required" });
+            }
+
+            // Get the host from the request headers
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
+            const protocol = request.protocol || 'https';
+            const url = `${protocol}://${host}`;
+
+            // Sort revisions by their index to ensure correct processing order
+            const sortedRevisions = [...requestData.revisions].sort((a, b) => {
+                const indexA = a.index ?? 0;
+                const indexB = b.index ?? 0;
+                return indexA - indexB;
+            });
+
+            // Process all revisions in sorted order
+            for (let i = 0; i < sortedRevisions.length; i++) {
+                const revisionItem = sortedRevisions[i];
+
+                if (!revisionItem.revision || !revisionItem.revisionHash) {
+                    return reply.code(400).send({
+                        success: false,
+                        message: `Invalid revision at index ${revisionItem.index ?? i}: revision and revisionHash are required`
+                    });
+                }
+
+                if (!revisionItem.revision.revision_type) {
+                    return reply.code(400).send({
+                        success: false,
+                        message: `Invalid revision at index ${revisionItem.index ?? i}: revision_type is required`
+                    });
+                }
+
+                if (!revisionItem.revision.local_timestamp) {
+                    return reply.code(400).send({
+                        success: false,
+                        message: `Invalid revision at index ${revisionItem.index ?? i}: local_timestamp is required`
+                    });
+                }
+
+                // Build the SaveRevisionForUser object
+                const revisionData: SaveRevisionForUser = {
+                    revision: revisionItem.revision,
+                    revisionHash: revisionItem.revisionHash,
+                    address: session.address,
+                    originAddress: requestData.originAddress,
+                    templateId: '',
+                    isWorkflow: requestData.isWorkflow ?? false
+                };
+
+                const [httpCode, message] = await saveMyRevisionInAquaTree(revisionData, session.address, url);
+
+                if (httpCode != 200) {
+                    return reply.code(httpCode).send({
+                        success: false,
+                        message: `Failed at revision index ${revisionItem.index ?? i}: ${message}`,
+                        failedIndex: revisionItem.index ?? i
+                    });
+                }
+            }
+
+            return reply.code(200).send({
+                success: true,
+                message: `Successfully saved ${requestData.revisions.length} revisions`,
+            });
+
+        } catch (error: any) {
+            request.log.error(error);
+            return reply.code(500).send({ error: `Failed to process bulk revisions: ${error}` });
+        }
+    });
+
+
+
+      //save revision for other user 
     fastify.post('/tree/user', async (request, reply) => {
         try {
             // Read `nonce` from headers
@@ -121,15 +292,15 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 return reply.code(202).send({ success: false, message: "use /tree to save revision for a specific user /tree/user is for different address" });
             }
 
-            if (!revisionData.orginAddress) {
+            if (!revisionData.originAddress) {
                 return reply.code(400).send({ success: false, message: "origin address not defined" });
             }
 
-            //  if(revisionData.orginAddress == revisionData.address    ){
+            //  if(revisionData.originAddress == revisionData.address    ){
             //      return reply.code(400).send({ success: false, message: "origin address cannot be the same as address " });
             // }
 
-            //   if(revisionData.orginAddress == session.address    ){
+            //   if(revisionData.originAddress == session.address    ){
             //      return reply.code(400).send({ success: false, message: "origin address cannot be the same as session address " });
             // }
 
@@ -144,11 +315,9 @@ export default async function revisionsController(fastify: FastifyInstance) {
             // Construct the full URL
             const url = `${protocol}://${host}`;
 
-            const [_httpCode, _message] = await saveRevisionInAquaTree(revisionData, revisionData.address, url);
+            const [_httpCode, _message] = await saveForOtherUserRevisionInAquaTree(revisionData,  url);
 
-            // if (httpCode != 200 && httpCode !== 407) {
-            //     return reply.code(httpCode).send({ success: false, message: message });
-            // }
+          
 
 
             //trigger the other party to refetch explorer files
@@ -165,13 +334,13 @@ export default async function revisionsController(fastify: FastifyInstance) {
         }
     });
 
-    // save revision for the user in the session
-    fastify.post('/tree', async (request, reply) => {
+
+    // Save all revisions for another user in a single request
+    fastify.post('/tree/user/all', async (request, reply) => {
         try {
             // Read `nonce` from headers
-            const nonce = request.headers['nonce']; // Headers are case-insensitive
+            const nonce = request.headers['nonce'];
 
-            // Check if `nonce` is missing or empty
             if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
                 return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
             }
@@ -181,79 +350,101 @@ export default async function revisionsController(fastify: FastifyInstance) {
             });
 
             if (!session) {
-                return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+                return reply.code(403).send({ success: false, message: "Nonce is invalid" });
             }
 
-            const revisionData = request.body as SaveRevisionForUser
+            const requestData = request.body as SaveAllRevisionsForUserRequest;
 
-            if (!revisionData.revision) {
-                return reply.code(400).send({ success: false, message: "revision Data is required" });
-            }
-            if (!revisionData.revisionHash) {
-                return reply.code(400).send({ success: false, message: "revision hash is required" });
+            if (!requestData.revisions || !Array.isArray(requestData.revisions) || requestData.revisions.length === 0) {
+                return reply.code(400).send({ success: false, message: "revisions array is required and must not be empty" });
             }
 
-            if (!revisionData.revision.revision_type) {
-                return reply.code(400).send({ success: false, message: "revision type is required" });
+            if (!requestData.address) {
+                return reply.code(400).send({ success: false, message: "address (target user) is required" });
             }
 
-            if (!revisionData.revision.local_timestamp) {
-                return reply.code(400).send({ success: false, message: "revision timestamp is required" });
+            if (!requestData.originAddress) {
+                return reply.code(400).send({ success: false, message: "originAddress is required" });
             }
 
-            if (!revisionData.revision.previous_verification_hash) {
-                return reply.code(400).send({ success: false, message: "previous revision hash  is required" });
-            }
-
-
-            if (!revisionData.orginAddress) {
-                return reply.code(400).send({ success: false, message: "origin address not defined.." });
+            if (requestData.address === session.address) {
+                return reply.code(202).send({
+                    success: false,
+                    message: `Use /tree/all to save revisions for yourself. /tree/user/all is for different addresses ${session.address}`
+                });
             }
 
             // Get the host from the request headers
             const host = request.headers.host || `${getHost()}:${getPort()}`;
-
-            // Get the protocol (http or https)
-            const protocol = request.protocol || 'https'
-
-            // Construct the full URL
+            const protocol = request.protocol || 'https';
             const url = `${protocol}://${host}`;
 
-            const [httpCode, message] = await saveRevisionInAquaTree(revisionData, session.address, url);
+            // Sort revisions by their index to ensure correct processing order
+            const sortedRevisions = [...requestData.revisions].sort((a, b) => {
+                const indexA = a.index ?? 0;
+                const indexB = b.index ?? 0;
+                return indexA - indexB;
+            });
 
-            if (httpCode != 200) {
-                return reply.code(httpCode).send({ success: false, message: message });
+            // Process all revisions in sorted order
+            for (let i = 0; i < sortedRevisions.length; i++) {
+                const revisionItem = sortedRevisions[i];
+
+                if (!revisionItem.revision || !revisionItem.revisionHash) {
+                    return reply.code(400).send({
+                        success: false,
+                        message: `Invalid revision at index ${revisionItem.index ?? i}: revision and revisionHash are required`
+                    });
+                }
+
+                if (!revisionItem.revision.revision_type) {
+                    return reply.code(400).send({
+                        success: false,
+                        message: `Invalid revision at index ${revisionItem.index ?? i}: revision_type is required`
+                    });
+                }
+
+                if (!revisionItem.revision.local_timestamp) {
+                    return reply.code(400).send({
+                        success: false,
+                        message: `Invalid revision at index ${revisionItem.index ?? i}: local_timestamp is required`
+                    });
+                }
+
+                // Build the SaveRevisionForUser object
+                const revisionData: SaveRevisionForUser = {
+                    revision: revisionItem.revision,
+                    revisionHash: revisionItem.revisionHash,
+                    address: requestData.address,
+                    originAddress: requestData.originAddress,
+                    templateId: '',
+                    isWorkflow: requestData.isWorkflow ?? false
+                };
+
+                const [httpCode, message] = await saveForOtherUserRevisionInAquaTree(revisionData, url);
+
+                if (httpCode !== 200) {
+                    
+                    return reply.code(httpCode).send({
+                        success: false,
+                        message: `Failed at revision index ${revisionItem.index ?? i}: ${message}`,
+                        failedIndex: revisionItem.index ?? i
+                    });
+                }
             }
 
-
-            // fetch all from latetst
-
-            // let latest = await prisma.latest.findMany({
-            //     where: {
-            //         user: session.address
-            //     }
-            // });
-
-            // if (latest.length == 0) {
-            //     return reply.code(200).send({ data: [] });
-            // }
-
-
-
-            // let displayData = await fetchAquatreeFoUser(url, latest)
-
-            let displayData = await getUserApiFileInfo(url, session.address)
+            // Trigger the other party to refetch explorer files
+            // console.log("🫠🫠🫠🫠 Sending websocket message to ", requestData.address , " session "+ session?.address);
+            // sendToUserWebsockerAMessage(requestData.address, WebSocketActions.REFETCH_FILES);
 
             return reply.code(200).send({
                 success: true,
-                message: "Revisions stored successfully",
-                data: displayData
-
+                message: `Successfully saved ${requestData.revisions.length} revisions for user ${requestData.address}`
             });
 
         } catch (error: any) {
             request.log.error(error);
-            return reply.code(500).send({ error: `Failed to process revisions ${error}` });
+            return reply.code(500).send({ error: `Failed to process bulk revisions for user: ${error}` });
         }
     });
 
@@ -1250,29 +1441,128 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
             } else {
                 // Default: date-based sorting from Latest table
-                const whereClause: any = {
-                    AND: {
+
+                if (fileType === 'user_files') {
+                    // For user_files, we need to exclude actual workflows at the database level
+                    // First, find all Latest hashes that belong to workflow chains
+
+                    // Step 1: Find all link revisions that point to system workflow templates
+                    const workflowLinkRevisions = await prisma.link.findMany({
+                        where: {
+                            hash: {
+                                startsWith: userAddress
+                            },
+                            link_verification_hashes: {
+                                hasSome: systemTemplateHashes
+                            }
+                        },
+                        select: {
+                            hash: true
+                        }
+                    });
+
+                    // Step 2: For each workflow link, find the Latest record for that chain
+                    const workflowLatestHashes = new Set<string>();
+
+                    // First, add all records explicitly marked as workflows
+                    const explicitWorkflows = await prisma.latest.findMany({
+                        where: {
+                            user: userAddress,
+                            is_workflow: true
+                        },
+                        select: { hash: true }
+                    });
+                    explicitWorkflows.forEach(w => workflowLatestHashes.add(w.hash));
+
+                    // Then, for each workflow link, trace to find its Latest record
+                    for (const linkRev of workflowLinkRevisions) {
+                        // Find the latest revision in this chain by following children
+                        let currentHash = linkRev.hash;
+                        let maxIterations = 100; // Safety limit
+
+                        while (maxIterations > 0) {
+                            const revision = await prisma.revision.findUnique({
+                                where: { pubkey_hash: currentHash },
+                                select: { children: true }
+                            });
+
+                            if (!revision || !revision.children || revision.children.length === 0) {
+                                break;
+                            }
+
+                            // Follow the first child (linear chain assumption)
+                            currentHash = revision.children[0];
+                            maxIterations--;
+                        }
+
+                        // currentHash is now the latest revision in this chain
+                        // Check if there's a Latest record for it
+                        const latestRecord = await prisma.latest.findFirst({
+                            where: {
+                                user: userAddress,
+                                hash: currentHash
+                            },
+                            select: { hash: true }
+                        });
+
+                        if (latestRecord) {
+                            workflowLatestHashes.add(latestRecord.hash);
+                        }
+                    }
+
+                    // Step 3: Query Latest table excluding workflow hashes
+                    const whereClause: any = {
                         user: userAddress,
                         template_id: null,
-                        is_workflow: fileType === 'all' || fileType == "user_files" ? false : undefined
-                    }
-                };
+                        is_workflow: false,
+                        ...(workflowLatestHashes.size > 0 ? {
+                            hash: {
+                                notIn: Array.from(workflowLatestHashes)
+                            }
+                        } : {})
+                    };
 
-                totalCount = await prisma.latest.count({ where: whereClause });
+                    totalCount = await prisma.latest.count({ where: whereClause });
 
-                const latestRecords = await prisma.latest.findMany({
-                    where: whereClause,
-                    select: {
-                        hash: true
-                    },
-                    skip: skip,
-                    take: limitNum,
-                    orderBy: {
-                        createdAt: 'desc'
-                    }
-                });
+                    const latestRecords = await prisma.latest.findMany({
+                        where: whereClause,
+                        select: {
+                            hash: true
+                        },
+                        skip: skip,
+                        take: limitNum,
+                        orderBy: {
+                            createdAt: 'desc'
+                        }
+                    });
 
-                revisionHashes = latestRecords.map(r => r.hash);
+                    revisionHashes = latestRecords.map(r => r.hash);
+
+                } else {
+                    // For 'all' fileType, use the original approach
+                    const whereClause: any = {
+                        AND: {
+                            user: userAddress,
+                            template_id: null
+                        }
+                    };
+
+                    totalCount = await prisma.latest.count({ where: whereClause });
+
+                    const latestRecords = await prisma.latest.findMany({
+                        where: whereClause,
+                        select: {
+                            hash: true
+                        },
+                        skip: skip,
+                        take: limitNum,
+                        orderBy: {
+                            createdAt: 'desc'
+                        }
+                    });
+
+                    revisionHashes = latestRecords.map(r => r.hash);
+                }
             }
 
             // Build aqua trees for the revision hashes
@@ -1300,6 +1590,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
             if (fileType === 'user_files') {
                 // Filter out any workflow files that might have slipped through
+                // Note: This is a safety net for records where is_workflow flag doesn't match actual content
                 let filteredDisplayData: Array<{
                     aquaTree: AquaTree,
                     fileObject: FileObject[]
@@ -1313,7 +1604,10 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
                 }
                 displayData = filteredDisplayData;
-                totalCount = displayData.length;
+                // Note: We intentionally do NOT update totalCount here.
+                // totalCount reflects the database count. If items are filtered out here,
+                // it indicates a data consistency issue where is_workflow flag doesn't match
+                // the actual aqua tree content. This should be fixed at the data layer.
             }
 
             const queryEnd = performance.now()
@@ -1352,7 +1646,12 @@ export default async function revisionsController(fastify: FastifyInstance) {
         preHandler: authenticate
     }, async (request: AuthenticatedRequest, reply) => {
         const userAddress = request.user?.address;
-        const { genesis_hash } = request.query as { genesis_hash: string };
+        const { genesis_hash, allRevisionHashes: revHashes } = request.query as { genesis_hash: string, allRevisionHashes: string };
+        let allRevisionHashes: string[] = []
+
+        try{
+            allRevisionHashes = JSON.parse(revHashes)
+        }catch(error){}
 
         if (!genesis_hash) {
             return reply.code(400).send({ error: 'genesis_hash query parameter is required' });
@@ -1366,6 +1665,30 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
         // Find all link revisions that have this genesis_hash in their link_verification_hashes
         // Using Prisma relation to perform inner join between Revision and Link tables
+        const orConditions: any[] = [
+            {
+                Link: {
+                    some: {
+                        link_verification_hashes: {
+                            has: genesis_hash,
+                        }
+                    }
+                }
+            }
+        ];
+
+        if (allRevisionHashes && allRevisionHashes.length > 0) {
+            orConditions.push({
+                Link: {
+                    some: {
+                        link_verification_hashes: {
+                            hasSome: allRevisionHashes
+                        }
+                    }
+                }
+            });
+        }
+
         const linkRevisions = await prisma.revision.findMany({
             select: {
                 pubkey_hash: true,
@@ -1375,13 +1698,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                     startsWith: userAddress
                 },
                 revision_type: 'link',
-                Link: {
-                    some: {
-                        link_verification_hashes: {
-                            has: genesis_hash
-                        }
-                    }
-                }
+                OR: orConditions
             },
             orderBy: {
                 createdAt: 'desc'
