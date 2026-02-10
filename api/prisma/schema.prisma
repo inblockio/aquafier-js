@@ -359,6 +359,7 @@ model VerificationAttempt {
 model DNSClaimVerification {
   id                  Int      @id @default(autoincrement())
   wallet_address      String
+  genesis_hash        String?
   domain              String
   verification_logs   Json
   verification_status String

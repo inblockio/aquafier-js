@@ -3,6 +3,7 @@ import * as dns from 'dns';
 import { promisify } from 'util';
 import Logger from "./logger";
 import { Prisma } from '@prisma/client';
+import { cliGreenify } from 'aqua-js-sdk';
 
 export interface TxtRecord {
   // New format fields
@@ -630,6 +631,8 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
       dnssecValidated = result.dnssecValidated;
       response.dnssecValidated = dnssecValidated;
 
+      console.log(cliGreenify(JSON.stringify(txtRecords, null, 4)))
+
       logs.push({
         level: 'success',
         message: 'DNS resolution successful (new format)',
@@ -641,6 +644,7 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
       });
     } catch (err) {
       // Fallback to old format
+      console.log("Error: ", err)
       logs.push({
         level: 'info',
         message: 'New format not found, trying old format',

@@ -1,5 +1,5 @@
 import { streamToBuffer } from "../utils/file_utils";
-import Aquafier, { AquaTree, FileObject, Revision } from "aqua-js-sdk";
+import Aquafier, { AquaTree, cliYellowfy, FileObject, Revision } from "aqua-js-sdk";
 import { FastifyInstance } from "fastify";
 import { ApiResponse, coerceIntoApiResponse, verifyProofApi } from "../utils/verify_dns_claim";
 import { prisma } from "../database/db";
@@ -185,8 +185,8 @@ export default async function verifyController(fastify: FastifyInstance) {
 
     fastify.post('/verify/dns_claim', async (request: any, reply: any) => {
         try {
-            const data: { domain: string, wallet: string, refresh?: boolean } = request.body as { domain: string, wallet: string, refresh?: boolean };
-
+            const data: { domain: string, wallet: string, refresh?: boolean, genesis_hash: string } = request.body as { domain: string, wallet: string, refresh?: boolean, genesis_hash: string };
+            console.log(cliYellowfy(JSON.stringify(data, null, 4)))
             // Validate input
             if (!data.domain || typeof data.domain !== 'string') {
                 return reply.code(400).send({
@@ -215,6 +215,7 @@ export default async function verifyController(fastify: FastifyInstance) {
             const existingVerification = await prisma.dNSClaimVerification.findFirst({
                 where: {
                     wallet_address: data.wallet,
+                    genesis_hash: data.genesis_hash,
                     domain: data.domain
                 }
             });
@@ -222,7 +223,11 @@ export default async function verifyController(fastify: FastifyInstance) {
             let result: ApiResponse | null = null
 
             if (existingVerification) {
-                if (data.refresh) {
+                // Reverify if explicitly requested or if last verification is stale (>5 mins)
+                const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+                const isStale = existingVerification.last_verified < fiveMinutesAgo;
+
+                if (data.refresh || isStale) {
                     result = await verifyProofApi(data.domain, 'wallet', data.wallet);
                     await prisma.dNSClaimVerification.update({
                         where: {
@@ -245,6 +250,7 @@ export default async function verifyController(fastify: FastifyInstance) {
                 await prisma.dNSClaimVerification.create({
                     data: {
                         wallet_address: data.wallet,
+                        genesis_hash: data.genesis_hash,
                         domain: data.domain,
                         verification_logs: result as any,
                         verification_status: result.success ? 'verified' : 'failed',
