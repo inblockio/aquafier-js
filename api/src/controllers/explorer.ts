@@ -105,6 +105,9 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
             let aquaJson = JSON.parse(aquaJsonContent);
+            if(!aquaJson.type){
+                aquaJson.type = "aqua_file_backup"
+            }
 
             if (aquaJson.type !== "aqua_workspace_backup" && aquaJson.type !== "aqua_file_backup") {
                 return reply.code(400).send({ error: 'Invalid aqua.json type' });
