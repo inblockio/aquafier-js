@@ -410,7 +410,7 @@ export async function generateENSClaim(ensName: string, ensExpiry: string, walle
         "expiry": ensExpiry
     }
 
-    console.log(ensForm)
+    // console.log(ensForm)
 
     let randomNum = getRandomNumber(999, 9999)
     let fileName = `ens_claim_${randomNum}.json`
