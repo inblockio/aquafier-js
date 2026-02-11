@@ -391,7 +391,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
       const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false, isWorkflow: boolean = false, account: string = session?.address || '') => {
             try {
-                  const url = `${backend_url}/explorer_aqua_file_upload`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_aqua_file_upload`)
 
                   // Create a FormData object to send multipart data
                   const formData = new FormData()

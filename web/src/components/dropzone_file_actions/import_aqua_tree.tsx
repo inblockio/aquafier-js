@@ -50,7 +50,7 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }:
 
         setUploading(true)
         try {
-            const url = `${backend_url}/explorer_aqua_file_upload`
+            const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_aqua_file_upload`)
             await fetch(url, {
                 method: 'POST',
                 body: formData,
