@@ -19,9 +19,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [view, setView] = useState<'table' | 'card'>('table')
       const [isSmallScreen, setIsSmallScreen] = useState(false)
       const [uniqueWorkflows, setUniqueWorkflows] = useState<{ name: string, count: number }[]>([])
-      const [selectedWorkflow, setSelectedWorkflow] = useState<string>(
-            filesListProps.hideAllFilesAndUserAquaFiles ? '' : 'user_files'
-      )
+      const [selectedWorkflow, setSelectedWorkflow] = useState<string>(filesListProps.hideAllFilesAndUserAquaFiles ? '' : 'user_files')
       const [stats, setStats] = useState<IUserStats>(emptyUserStats)
       const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date')
 
@@ -54,9 +52,20 @@ export default function FilesList(filesListProps: FilesListProps) {
                   getUserStats()
             }
 
+            if (tabFromUrl) {
+                  setSelectedWorkflow(tabFromUrl)
+            }
+            //  else {
+            //       setSelectedWorkflow(filesListProps.hideAllFilesAndUserAquaFiles ? '' : 'user_files')
+            // }
+
+
             return () => {
                   window.removeEventListener('resize', checkScreenSize)
             }
+
+
+
       }, [])
 
       const getUserStats = async () => {
@@ -109,7 +118,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       }, [tabFromUrl, stats])
 
       useEffect(() => {
-            if (stats) {
+            if (stats && !tabFromUrl) {
                   if (stats?.claimTypeCounts?.user_files > 0) {
                         setSelectedWorkflow('user_files')
                   } else {
