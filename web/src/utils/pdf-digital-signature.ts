@@ -329,7 +329,7 @@ export async function signPdfDocument(
     allSigners.push(...options.additionalSigners);
   }
 
-  console.log('All signers for this document:', allSigners);
+  // console.log('All signers for this document:', allSigners);
 
   // Collect names and wallets for metadata
   const allSignerNames = allSigners.map(s => s.name);
@@ -371,15 +371,15 @@ export async function signPdfDocument(
   // Use passed fileInfo if available, fall back to store
   const resolvedFileInfo = fileInfo ?? appStore.getState().selectedFileInfo;
 
-  console.log('resolvedFileInfo for PDF attachments:', {
-    source: fileInfo ? 'passed as parameter' : 'from store',
-    exists: !!resolvedFileInfo,
-    hasAquaTree: !!resolvedFileInfo?.aquaTree,
-    hasFileObject: !!resolvedFileInfo?.fileObject,
-    fileObjectLength: resolvedFileInfo?.fileObject?.length,
-    hasLinkedFileObjects: !!resolvedFileInfo?.linkedFileObjects,
-    linkedFileObjectsLength: resolvedFileInfo?.linkedFileObjects?.length,
-  });
+  // console.log('resolvedFileInfo for PDF attachments:', {
+  //   source: fileInfo ? 'passed as parameter' : 'from store',
+  //   exists: !!resolvedFileInfo,
+  //   hasAquaTree: !!resolvedFileInfo?.aquaTree,
+  //   hasFileObject: !!resolvedFileInfo?.fileObject,
+  //   fileObjectLength: resolvedFileInfo?.fileObject?.length,
+  //   hasLinkedFileObjects: !!resolvedFileInfo?.linkedFileObjects,
+  //   linkedFileObjectsLength: resolvedFileInfo?.linkedFileObjects?.length,
+  // });
 
   if (resolvedFileInfo && resolvedFileInfo.aquaTree) {
     try {
@@ -443,8 +443,8 @@ export async function signPdfDocument(
         }
       );
 
-      console.log('Embedded aqua.json with content:', JSON.stringify(aquaJsonData, null, 2));
-      console.log('Embedded resolved file info:', JSON.stringify(resolvedFileInfo, null, 2));
+      // console.log('Embedded aqua.json with content:', JSON.stringify(aquaJsonData, null, 2));
+      // console.log('Embedded resolved file info:', JSON.stringify(resolvedFileInfo, null, 2));
       // throw new Error('Test error to verify error handling'); // <-- Test error, remove in production
       // Embed all file objects (both .aqua.json metadata and actual asset files)
       // Mirrors the logic in download_aqua_chain.tsx for consistency
@@ -515,7 +515,7 @@ export async function signPdfDocument(
                 modificationDate: signedAt,
               }
             );
-            console.log(`Attached file: ${fileName} (${fileBytes.length} bytes)`);
+            // console.log(`Attached file: ${fileName} (${fileBytes.length} bytes)`);
           } catch (error) {
             console.error(`Failed to attach ${fileObj.fileName}:`, error);
           }
@@ -656,11 +656,11 @@ export async function signPdfWithAquafier(
   documentId?: string,
   fileInfo?: ApiFileInfo
 ): Promise<DigitalSignatureResult> {
-  console.log('signPdfWithAquafier - fileInfo received:', {
-    exists: !!fileInfo,
-    hasAquaTree: !!fileInfo?.aquaTree,
-    fileObjectLength: fileInfo?.fileObject?.length,
-  });
+  // console.log('signPdfWithAquafier - fileInfo received:', {
+  //   exists: !!fileInfo,
+  //   hasAquaTree: !!fileInfo?.aquaTree,
+  //   fileObjectLength: fileInfo?.fileObject?.length,
+  // });
 
   const signersList = signerName + (additionalSigners ? ', ' + additionalSigners.map((s) => s.name).join(', ') : '');
 
@@ -683,7 +683,7 @@ export async function signPdfWithAquafier(
     },
     additionalSigners: additionalSignerInfos,
   };
-  console.log('Signing PDF with options:', options);
+  // console.log('Signing PDF with options:', options);
   const res = await signPdfDocument(pdfBytes, options, fileInfo);
 
   return res;
@@ -700,7 +700,7 @@ export async function extractEmbeddedAquaData(
   assetFiles: Array<{ filename: string; content: string | ArrayBuffer }>;
 }> {
   try {
-    console.log('Loading PDF document for extraction...');
+    // console.log('Loading PDF document for extraction...');
     const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
 
     let aquaJson: any = null;
@@ -712,35 +712,35 @@ export async function extractEmbeddedAquaData(
     const namesDict = catalog.lookup(PDFName.of('Names'));
 
     if (!namesDict) {
-      console.log('No Names dictionary found in PDF catalog');
+      // console.log('No Names dictionary found in PDF catalog');
       return { aquaJson: null, aquaChainFiles: [], assetFiles: [] };
     }
 
     if (!(namesDict instanceof PDFDict)) {
-      console.log('Names entry is not a dictionary');
+      // console.log('Names entry is not a dictionary');
       return { aquaJson: null, aquaChainFiles: [], assetFiles: [] };
     }
 
     const embeddedFilesDict = namesDict.lookup(PDFName.of('EmbeddedFiles'));
 
     if (!embeddedFilesDict) {
-      console.log('No EmbeddedFiles dictionary found');
+      // console.log('No EmbeddedFiles dictionary found');
       return { aquaJson: null, aquaChainFiles: [], assetFiles: [] };
     }
 
     if (!(embeddedFilesDict instanceof PDFDict)) {
-      console.log('EmbeddedFiles entry is not a dictionary');
+      // console.log('EmbeddedFiles entry is not a dictionary');
       return { aquaJson: null, aquaChainFiles: [], assetFiles: [] };
     }
 
     const namesArray = embeddedFilesDict.lookup(PDFName.of('Names'));
 
     if (!namesArray || !(namesArray instanceof PDFArray)) {
-      console.log('Names array not found in EmbeddedFiles');
+      // console.log('Names array not found in EmbeddedFiles');
       return { aquaJson: null, aquaChainFiles: [], assetFiles: [] };
     }
 
-    console.log(`Found ${namesArray.size() / 2} embedded files`);
+    // console.log(`Found ${namesArray.size() / 2} embedded files`);
 
     // Names array contains alternating filename and filespec entries
     for (let i = 0; i < namesArray.size(); i += 2) {
@@ -753,19 +753,19 @@ export async function extractEmbeddedAquaData(
         }
 
         const filename = filenameObj.decodeText();
-        console.log(`Processing embedded file: ${filename}`);
+        // console.log(`Processing embedded file: ${filename}`);
 
         const filespec = pdfDoc.context.lookup(filespecRef);
 
         if (!filespec || !(filespec instanceof PDFDict)) {
-          console.log(`Filespec not found for ${filename}`);
+          // console.log(`Filespec not found for ${filename}`);
           continue;
         }
 
         const efDict = filespec.lookup(PDFName.of('EF'));
 
         if (!efDict || !(efDict instanceof PDFDict)) {
-          console.log(`EF dictionary not found for ${filename}`);
+          // console.log(`EF dictionary not found for ${filename}`);
           continue;
         }
 
@@ -773,7 +773,7 @@ export async function extractEmbeddedAquaData(
         const fileStream = pdfDoc.context.lookup(fileStreamRef);
 
         if (!fileStream) {
-          console.log(`File stream not found for ${filename}`);
+          // console.log(`File stream not found for ${filename}`);
           continue;
         }
 
@@ -784,16 +784,16 @@ export async function extractEmbeddedAquaData(
         if ((fileStream as any).contents) {
           fileBytes = (fileStream as any).contents;
         } else {
-          console.log(`No contents found for ${filename}`);
+          // console.log(`No contents found for ${filename}`);
           continue;
         }
 
         if (!fileBytes || fileBytes.length === 0) {
-          console.log(`No contents found for ${filename}`);
+          // console.log(`No contents found for ${filename}`);
           continue;
         }
 
-        console.log(`Raw bytes for ${filename}: length=${fileBytes.length}, first byte=0x${fileBytes[0].toString(16)}, second byte=0x${fileBytes[1]?.toString(16) || 'N/A'}`);
+        // console.log(`Raw bytes for ${filename}: length=${fileBytes.length}, first byte=0x${fileBytes[0].toString(16)}, second byte=0x${fileBytes[1]?.toString(16) || 'N/A'}`);
 
         // Check if the stream has a FlateDecode filter (zlib compressed)
         // Zlib header starts with 0x78 followed by compression level byte
@@ -805,11 +805,11 @@ export async function extractEmbeddedAquaData(
         let rawBytes: Uint8Array;
 
         if (isZlibCompressed) {
-          console.log(`File ${filename} appears to be zlib compressed, attempting to decompress with pako...`);
+          // console.log(`File ${filename} appears to be zlib compressed, attempting to decompress with pako...`);
           try {
             const pako = await import('pako');
             rawBytes = pako.inflate(fileBytes);
-            console.log(`Successfully decompressed ${filename} with pako`);
+            // console.log(`Successfully decompressed ${filename} with pako`);
           } catch (error) {
             console.error(`Failed to decompress ${filename} with pako:`, error);
             rawBytes = fileBytes;
@@ -818,36 +818,36 @@ export async function extractEmbeddedAquaData(
           rawBytes = fileBytes;
         }
 
-        console.log(`Extracted ${filename}: ${rawBytes.length} bytes, isTextFile: ${isTextFile}`);
+        // console.log(`Extracted ${filename}: ${rawBytes.length} bytes, isTextFile: ${isTextFile}`);
 
         if (filename === 'aqua.json') {
           try {
             const textContent = new TextDecoder('utf-8').decode(rawBytes);
             aquaJson = JSON.parse(textContent);
-            console.log('Successfully parsed aqua.json');
+            // console.log('Successfully parsed aqua.json');
           } catch (error) {
             console.error('Failed to parse aqua.json:', error);
           }
         } else if (filename.endsWith('.aqua.json')) {
           const textContent = new TextDecoder('utf-8').decode(rawBytes);
           aquaChainFiles.push({ filename, content: textContent });
-          console.log(`Added ${filename} to aquaChainFiles`);
+          // console.log(`Added ${filename} to aquaChainFiles`);
         } else if (isTextFile) {
           // Non-aqua JSON asset file — decode as text
           const textContent = new TextDecoder('utf-8').decode(rawBytes);
           assetFiles.push({ filename, content: textContent });
-          console.log(`Added ${filename} to assetFiles (text)`);
+          // console.log(`Added ${filename} to assetFiles (text)`);
         } else {
           // Binary asset file (PNG, PDF, etc.) — keep as raw bytes
           assetFiles.push({ filename, content: rawBytes.buffer as ArrayBuffer });
-          console.log(`Added ${filename} to assetFiles (binary, ${rawBytes.length} bytes)`);
+          // console.log(`Added ${filename} to assetFiles (binary, ${rawBytes.length} bytes)`);
         }
       } catch (error) {
         console.error('Failed to process embedded file at index', i, ':', error);
       }
     }
 
-    console.log(`Extraction complete. aquaJson: ${aquaJson ? 'found' : 'not found'}, aquaChainFiles: ${aquaChainFiles.length}, assetFiles: ${assetFiles.length}`);
+    // console.log(`Extraction complete. aquaJson: ${aquaJson ? 'found' : 'not found'}, aquaChainFiles: ${aquaChainFiles.length}, assetFiles: ${assetFiles.length}`);
     return { aquaJson, aquaChainFiles, assetFiles };
   } catch (error) {
     console.error('Error extracting embedded aqua data:', error);

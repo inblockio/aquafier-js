@@ -228,9 +228,9 @@ export default function FilesList(filesListProps: FilesListProps) {
       const filteredFiles = getFilteredFiles()
 
       const capitalizeWords = (str: string): string => {
-            if(str === "domain_claim"){
+            if(str === "domain claim"){
                   return "DNS Claim"
-            }else if(str === "ens_claim"){
+            }else if(str === "ens claim"){
                   return "ENS Claim"
             }
             return str.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1))

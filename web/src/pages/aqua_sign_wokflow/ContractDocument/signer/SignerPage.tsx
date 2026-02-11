@@ -70,10 +70,10 @@ export function PdfRendererComponent({
       const handleDownload = () => {
             if (onDownload) {
                   // onDownload()
-                  console.log("Download triggered from PdfRenderer");
+                  // console.log("Download triggered from PdfRenderer");
                   onDownload()
             } else {
-                  console.log("No onDownload prop provided to PdfRenderer");
+                  // console.log("No onDownload prop provided to PdfRenderer");
                   toast.error("Download function not implemented.");
             }
             // else if (pdfFile) {
