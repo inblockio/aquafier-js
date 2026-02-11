@@ -25,6 +25,7 @@ import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 import { useContacts } from '@/hooks/useContactResolver'
+import ENSClaim from './ENSClaim'
 
 
 export default function ClaimsWorkflowPage() {
@@ -126,7 +127,7 @@ export default function ClaimsWorkflowPage() {
                   setIsProcessingClaims(false)
                   return
             }
-            const claimTemplateNames = ["simple_claim", "identity_claim", "dns_claim", "domain_claim", "phone_number_claim", "email_claim", "user_signature"]
+            const claimTemplateNames = ["simple_claim", "identity_claim", "ens_claim", "dns_claim", "domain_claim", "phone_number_claim", "email_claim", "user_signature"]
 
             const aquaSystemFileNames = await loadSystemAquaFileNames()
 
@@ -151,7 +152,7 @@ export default function ClaimsWorkflowPage() {
                         if (_walletAddress === walletAddress) {
                               const processedClaimInfo = processSimpleWorkflowClaim(file)
                               let processedAttestations: Array<IAttestationEntry> = []
-                              if (["simple_claim", "identity_claim", "dns_claim", "domain_claim", "phone_number_claim", "email_claim", "user_signature"].includes(processedClaimInfo.claimInformation.forms_type)) {
+                              if (["simple_claim", "identity_claim", "dns_claim", "ens_claim", "domain_claim", "phone_number_claim", "email_claim", "user_signature"].includes(processedClaimInfo.claimInformation.forms_type)) {
                                     processedAttestations = await loadAttestationData(processedClaimInfo.genesisHash!, _attestations)
                               }
                               const sharedContracts = await loadSharedContractsData(lastRevisionHash)
@@ -165,8 +166,15 @@ export default function ClaimsWorkflowPage() {
       }
 
       const renderClaim = (claim: ICompleteClaimInformation) => {
+            // console.log("Claim: ", claim)
             const claimInfo = claim.processedInfo.claimInformation
             const genesisRevisionHash = getGenesisHash(claim.file.aquaTree!)
+
+            if(!claimInfo.forms_type){
+                  return (
+                        <ENSClaim claimInfo={claimInfo} />
+                  )
+            }
 
             if (claimInfo.forms_type === 'dns_claim') {
                   return (
@@ -416,7 +424,7 @@ export default function ClaimsWorkflowPage() {
 
                   <div className="flex flex-col gap-4">
                         {
-                              claims.filter(item => ["simple_claim", "identity_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
+                              claims.filter(item => ["simple_claim", "identity_claim", "ens_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
                                     <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg border-2 border-gray-400">
                                           {renderClaim(claim)}
                                           <Collapsible className=' bg-gray-50 p-2 rounded-lg'>
@@ -462,7 +470,7 @@ export default function ClaimsWorkflowPage() {
                               ))
                         }
                         {
-                              claims.filter(item => !["simple_claim", "identity_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
+                              claims.filter(item => !["simple_claim", "identity_claim", "ens_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
                                     <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg border-2 border-gray-400">
                                           {renderClaim(claim)}
                                           <Collapsible className='mt-4 bg-gray-50 p-2 rounded-lg'>

@@ -69,12 +69,26 @@ export interface DownloadPdfOptions {
  */
 export const sanitizeTextForWinAnsi = (text: string): string => {
     if (!text) return "";
-    // Regex matches characters that are NOT in the WinAnsi printable range (roughly).
-    // WinAnsi supports: 
-    // - ASCII printable (32-126)
-    // - Most IS0-8859-1 chars (128-255)
-    // We'll filter out anything else for safety to avoid crash.
-    return text.replace(/[^\x20-\x7E\xA0-\xFF]/g, '?');
+    // Map common Unicode chars to their WinAnsi equivalents (these exist in WinAnsi
+    // but have Unicode codepoints outside the Latin-1 \xA0-\xFF range)
+    const winAnsiMap: Record<string, string> = {
+        '\u2022': '\xB7', // bullet • → middle dot (WinAnsi safe)
+        '\u2013': '\x96', // en dash
+        '\u2014': '\x97', // em dash
+        '\u2018': '\x91', // left single quote
+        '\u2019': '\x92', // right single quote
+        '\u201C': '\x93', // left double quote
+        '\u201D': '\x94', // right double quote
+        '\u2026': '\x85', // ellipsis
+        '\u2122': '\x99', // trademark
+    };
+    let mapped = text;
+    for (const [unicode, winAnsi] of Object.entries(winAnsiMap)) {
+        mapped = mapped.replace(unicode, winAnsi);
+    }
+    // Filter out anything not in WinAnsi printable range
+    // WinAnsi supports: ASCII printable (32-126), codes 128-159 (special chars), ISO-8859-1 (160-255)
+    return mapped.replace(/[^\x20-\x7E\x80-\xFF]/g, '?');
 };
  
 export const downloadPdfWithAnnotations = async ({

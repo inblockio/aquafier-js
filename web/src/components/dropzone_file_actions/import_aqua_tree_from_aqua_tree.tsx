@@ -23,6 +23,7 @@ import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 // import { Badge } from "@/components/ui/badge";
 // import { Separator } from "@/components/ui/separator";
 import { useNavigate } from 'react-router-dom'
+import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 
 export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificationSuccessful, contractData }: ImportChainFromChainProps) => {
       const navigate = useNavigate()
@@ -99,6 +100,7 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                   setLastLocalRevisionHash(lastRevision)
                   setRevisionsToImport(_revisionsToImport)
                   setModalOpen(true)
+
                   return
             }
 
@@ -112,7 +114,7 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                   const revisionHashes = Object.keys(revisions)
                   const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
 
-                   await apiClient.post(
+                  await apiClient.post(
                         url,
                         {
                               latestRevisionHash: latestRevisionHash,
@@ -149,17 +151,20 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                               let activeUserAddress = session?.address?.toLocaleLowerCase()
                               let isUserSigner = signersArray.find((signer: string) => signer === activeUserAddress)
                               if (isUserSigner) {
-                                    
+                                    await triggerWorkflowReload(RELOAD_KEYS.contacts, true);
                                     navigate('/app/pdf/workflow/2/' + genesisHash)
                                     return
                               }
-                        }else{
-                              
+                        } else {
+                              await triggerWorkflowReload(RELOAD_KEYS.contacts, true);
                               navigate('/app/pdf/workflow/1/' + genesisHash)
                               return
                         }
-                      
+
                   } else {
+                        await triggerWorkflowReload(RELOAD_KEYS.user_files, false);
+                        await triggerWorkflowReload(RELOAD_KEYS.all_files, false);
+                        await triggerWorkflowReload(RELOAD_KEYS.contacts, true);
                         navigate('/app')
                   }
 
@@ -237,18 +242,21 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                                     let activeUserAddress = session?.address?.toLocaleLowerCase()
                                     let isUserSigner = signersArray.find((signer: string) => signer === activeUserAddress)
                                     if (isUserSigner) {
-
+                                          await triggerWorkflowReload(RELOAD_KEYS.contacts, true);
                                           navigate('/app/pdf/workflow/2/' + genesisHash)
                                           return
                                     }
-                              }else{
-
+                              } else {
+                                    await triggerWorkflowReload(RELOAD_KEYS.contacts, true);
                                     navigate('/app/pdf/workflow/1/' + genesisHash)
                                     return
                               }
 
-                       
+
                         } else {
+                              await triggerWorkflowReload(RELOAD_KEYS.user_files, false);
+                              await triggerWorkflowReload(RELOAD_KEYS.all_files, false);
+                              await triggerWorkflowReload(RELOAD_KEYS.contacts, true);
                               navigate('/app')
                         }
 

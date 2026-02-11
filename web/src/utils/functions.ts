@@ -2696,7 +2696,7 @@ export const processSimpleWorkflowClaim = (selectedFileInfo: ApiFileInfo): Claim
             // 'forms_wallet_address',
             // 'forms_claim_context',
       ]
-      const isClaimValid = mustContainkeys.every(key => firstRevisionKeys.includes(key))
+      const isClaimValid = mustContainkeys.every(key => firstRevisionKeys.includes(key)) || firstRevisionKeys.includes("forms_ens_name")
 
       if (!isClaimValid) {
             return {
