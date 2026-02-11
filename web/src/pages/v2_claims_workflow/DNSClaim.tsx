@@ -6,8 +6,11 @@ import {ShareButton} from '@/components/aqua_chain_actions/share_aqua_chain'
 import {ApiFileInfo} from '@/models/FileInfo'
 import {useStore} from 'zustand'
 import appStore from '@/store'
+import apiClient from '@/api/axiosInstance'
 import ImprovedDNSLogs from './ImprovedDNSLogs'
 import { useLocation } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import { LuRefreshCw } from 'react-icons/lu'
 
 interface IDNSClaim {
       claimInfo: Record<string, string>,
@@ -103,6 +106,7 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
       const description = 'Domain control validation for a domain.'
       const domain = claimInfo['forms_domain'] || ''
       const walletAddress = claimInfo['forms_wallet_address'] || ''
+      const uniqueId = claimInfo['forms_unique_id']
       const date =
             claimInfo['forms_created_at'] ||
             claimInfo['date'] ||
@@ -139,7 +143,7 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
             setVerificationMessage('Checking DNS records...')
       }
 
-      const verifyDNS = async () => {
+      const verifyDNS = async (forceRefresh: boolean) => {
             resetVerification()
 
             if (!domain) {
@@ -152,51 +156,43 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
                   setVerificationStatus('loading')
                   setVerificationMessage('Verifying DNS records...')
 
-                  const url = `${backend_url}/verify/dns_claim`
-                  const actualUrlToFetch = ensureDomainUrlHasSSL(url)
-                  const response = await fetch(actualUrlToFetch, {
-                        method: 'POST',
-                        headers: {
-                              'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                              domain: domain,
-                              wallet: walletAddress
-                        }),
+                  const response = await apiClient.post(ensureDomainUrlHasSSL(`${backend_url}/verify/dns_claim`), {
+                        domain: domain,
+                        wallet: walletAddress,
+                        genesis_hash: genesisRevisionHash,
+                        refresh: forceRefresh,
+                        claimData: {
+                              wallet: walletAddress, 
+                              uniqueId: uniqueId
+                        }
                   })
 
-                  const result: VerificationResult = await response.json()
+                  const result: VerificationResult = response.data
                   setVerificationResult(result)
 
                   if (result.success) {
                         setVerificationStatus('verified')
                         setVerificationMessage(result.message)
                   } else {
-                        // Determine status based on the response status and result
-                        if (response.status === 404) {
+                        setVerificationStatus('failed')
+                        setVerificationMessage(result.message || 'Verification failed')
+                  }
+            } catch (error: any) {
+                  console.error('Error verifying DNS claim:', error)
+                  if (error.response?.data) {
+                        const result: VerificationResult = error.response.data
+                        setVerificationResult(result)
+                        if (error.response.status === 404) {
                               setVerificationStatus('not_found')
                               setVerificationMessage(result.message || 'DNS records not found')
-                        } else if (response.status === 429) {
-                              setVerificationStatus('failed')
-                              setVerificationMessage(result.message || 'Rate limit exceeded. Please try again later.')
-                        } else if (response.status === 400) {
-                              setVerificationStatus('failed')
-                              setVerificationMessage(result.message || 'Invalid request format')
-                        } else if (response.status === 422) {
-                              setVerificationStatus('failed')
-                              setVerificationMessage(result.message || 'Verification failed')
                         } else {
-                              // Fallback for other cases
                               setVerificationStatus('failed')
                               setVerificationMessage(result.message || 'Verification failed')
                         }
+                  } else {
+                        setVerificationStatus('failed')
+                        setVerificationMessage('Error connecting to verification service')
                   }
-            } catch (error) {
-                  console.error('Error verifying DNS claim:', error)
-                  setVerificationStatus('failed')
-                  setVerificationMessage('Error connecting to verification service')
-
-
             }
       }
 
@@ -210,10 +206,10 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
       }
 
       useEffect(() => {
-            if (domain && walletAddress) {
-                  verifyDNS()
+            if (domain && walletAddress && genesisRevisionHash) {
+                  verifyDNS(false)
             }
-      }, [domain, walletAddress])
+      }, [domain, walletAddress, genesisRevisionHash])
 
       return (
             <div className="grid lg:grid-cols-12 gap-4 relative" id={`${genesisRevisionHash}`}>
@@ -239,7 +235,7 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
                                           </div>
 
                                           {/* DNS Verification Status Indicator */}
-                                          <div className="flex items-center">
+                                          <div className="flex items-center gap-2">
                                                 {verificationStatus === 'loading' && (
                                                       <div className="flex items-center text-blue-500">
                                                             <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full mr-2"></div>
@@ -264,6 +260,9 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
                                                             <span className="text-xs">Verification Failed</span>
                                                       </div>
                                                 )}
+                                                <Button onClick={() => verifyDNS(true)} size={"sm"} variant={"link"} className='cursor-pointer'>
+                                                      <LuRefreshCw />
+                                                </Button>
                                           </div>
                                     </div>
 

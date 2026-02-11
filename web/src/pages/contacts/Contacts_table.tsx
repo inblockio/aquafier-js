@@ -122,7 +122,7 @@ const ContactRow = ({ contact, onProfileSelect }: ContactRowProps) => {
 
                 <div className="col-span-2">
                     <div className="flex items-center min-w-0 gap-3">
-                        <div className="relative h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br from-neutral-100 to-neutral-200 border border-neutral-200 flex items-center justify-center text-sm font-medium text-neutral-700">
+                        <div className="relative h-10 w-10 shrink-0 rounded-xl bg-linear-to-br from-neutral-100 to-neutral-200 border border-neutral-200 flex items-center justify-center text-sm font-medium text-neutral-700">
                             {avatar}
                         </div>
                         <div className="min-w-0">
@@ -205,7 +205,7 @@ const ContactRow = ({ contact, onProfileSelect }: ContactRowProps) => {
 
 const GroupHeader = ({ letter }: { letter: string }) => {
     return (
-        <div id={`group-${letter}`} className="sticky top-0 z-10 bg-white/85 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-neutral-100">
+        <div id={`group-${letter}`} className="sticky top-0 z-10 bg-white/85 backdrop-blur supports-backdrop-filter:bg-white/60 border-b border-neutral-100">
             <h3 className="px-4 py-2 text-sm font-medium tracking-tight text-neutral-500">{letter}</h3>
         </div>
     )
@@ -223,8 +223,6 @@ const ContactsTable = () => {
     const [selectedProfile, setSelectedProfile] = useState<ContactProfile | null>(null);
 
     const { contacts: contactProfiles, loading: contactsLoading } = useContacts();
-
-    console.log(contactProfiles)
 
     const groupKey = (c: ContactProfile) => {
         const nm = normalizeText(c.name ?? "");
@@ -406,7 +404,7 @@ const ContactsTable = () => {
             </div>
             <Dialog open={openDialog} onOpenChange={setOpenDialog}>
                 {/* <DialogTrigger>Open</DialogTrigger> */}
-                <DialogContent className="rounded-2xl max-w-[90%] md:max-w-[425px] px-2 md:px-4">
+                <DialogContent className="rounded-2xl max-w-[90%] md:max-w-106.25 px-2 md:px-4">
                     <DialogHeader>
                         <DialogTitle>Profile</DialogTitle>
                         <DialogDescription style={{
