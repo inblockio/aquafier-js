@@ -30,7 +30,7 @@ export interface IDnsVerificationResult {
     verificationResult: VerificationResult | null
 }
 
-export const verifyDNS = async (backend_url: string, domain: string, walletAddress: string, triggerReload: boolean, genesisRevision: string): Promise<IDnsVerificationResult> => {
+export const verifyDNS = async (backend_url: string, domain: string, walletAddress: string, triggerReload: boolean, genesisRevision: string, uniqueId: string): Promise<IDnsVerificationResult> => {
     // Hardcoded values as requested
     //     const domain = 'inblock.io'
     //     const walletAddress = '0x677e5E9a3badb280d7393464C09490F813d6d6ef'
@@ -60,7 +60,11 @@ export const verifyDNS = async (backend_url: string, domain: string, walletAddre
                 domain: domain ?? "inblock.io",
                 wallet: walletAddress,
                 refresh: triggerReload,
-                genesis_hash: genesisRevision
+                genesis_hash: genesisRevision,
+                claimData :{
+wallet: walletAddress,
+uniqueId
+                }
             }),
         })
 

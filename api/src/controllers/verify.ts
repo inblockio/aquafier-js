@@ -1,7 +1,7 @@
 import { streamToBuffer } from "../utils/file_utils";
-import Aquafier, { AquaTree, cliYellowfy, FileObject, Revision } from "aqua-js-sdk";
+import Aquafier, { AquaTree, FileObject, Revision } from "aqua-js-sdk";
 import { FastifyInstance } from "fastify";
-import { ApiResponse, coerceIntoApiResponse, verifyProofApi } from "../utils/verify_dns_claim";
+import { ApiResponse, coerceIntoApiResponse, IClaimData, verifyProofApi } from "../utils/verify_dns_claim";
 import { prisma } from "../database/db";
 
 export default async function verifyController(fastify: FastifyInstance) {
@@ -185,8 +185,8 @@ export default async function verifyController(fastify: FastifyInstance) {
 
     fastify.post('/verify/dns_claim', async (request: any, reply: any) => {
         try {
-            const data: { domain: string, wallet: string, refresh?: boolean, genesis_hash: string } = request.body as { domain: string, wallet: string, refresh?: boolean, genesis_hash: string };
-            console.log(cliYellowfy(JSON.stringify(data, null, 4)))
+            const data: { domain: string, wallet: string, refresh?: boolean, genesis_hash: string, claimData: IClaimData } = request.body as { domain: string, wallet: string, refresh?: boolean, genesis_hash: string, claimData: IClaimData };
+            // console.log(cliYellowfy(JSON.stringify(data, null, 4)))
             // Validate input
             if (!data.domain || typeof data.domain !== 'string') {
                 return reply.code(400).send({
@@ -228,7 +228,7 @@ export default async function verifyController(fastify: FastifyInstance) {
                 const isStale = existingVerification.last_verified < fiveMinutesAgo;
 
                 if (data.refresh || isStale) {
-                    result = await verifyProofApi(data.domain, 'wallet', data.wallet);
+                    result = await verifyProofApi(data.domain, 'wallet', data.wallet, data.claimData);
                     await prisma.dNSClaimVerification.update({
                         where: {
                             id: existingVerification.id
@@ -245,7 +245,7 @@ export default async function verifyController(fastify: FastifyInstance) {
                     result = coerceIntoApiResponse(existingVerification.verification_logs)
                 }
             } else {
-                result = await verifyProofApi(data.domain, 'wallet', data.wallet);
+                result = await verifyProofApi(data.domain, 'wallet', data.wallet, data.claimData);
 
                 await prisma.dNSClaimVerification.create({
                     data: {

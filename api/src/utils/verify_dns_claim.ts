@@ -1,9 +1,9 @@
 import * as ethers from 'ethers';
 import * as dns from 'dns';
-import { promisify } from 'util';
 import Logger from "./logger";
 import { Prisma } from '@prisma/client';
-import { cliGreenify } from 'aqua-js-sdk';
+import { cliGreenify, cliYellowfy } from 'aqua-js-sdk';
+// import { cliGreenify } from 'aqua-js-sdk';
 
 export interface TxtRecord {
   // New format fields
@@ -19,9 +19,6 @@ export interface TxtRecord {
   // Common
   sig: string;
 }
-
-// Promisify DNS functions for better async handling
-const resolveTxtAsync = promisify(dns.resolveTxt);
 
 // Set reliable DNS servers (Google and Cloudflare)
 dns.setServers([
@@ -66,115 +63,130 @@ export interface ApiResponse {
   dnssecValidated: boolean;
 }
 
-// Improved DNS resolution with multiple fallbacks
-async function resolveTxtWithFallbacks(domain: string): Promise<{ records: string[][]; dnssecValidated: boolean }> {
-  const logs: string[] = [];
-
-  // Method 1: Try with promisified dns.resolveTxt
-  try {
-    logs.push(`Attempting DNS resolution for ${domain} using promisified dns.resolveTxt`);
-    const records = await resolveTxtAsync(domain);
-    logs.push(`Success with promisified dns.resolveTxt: ${records.length} records found`);
-    return { records, dnssecValidated: false };
-  } catch (error1) {
-    logs.push(`Method 1 failed: ${error1 instanceof Error ? error1.message : error1}`);
-  }
-
-  // Method 2: Try with callback-based dns.resolveTxt in Promise wrapper
-  try {
-    logs.push(`Attempting DNS resolution using callback-based dns.resolveTxt`);
-    const records = await new Promise<string[][]>((resolve, reject) => {
-      // Set a timeout for the DNS query
-      const timeoutId = setTimeout(() => {
-        reject(new Error('DNS query timeout after 10 seconds'));
-      }, 10000);
-
-      dns.resolveTxt(domain, (err, records) => {
-        clearTimeout(timeoutId);
-        if (err) {
-          reject(err);
-        } else {
-          resolve(records);
-        }
-      });
-    });
-    logs.push(`Success with callback-based dns.resolveTxt: ${records.length} records found`);
-    return { records, dnssecValidated: false };
-  } catch (error2) {
-    logs.push(`Method 2 failed: ${error2 instanceof Error ? error2.message : error2}`);
-  }
-
-  // Method 3: Try with custom resolver
-  try {
-    logs.push(`Attempting DNS resolution using custom resolver`);
-    const customResolver = new dns.Resolver();
-    customResolver.setServers(['8.8.8.8', '1.1.1.1']);
-
-    const records = await new Promise<string[][]>((resolve, reject) => {
-      const timeoutId = setTimeout(() => {
-        reject(new Error('Custom resolver timeout after 10 seconds'));
-      }, 10000);
-
-      customResolver.resolveTxt(domain, (err, records) => {
-        clearTimeout(timeoutId);
-        if (err) {
-          reject(err);
-        } else {
-          resolve(records);
-        }
-      });
-    });
-    logs.push(`Success with custom resolver: ${records.length} records found`);
-    return { records, dnssecValidated: false };
-  } catch (error3) {
-    logs.push(`Method 3 failed: ${error3 instanceof Error ? error3.message : error3}`);
-  }
-
-  // Method 4: Try with different DNS servers
-  const dnsServers = [
-    ['8.8.8.8', '8.8.4.4'], // Google
-    ['1.1.1.1', '1.0.0.1'], // Cloudflare
-    ['208.67.222.222', '208.67.220.220'], // OpenDNS
-    ['9.9.9.9', '149.112.112.112'] // Quad9
+// DNS-over-HTTPS resolution (uses TCP - no UDP truncation issues)
+async function resolveTxtWithDoH(domain: string): Promise<{ records: string[][]; dnssecValidated: boolean }> {
+  const endpoints = [
+    {
+      name: 'Google DoH',
+      url: `https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=TXT`,
+      headers: {} as Record<string, string>
+    },
+    {
+      name: 'Cloudflare DoH',
+      url: `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(domain)}&type=TXT`,
+      headers: { 'Accept': 'application/dns-json' }
+    }
   ];
 
-  for (const servers of dnsServers) {
-    try {
-      logs.push(`Attempting DNS resolution using servers: ${servers.join(', ')}`);
-      const resolver = new dns.Resolver();
-      resolver.setServers(servers);
+  let lastError: Error | undefined;
 
-      const records = await new Promise<string[][]>((resolve, reject) => {
-        const timeoutId = setTimeout(() => {
-          reject(new Error(`DNS query timeout with servers ${servers.join(', ')}`));
-        }, 8000);
+  for (const endpoint of endpoints) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-        resolver.resolveTxt(domain, (err, records) => {
-          clearTimeout(timeoutId);
-          if (err) {
-            reject(err);
-          } else {
-            resolve(records);
-          }
+        const response = await fetch(endpoint.url, {
+          headers: endpoint.headers,
+          signal: controller.signal
         });
-      });
-      logs.push(`Success with servers ${servers.join(', ')}: ${records.length} records found`);
-      return { records, dnssecValidated: false };
-    } catch (error: any) {
-      logs.push(`Failed with servers ${servers.join(', ')}: ${error instanceof Error ? error.message : error}`);
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          Logger.warn(`${endpoint.name} returned HTTP ${response.status}`);
+          continue;
+        }
+
+        const data = await response.json() as any;
+
+        // Status 3 = NXDOMAIN (domain does not exist)
+        if (data.Status === 3) {
+          throw new Error(`DNS name does not exist: ${domain}`);
+        }
+
+        if (data.Status !== 0) {
+          Logger.warn(`${endpoint.name} returned DNS status ${data.Status}`);
+          continue;
+        }
+
+        if (!data.Answer) {
+          return { records: [], dnssecValidated: !!data.AD };
+        }
+
+        const records: string[][] = data.Answer
+          .filter((r: any) => r.type === 16) // TXT record type
+          .map((r: any) => {
+            let txt = r.data as string;
+            // DoH returns data with surrounding quotes
+            if (txt.startsWith('"') && txt.endsWith('"')) {
+              txt = txt.slice(1, -1);
+            }
+            return [txt];
+          });
+
+        Logger.info(`${endpoint.name}: resolved ${records.length} TXT records for ${domain}`);
+       
+        return { records, dnssecValidated: !!data.AD };
+      } catch (error: any) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        // Propagate NXDOMAIN immediately so caller can try alternate record name
+        if (lastError.message.includes('does not exist')) throw lastError;
+        if (attempt < 2) await new Promise(r => setTimeout(r, 500));
+      }
     }
   }
 
-  // If all methods fail, throw the last error with diagnostic info
-  const diagnosticInfo = {
-    domain,
-    availableServers: dns.getServers(),
-    logs,
-    nodeVersion: process.version,
-    platform: process.platform
-  };
+  throw lastError || new Error(`All DoH endpoints failed for ${domain}`);
+}
 
-  throw new Error(`All DNS resolution methods failed for ${domain}. Diagnostic info: ${JSON.stringify(diagnosticInfo, null, 2)}`);
+// Fallback: UDP-based DNS resolution via Node.js dns module
+async function resolveTxtWithUdp(domain: string): Promise<{ records: string[][]; dnssecValidated: boolean }> {
+  const resolvers = [
+    { name: 'System DNS', servers: null },
+    { name: 'Google DNS', servers: ['8.8.8.8', '8.8.4.4'] },
+    { name: 'Cloudflare DNS', servers: ['1.1.1.1', '1.0.0.1'] },
+  ];
+
+  for (const { name, servers } of resolvers) {
+    try {
+      const resolver = new dns.Resolver();
+      if (servers) resolver.setServers(servers);
+
+      const records = await new Promise<string[][]>((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error(`${name} timeout after 10s`));
+        }, 10000);
+
+        resolver.resolveTxt(domain, (err, records) => {
+          clearTimeout(timeoutId);
+          if (err) reject(err);
+          else resolve(records);
+        });
+      });
+
+      Logger.info(`${name}: resolved ${records.length} TXT records for ${domain}`);
+      return { records, dnssecValidated: false };
+    } catch (error) {
+      Logger.warn(`${name} failed for ${domain}: ${error instanceof Error ? error.message : error}`);
+    }
+  }
+
+  throw new Error(`All UDP DNS methods failed for ${domain}`);
+}
+
+// Main DNS resolution: DoH first (reliable, TCP), then UDP fallback
+async function resolveTxtWithFallbacks(domain: string): Promise<{ records: string[][]; dnssecValidated: boolean }> {
+  // Prefer DNS-over-HTTPS: uses TCP so no UDP packet truncation for large TXT records
+  try {
+    return await resolveTxtWithDoH(domain);
+  } catch (dohError: any) {
+    // NXDOMAIN = domain doesn't exist, propagate immediately
+    if (dohError.message?.includes('does not exist')) throw dohError;
+    Logger.warn(`DoH failed for ${domain}, falling back to UDP: ${dohError.message}`);
+  }
+
+  // Fallback to traditional UDP-based DNS
+  return await resolveTxtWithUdp(domain);
 }
 
 // Rate limiting check
@@ -221,6 +233,7 @@ async function verifySingleRecord(
   recordIndex: number,
   dnssecValidated: boolean,
   logs: LogEntry[],
+  expectedWallet?: string,
   claimData?: { wallet: string; secret?: string; uniqueId?: string }
 ): Promise<VerificationResult> {
 
@@ -257,7 +270,7 @@ async function verifySingleRecord(
 
   // Variables for verification
   let messageToVerify: string;
-  let walletAddress: string;
+  let walletAddress: string | undefined;
   let itime: string;
   let etime: string;
 
@@ -268,16 +281,6 @@ async function verifySingleRecord(
       details: { id: parsedRecord.id, hasWallet: !!parsedRecord.wallet }
     });
 
-    // New format verification
-    if (!claimData) {
-      logs.push({
-        level: 'error',
-        message: 'New format detected but no claim data provided'
-      });
-      return result;
-    }
-
-    walletAddress = claimData.wallet;
     itime = parsedRecord.itime!;
     etime = parsedRecord.etime!;
 
@@ -286,25 +289,13 @@ async function verifySingleRecord(
       // Public mode: wallet in DNS record
       messageToVerify = `${parsedRecord.wallet}&${itime}&${domain}&${etime}`;
 
-      if (parsedRecord.wallet.toLowerCase() !== walletAddress.toLowerCase()) {
-        logs.push({
-          level: 'error',
-          message: 'Wallet address mismatch between DNS record and claim data',
-          details: {
-            dnsWallet: parsedRecord.wallet,
-            claimWallet: walletAddress
-          }
-        });
-        return result;
-      }
-
       logs.push({
         level: 'info',
         message: 'Public mode: Wallet address in DNS record'
       });
     } else {
       // Private mode: secret-based verification
-      if (!claimData.secret) {
+      if (!claimData?.secret) {
         logs.push({
           level: 'error',
           message: 'Private mode claim detected but no secret provided'
@@ -319,8 +310,7 @@ async function verifySingleRecord(
       });
     }
 
-    result.walletAddress = walletAddress;
-    testsPassed++;
+    // Wallet address will be recovered from signature verification
   } else {
     // Old format verification (backward compatibility)
     logs.push({
@@ -442,16 +432,50 @@ async function verifySingleRecord(
   try {
     const recoveredAddress = ethers.verifyMessage(messageToVerify, parsedRecord.sig);
 
-    if (recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
-      logs.push({
-        level: 'error',
-        message: 'Signature verification failed - signature was NOT created by claimed wallet',
-        details: {
-          expectedWallet: walletAddress,
-          recoveredAddress: recoveredAddress
-        }
-      });
-      return result;
+    if (isNewFormat) {
+      // For new format, the wallet is recovered from the signature
+      walletAddress = recoveredAddress;
+      result.walletAddress = recoveredAddress;
+      testsPassed++; // wallet recovery test
+
+      // Public mode: verify recovered wallet matches wallet in DNS record
+      if (parsedRecord.wallet && recoveredAddress.toLowerCase() !== parsedRecord.wallet.toLowerCase()) {
+        logs.push({
+          level: 'error',
+          message: 'Signature verification failed - recovered wallet does not match wallet in DNS record',
+          details: {
+            dnsWallet: parsedRecord.wallet,
+            recoveredAddress: recoveredAddress
+          }
+        });
+        return result;
+      }
+
+      // Compare recovered wallet with expected wallet
+      if (expectedWallet && recoveredAddress.toLowerCase() !== expectedWallet.toLowerCase()) {
+        logs.push({
+          level: 'error',
+          message: 'Recovered wallet does not match expected wallet',
+          details: {
+            expectedWallet: expectedWallet,
+            recoveredAddress: recoveredAddress
+          }
+        });
+        return result;
+      }
+    } else {
+      // Old format: compare recovered with parsed wallet
+      if (recoveredAddress.toLowerCase() !== walletAddress!.toLowerCase()) {
+        logs.push({
+          level: 'error',
+          message: 'Signature verification failed - signature was NOT created by claimed wallet',
+          details: {
+            expectedWallet: walletAddress,
+            recoveredAddress: recoveredAddress
+          }
+        });
+        return result;
+      }
     }
 
     logs.push({
@@ -546,8 +570,10 @@ export function coerceIntoApiResponse(jsonValue: Prisma.JsonValue): ApiResponse 
   }
 }
 
+export interface IClaimData { wallet: string; secret?: string; uniqueId?: string }
+
 // Main verification function adapted for API with improved DNS handling
-export async function verifyProofApi(domain: string, lookupKey: string, expectedWallet?: string, claimData?: { wallet: string; secret?: string; uniqueId?: string }): Promise<ApiResponse> {
+export async function verifyProofApi(domain: string, lookupKey: string, expectedWallet?: string, claimData?: IClaimData): Promise<ApiResponse> {
   const logs: LogEntry[] = [];
   const response: ApiResponse = {
     success: false,
@@ -562,18 +588,18 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
   };
 
   // Rate limiting by domain
-  if (!checkRateLimit(domain)) {
-    logs.push({
-      level: 'error',
-      message: 'Rate limit exceeded',
-      details: {
-        maxRequests: RATE_LIMIT_MAX,
-        windowMinutes: RATE_LIMIT_WINDOW / 60000
-      }
-    });
-    response.message = 'Rate limit exceeded. Please try again later.';
-    return response;
-  }
+  // if (!checkRateLimit(domain)) {
+  //   logs.push({
+  //     level: 'error',
+  //     message: 'Rate limit exceeded',
+  //     details: {
+  //       maxRequests: RATE_LIMIT_MAX,
+  //       windowMinutes: RATE_LIMIT_WINDOW / 60000
+  //     }
+  //   });
+  //   response.message = 'Rate limit exceeded. Please try again later.';
+  //   return response;
+  // }
 
   // Parse domain and lookup key
   let actualDomain: string;
@@ -613,7 +639,9 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
 
   try {
     // Try new format first (_aw.domain), fallback to old format (aqua._wallet.domain)
-    const newRecordName = `_aw.${actualDomain}`;
+    // Strip leading _aw. from domain to prevent double prefix (e.g. _aw._aw.domain)
+    const cleanDomain = actualDomain.replace(/^_aw\./, '');
+    const newRecordName = `_aw.${cleanDomain}`;
     const oldRecordName = `aqua._${actualLookupKey}.${actualDomain}`;
     let txtRecords: string[][];
     let dnssecValidated = false;
@@ -627,11 +655,13 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
 
     try {
       const result = await resolveTxtWithFallbacks(newRecordName);
+      // console.log(cliGreenify("DNS DATA RESULT"))
+      // console.log(JSON.stringify(result, null, 4))
       txtRecords = result.records;
       dnssecValidated = result.dnssecValidated;
       response.dnssecValidated = dnssecValidated;
 
-      console.log(cliGreenify(JSON.stringify(txtRecords, null, 4)))
+      // console.log(cliGreenify(JSON.stringify(txtRecords, null, 4)))
 
       logs.push({
         level: 'success',
@@ -644,7 +674,7 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
       });
     } catch (err) {
       // Fallback to old format
-      console.log("Error: ", err)
+      // console.log("Error: ", err)
       logs.push({
         level: 'info',
         message: 'New format not found, trying old format',
@@ -696,12 +726,14 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
       return response;
     }
 
-    // Filter wallet records
+    // Filter claim records (new format: id + itime + etime + sig, old format: wallet + timestamp + sig)
     const walletRecords = txtRecords.flat().filter(record =>
-      (record.includes('wallet=') &&
-        record.includes('timestamp=') &&
-        record.includes('expiration=') &&
+      // New format: id=, itime=, etime=, sig= (wallet= is optional - absent in private mode)
+      (record.includes('id=') &&
+        record.includes('itime=') &&
+        record.includes('etime=') &&
         record.includes('sig=')) ||
+      // Old format: wallet=, timestamp=, sig= (with optional expiration=)
       (record.includes('wallet=') &&
         record.includes('timestamp=') &&
         record.includes('sig='))
@@ -710,72 +742,83 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
     if (walletRecords.length === 0) {
       logs.push({
         level: 'error',
-        message: 'No wallet records with required format found',
+        message: 'No valid claim records found',
         details: {
-          expected: 'wallet=...&timestamp=...&expiration=...&sig=...',
+          expected: 'id=...&itime=...&etime=...&sig=... or wallet=...&timestamp=...&sig=...',
           foundRecords: txtRecords.flat()
         }
       });
-      response.message = 'No valid wallet records found';
+      response.message = 'No valid claim records found';
       return response;
     }
 
     response.totalRecords = walletRecords.length;
     logs.push({
       level: 'success',
-      message: `Found ${walletRecords.length} wallet record(s) with valid format`
+      message: `Found ${walletRecords.length} claim record(s) with valid format`
     });
 
-    // Check if expected wallet exists (if specified)
     if (expectedWallet) {
-      const expectedWalletFound = walletRecords.some(record => {
+      logs.push({
+        level: 'info',
+        message: `Will verify records against expected wallet ${expectedWallet}`
+      });
+    }
+
+    // If uniqueId is provided, find the specific record to verify
+    if (claimData?.uniqueId) {
+      const targetRecord = walletRecords.find(record => {
         const parsed = parseTxtRecord(record);
-        return parsed.wallet && parsed.wallet.toLowerCase() === expectedWallet.toLowerCase();
+        return parsed.id === claimData.uniqueId;
       });
 
-      if (!expectedWalletFound) {
-        const availableWallets = walletRecords.map(record => {
-          const parsed = parseTxtRecord(record);
-          return parsed.wallet;
-        }).filter(Boolean);
-
+      if (!targetRecord) {
         logs.push({
           level: 'error',
-          message: 'Expected wallet not found',
+          message: `No record found with id=${claimData.uniqueId}`,
           details: {
-            expectedWallet: expectedWallet,
-            availableWallets: availableWallets
+            uniqueId: claimData.uniqueId,
+            availableIds: walletRecords.map(r => parseTxtRecord(r).id).filter(Boolean)
           }
         });
-        response.message = `Expected wallet ${expectedWallet} not found in records`;
+        response.message = `No record found with id=${claimData.uniqueId}`;
         return response;
       }
 
       logs.push({
-        level: 'success',
-        message: `Expected wallet ${expectedWallet} found in records`
+        level: 'info',
+        message: `Found target record with id=${claimData.uniqueId}`
       });
-    }
 
-    // Process each wallet record
-    for (let i = 0; i < walletRecords.length; i++) {
-      const record = walletRecords[i];
-
-      if (expectedWallet) {
-        const parsed = parseTxtRecord(record);
-        if (!parsed.wallet || parsed.wallet.toLowerCase() !== expectedWallet.toLowerCase()) {
-          continue;
-        }
-      }
-
-      const result = await verifySingleRecord(record, actualDomain, recordName, i + 1, dnssecValidated, logs, claimData);
+      const result = await verifySingleRecord(targetRecord, actualDomain, recordName, 1, dnssecValidated, logs, expectedWallet, claimData);
       response.results.push(result);
 
       if (result.success) {
         response.verifiedRecords++;
+      }
+    } else {
+      // Process each claim record
+      for (let i = 0; i < walletRecords.length; i++) {
+        const record = walletRecords[i];
 
         if (expectedWallet) {
-          break;
+          const parsed = parseTxtRecord(record);
+          // Only skip old format records with explicit wallet mismatch
+          // Private (new format without wallet) records must be verified to discover the wallet
+          if (parsed.wallet && !parsed.id && parsed.wallet.toLowerCase() !== expectedWallet.toLowerCase()) {
+            continue;
+          }
+        }
+
+        const result = await verifySingleRecord(record, actualDomain, recordName, i + 1, dnssecValidated, logs, expectedWallet, claimData);
+        response.results.push(result);
+
+        if (result.success) {
+          response.verifiedRecords++;
+
+          if (expectedWallet && result.walletAddress.toLowerCase() === expectedWallet.toLowerCase()) {
+            break;
+          }
         }
       }
     }

@@ -253,7 +253,7 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                   const hashes = Object.keys(reorderedAquaTree.revisions)
                   const genesisHash = hashes[0]
                   const genesisRevision = reorderedAquaTree.revisions[genesisHash]
-                  const result = await verifyDNS(backend_url, claim.claimName!, genesisRevision["forms_wallet_address"], triggerReload, genesisHash)
+                  const result = await verifyDNS(backend_url, claim.claimName!, genesisRevision["forms_wallet_address"], triggerReload, genesisHash, genesisRevision['forms_unique_id'])
 
                   setDnsVerificationResult(result)
             } catch (error) {

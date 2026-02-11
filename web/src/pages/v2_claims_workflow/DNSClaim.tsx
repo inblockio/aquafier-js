@@ -106,6 +106,7 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
       const description = 'Domain control validation for a domain.'
       const domain = claimInfo['forms_domain'] || ''
       const walletAddress = claimInfo['forms_wallet_address'] || ''
+      const uniqueId = claimInfo['forms_unique_id']
       const date =
             claimInfo['forms_created_at'] ||
             claimInfo['date'] ||
@@ -159,7 +160,11 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
                         domain: domain,
                         wallet: walletAddress,
                         genesis_hash: genesisRevisionHash,
-                        refresh: forceRefresh
+                        refresh: forceRefresh,
+                        claimData: {
+                              wallet: walletAddress, 
+                              uniqueId: uniqueId
+                        }
                   })
 
                   const result: VerificationResult = response.data
@@ -230,7 +235,7 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
                                           </div>
 
                                           {/* DNS Verification Status Indicator */}
-                                          <div className="flex items-center">
+                                          <div className="flex items-center gap-2">
                                                 {verificationStatus === 'loading' && (
                                                       <div className="flex items-center text-blue-500">
                                                             <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full mr-2"></div>
@@ -255,7 +260,7 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
                                                             <span className="text-xs">Verification Failed</span>
                                                       </div>
                                                 )}
-                                                <Button onClick={() => verifyDNS(true)}>
+                                                <Button onClick={() => verifyDNS(true)} size={"sm"} variant={"link"} className='cursor-pointer'>
                                                       <LuRefreshCw />
                                                 </Button>
                                           </div>
