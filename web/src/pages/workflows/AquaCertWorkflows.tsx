@@ -185,7 +185,9 @@ const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer
                         // setSelectedFileInfo(apiFileInfo)
                         // navigate('/app/pdf/workflow')
                   }}>
-                        <TableCell className="font-medium w-75 max-w-75 min-w-75">
+                        <TableCell className="font-medium w-75 max-w-75 min-w-75" onClick={() => {
+                              openDrawer && openDrawer(apiFileInfo, attesters)
+                        }}>
                               <div className='space-y-1'>
                                     <div className="w-full flex items-center gap-3">
                                           <div className="shrink-0">
@@ -207,14 +209,18 @@ const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer
                                     </div>
                               </div>
                         </TableCell>
-                        <TableCell className="w-50">
+                        <TableCell className="w-50" onClick={() => {
+                              openDrawer && openDrawer(apiFileInfo, attesters)
+                        }}>
                               <div className="flex items-center gap-2 w-fit capitalize" onClick={e => {
                                     e.stopPropagation()
                               }}>
                                     {certType}
                               </div>
                         </TableCell>
-                        <TableCell className="w-37.5">
+                        <TableCell className="w-37.5" onClick={() => {
+                              openDrawer && openDrawer(apiFileInfo, attesters)
+                        }}>
                               <div className="space-y-1">
                                     {/* attestations/attesters */}
                                     <div className="flex items-center gap-2 w-fit" onClick={e => {
@@ -239,7 +245,7 @@ const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer
                                     </div>
                               </div>
                         </TableCell>
-                        <TableCell className="text-right w-25">
+                        <TableCell className="text-right w-25"  >
                               <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                           <Button
@@ -257,7 +263,7 @@ const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer
                                                 openDrawer && openDrawer(apiFileInfo, attesters)
                                           }}>
                                                 <FileText className="mr-2 h-4 w-4" />
-                                                View Information
+                                                View
                                           </DropdownMenuItem>
                                           <OpenSelectedFileDetailsButton file={apiFileInfo} index={index}>
                                                 <DropdownMenuItem className='cursor-pointer'>

@@ -88,7 +88,7 @@ export async function addSecurityInfoPage(
     infoItems.push(['Document ID:', documentId]);
   }
   infoItems.push(['Signed At:', formatDate(signedAt)]);
-  infoItems.push(['Protocol:', 'Aqua Protocol v1.0']);
+  infoItems.push(['Protocol:', 'Aqua Protocol v3.2']);
   infoItems.push(['Platform:', `${platformName} (${platformUrl})`]);
   infoItems.push(['Reason:', reason]);
 

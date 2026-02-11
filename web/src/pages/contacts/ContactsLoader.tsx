@@ -104,7 +104,7 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
 
       // Fetch server's identity claim using the server wallet address
       const serverWalletAddress = serverInfoResponse.data?.data?.walletAddress;
-      console.log("Server response: ", serverWalletAddress)
+      
       if (serverWalletAddress) {
         try {
           const serverFilesQuery = await apiClient.get(ensureDomainUrlHasSSL(`${localBackendUrl}/${API_ENDPOINTS.GET_PER_TYPE}`), {
@@ -118,8 +118,6 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
               use_wallet: serverWalletAddress
             }
           });
-
-          console.log("serverFilesQuery: ", serverFilesQuery)
 
           const serverAquaTrees: ApiFileInfo[] = serverFilesQuery.data?.aquaTrees ?? [];
           if (serverAquaTrees.length > 0) {

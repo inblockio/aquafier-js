@@ -1,53 +1,28 @@
-import { HiShieldCheck } from 'react-icons/hi'
-import { Mail, Phone } from 'lucide-react'
 import CopyButton from '@/components/CopyButton'
+import { FaEthereum } from 'react-icons/fa6'
 
 interface ISimpleClaim {
       claimInfo: Record<string, string>
 }
 
-const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
+const ENSClaim = ({ claimInfo }: ISimpleClaim) => {
       // Extract relevant information from claimInfo
       console.log("claimInfo: ", claimInfo)
 
-      function getClaimTitle(claimType: string) {
-            if (claimType === 'simple_claim') {
-                  return 'Simple Claim'
-            } else if (claimType === 'phone_number_claim') {
-                  return 'Phone Number Claim'
-            } else if (claimType === 'email_claim') {
-                  return 'Email Claim'
-            }
-            else if (claimType === 'ens_claim') {
-                  return 'Email Claim'
-            }
-            return 'Unknown Claim'
+      function getClaimTitle() {
+            return 'ENS Claim'
       }
 
-      function getClaimDescription(claimType: string) {
-            if (claimType === 'simple_claim') {
-                  return 'A basic, standard claim type.'
-            } else if (claimType === 'phone_number_claim') {
-                  return 'A claim that verifies a phone number.'
-            } else if (claimType === 'email_claim') {
-                  return 'A claim that verifies an email address.'
-            }
-            return 'Unknown Claim'
+      function getClaimDescription() {
+            return "A claim that verifies your ENS name"
       }
-      function getClaimIcon(claimType: string) {
-            if (claimType === 'simple_claim') {
-                  return <HiShieldCheck className="text-blue-500 w-6 h-6" />
-            } else if (claimType === 'phone_number_claim') {
-                  return <Phone className="text-green-500 w-6 h-6" />
-            } else if (claimType === 'email_claim') {
-                  return <Mail className="text-green-500 w-6 h-6" />
-            }
-            return <HiShieldCheck className="text-blue-500 w-6 h-6" />
+      function getClaimIcon() {
+            return <FaEthereum className="text-blue-500 w-6 h-6" />
       }
 
-      const claimName = getClaimTitle(claimInfo['forms_type'])
-      const description = getClaimDescription(claimInfo['forms_type'])
-      const Icon = getClaimIcon(claimInfo['forms_type'])
+      const claimName = getClaimTitle()
+      const description = getClaimDescription()
+      const Icon = getClaimIcon()
 
       // const date =
       //       claimInfo['forms_created_at'] ||
@@ -141,4 +116,4 @@ const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
       )
 }
 
-export default SimpleClaim
+export default ENSClaim

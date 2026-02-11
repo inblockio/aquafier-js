@@ -1,23 +1,23 @@
-import {CustomAlert} from '@/components/ui/alert-custom'
-import {Button} from '@/components/ui/button'
-import {toast} from 'sonner'
-import {AquaTreeDetailsData} from '@/models/AquaTreeDetails'
+import { CustomAlert } from '@/components/ui/alert-custom'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
+import { AquaTreeDetailsData } from '@/models/AquaTreeDetails'
 import appStore from '@/store'
-import {displayTime, ensureDomainUrlHasSSL, fetchFiles, formatCryptoAddress} from '@/utils/functions'
-import {LogTypeEmojis} from 'aqua-js-sdk/web'
+import { displayTime, ensureDomainUrlHasSSL, fetchFiles, formatCryptoAddress } from '@/utils/functions'
+import { LogTypeEmojis } from 'aqua-js-sdk/web'
 import apiClient from '@/api/axiosInstance'
-import {useCallback, useEffect, useMemo, useState} from 'react'
-import {LuCheck, LuTrash, LuX} from 'react-icons/lu'
-import {ClipLoader} from 'react-spinners'
-import {useStore} from 'zustand'
-import {revisionDataHeader, viewLinkedFile} from './files_revision_details'
-import {ItemDetail} from './item_details'
-import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '@/components/ui/collapsible'
-import {Card, CardContent, CardFooter} from '@/components/ui/card'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { LuCheck, LuTrash, LuX } from 'react-icons/lu'
+import { ClipLoader } from 'react-spinners'
+import { useStore } from 'zustand'
+import { revisionDataHeader, viewLinkedFile } from './files_revision_details'
+import { ItemDetail } from './item_details'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Card, CardContent, CardFooter } from '@/components/ui/card'
 
-import {ExternalLink} from 'lucide-react'
-import {WITNESS_NETWORK_MAP} from '@/utils/constants'
-import {WalletEnsView} from '@/components/ui/wallet_ens'
+import { ExternalLink } from 'lucide-react'
+import { WITNESS_NETWORK_MAP } from '@/utils/constants'
+import { WalletEnsView } from '@/components/ui/wallet_ens'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 
 export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificationComplete, verificationResults, isDeletable, deleteRevision, index }: AquaTreeDetailsData) => {
@@ -121,40 +121,40 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
             try {
                   const url = ensureDomainUrlHasSSL(`${backend_url}/tree/revisions/${revisionHash}`)
 
-                    await apiClient.delete(url, {
+                  await apiClient.delete(url, {
                         headers: {
                               metamask_address: session?.address,
                               nonce: session?.nonce,
                         },
                   })
 
-                 
-                        toast.success('Revision deleted')
 
-                        // Reload files for the current user
-                        if (index === 0) {
-                              window.location.reload()
-                        } else {
-                              
-                              const filesApi = await fetchFiles(session!.address, ensureDomainUrlHasSSL(`${backend_url}/explorer_files`), session!.nonce)
-                              setFiles({ fileData: filesApi.files, pagination : filesApi.pagination, status: 'loaded' })
+                  toast.success('Revision deleted')
+
+                  // Reload files for the current user
+                  if (index === 0) {
+                        window.location.reload()
+                  } else {
+
+                        const filesApi = await fetchFiles(session!.address, ensureDomainUrlHasSSL(`${backend_url}/explorer_files`), session!.nonce)
+                        setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
 
-                              // we need to update the side drawer for reverification to start
-                              const selectedFileDataResponse = filesApi.files.find(e => {
-                                    Object.keys(e.aquaTree!.revisions!)[0] == Object.keys(selectedFileInfo!.aquaTree!.revisions)[0]
-                              })
-                              if (selectedFileDataResponse) {
-                                    setSelectedFileInfo(selectedFileDataResponse)
-                              }
-
-                              // Remove the revision from the list of revisions
-                              deleteRevision(revisionHash)
+                        // we need to update the side drawer for reverification to start
+                        const selectedFileDataResponse = filesApi.files.find(e => {
+                              Object.keys(e.aquaTree!.revisions!)[0] == Object.keys(selectedFileInfo!.aquaTree!.revisions)[0]
+                        })
+                        if (selectedFileDataResponse) {
+                              setSelectedFileInfo(selectedFileDataResponse)
                         }
 
-                         await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
-                                    await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
-                 
+                        // Remove the revision from the list of revisions
+                        deleteRevision(revisionHash)
+                  }
+
+                  await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
+                  await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
+
             } catch (error) {
                   console.error('Error deleting revision:', error)
                   toast.error('Revision not deleted ')
