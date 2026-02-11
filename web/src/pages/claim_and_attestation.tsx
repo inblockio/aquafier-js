@@ -10,7 +10,7 @@ import {
       DropdownMenuSeparator,
       DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { Download, Eye, FileText, MoreHorizontal, Send, Trash2 } from 'lucide-react'
+import { Download, Eye, FileText, MoreHorizontal, Trash2 } from 'lucide-react'
 import appStore from '@/store'
 import { useStore } from 'zustand'
 import {

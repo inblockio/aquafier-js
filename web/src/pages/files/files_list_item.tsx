@@ -35,7 +35,6 @@ import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import { LuBookOpen, LuGlasses, LuLink2, LuShare2, LuSignature } from 'react-icons/lu'
 
 export default function FilesListItem({
-      showFileActions,
       showWorkFlowsOnly,
       file,
       index,

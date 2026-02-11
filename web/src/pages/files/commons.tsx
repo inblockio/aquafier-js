@@ -74,8 +74,7 @@ export const RenderFilesList = ({ filteredFiles, filesListProps, view, loading =
                             backendUrl={backend_url}
                             nonce={session?.nonce ?? ''}
                             viewMode={view}
-                            filesListProps={filesListProps}
-                        />
+                            filesListProps={filesListProps} showFileActions={false}                        />
                     )
                 })}
         </tbody>
@@ -98,8 +97,7 @@ export const RenderFilesListCard = ({ filteredFiles, filesListProps, view, syste
                         backendUrl={backend_url}
                         nonce={session?.nonce ?? ''}
                         viewMode={view}
-                        filesListProps={filesListProps}
-                    />
+                        filesListProps={filesListProps} showFileActions={false}                    />
                 )
             })}
     </div>
