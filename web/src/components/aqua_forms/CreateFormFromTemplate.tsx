@@ -641,8 +641,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   const systemFiles = await fetchSystemFiles(url3, sessionAddress)
                   allSystemFiles = systemFiles
             } else {
-                  console.log(`Using cached system files`)
-                  console.log(`systemFileInfo length: ${systemFileInfo.length} : ${JSON.stringify(systemFileInfo, null, 2)}`)
+                  // console.log(`Using cached system files`)
+                  // console.log(`systemFileInfo length: ${systemFileInfo.length} : ${JSON.stringify(systemFileInfo, null, 2)}`)
             }
 
             if (allSystemFiles.length === 0) {
@@ -1659,7 +1659,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           data-testid={`multiple_values_${field.name}`}
                                     >
                                           <Plus className="h-4 w-4 mr-1" />
-                                          Add Signer
+                                          {
+                                                selectedTemplate.name === "aquafier_licence" ? "Add Receiver" : "Add Signer"
+                                          }
                                     </Button>
                               </div>
                         </div>
