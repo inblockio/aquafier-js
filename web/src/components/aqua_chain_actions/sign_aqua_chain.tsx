@@ -8,7 +8,7 @@ import Aquafier, { AquaTreeWrapper, OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import { RevionOperation } from '../../models/RevisionOperation'
 import { toast } from 'sonner'
 import { useAppKit } from '@reown/appkit/react'
-import { getAppKitProvider } from '@/utils/appkit-wallet-utils'
+import { getAppKitProvider, unwrapERC6492Signature } from '@/utils/appkit-wallet-utils'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 
 
@@ -189,8 +189,11 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index, children 
                               })
                         }
 
+                        // Unwrap ERC-6492 signature from smart account wallets (e.g., Reown social login)
+                        const unwrappedSignature = unwrapERC6492Signature(signature)
+
                         const result = await aquafier.signAquaTree(aquaTreeWrapper, 'inline', xCredentials, true, undefined, {
-                              signature: signature,
+                              signature: unwrappedSignature,
                               walletAddress: session?.address!,
                         })
 

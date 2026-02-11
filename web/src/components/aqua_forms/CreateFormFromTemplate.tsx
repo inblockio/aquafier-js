@@ -19,7 +19,7 @@ import {
       reorderRevisionsInAquaTree,
       stringToHex
 } from '@/utils/functions'
-import { getAppKitProvider } from '@/utils/appkit-wallet-utils'
+import { getAppKitProvider, unwrapERC6492Signature } from '@/utils/appkit-wallet-utils'
 import Aquafier, {
       AquaTree,
       AquaTreeWrapper,
@@ -1135,10 +1135,12 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         })
                   }
 
-                  // const signature = await signer.signMessage(messageToSign)
+                  // Unwrap ERC-6492 signature from smart account wallets (e.g., Reown social login)
+                  // into a standard 65-byte ECDSA signature that ethers.js can parse
+                  const unwrappedSignature = unwrapERC6492Signature(signature)
 
                   const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'inline', dummyCredential(), true, undefined, {
-                        signature: signature,
+                        signature: unwrappedSignature,
                         walletAddress: session?.address!,
                   })
 
@@ -1526,6 +1528,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   if (error.message.includes('is mandatory') || error.message.includes('is not a valid') || error.message.includes('is a duplicate')) {
                         setModalFormErorMessae(error.message)
                   } else {
+                        console.log(`Err ${error}`)
+                        console.log(`Err ${error?.message}`)
                         toast.error('Error creating Aqua tree from template', {
                               description: error?.message ?? 'Unknown error',
                               duration: 5000,

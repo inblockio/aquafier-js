@@ -92,6 +92,71 @@ export async function getConnectedAddress() {
 }
 
 /**
+ * ERC-6492 magic suffix (32 bytes) appended to signatures from undeployed smart accounts.
+ * See: https://eips.ethereum.org/EIPS/eip-6492
+ */
+const ERC_6492_MAGIC_SUFFIX = '6492649264926492649264926492649264926492649264926492649264926492'
+
+/**
+ * Unwraps an ERC-6492 signature to extract the inner ECDSA signature.
+ *
+ * Reown's social login creates an embedded smart account wallet that returns
+ * ERC-6492 wrapped signatures from `personal_sign`. These are not standard
+ * 65-byte ECDSA signatures and will fail with ethers.js Signature.from().
+ *
+ * The ERC-6492 format is: abi.encode(address, bytes, bytes) + magic_suffix
+ * where the third bytes element is the inner signature.
+ *
+ * Safe smart accounts also adjust the v value for eth_sign by adding 4
+ * (v=27 becomes 31, v=28 becomes 32), so we normalize that back.
+ *
+ * For standard ECDSA signatures (65 bytes), this function returns them as-is.
+ */
+export function unwrapERC6492Signature(signature: string): string {
+  const sigBytes = ethers.getBytes(signature)
+
+  // Standard ECDSA signature - return as-is
+  if (sigBytes.length === 65) {
+    return signature
+  }
+
+  // Check for ERC-6492 magic suffix (last 32 bytes)
+  if (sigBytes.length <= 32) {
+    return signature
+  }
+
+  const suffix = ethers.hexlify(sigBytes.slice(sigBytes.length - 32)).slice(2)
+  if (suffix !== ERC_6492_MAGIC_SUFFIX) {
+    return signature
+  }
+
+  // Strip magic suffix and ABI decode: (address factory, bytes calldata, bytes innerSig)
+  const abiData = sigBytes.slice(0, sigBytes.length - 32)
+  const decoded = ethers.AbiCoder.defaultAbiCoder().decode(
+    ['address', 'bytes', 'bytes'],
+    abiData
+  )
+
+  const innerSig = ethers.getBytes(decoded[2])
+
+  if (innerSig.length === 65) {
+    // Safe wallets adjust v for eth_sign: v += 4 (so 27->31, 28->32)
+    // Normalize back to standard v values for ethers.js compatibility
+    const v = innerSig[64]
+    if (v >= 31 && v <= 32) {
+      const normalized = new Uint8Array(innerSig)
+      normalized[64] = v - 4
+      return ethers.hexlify(normalized)
+    }
+    return ethers.hexlify(innerSig)
+  }
+
+  // Inner signature is not standard 65-byte ECDSA (e.g., multi-sig)
+  // Return it as-is and let the caller handle the error
+  return ethers.hexlify(innerSig)
+}
+
+/**
  * Normalizes a SIWE message to a single line.
  */
 export const normalizeSiweMessage = (message: string): string => {
