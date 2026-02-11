@@ -14,6 +14,7 @@ import { PDFDocument, PDFName, PDFString, PDFHexString, PDFDict, PDFArray, PDFNu
 import appStore from '../store';
 import Aquafier from 'aqua-js-sdk';
 import { isAquaTree, getAquatreeObject, isValidUrl, isHttpUrl, ensureDomainUrlHasSSL, getGenesisHash } from './functions';
+import { addSecurityInfoPage } from './pdf-security-info-page';
 import { getCorrectUTF8JSONString } from '../lib/utils';
 import { ApiFileInfo } from '../models/FileInfo';
 
@@ -595,6 +596,16 @@ export async function signPdfDocument(
       console.error('Failed to embed aqua chain data:', error);
     }
   }
+
+  // Add security information page
+  await addSecurityInfoPage(tempDoc, {
+    signers: allSigners,
+    signedAt,
+    documentId: options.documentId,
+    reason,
+    platformName: PLATFORM_NAME,
+    platformUrl: PLATFORM_URL,
+  });
 
   // Save the prepared document
   let currentPdfBytes = await tempDoc.save({ useObjectStreams: false });
