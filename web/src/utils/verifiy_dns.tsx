@@ -30,7 +30,7 @@ export interface IDnsVerificationResult {
     verificationResult: VerificationResult | null
 }
 
-export const verifyDNS = async (backend_url: string, domain: string, walletAddress: string, triggerReload: boolean, genesisRevision: string, uniqueId: string): Promise<IDnsVerificationResult> => {
+export const verifyDNS = async (backend_url: string, domain: string, walletAddress: string, triggerReload: boolean, genesisRevision: string, uniqueId: string, claimSecret: string): Promise<IDnsVerificationResult> => {
     // Hardcoded values as requested
     //     const domain = 'inblock.io'
     //     const walletAddress = '0x677e5E9a3badb280d7393464C09490F813d6d6ef'
@@ -61,9 +61,10 @@ export const verifyDNS = async (backend_url: string, domain: string, walletAddre
                 wallet: walletAddress,
                 refresh: triggerReload,
                 genesis_hash: genesisRevision,
-                claimData :{
-wallet: walletAddress,
-uniqueId
+                claimData: {
+                    wallet: walletAddress,
+                    uniqueId,
+                    secret: claimSecret
                 }
             }),
         })
@@ -122,10 +123,10 @@ export const getDNSStatusBadge = (dnsStatus: IDNSStatus, dnsMessage: string): Re
         case 'verified':
             return (
                 <>
-                {/* <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full w-fit" >
+                    {/* <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full w-fit" >
                     ✓ {dnsMessage}
                 </span> */}
-                <div className="flex gap-2 items-center flex-wrap">
+                    <div className="flex gap-2 items-center flex-wrap">
                         <CheckCircle size={ICON_SIZE - 2} className="text-green-500" />
                         <p className="text-xs font-medium text-gray-900">{dnsMessage}</p>
                     </div>
@@ -134,10 +135,10 @@ export const getDNSStatusBadge = (dnsStatus: IDNSStatus, dnsMessage: string): Re
         case 'not_found':
             return (
                 <>
-                {/* <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full w-fit" >
+                    {/* <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full w-fit" >
                     ⚠ {dnsMessage}
                 </span> */}
-                <div className="flex gap-2 items-center flex-wrap">
+                    <div className="flex gap-2 items-center flex-wrap">
                         <X size={ICON_SIZE - 2} className="text-red-500" />
                         <p className="text-xs font-medium text-gray-900">{dnsMessage}</p>
                     </div>
@@ -147,10 +148,10 @@ export const getDNSStatusBadge = (dnsStatus: IDNSStatus, dnsMessage: string): Re
         default:
             return (
                 <>
-                {/* <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full w-fit" >
+                    {/* <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full w-fit" >
                     ✗ {dnsMessage}
                 </span> */}
-                <div className="flex gap-2 items-center flex-wrap">
+                    <div className="flex gap-2 items-center flex-wrap">
                         <X size={ICON_SIZE - 2} className="text-red-500" />
                         <p className="text-xs font-medium text-gray-900">{dnsMessage}</p>
                     </div>
