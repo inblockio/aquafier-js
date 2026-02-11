@@ -1638,7 +1638,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                     )}
                                     <p className="text-xs text-gray-400 mt-1">
                                           <GripVertical className="h-3 w-3 inline-block mr-1" />
-                                          Drag to reorder signers
+                                          {
+                                                selectedTemplate.name === "aquafier_licence" ? " Drag to reorder receivers" : " Drag to reorder signers"
+                                          }
                                     </p>
                               </div>
                               <div className='flex gap-1'>
