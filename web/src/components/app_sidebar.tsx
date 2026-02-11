@@ -19,11 +19,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       const { usage, limits, percentageUsed, setUsage } = useSubscriptionStore()
 
-      // Load usage stats on mount if not already loaded
+      // Load usage stats only when session with nonce is available
       React.useEffect(() => {
+            if (!session?.nonce) return;
             const loadUsage = async () => {
                   try {
-                        // Dynamically import API to avoid circular deps if any, or just import at top
                         const { fetchUsageStats } = await import('@/api/subscriptionApi');
                         const data = await fetchUsageStats();
                         setUsage(data.usage, data.limits, data.percentage_used);
@@ -32,7 +32,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   }
             };
             loadUsage();
-      }, []);
+      }, [session?.nonce]);
 
       React.useEffect(() => {
             if (webConfig.BACKEND_URL) {

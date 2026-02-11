@@ -52,10 +52,9 @@ export const ConnectWalletPageAppKit = () => {
     }
   }, [modalOpen])
 
-  // Monitor for successful authentication
+  // Monitor for successful authentication - wait for SIWE session (nonce) to be set
   useEffect(() => {
-    // if (isConnected && address && session?.address && !hasTriggeredSiwe) {
-    if (isConnected && address && !hasTriggeredSiwe) {
+    if (isConnected && address && session?.nonce && !hasTriggeredSiwe) {
       setHasTriggeredSiwe(true)
       handleSiweSuccess()
       toast.success('Sign In successful')

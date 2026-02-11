@@ -146,6 +146,10 @@ export async function fetchUsageStats(): Promise<{
   limits: UsageLimits;
   percentage_used: PercentageUsed;
 }> {
+  const { session } = appStore.getState();
+  if (!session?.nonce) {
+    throw new Error('No authenticated session - cannot fetch usage stats');
+  }
   const backendUrl = getBackendUrl();
   const headers = getHeaders();
   const url = ensureDomainUrlHasSSL(`${backendUrl}/subscriptions/usage`);
