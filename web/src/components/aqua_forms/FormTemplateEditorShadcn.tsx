@@ -241,7 +241,7 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
                         onSubmit={handleSubmit(handleFormSubmit, errors => {
                               console.error('Form validation errors:', errors)
                               // This function runs when validation fails
-                              toast.error('Please fix the form errors before submitting (more thatn 3 characters  and atleast one form field is required)')
+                              toast.error('Please fix the form errors before submitting (more than 3 characters  and atleast one form field is required)')
                         })}
                         className="space-y-6"
                   >

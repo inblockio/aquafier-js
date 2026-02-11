@@ -132,7 +132,7 @@ const FilesPage = () => {
             }
       });
 
-
+ 
       const handleUploadClick = () => {
             fileInputRef.current?.click()
       }

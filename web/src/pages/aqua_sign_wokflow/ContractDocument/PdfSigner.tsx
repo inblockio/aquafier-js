@@ -29,7 +29,7 @@ import { downloadPdfWithAnnotations } from '@/utils/pdf-downloader'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
 import WalletAddressClaim from '../../v2_claims_workflow/WalletAdrressClaim'
-import { getAppKitProvider } from '@/utils/appkit-wallet-utils'
+import { getAppKitProvider, unwrapERC6492Signature } from '@/utils/appkit-wallet-utils'
 import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocketContext'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { reloadDB, RELOAD_KEYS } from '../../../utils/reloadDatabase'
@@ -337,8 +337,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   }
 
 
+                  // Unwrap ERC-6492 signature from smart account wallets (e.g., Reown social login)
+                  const unwrappedSignature = unwrapERC6492Signature(signature)
+
                   const resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrapper, 'inline', dummyCredential(), true, undefined, {
-                        signature: signature,
+                        signature: unwrappedSignature,
                         walletAddress: session?.address!,
                   })
 

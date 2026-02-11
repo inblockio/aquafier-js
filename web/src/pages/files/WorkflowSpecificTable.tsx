@@ -15,6 +15,7 @@ import { RELOAD_KEYS, triggerWorkflowReload } from "@/utils/reloadDatabase"
 import { useNotificationWebSocketContext } from "@/contexts/NotificationWebSocketContext"
 
 interface IWorkflowSpecificTable {
+    showFileActions : boolean
     workflowName: string
     view: 'table' | 'card'
     filesListProps: FilesListProps
@@ -22,8 +23,8 @@ interface IWorkflowSpecificTable {
     systemAquaFileNames: string[]
     sortBy: 'date' | 'name' | 'size'
 } 
-
-const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScreen, systemAquaFileNames, sortBy }: IWorkflowSpecificTable) => {
+ 
+const WorkflowSpecificTable = ({ showFileActions, workflowName, view, filesListProps, isSmallScreen, systemAquaFileNames, sortBy }: IWorkflowSpecificTable) => {
  
     const { session, backend_url } = useStore(appStore)
 
@@ -152,6 +153,7 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
                                         .map((file, index) => (
                                             <div key={`mobile-${index}`}>
                                                 <FilesListItem
+                                                showFileActions={showFileActions}
                                                     showWorkFlowsOnly={false}
                                                     // key={`mobile-item-${index}`}
                                                     index={index}
