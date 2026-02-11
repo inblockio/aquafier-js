@@ -27,7 +27,7 @@ export default function FilesList(filesListProps: FilesListProps) {
 
       // Read the tab parameter from URL
       const tabFromUrl = searchParams.get('tab');
-
+  
       // Filter states
       const [showFilterModal, setShowFilterModal] = useState(false)
       const [selectedFilters, setSelectedFilters] = useState<string[]>(['all'])
@@ -425,7 +425,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                   </div>
             )
       }
-
+ 
       const renderFilterModal = () => {
             if (!showFilterModal) return null
 
@@ -548,6 +548,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                         {renderWorkflowTabs()}
 
                         <WorkflowSpecificTable
+                        showFileActions={filesListProps.showFileActions}
                               workflowName={selectedWorkflow}
                               view={view}
                               filesListProps={filesListProps}

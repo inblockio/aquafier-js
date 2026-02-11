@@ -35,6 +35,8 @@ import { API_ENDPOINTS, IDENTITY_CLAIMS } from '@/utils/constants'
 import CustomPagination from '@/components/common/CustomPagination'
 import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 import { RELOAD_KEYS } from '@/utils/reloadDatabase'
+import { LuShare2 } from 'react-icons/lu'
+import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
 
 
 const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowItem) => {
@@ -214,10 +216,16 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                                                 View Claim
                                           </DropdownMenuItem>
                                     </OpenClaimsWorkFlowButton>
-                                    <DropdownMenuItem disabled>
+                                    {/* <DropdownMenuItem disabled>
                                           <Send className="mr-2 h-4 w-4" />
                                           Send Reminder
-                                    </DropdownMenuItem>
+                                    </DropdownMenuItem> */}
+                                    <ShareButton item={apiFileInfo} index={index}>
+                                          <DropdownMenuItem className='cursor-pointer'>
+                                                <LuShare2 className="mr-2 h-4 w-4" />
+                                                Share
+                                          </DropdownMenuItem>
+                                    </ShareButton>
                                     <DownloadAquaChain file={apiFileInfo} index={index}>
                                           <DropdownMenuItem>
                                                 <Download className="mr-2 h-4 w-4" />

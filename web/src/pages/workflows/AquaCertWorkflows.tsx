@@ -27,7 +27,8 @@ import {
       ensureDomainUrlHasSSL,
       getAquaTreeFileName,
       getAquaTreeFileObject,
-      getGenesisHash} from '@/utils/functions'
+      getGenesisHash
+} from '@/utils/functions'
 import { FileObject } from 'aqua-js-sdk'
 import { DownloadAquaChain } from '../../components/aqua_chain_actions/download_aqua_chain'
 import { DeleteAquaChain, DeleteAquaChainDialog } from '../../components/aqua_chain_actions/delete_aqua_chain'
@@ -44,9 +45,11 @@ import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 import { OpenSelectedFileDetailsButton } from '@/components/aqua_chain_actions/details_button'
 import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 import AquaCertWorkflowDrawer from './AquaCertWorkflowDrawer'
+import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
+import { LuShare2 } from 'react-icons/lu'
 
 const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer }: IWorkflowItem) => {
-     
+
       const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined)
       // const [attestations, setAttestations] = useState<ApiFileInfo[]>([])
       const [attesters, setAttesters] = useState<ICertificateAttestor[]>([])
@@ -262,6 +265,12 @@ const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer
                                                       Details
                                                 </DropdownMenuItem>
                                           </OpenSelectedFileDetailsButton>
+                                          <ShareButton item={apiFileInfo} index={index}>
+                                                <DropdownMenuItem className='cursor-pointer'>
+                                                      <LuShare2 className="mr-2 h-4 w-4" />
+                                                      Share
+                                                </DropdownMenuItem>
+                                          </ShareButton>
                                           <DownloadAquaChain file={apiFileInfo} index={index}>
                                                 <DropdownMenuItem className='cursor-pointer'>
                                                       <Download className="mr-2 h-4 w-4" />

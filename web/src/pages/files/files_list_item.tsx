@@ -1,5 +1,5 @@
 import { ApiFileInfo } from '@/models/FileInfo'
-
+ 
 import {
       capitalizeWords,
       displayTime,
@@ -35,6 +35,7 @@ import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import { LuBookOpen, LuGlasses, LuLink2, LuShare2, LuSignature } from 'react-icons/lu'
 
 export default function FilesListItem({
+      showFileActions,
       showWorkFlowsOnly,
       file,
       index,
@@ -44,6 +45,7 @@ export default function FilesListItem({
       viewMode = 'table',
       filesListProps
 }: {
+      showFileActions : boolean //diabled 
       showWorkFlowsOnly: boolean
       file: ApiFileInfo
       index: number
@@ -542,7 +544,8 @@ export default function FilesListItem({
                         }
                         <td className="py-3 flex items-center px-4" onClick={(e) => {
                               e.preventDefault()
-                              if (viewMode === "table") {
+                              console.log(`view mode ${viewMode}  ==  filesListProps.showCheckbox ${filesListProps.showCheckbox}`)
+                              if (viewMode === "table" && (filesListProps.showCheckbox == null || filesListProps.showCheckbox == false)) {
                                     setSelectedFileInfo(file)
                                     setOpenDialog({ dialogType: 'aqua_file_details', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
                               }
@@ -561,21 +564,24 @@ export default function FilesListItem({
 
                         {showWorkFlowsOnly ? <td className="py-3 px-3 text-sm text-gray-500" onClick={(e) => {
                               e.preventDefault()
-                              if (viewMode === "table") {
-                                    setSelectedFileInfo(file)
-                                    setOpenDialog({ dialogType: 'aqua_file_details', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
-                              }
+                            
+
+                                    if (viewMode === "table" && (filesListProps.showCheckbox == null || filesListProps.showCheckbox == false)) {
+                                          setSelectedFileInfo(file)
+                                          setOpenDialog({ dialogType: 'aqua_file_details', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
+                                    }
+                              
                         }}>{workflowInfo?.workFlow || 'Not a workflow'}</td> : null}
                         <td className="py-3 text-sm text-gray-500" onClick={(e) => {
                               e.preventDefault()
-                              if (viewMode === "table") {
+                              if (viewMode === "table" && (filesListProps.showCheckbox == null || filesListProps.showCheckbox == false)) {
                                     setSelectedFileInfo(file)
                                     setOpenDialog({ dialogType: 'aqua_file_details', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
                               }
                         }}>{getFileCategory(getFileExtension(getAquaTreeFileName(file.aquaTree!)))}</td>
                         <td className="py-3 text-sm text-gray-500" onClick={(e) => {
                               e.preventDefault()
-                              if (viewMode === "table") {
+                              if (viewMode === "table" && (filesListProps.showCheckbox == null || filesListProps.showCheckbox == false)) {
                                     setSelectedFileInfo(file)
                                     setOpenDialog({ dialogType: 'aqua_file_details', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
                               }
@@ -593,7 +599,7 @@ export default function FilesListItem({
                         </td>
                         <td className="py-3 text-sm text-gray-500" onClick={(e) => {
                               e.preventDefault()
-                              if (viewMode === "table") {
+                              if (viewMode === "table" && (filesListProps.showCheckbox == null || filesListProps.showCheckbox == false)) {
                                     setSelectedFileInfo(file)
                                     setOpenDialog({ dialogType: 'aqua_file_details', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
                               }
