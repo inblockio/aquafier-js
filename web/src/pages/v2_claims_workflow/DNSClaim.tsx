@@ -107,6 +107,7 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
       const domain = claimInfo['forms_domain'] || ''
       const walletAddress = claimInfo['forms_wallet_address'] || ''
       const uniqueId = claimInfo['forms_unique_id']
+      const claimSecret = claimInfo['forms_claim_secret']
       const date =
             claimInfo['forms_created_at'] ||
             claimInfo['date'] ||
@@ -163,7 +164,8 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
                         refresh: forceRefresh,
                         claimData: {
                               wallet: walletAddress, 
-                              uniqueId: uniqueId
+                              uniqueId: uniqueId,
+                              secret: claimSecret
                         }
                   })
 
