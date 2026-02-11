@@ -67,7 +67,7 @@ export interface DownloadPdfOptions {
  * Sanitizes text to ensure it can be encoded in WinAnsi (standard PDF font encoding).
  * Replaces unsupported characters with '?' or removes them.
  */
-const sanitizeTextForWinAnsi = (text: string): string => {
+export const sanitizeTextForWinAnsi = (text: string): string => {
     if (!text) return "";
     // Regex matches characters that are NOT in the WinAnsi printable range (roughly).
     // WinAnsi supports: 
