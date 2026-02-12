@@ -963,7 +963,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                               continue
                         }
 
-                        if (forthRevision?.signature_wallet_address != session.address) {
+                        // Check ownership: for smart account wallets (social login), signature_wallet_address
+                        // is the EOA signer, not the smart account. Fall back to forms_wallet_address.
+                        const isOwner = forthRevision?.signature_wallet_address === session.address
+                              || firstRevision.forms_wallet_address === session.address
+                        if (!isOwner) {
                               continue
                         }
 
