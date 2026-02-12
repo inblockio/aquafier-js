@@ -24,6 +24,8 @@ export default function PaymentHistoryPage() {
       setPayments(data.payments, data.pagination);
     } catch (error: any) {
       setPaymentsError(error.message);
+    } finally{
+      setPaymentsLoading(false)
     }
   };
 
@@ -66,7 +68,7 @@ export default function PaymentHistoryPage() {
 
       {/* Payments Table */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-        {paymentsLoading && payments.length === 0 ? (
+        {paymentsLoading  ? (
           <div className="p-8 text-center">
             <p className="text-gray-600 dark:text-gray-400">Loading payments...</p>
           </div>
