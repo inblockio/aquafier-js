@@ -19,52 +19,105 @@ Its modular architecture makes it a solid foundation for custom applications or 
 
 ## Environment Variables
 
-To run this project, you will need to add the following environment variables to your .env file. See deployment/.env.sample
+Copy `api/.env.sample` to `api/.env` and fill in the values. The sections below describe each group.
 
-`HOST`
+### Core
 
-`PORT`
+| Variable | Description | Default |
+|---|---|---|
+| `PORT` | Server listen port | `3000` |
+| `HOST` | Server hostname | `localhost` |
+| `BACKEND_URL` | Public URL of the backend (used in payments, revisions) | — |
+| `FRONTEND_URL` | Public URL of the frontend (used in CORS) | — |
+| `DATABASE_URL` | PostgreSQL connection string for Prisma (`postgresql://user:pass@host:5432/db`) | — |
+| `ALLOWED_CORS` | Comma-separated list of allowed CORS origins | — |
+| `ALCHEMY_API_KEY` | Alchemy API key for blockchain interactions | — |
+| `SERVER_MNEMONIC` | Server wallet mnemonic | — |
+| `DEFAULT_WITNESS_NETWORK` | Default network for witnessing | — |
+| `ENABLE_DBA_CLAIM` | Enable DBA claim functionality | — |
+| `DASHBOARD_WALLETS` | Comma-separated wallet addresses for admin dashboard access | — |
 
-`admin_wallet` ? TBD
+### S3 / Storage (optional)
 
-### Proxy settings / Lets Encrypt
-Used in the proxy to define the target for the requests. Obsolet in local deployment.
+S3 is disabled when these variables are not set. The server falls back to local filesystem storage.
 
-`FRONTEND_URL`
-
-`BACKEND_URL`
-
-`LETSENCRYPT_EMAIL`
-
-### Database
-
-`DB_USER` Database-User
-
-`DB_PASSWORD` Password for the Database-User
-
-`DB_NAME` Name of the Database
-
-### Backend
-//TODO split this
-
-`DATABASE_URL` define the url for the postgres-connection used by the prisma client (`postgres://<user>:<password>@<host>:<post>/<database>`)
-
-`SERVER_MNEMONIC` ?
+| Variable | Description | Default |
+|---|---|---|
+| `S3_USER` | Minio/S3 access key | — |
+| `S3_PASSWORD` | Minio/S3 secret key | — |
+| `S3_URL` | Minio/S3 endpoint | — |
+| `S3_PORT` | Minio/S3 port | `9000` |
+| `S3_USE_SSL` | Use SSL for S3 connection | `true` |
+| `S3_BUCKET` | S3 bucket name | `aquafier` |
+| `UPLOAD_DIR` | Local upload directory (used as fallback) | — |
 
 ### Twilio
-`TWILIO_ACCOUNT_SID`
 
-`TWILIO_AUTH_TOKEN`
+Used for SMS/email verification when creating claims.
 
-`TWILIO_VERIFY_SERVICE_SID`
+| Variable | Description |
+|---|---|
+| `TWILIO_ACCOUNT_SID` | Twilio account SID |
+| `TWILIO_AUTH_TOKEN` | Twilio auth token |
+| `TWILIO_VERIFY_SERVICE_SID` | Twilio Verify service SID |
 
-### Backup
-`BACKUP_CRON` (cron expression e.g. `* * * * *`) set how often the server create an backup
+### Elasticsearch (optional)
 
-`BACKUP_COUNT` define how many backups sould we create befor delte the oldest one
+Only needed if you want search indexing. Not required to run the server.
 
-### e2e (playwright)
-`BASE_URL` Set the URL for the Playwright runner to execute the tests against this URL.
+| Variable | Description |
+|---|---|
+| `ELASTIC_NODE` | Elasticsearch node URL |
+| `ELASTIC_NODE_USERNAME` | Elasticsearch username |
+| `ELASTIC_NODE_PASSWORD` | Elasticsearch password |
+
+### Tracing (optional)
+
+| Variable | Description |
+|---|---|
+| `TRACING_ENABLE` | Enable OpenTelemetry tracing |
+| `TRACING_SERVICE_NAME` | Service name for traces |
+
+### Payment System
+
+| Variable | Description | Default |
+|---|---|---|
+| `ENABLE_CRYPTO_PAYMENTS` | Enable crypto payment method | `true` |
+| `ENABLE_STRIPE_PAYMENTS` | Enable Stripe payment method | `false` |
+| `DEFAULT_PAYMENT_METHOD` | Default payment method (`CRYPTO` or `STRIPE`) | `CRYPTO` |
+| `STRIPE_SECRET_KEY` | Stripe secret key | — |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | — |
+| `STRIPE_PRO_MONTHLY_PRICE_ID` | Stripe price ID for Pro monthly | — |
+| `STRIPE_PRO_YEARLY_PRICE_ID` | Stripe price ID for Pro yearly | — |
+| `STRIPE_ENTERPRISE_MONTHLY_PRICE_ID` | Stripe price ID for Enterprise monthly | — |
+| `STRIPE_ENTERPRISE_YEARLY_PRICE_ID` | Stripe price ID for Enterprise yearly | — |
+| `NOWPAYMENTS_API_KEY` | NOWPayments API key | — |
+| `NOWPAYMENTS_IPN_SECRET` | NOWPayments IPN secret | — |
+| `DEFAULT_FREE_PLAN_ID` | Free plan UUID (auto-resolved from DB if not set) | — |
+| `TRIAL_PERIOD_DAYS` | Trial period length in days | `14` |
+
+### Proxy / Lets Encrypt (deployment only)
+
+Used by the reverse proxy in dev/prod deployments. Not needed for local development.
+
+| Variable | Description |
+|---|---|
+| `FRONTEND_URL` | Target for frontend proxy |
+| `BACKEND_URL` | Target for backend proxy |
+| `LETSENCRYPT_EMAIL` | Email for Let's Encrypt certificates |
+
+### Backup (deployment only)
+
+| Variable | Description |
+|---|---|
+| `BACKUP_CRON` | Cron expression for backup schedule (e.g. `0 2 * * *`) |
+| `BACKUP_COUNT` | Number of backups to retain before deleting the oldest |
+
+### e2e (Playwright)
+
+| Variable | Description |
+|---|---|
+| `BASE_URL` | URL the Playwright test runner executes against |
 
 ## Backup and Restore
 ### Backup

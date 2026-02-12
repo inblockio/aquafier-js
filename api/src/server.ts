@@ -22,7 +22,7 @@ import revisionsController from './controllers/revisions';
 import shareController from './controllers/share';
 import fetchChainController from './controllers/fetch-chain';
 import templatesController from './controllers/templates';
-import { setupPaymentPlans, setUpSystemTemplates } from './utils/api_utils';
+import { setupPaymentPlans, setUpSystemTemplates, ensureDefaultFreePlanId } from './utils/api_utils';
 import systemController from './controllers/system';
 import notificationsController from './controllers/notifications';
 import ApiController from './controllers/api';
@@ -91,7 +91,10 @@ async function buildServer() {
     await setUpSystemTemplates();
 
     // Setup payment plans
-    await setupPaymentPlans() 
+    await setupPaymentPlans()
+
+    // Ensure DEFAULT_FREE_PLAN_ID is set (resolves from DB if missing from .env)
+    await ensureDefaultFreePlanId()
 
     await createServerIdentity()
 

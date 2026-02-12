@@ -30,11 +30,11 @@
     "@sentry/node": "^10.27.0",
     "@sentry/profiling-node": "^10.27.0",
     "aqua-js-sdk": "^3.2.1-45",
-    "axios": "^1.13.2",
+    "axios": "^1.13.5",
     "cheerio": "^1.1.2",
     "dotenv": "^17.2.3",
     "ethers": "^6.15.0",
-    "fastify": "^5.6.2",
+    "fastify": "^5.7.3",
     "get-stream": "^9.0.1",
     "i": "^0.3.7",
     "jszip": "^3.10.1",
@@ -48,6 +48,18 @@
     "twilio": "^5.10.5",
     "viem": "^2.44.4",
     "winston": "^3.18.3"
+  },
+  "overrides": {
+    "ws": ">=8.17.1",
+    "systeminformation": ">=5.27.14",
+    "@isaacs/brace-expansion": ">=5.0.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "ws@>=8.0.0 <8.17.1": ">=8.17.1",
+      "systeminformation@<5.27.14": ">=5.27.14",
+      "@isaacs/brace-expansion@5.0.0": ">=5.0.1"
+    }
   },
   "devDependencies": {
     "@types/estree": "^1.0.8",

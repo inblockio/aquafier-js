@@ -157,6 +157,45 @@ export function unwrapERC6492Signature(signature: string): string {
 }
 
 /**
+ * Signs a message using the AppKit provider directly via personal_sign.
+ *
+ * This bypasses ethers.BrowserProvider.getSigner() which internally calls
+ * eth_requestAccounts — a method blocked by W3mFrameProvider (social login wallets).
+ *
+ * The message is hex-encoded as required by W3mFrameProvider.
+ * ERC-6492 signatures from smart account wallets are automatically unwrapped.
+ *
+ * Returns the unwrapped ECDSA signature and the recovered signer address.
+ * For smart account wallets, the signer address is the internal EOA (not the
+ * smart account address), which is what the SDK's verifySignature expects.
+ */
+export async function signMessageWithAppKit(
+  message: string,
+  accountAddress: string
+): Promise<{ signature: string; signerAddress: string }> {
+  const provider = await getAppKitProvider()
+  if (!provider) throw new Error('No wallet provider available')
+
+  // Hex-encode the message as required by W3mFrameProvider
+  const messageHex = ethers.hexlify(ethers.toUtf8Bytes(message))
+
+  const rawSignature: string = await provider.request({
+    method: 'personal_sign',
+    params: [messageHex, accountAddress],
+  })
+
+  // Unwrap ERC-6492 signature from smart account wallets (e.g., Reown social login)
+  const signature = unwrapERC6492Signature(rawSignature)
+
+  // Recover the actual ECDSA signer address from the signature.
+  // For smart account wallets, accountAddress is the smart account address
+  // but the ECDSA signature is from the internal EOA signer.
+  const signerAddress = ethers.verifyMessage(message, signature)
+
+  return { signature, signerAddress }
+}
+
+/**
  * Normalizes a SIWE message to a single line.
  */
 export const normalizeSiweMessage = (message: string): string => {

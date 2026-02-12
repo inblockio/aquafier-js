@@ -1,5 +1,5 @@
 import { LuSignature } from 'react-icons/lu'
-import { dummyCredential, ensureDomainUrlHasSSL, getLastRevisionVerificationHash, stringToHex } from '../../utils/functions'
+import { dummyCredential, ensureDomainUrlHasSSL, getLastRevisionVerificationHash } from '../../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import apiClient from '@/api/axiosInstance'
@@ -8,7 +8,7 @@ import Aquafier, { AquaTreeWrapper, OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import { RevionOperation } from '../../models/RevisionOperation'
 import { toast } from 'sonner'
 import { useAppKit } from '@reown/appkit/react'
-import { getAppKitProvider, unwrapERC6492Signature } from '@/utils/appkit-wallet-utils'
+import { signMessageWithAppKit } from '@/utils/appkit-wallet-utils'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 
 
@@ -167,34 +167,13 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index, children 
                               return
                         }
 
-                        // Sign using WalletConnect via ethers adapter
+                        // Sign using AppKit provider directly (personal_sign with hex encoding)
                         const messageToSign = `I sign this revision: [${targetRevisionHash}]`
-                        const provider = await getAppKitProvider()
-
-                        // Convert message to hex format for Core Wallet compatibility
-                        const messageHex = stringToHex(messageToSign)
-
-                        // Try with hex format first (for Core Wallet), fallback to plain text
-                        let signature: string
-                        try {
-                              signature = await provider.request({
-                                    method: 'personal_sign',
-                                    params: [messageHex, session?.address!]
-                              })
-                        } catch (hexError) {
-                              // Fallback to plain text for wallets that don't accept hex
-                              signature = await provider.request({
-                                    method: 'personal_sign',
-                                    params: [messageToSign, session?.address!]
-                              })
-                        }
-
-                        // Unwrap ERC-6492 signature from smart account wallets (e.g., Reown social login)
-                        const unwrappedSignature = unwrapERC6492Signature(signature)
+                        const { signature, signerAddress } = await signMessageWithAppKit(messageToSign, session?.address!)
 
                         const result = await aquafier.signAquaTree(aquaTreeWrapper, 'inline', xCredentials, true, undefined, {
-                              signature: unwrappedSignature,
-                              walletAddress: session?.address!,
+                              signature,
+                              walletAddress: signerAddress,
                         })
 
                         if (result.isErr()) {
