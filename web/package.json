@@ -94,6 +94,11 @@
     "wagmi": "^2.18.0",
     "zustand": "^5.0.8"
   },
+  "pnpm": {
+    "overrides": {
+      "ws@>=8.0.0 <8.17.1": ">=8.17.1"
+    }
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@types/chrome": "^0.1.28",
