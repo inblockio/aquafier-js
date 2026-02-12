@@ -16,7 +16,6 @@ import {
       getLastRevisionVerificationHash,
       getRandomNumber,
       reorderRevisionsInAquaTree,
-      stringToHex,
       timeStampToDateObject,
 } from '../../../utils/functions'
 import { API_ENDPOINTS } from '../../../utils/constants'
@@ -29,7 +28,7 @@ import { downloadPdfWithAnnotations } from '@/utils/pdf-downloader'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
 import WalletAddressClaim from '../../v2_claims_workflow/WalletAdrressClaim'
-import { getAppKitProvider, unwrapERC6492Signature } from '@/utils/appkit-wallet-utils'
+import { signMessageWithAppKit } from '@/utils/appkit-wallet-utils'
 import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocketContext'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { reloadDB, RELOAD_KEYS } from '../../../utils/reloadDatabase'
@@ -311,38 +310,13 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
                   // const resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
 
-                  // const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
                   const targetRevisionHash = getLastRevisionVerificationHash(aquaTree)
-                  // Sign using WalletConnect via ethers adapter
                   const messageToSign = `I sign this revision: [${targetRevisionHash}]`
-                  // const provider: any = walletProvider
-                  const provider = await getAppKitProvider()
-
-
-                  // Convert message to hex format for Core Wallet compatibility
-                  const messageHex = stringToHex(messageToSign)
-
-                  let signature
-                  try {
-                        signature = await provider.request({
-                              method: 'personal_sign',
-                              params: [messageHex, session?.address!]
-                        })
-                  } catch (hexError) {
-                        // Fallback to plain text for wallets that don't accept hex
-                        signature = await provider.request({
-                              method: 'personal_sign',
-                              params: [messageToSign, session?.address!]
-                        })
-                  }
-
-
-                  // Unwrap ERC-6492 signature from smart account wallets (e.g., Reown social login)
-                  const unwrappedSignature = unwrapERC6492Signature(signature)
+                  const { signature, signerAddress } = await signMessageWithAppKit(messageToSign, session?.address!)
 
                   const resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrapper, 'inline', dummyCredential(), true, undefined, {
-                        signature: unwrappedSignature,
-                        walletAddress: session?.address!,
+                        signature,
+                        walletAddress: signerAddress,
                   })
 
                   if (resLinkedMetaMaskSignedAquaTree.isErr()) {

@@ -17,9 +17,8 @@ import {
       isValidEthereumAddress,
       isWorkFlowData,
       reorderRevisionsInAquaTree,
-      stringToHex
 } from '@/utils/functions'
-import { getAppKitProvider, unwrapERC6492Signature } from '@/utils/appkit-wallet-utils'
+import { signMessageWithAppKit } from '@/utils/appkit-wallet-utils'
 import Aquafier, {
       AquaTree,
       AquaTreeWrapper,
@@ -780,39 +779,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
             } else {
 
-                  const provider = await getAppKitProvider()
-
-                  if (!provider) {
-                        console.error('Wallet not connected')
-                        setDialogOpen(true)
-                        setDialogData({
-                              title: 'Wallet not connected',
-                              content: (
-                                    <>
-                                          <Alert variant="destructive">
-                                                <AlertCircle className="h-4 w-4" />
-                                                <AlertDescription>Please connect your wallet to sign the domain claim.</AlertDescription>
-                                          </Alert>
-                                    </>
-                              ),
-                        })
-                        return
-                  }
-
                   try {
-                        const messageHex = stringToHex(messageToSign)
-                        try {
-                              signature = await provider.request({
-                                    method: 'personal_sign',
-                                    params: [messageHex, session?.address!]
-                              })
-                        } catch (hexError) {
-                              // Fallback to plain text for wallets that don't accept hex
-                              signature = await provider.request({
-                                    method: 'personal_sign',
-                                    params: [messageToSign, session?.address!]
-                              })
-                        }
+                        const result = await signMessageWithAppKit(messageToSign, session?.address!)
+                        signature = result.signature
                   } catch (error: any) {
                         console.error('Error signing domain claim:' + error)
                         setDialogOpen(true)
@@ -1111,37 +1080,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   return signRes.data.aquaTree!
             } else {
 
-                  // const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
                   const targetRevisionHash = getLastRevisionVerificationHash(aquaTreeData)
-                  // Sign using WalletConnect via ethers adapter
                   const messageToSign = `I sign this revision: [${targetRevisionHash}]`
-                  // const provider: any = walletProvider
-                  const provider = await getAppKitProvider()
-
-                  // Convert message to hex format for Core Wallet compatibility
-                  const messageHex = stringToHex(messageToSign)
-
-                  let signature
-                  try {
-                        signature = await provider.request({
-                              method: 'personal_sign',
-                              params: [messageHex, session?.address!]
-                        })
-                  } catch (hexError) {
-                        // Fallback to plain text for wallets that don't accept hex
-                        signature = await provider.request({
-                              method: 'personal_sign',
-                              params: [messageToSign, session?.address!]
-                        })
-                  }
-
-                  // Unwrap ERC-6492 signature from smart account wallets (e.g., Reown social login)
-                  // into a standard 65-byte ECDSA signature that ethers.js can parse
-                  const unwrappedSignature = unwrapERC6492Signature(signature)
+                  const { signature, signerAddress } = await signMessageWithAppKit(messageToSign, session?.address!)
 
                   const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'inline', dummyCredential(), true, undefined, {
-                        signature: unwrappedSignature,
-                        walletAddress: session?.address!,
+                        signature,
+                        walletAddress: signerAddress,
                   })
 
 
