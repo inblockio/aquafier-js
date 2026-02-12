@@ -2659,9 +2659,9 @@ export const processContractInformation = (selectedFileInfo: ApiFileInfo): ICont
 
             // Duct tape fix: if signature group count >= signer count, all signers have signed
             // Reown social login uses rotating ephemeral session keys, so wallet addresses may not match
-            if (remainingSigners.length > 0 && signatureRevisionHashes.length >= signers.length) {
-                  remainingSigners = []
-            }
+            // if (remainingSigners.length > 0 && signatureRevisionHashes.length >= signers.length) {
+            //       remainingSigners = []
+            // }
 
             // verifyAquaTreeRevisions(selectedFileInfo);
 

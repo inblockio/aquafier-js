@@ -349,9 +349,9 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
 
                         // Duct tape fix: if signature group count >= signer count, all signers have signed
                         // Reown social login uses rotating ephemeral session keys, so wallet addresses may not match
-                        if (remainSigners.length > 0 && signatureRevionHashes.length >= signers.length) {
-                              remainSigners = []
-                        }
+                        // if (remainSigners.length > 0 && signatureRevionHashes.length >= signers.length) {
+                        //       remainSigners = []
+                        // }
                         setIsWorkFlowComplete(remainSigners)
 
                         setSignatureRevionHashes(signatureRevionHashes)
