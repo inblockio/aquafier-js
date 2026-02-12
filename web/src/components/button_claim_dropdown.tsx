@@ -133,7 +133,7 @@ export default function ClaimTypesDropdownButton() {
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
             <UserLock className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
-            Create Name Claim
+             Name Claim
           </button>
 
           <button
@@ -142,7 +142,7 @@ export default function ClaimTypesDropdownButton() {
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
             <Globe className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
-            Create DNS Claim
+             DNS Claim
           </button>
 
           {user_profile?.enable_dba_claim ? (<button
@@ -151,7 +151,7 @@ export default function ClaimTypesDropdownButton() {
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
             <Scale className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
-            Create DBA Claim
+             DBA Claim
           </button>) : null}
 
 
@@ -163,7 +163,7 @@ export default function ClaimTypesDropdownButton() {
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
             <Signature className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
-            Create Signature
+             Signature
           </button>
 
           <button
@@ -172,7 +172,7 @@ export default function ClaimTypesDropdownButton() {
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
             <Mail className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
-            Create Email Claim
+             Email Claim
           </button>
 
 
@@ -183,7 +183,7 @@ export default function ClaimTypesDropdownButton() {
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
             <Phone className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
-            Create Phone Number claim
+             Phone Number Claim
           </button>
 
 
@@ -194,7 +194,7 @@ export default function ClaimTypesDropdownButton() {
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
             <FileCheck className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-            Create certificate/proof claim
+             Certificate Claim
           </button>
 
 
@@ -205,7 +205,7 @@ export default function ClaimTypesDropdownButton() {
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
             <Blinds className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
-            Create Identity card
+             Identity Card
           </button>
 
           {isAdmin && (
