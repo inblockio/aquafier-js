@@ -298,7 +298,7 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
 }
 
 const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, showShadow, hideOpenProfileButton, noBg, timestamp, files, signatureHash }: ISignatureWalletAddressCard) => {
-      const { workflows, session, setFiles, backend_url, setOpenDialog, setSelectedFileInfo, user_profile } = useStore(appStore)
+      const { workflows, session, setFiles, backend_url, setOpenDialog, setSelectedFileInfo } = useStore(appStore)
       const [claims, setClaims] = useState<IClaim[]>([])
       const [loading, setLoading] = useState(true)
       const [isLoading, setIsLoading] = useState<boolean>(true)

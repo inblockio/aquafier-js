@@ -49,7 +49,6 @@ import AquaCertWorkflowDrawer from './AquaCertWorkflowDrawer'
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
 import { LuShare2 } from 'react-icons/lu'
 import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_claim'
-import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocketContext'
 
 const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer }: IWorkflowItem) => {
 
@@ -338,8 +337,6 @@ export default function AquaCertWorkflows() {
             open: false,
             attestors: []
       })
-
-      const { subscribe } = useNotificationWebSocketContext()
 
       const processFilesToWorkflowUi = (_files: ApiFileInfo[]) => {
             const newData: IWorkflowItem[] = []
