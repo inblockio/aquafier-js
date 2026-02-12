@@ -24,7 +24,6 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
 
       const attestAquaClaimAction = async () => {
 
-            const toastId = toast.info('Checking for existing attestations...')
 
             const genesisHash = getGenesisHash(file.aquaTree!)
             const genesisRevision = file.aquaTree?.revisions[genesisHash!]
@@ -34,6 +33,8 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
                   return
             }
 
+
+            const toastId = toast.info('Checking for existing attestations...')
 
             let endpoint = API_ENDPOINTS.GET_PER_TYPE
             const params = {
