@@ -1,6 +1,7 @@
 import apiClient from './axiosInstance';
 import appStore from '../store';
 import { ensureDomainUrlHasSSL } from '@/utils/functions';
+import { RELOAD_KEYS } from '@/utils/reloadDatabase';
 
 const getBackendUrl = () => {
     const { backend_url } = appStore.getState();
@@ -95,7 +96,7 @@ export async function createAdminPlan(data: AdminPlanInput): Promise<AdminPlan> 
     const headers = getHeaders();
     const url = ensureDomainUrlHasSSL(`${backendUrl}/admin/plans`);
 
-    const response = await apiClient.post(url, data, { headers });
+    const response = await apiClient.post(url, data, { headers, reloadKeys: [RELOAD_KEYS.user_stats] });
 
     if (response.data.success) {
         return response.data.data;
@@ -109,7 +110,7 @@ export async function updateAdminPlan(planId: string, data: AdminPlanInput): Pro
     const headers = getHeaders();
     const url = ensureDomainUrlHasSSL(`${backendUrl}/admin/plans/${planId}`);
 
-    const response = await apiClient.put(url, data, { headers });
+    const response = await apiClient.put(url, data, { headers, reloadKeys: [RELOAD_KEYS.user_stats] });
 
     if (response.data.success) {
         return response.data.data;
@@ -123,7 +124,7 @@ export async function deleteAdminPlan(planId: string): Promise<void> {
     const headers = getHeaders();
     const url = ensureDomainUrlHasSSL(`${backendUrl}/admin/plans/${planId}`);
 
-    const response = await apiClient.delete(url, { headers });
+    const response = await apiClient.delete(url, { headers, reloadKeys: [RELOAD_KEYS.user_stats] });
 
     if (!response.data.success) {
         throw new Error(response.data.error || 'Failed to delete plan');

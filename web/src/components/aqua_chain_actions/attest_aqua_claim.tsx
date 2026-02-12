@@ -24,8 +24,17 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
 
       const attestAquaClaimAction = async () => {
 
-            const toastId = toast.info('Checking for existing attestations...')
 
+            const genesisHash = getGenesisHash(file.aquaTree!)
+            const genesisRevision = file.aquaTree?.revisions[genesisHash!]
+            const creatorWalletAddress = genesisRevision?.forms_creator || genesisRevision?.forms_wallet_address
+            if (creatorWalletAddress?.toLocaleLowerCase() === session?.address?.toLocaleLowerCase()) {
+                  toast.warning("You cannot attest yourself. Kindly share to another user for attestation")
+                  return
+            }
+
+
+            const toastId = toast.info('Checking for existing attestations...')
 
             let endpoint = API_ENDPOINTS.GET_PER_TYPE
             const params = {

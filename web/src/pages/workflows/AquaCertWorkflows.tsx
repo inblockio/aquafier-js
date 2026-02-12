@@ -12,6 +12,7 @@ import {
       DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import {
+      Album,
       Download,
       Eye,
       FileText,
@@ -47,6 +48,7 @@ import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 import AquaCertWorkflowDrawer from './AquaCertWorkflowDrawer'
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
 import { LuShare2 } from 'react-icons/lu'
+import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_claim'
 
 const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer }: IWorkflowItem) => {
 
@@ -154,14 +156,12 @@ const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer
                   const response = await apiClient.post(
                         url,
                         { revisionHash: lastRevisionHash },
-                        { headers: { nonce: session?.nonce } }
+                        { headers: { nonce: session?.nonce }, reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files, RELOAD_KEYS.aqua_certificate, RELOAD_KEYS.contacts] }
                   )
 
                   if (response.status === 200) {
                         setDeleteDialogOpen(false)
                         toast.success('File deleted successfully')
-                        // Trigger reload - you may need to add this reload logic
-                        window.location.reload()
                   }
             } catch (e) {
                   toast.error('File deletion error')
@@ -265,6 +265,12 @@ const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer
                                                 <FileText className="mr-2 h-4 w-4" />
                                                 View
                                           </DropdownMenuItem>
+                                          <AttestAquaClaim file={apiFileInfo} index={index}>
+                                                <DropdownMenuItem className='cursor-pointer'>
+                                                      <Album className="mr-2 h-4 w-4" />
+                                                      Attest
+                                                </DropdownMenuItem>
+                                          </AttestAquaClaim>
                                           <OpenSelectedFileDetailsButton file={apiFileInfo} index={index}>
                                                 <DropdownMenuItem className='cursor-pointer'>
                                                       <Eye className="mr-2 h-4 w-4" />
@@ -374,6 +380,13 @@ export default function AquaCertWorkflows() {
       // Watch for reload triggers
       useReloadWatcher({
             key: RELOAD_KEYS.aqua_certificate,
+            onReload: () => {
+                  loadWorkflowsData();
+            }
+      });
+
+      useReloadWatcher({
+            key: RELOAD_KEYS.identity_attestation,
             onReload: () => {
                   loadWorkflowsData();
             }

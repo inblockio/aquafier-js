@@ -10,7 +10,7 @@ import { IDropzoneAction } from '../../types/types'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
-import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 // export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex, autoUpload }: IDropzoneAction) => {
 export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload, autoUpload }: IDropzoneAction) => {
       const [uploading, setUploading] = useState(false)
@@ -60,6 +60,7 @@ export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload, autoU
                               'Content-Type': 'multipart/form-data',
                               nonce: session?.nonce,
                         },
+                        reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files, RELOAD_KEYS.user_stats],
                   })
 
                   const res = response.data
@@ -77,12 +78,6 @@ export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload, autoU
                   // setUploaded(true)
                   setUploading(false)
                   toast.success('File uploaded successfuly')
-
-                  // Trigger reload for all files and stats
-                  await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
-                  await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
-                  await triggerWorkflowReload(RELOAD_KEYS.user_stats, true);
-
 
                   // updateUploadedIndex(fileIndex)
                   removeFilesListForUpload(filesWrapper)

@@ -1,5 +1,6 @@
 import { ReactNode } from "react"
 import { ensureDomainUrlHasSSL } from "./functions"
+import apiClient from '@/api/axiosInstance'
 import { CheckCircle, Loader, X } from "lucide-react"
 
 
@@ -51,12 +52,7 @@ export const verifyDNS = async (backend_url: string, domain: string, walletAddre
         const url = `${backend_url}/verify/dns_claim`
         const actualUrlToFetch = ensureDomainUrlHasSSL(url)
 
-        const response = await fetch(actualUrlToFetch, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        const response = await apiClient.post(actualUrlToFetch, {
                 domain: domain ?? "inblock.io",
                 wallet: walletAddress,
                 refresh: triggerReload,
@@ -66,10 +62,13 @@ export const verifyDNS = async (backend_url: string, domain: string, walletAddre
                     uniqueId,
                     secret: claimSecret
                 }
-            }),
-        })
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
 
-        const result: VerificationResult = await response.json()
+        const result: VerificationResult = response.data
 
         dnsVerificationResult.verificationResult = result
 

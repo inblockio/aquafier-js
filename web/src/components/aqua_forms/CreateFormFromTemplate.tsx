@@ -2002,8 +2002,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         {aquaSignStep === 2 && (
                               <div className="space-y-4">
                                     <div className="text-center mb-4">
-                                          <h3 className="text-lg font-medium text-gray-900">Add signers for this document</h3>
-                                          <p className="text-sm text-gray-500 mt-1">Specify who needs to sign this document</p>
+                                          <h3 className="text-lg font-medium text-gray-900">Specify who needs to sign this document</h3>
                                     </div>
 
                                     {otherFields.map((field, idx) => renderSingleField(field, idx))}

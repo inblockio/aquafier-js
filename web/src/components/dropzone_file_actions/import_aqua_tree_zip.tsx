@@ -14,7 +14,7 @@ import { FileText, Loader2, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
 import { ScrollArea } from '../ui/scroll-area'
 import Logger from '@/utils/Logger'
-import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload }: IDropzoneAction) => {
       const [uploading, setUploading] = useState(false)
       const [conflictFiles, setConflictFiles] = useState<Array<ImportZipAquaTreeConflictResolutionDialogProps>>([])
@@ -40,6 +40,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                               'Content-Type': 'multipart/form-data',
                               nonce: session?.nonce,
                         },
+                        reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
                   })
 
                  const urlPath = `${backend_url}/explorer_files`
@@ -56,10 +57,6 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                   // updateUploadedIndex(fileIndex)
 
                   removeFilesListForUpload(filesWrapper)
-
-                  // Trigger reload for all files and stats
-                  await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
-                  await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
 
                   return
             } catch (error) {

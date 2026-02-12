@@ -13,6 +13,7 @@ import { useStore } from 'zustand'
 import WorkspaceDialogUI from './workspace_download_dialog_ui'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 import { getCorrectUTF8JSONString } from '@/lib/utils'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 
 const WorkspaceManagment = () => {
 
@@ -464,6 +465,7 @@ const WorkspaceManagment = () => {
                     'nonce': session.nonce,
                     'Content-Type': 'multipart/form-data'
                 },
+                reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
                 onUploadProgress: (progressEvent) => {
                     if (progressEvent.total) {
                         const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)

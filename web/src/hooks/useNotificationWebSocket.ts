@@ -3,6 +3,7 @@ import appStore from '../store';
 import { API_ENDPOINTS } from '../utils/constants';
 import { useStore } from 'zustand';
 import { ensureDomainUrlHasSSL } from '../utils/functions';
+import apiClient from '@/api/axiosInstance';
 
 interface WebSocketMessage {
   type: string;
@@ -324,20 +325,13 @@ export async function sendNotification(
       timestamp: Date.now()
     };
 
-    const response = await fetch(url, {
-      method: 'POST',
+    const response = await apiClient.post(url, body, {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body)
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to send notification: ${response.status} ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    return result;
+    return response.data;
 
   } catch (error) {
     throw error;

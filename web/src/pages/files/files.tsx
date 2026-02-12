@@ -173,14 +173,12 @@ const FilesPage = () => {
                               'Content-Type': 'multipart/form-data',
                               nonce: session?.nonce,
                         },
+                        reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
                   })
 
                   // Remove from upload list after successful upload
                   setFilesListForUpload(prev => prev.filter((_, i) => i !== index))
                   clearFileInput()
-
-                  await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
-                  await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
 
 
                   toast.success('File uploaded successfully')

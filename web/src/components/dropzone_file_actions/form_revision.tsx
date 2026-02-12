@@ -10,7 +10,7 @@ import { IDropzoneAction } from '../../types/types'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { triggerWorkflowReload, RELOAD_KEYS } from '@/utils/reloadDatabase'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 // export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
 export const FormRevisionFile = ({ file, filesWrapper, removeFilesListForUpload }: IDropzoneAction) => {
       const [uploading, setUploading] = useState(false)
@@ -54,6 +54,7 @@ export const FormRevisionFile = ({ file, filesWrapper, removeFilesListForUpload 
                               'Content-Type': 'multipart/form-data',
                               nonce: session?.nonce,
                         },
+                        reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
                   })
 
                   const res = response.data
@@ -88,10 +89,6 @@ export const FormRevisionFile = ({ file, filesWrapper, removeFilesListForUpload 
                   toast.success('File uploaded successfuly')
                   // updateUploadedIndex(fileIndex)
                   removeFilesListForUpload(filesWrapper)
-
-                  // Trigger reload for all files and stats
-                  await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
-                  await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
 
                   return
             } catch (error) {

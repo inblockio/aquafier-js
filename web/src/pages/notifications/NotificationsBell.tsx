@@ -7,6 +7,7 @@ import { INotification } from '../../types/index'
 import appStore from '../../store'
 import { API_ENDPOINTS } from '../../utils/constants'
 import { ensureDomainUrlHasSSL } from '../../utils/functions'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover'
 import { Badge } from '../../components/ui/badge'
 import { Button } from '../../components/ui/button'
@@ -55,6 +56,7 @@ const NotificationsBell = () => {
                               headers: {
                                     nonce: session.nonce,
                               },
+                              reloadKeys: [RELOAD_KEYS.notifications],
                         }
                   )
 

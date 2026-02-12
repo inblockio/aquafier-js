@@ -12,6 +12,7 @@ import {
 import {FilePreviewAquaTreeFromTemplate} from './file_preview_aqua_tree_from_template'
 import {EasyPDFRenderer} from '@/pages/aqua_sign_wokflow/ContractDocument/signer/SignerPage'
 import heic2any from "heic2any"
+import apiClient from '@/api/axiosInstance'
 
 // Define file extensions to content type mappings
 const fileExtensionMap: { [key: string]: string } = {
@@ -333,21 +334,20 @@ export const FilePreview: React.FC<IFilePreview> = ({ fileInfo, latestRevisionHa
                               const fileContentUrl = fileInfo.fileContent
                               const actualUrlToFetch = ensureDomainUrlHasSSL(fileContentUrl)
 
-                              const response = await fetch(actualUrlToFetch, {
+                              const response = await apiClient.get(actualUrlToFetch, {
                                     headers: {
                                           nonce: `${session?.nonce}`,
                                     },
+                                    responseType: 'arraybuffer',
                               })
 
-                              if (!response.ok) throw new Error('Failed to fetch file')
-
-                              let contentType = response.headers.get('Content-Type') || ''
+                              let contentType = response.headers['content-type'] || ''
 
                               if (contentType === 'application/octet-stream' || contentType === '') {
                                     contentType = getContentTypeFromFileName(fileInfo.fileName || '')
                               }
 
-                              const arrayBuffer = await response.arrayBuffer()
+                              const arrayBuffer = response.data
 
                               // For text-based content types (expanded list)
                               if (contentType.startsWith('text/') || 

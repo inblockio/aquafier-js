@@ -169,14 +169,12 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                   const response = await apiClient.post(
                         url,
                         { revisionHash: lastRevisionHash },
-                        { headers: { nonce: session?.nonce } }
+                        { headers: { nonce: session?.nonce }, reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files, RELOAD_KEYS.aqua_sign] }
                   )
 
                   if (response.status === 200) {
                         setDeleteDialogOpen(false)
                         toast.success('File deleted successfully')
-                        // Trigger reload - you may need to add this reload logic
-                        window.location.reload()
                   }
             } catch (e) {
                   toast.error('File deletion error')

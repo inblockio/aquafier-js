@@ -7,6 +7,7 @@ import {IDropzoneAction} from '../../types/types'
 import {Button} from '@/components/ui/button'
 import {toast} from 'sonner'
 import {ensureDomainUrlHasSSL, fetchFiles} from '@/utils/functions'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 
 // export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
 export const ImportAquaChainFromFile = ({ file, filesWrapper, removeFilesListForUpload}: IDropzoneAction) => {
@@ -38,6 +39,7 @@ export const ImportAquaChainFromFile = ({ file, filesWrapper, removeFilesListFor
                               'Content-Type': 'multipart/form-data',
                               metamask_address: metamaskAddress,
                         },
+                        reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
                   })
 
                 const urlPath = `${backend_url}/explorer_files`

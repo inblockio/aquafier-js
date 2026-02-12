@@ -11,6 +11,7 @@ import { ContactsService } from '@/storage/databases/contactsDb';
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames';
 import { useReloadWatcher } from '@/hooks/useReloadWatcher';
 import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocketContext';
+import { RELOAD_KEYS } from '@/utils/reloadDatabase';
 
 interface ContactsLoaderProps {
   onContactsLoaded?: (contacts: ContactProfile[]) => void;
@@ -339,7 +340,12 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
   }, [files]);
 
   useReloadWatcher({
-    key: "contacts",
+    key: RELOAD_KEYS.contacts,
+    onReload: loadContactTrees,
+  })
+
+  useReloadWatcher({
+    key: RELOAD_KEYS.ens_claim,
     onReload: loadContactTrees,
   })
 

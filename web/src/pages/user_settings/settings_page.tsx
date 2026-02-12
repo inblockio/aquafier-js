@@ -6,6 +6,7 @@ import { useStore } from 'zustand'
 import { toast } from 'sonner'
 import apiClient from '@/api/axiosInstance'
 import { ensureDomainUrlHasSSL } from '@/utils/functions'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { ContactsService } from '@/storage/databases/contactsDb'
@@ -162,6 +163,7 @@ export default function SettingsPage() {
                               nonce: session?.nonce,
                               // 'Content-Type': 'application/x-www-form-urlencoded'
                         },
+                        reloadKeys: [RELOAD_KEYS.user_profile],
                   }
             )
 
