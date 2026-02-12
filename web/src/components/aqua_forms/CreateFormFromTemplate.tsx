@@ -2247,7 +2247,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   <div className="min-h-full px-2 sm:px-4">
                         <div className="max-w-full sm:max-w-4xl mx-auto py-4 sm:py-6">
                               {/* Header */}
-                              <div className="mb-8">
+                              <div className="mb-7">
                                     <div className="flex items-center gap-2 sm:gap-3 mb-2">
                                           <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
                                                 <FileText className="h-5 w-5 text-blue-600" />
@@ -2263,11 +2263,11 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           </div>
                                     </div>
 
-                                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                    {/* <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                                           Template: {selectedTemplate?.name}
-                                    </Badge>
+                                    </Badge> */}
                               </div>
-                              <div className="pt-5">
+                              <div className="pt-2">
                                     <form onSubmit={createWorkflowFromTemplate} id="create-aqua-tree-form" className="space-y-8">
                                           {renderFormError()}
 
