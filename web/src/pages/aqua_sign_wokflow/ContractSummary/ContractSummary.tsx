@@ -345,7 +345,13 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                         signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
 
                         const signatureRevionHashesDataAddress = signatureRevionHashes.map(e => e.walletAddress)
-                        const remainSigners = signers.filter(item => !signatureRevionHashesDataAddress.includes(item))
+                        let remainSigners = signers.filter(item => !signatureRevionHashesDataAddress.includes(item))
+
+                        // Duct tape fix: if signature group count >= signer count, all signers have signed
+                        // Reown social login uses rotating ephemeral session keys, so wallet addresses may not match
+                        // if (remainSigners.length > 0 && signatureRevionHashes.length >= signers.length) {
+                        //       remainSigners = []
+                        // }
                         setIsWorkFlowComplete(remainSigners)
 
                         setSignatureRevionHashes(signatureRevionHashes)

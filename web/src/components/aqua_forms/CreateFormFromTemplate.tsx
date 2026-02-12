@@ -17,9 +17,8 @@ import {
       isValidEthereumAddress,
       isWorkFlowData,
       reorderRevisionsInAquaTree,
-      stringToHex
 } from '@/utils/functions'
-import { getAppKitProvider, unwrapERC6492Signature } from '@/utils/appkit-wallet-utils'
+import { signMessageWithAppKit } from '@/utils/appkit-wallet-utils'
 import Aquafier, {
       AquaTree,
       AquaTreeWrapper,
@@ -57,7 +56,6 @@ import {
       Wallet,
       X
 } from 'lucide-react'
-import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
 import { ScrollArea } from '../ui/scroll-area'
 import FilePreview from '../file_preview'
@@ -780,39 +778,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
             } else {
 
-                  const provider = await getAppKitProvider()
-
-                  if (!provider) {
-                        console.error('Wallet not connected')
-                        setDialogOpen(true)
-                        setDialogData({
-                              title: 'Wallet not connected',
-                              content: (
-                                    <>
-                                          <Alert variant="destructive">
-                                                <AlertCircle className="h-4 w-4" />
-                                                <AlertDescription>Please connect your wallet to sign the domain claim.</AlertDescription>
-                                          </Alert>
-                                    </>
-                              ),
-                        })
-                        return
-                  }
-
                   try {
-                        const messageHex = stringToHex(messageToSign)
-                        try {
-                              signature = await provider.request({
-                                    method: 'personal_sign',
-                                    params: [messageHex, session?.address!]
-                              })
-                        } catch (hexError) {
-                              // Fallback to plain text for wallets that don't accept hex
-                              signature = await provider.request({
-                                    method: 'personal_sign',
-                                    params: [messageToSign, session?.address!]
-                              })
-                        }
+                        const result = await signMessageWithAppKit(messageToSign, session?.address!)
+                        signature = result.signature
                   } catch (error: any) {
                         console.error('Error signing domain claim:' + error)
                         setDialogOpen(true)
@@ -1111,37 +1079,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   return signRes.data.aquaTree!
             } else {
 
-                  // const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
                   const targetRevisionHash = getLastRevisionVerificationHash(aquaTreeData)
-                  // Sign using WalletConnect via ethers adapter
                   const messageToSign = `I sign this revision: [${targetRevisionHash}]`
-                  // const provider: any = walletProvider
-                  const provider = await getAppKitProvider()
-
-                  // Convert message to hex format for Core Wallet compatibility
-                  const messageHex = stringToHex(messageToSign)
-
-                  let signature
-                  try {
-                        signature = await provider.request({
-                              method: 'personal_sign',
-                              params: [messageHex, session?.address!]
-                        })
-                  } catch (hexError) {
-                        // Fallback to plain text for wallets that don't accept hex
-                        signature = await provider.request({
-                              method: 'personal_sign',
-                              params: [messageToSign, session?.address!]
-                        })
-                  }
-
-                  // Unwrap ERC-6492 signature from smart account wallets (e.g., Reown social login)
-                  // into a standard 65-byte ECDSA signature that ethers.js can parse
-                  const unwrappedSignature = unwrapERC6492Signature(signature)
+                  const { signature, signerAddress } = await signMessageWithAppKit(messageToSign, session?.address!)
 
                   const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'inline', dummyCredential(), true, undefined, {
-                        signature: unwrappedSignature,
-                        walletAddress: session?.address!,
+                        signature,
+                        walletAddress: signerAddress,
                   })
 
 
@@ -2301,7 +2245,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   <div className="min-h-full px-2 sm:px-4">
                         <div className="max-w-full sm:max-w-4xl mx-auto py-4 sm:py-6">
                               {/* Header */}
-                              <div className="mb-8">
+                              <div className="mb-7">
                                     <div className="flex items-center gap-2 sm:gap-3 mb-2">
                                           <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
                                                 <FileText className="h-5 w-5 text-blue-600" />
@@ -2317,11 +2261,11 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                           </div>
                                     </div>
 
-                                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                    {/* <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                                           Template: {selectedTemplate?.name}
-                                    </Badge>
+                                    </Badge> */}
                               </div>
-                              <div className="pt-5">
+                              <div className="pt-2">
                                     <form onSubmit={createWorkflowFromTemplate} id="create-aqua-tree-form" className="space-y-8">
                                           {renderFormError()}
 
