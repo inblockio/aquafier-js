@@ -56,7 +56,6 @@ import {
       Wallet,
       X
 } from 'lucide-react'
-import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
 import { ScrollArea } from '../ui/scroll-area'
 import FilePreview from '../file_preview'
