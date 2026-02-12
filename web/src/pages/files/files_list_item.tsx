@@ -1,5 +1,5 @@
 import { ApiFileInfo } from '@/models/FileInfo'
- 
+
 import {
       capitalizeWords,
       displayTime,
@@ -44,7 +44,7 @@ export default function FilesListItem({
       viewMode = 'table',
       filesListProps
 }: {
-      showFileActions : boolean //diabled 
+      showFileActions: boolean //diabled 
       showWorkFlowsOnly: boolean
       file: ApiFileInfo
       index: number
@@ -563,13 +563,13 @@ export default function FilesListItem({
 
                         {showWorkFlowsOnly ? <td className="py-3 px-3 text-sm text-gray-500" onClick={(e) => {
                               e.preventDefault()
-                            
 
-                                    if (viewMode === "table" && (filesListProps.showCheckbox == null || filesListProps.showCheckbox == false)) {
-                                          setSelectedFileInfo(file)
-                                          setOpenDialog({ dialogType: 'aqua_file_details', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
-                                    }
-                              
+
+                              if (viewMode === "table" && (filesListProps.showCheckbox == null || filesListProps.showCheckbox == false)) {
+                                    setSelectedFileInfo(file)
+                                    setOpenDialog({ dialogType: 'aqua_file_details', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
+                              }
+
                         }}>{workflowInfo?.workFlow || 'Not a workflow'}</td> : null}
                         <td className="py-3 text-sm text-gray-500" onClick={(e) => {
                               e.preventDefault()
@@ -799,6 +799,31 @@ export default function FilesListItem({
 
 
 
+                        </>
+
+                  }
+
+            }
+
+            if (workflowInfo?.workFlow == "aqua_certificate") {
+
+                  let genesisHash = getGenesisHash(file.aquaTree!)
+                  if (!genesisHash) {
+                        return <div />
+                  }
+                  let genRevision = file.aquaTree?.revisions[genesisHash]
+                  if (!genRevision) {
+                        return <div />
+                  }
+
+                  let creatorWallet = genRevision[`forms_creator`]
+
+                  if (creatorWallet) {
+                        return <>
+                              <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
+                                    <p className="text-xs ">Owner   {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
+                                    <WalletAdrressClaim walletAddress={creatorWallet} />
+                              </div>
                         </>
 
                   }

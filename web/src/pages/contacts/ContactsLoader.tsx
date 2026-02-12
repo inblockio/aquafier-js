@@ -350,13 +350,13 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
   })
 
   useEffect(() => {
-    const unsubscribe = subscribe((message) => {
+    subscribe((message) => {
       // Handle notification reload specifically
       if (message.type === 'notification_reload' && message.data && message.data.target === "workflows") {
         loadContactTrees()
       }
     });
-    return unsubscribe;
+    // return unsubscribe;
   }, []);
 
   // Effects

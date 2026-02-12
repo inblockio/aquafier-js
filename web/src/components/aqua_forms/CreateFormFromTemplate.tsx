@@ -362,7 +362,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   const latestHash = allHashes[allHashes.length - 1]
 
                   const name = aquaTree.file_index[genesisHash] ?? 'workflow file'
-                  const url = `${backend_url}/share_data`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/share_data`)
                   const method = 'POST'
                   const data = {
                         latest: latestHash,
@@ -1102,7 +1102,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   // Get ordered revision hashes from genesis to latest
                   const orderedRevisionHashes = reorderRevisionsInAquaTree(aquaTree!)
 
-                  const url = `${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`)
                   const res = await apiClient.post(url, {
                         revisionHashes: orderedRevisionHashes
                   }, {
@@ -1124,8 +1124,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       const handlePostSigning = async (signedAquaTree: AquaTree, fileObject: FileObject, completeFormData: Record<string, CustomInputType>, selectedTemplate: FormTemplate, session: Session | null, selectedFileInfo: ApiFileInfo | null) => {
             fileObject.fileContent = completeFormData
 
-            const savedResult = await saveAquaTree(signedAquaTree, fileObject, true)
-            console.log("Saved result: ", savedResult)
+            await saveAquaTree(signedAquaTree, fileObject, true)
 
             // Handle aqua_sign specific logic
             if (selectedTemplate && selectedTemplate.name === 'aqua_sign' && session?.address) {
@@ -1791,6 +1790,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                                                 const val = getFieldDefaultValue(field, formData[field.name] as any)
                                                 return val instanceof File || Array.isArray(val) ? undefined : val
                                           })()}
+                                          maxLength={500}
                                           onChange={(e) => handleTextInputChange(e, field)}
                                     />
 
