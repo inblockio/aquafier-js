@@ -18,7 +18,7 @@ import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, OrderRevisionInAquaTre
 import { toast } from "sonner"
 import apiClient from '@/api/axiosInstance'
 import { useAquaSystemNames } from "@/hooks/useAquaSystemNames"
-import { RELOAD_KEYS, triggerWorkflowReload } from "@/utils/reloadDatabase"
+import { RELOAD_KEYS } from "@/utils/reloadDatabase"
 import FilesList from "@/pages/files/files_list"
 import { API_ENDPOINTS } from "@/utils/constants"
 
@@ -163,6 +163,7 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
         headers: {
           nonce: session?.nonce,
         },
+        reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files, RELOAD_KEYS.identity_card],
       })
 
       if (response.status === 200 || response.status === 201) {
@@ -170,11 +171,6 @@ const IdentityCardDialogUi: React.FC<IdentityCardDialogUiProps> = ({
           
 
           toast.success('Identity card created successfully')
-
-          // Trigger file reloads
-          await triggerWorkflowReload(RELOAD_KEYS.user_files, false)
-          await triggerWorkflowReload(RELOAD_KEYS.all_files, false)
-          await triggerWorkflowReload(RELOAD_KEYS.identity_card, true)
 
           return {
             aquaTree,

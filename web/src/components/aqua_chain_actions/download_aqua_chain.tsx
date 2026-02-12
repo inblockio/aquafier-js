@@ -11,6 +11,7 @@ import { AquaJsonInZip, AquaNameWithHash } from '../../models/Aqua'
 // import { toaster } from "@/components/ui/use-toast"
 import { toast } from 'sonner'
 import { getCorrectUTF8JSONString } from '@/lib/utils'
+import apiClient from '@/api/axiosInstance'
 
 // Helper function to get MIME type based on file extension
 const getMimeType = (filename: string): string => {
@@ -164,13 +165,13 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                               const actualUrlToFetch = ensureDomainUrlHasSSL(fileObj.fileContent)
 
                               // Fetch the file from the URL
-                              const response = await fetch(actualUrlToFetch, {
-                                    method: 'GET',
+                              const response = await apiClient.get(actualUrlToFetch, {
                                     headers: {
-                                          Nonce: session?.nonce ?? '--error--', // Add the nonce directly as a custom header if needed
+                                          Nonce: session?.nonce ?? '--error--',
                                     },
+                                    responseType: 'blob',
                               })
-                              const blob = await response.blob()
+                              const blob: Blob = response.data
 
                               let hashData = extractFileHash(fileObj.fileContent)
                               if (hashData == undefined) {
@@ -284,18 +285,14 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                                     const actualUrlToFetch = ensureDomainUrlHasSSL(fileObj.fileContent)
 
                                     // Fetch the file from the URL
-                                    const response = await fetch(actualUrlToFetch, {
-                                          method: 'GET',
+                                    const response = await apiClient.get(actualUrlToFetch, {
                                           headers: {
-                                                Nonce: session?.nonce ?? '--error--', // Add the nonce directly as a custom header if needed
+                                                Nonce: session?.nonce ?? '--error--',
                                           },
+                                          responseType: 'blob',
                                     })
 
-                                    if (!response.ok) {
-                                          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-                                    }
-
-                                    const blob = await response.blob()
+                                    const blob: Blob = response.data
 
                                     // Create URL from blob
                                     const url = URL.createObjectURL(blob)

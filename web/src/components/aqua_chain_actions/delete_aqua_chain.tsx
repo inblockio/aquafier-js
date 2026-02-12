@@ -2,7 +2,7 @@ import { LuDelete } from 'react-icons/lu'
 import { useEffect, useState } from 'react'
 import { RevionOperation } from '../../models/RevisionOperation'
 import { toast } from 'sonner'
-import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import apiClient from '@/api/axiosInstance'
@@ -162,6 +162,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                               headers: {
                                     nonce: nonce,
                               },
+                              reloadKeys: [RELOAD_KEYS.all_files, RELOAD_KEYS.user_files, RELOAD_KEYS.contacts],
                         }
                   )
 
@@ -181,9 +182,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
       }
 
       const refetchAllUserFiles = () => {
-            // triggerWorkflowReload(RELOAD_KEYS.user_stats)
-            triggerWorkflowReload(RELOAD_KEYS.all_files, true)
-            triggerWorkflowReload(RELOAD_KEYS.user_files, true)
+            // Reloads are now handled by the axios interceptor via reloadKeys
       }
 
       // If used inside dropdown, use callback pattern

@@ -17,6 +17,7 @@ import { isAquaTree, getAquatreeObject, isValidUrl, isHttpUrl, ensureDomainUrlHa
 import { addSecurityInfoPage } from './pdf-security-info-page';
 import { getCorrectUTF8JSONString } from '../lib/utils';
 import { ApiFileInfo } from '../models/FileInfo';
+import apiClient from '@/api/axiosInstance';
 
 // Platform identification
 const PLATFORM_NAME = 'Aquafier';
@@ -464,16 +465,14 @@ export async function signPdfDocument(
               // Fetch URL-based files instead of skipping them (matches ZIP behavior)
               try {
                 const actualUrlToFetch = ensureDomainUrlHasSSL(fileObj.fileContent);
-                const response = await fetch(actualUrlToFetch, {
-                  method: 'GET',
+                const response = await apiClient.get(actualUrlToFetch, {
                   headers: {
                     Nonce: session?.nonce ?? '--error--',
                   },
+                  responseType: 'arraybuffer',
                 });
-                const blob = await response.blob();
-                const arrayBuffer = await blob.arrayBuffer();
-                fileBytes = new Uint8Array(arrayBuffer);
-                mimeType = blob.type || getMimeTypeFromFilename(fileObj.fileName);
+                fileBytes = new Uint8Array(response.data);
+                mimeType = response.headers['content-type'] || getMimeTypeFromFilename(fileObj.fileName);
                 description = 'Aquafier fetched asset';
               } catch (fetchError) {
                 console.error(`Failed to fetch URL-based file ${fileObj.fileName}:`, fetchError);

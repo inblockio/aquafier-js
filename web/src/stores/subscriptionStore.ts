@@ -188,6 +188,7 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         set({
           payments,
           paymentsPagination: pagination || null,
+          paymentsLoading: false,
           paymentsError: null,
         }),
       setPaymentsLoading: (loading) => set({ paymentsLoading: loading }),

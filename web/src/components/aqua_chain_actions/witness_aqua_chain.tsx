@@ -9,7 +9,7 @@ import { RevionOperation } from '../../models/RevisionOperation'
 import { toast } from 'sonner'
 import { ETH_CHAINID_MAP } from '@/utils/constants'
 import { getAppKitProvider, switchNetworkWalletConnect } from '@/utils/appkit-wallet-utils'
-import { triggerWorkflowReload, RELOAD_KEYS } from '@/utils/reloadDatabase'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 
 export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: RevionOperation) => {
       const { metamaskAddress, user_profile, session, webConfig } = useStore(appStore)
@@ -64,6 +64,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: R
                                                 headers: {
                                                       nonce: nonce,
                                                 },
+                                                reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
                                           }
                                     )
                                     // #FIX: Remove selected file info update for now, incase required we can update this
@@ -179,6 +180,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: R
                                           headers: {
                                                 nonce: nonce,
                                           },
+                                          reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
                                     }
                               )
 
@@ -217,9 +219,6 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: R
                   }
             }
 
-            // Trigger actions
-            await triggerWorkflowReload(RELOAD_KEYS.user_files, true)
-            await triggerWorkflowReload(RELOAD_KEYS.all_files, true)
       }
 
       if (children) {

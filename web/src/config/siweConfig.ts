@@ -6,6 +6,8 @@ import { ETH_CHAINID_MAP_NUMBERS, SESSION_COOKIE_NAME, BACKEND_URL_STORAGE_KEY }
 import appStore from '../store'
 import { toast } from 'sonner'
 import { ethers } from 'ethers'
+import { ContactsService } from '../storage/databases/contactsDb'
+import { AquaSystemNamesService } from '../storage/databases/aquaSystemNames'
 
 /**
  * Get backend URL synchronously - reads from localStorage first (sync),
@@ -185,6 +187,10 @@ export const siweConfig = createSIWEConfig({
         fileData: [],
         status: 'idle',
       })
+
+      // Clear cached contacts and system names
+      await ContactsService.getInstance().clear()
+      await AquaSystemNamesService.getInstance().clear()
 
       return true
     } catch (error) {

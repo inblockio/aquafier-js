@@ -9,6 +9,7 @@ import apiClient from '@/api/axiosInstance'
 import appStore from '../../store'
 import { API_ENDPOINTS } from '../../utils/constants'
 import { ensureDomainUrlHasSSL } from '../../utils/functions'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 import { Badge } from '../../components/ui/badge'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -47,6 +48,7 @@ const NotificationItem = ({ notification, onRead }: NotificationItemProps) => {
                               headers: {
                                     nonce: session?.nonce,
                               },
+                              reloadKeys: [RELOAD_KEYS.notifications],
                         }
                   )
                   onRead()

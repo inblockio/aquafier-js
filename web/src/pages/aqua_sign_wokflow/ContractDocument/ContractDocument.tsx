@@ -15,6 +15,7 @@ import {PDFDisplayWithJustSimpleOverlay} from './components/signature_overlay'
 import {toast} from 'sonner'
 import PdfSigner from './PdfSigner'
 import SignatureItem from '../../../components/pdf/SignatureItem'
+import apiClient from '@/api/axiosInstance'
 
 export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setActiveStep, selectedFileInfo }) => {
       const [pdfLoadingFile, setLoadingPdfFile] = useState<boolean>(true)
@@ -84,19 +85,21 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
       const fetchImage = async (fileUrl: string) => {
             try {
                   const actualUrlToFetch = ensureDomainUrlHasSSL(fileUrl)
-                  const response = await fetch(actualUrlToFetch, {
+                  const response = await apiClient.get(actualUrlToFetch, {
                         headers: {
                               nonce: `${session?.nonce}`,
                         },
+                        responseType: 'arraybuffer',
+                        validateStatus: (status) => status < 500,
                   })
 
-                  if (!response.ok) {
-                        console.error('FFFailed to fetch file:', response.status, response.statusText)
+                  if (response.status < 200 || response.status >= 300) {
+                        console.error('FFFailed to fetch file:', response.status)
                         return null
                   }
 
                   // Get content type from headers
-                  let contentType = response.headers.get('Content-Type') || ''
+                  let contentType = response.headers['content-type'] || ''
 
                   // If content type is missing or generic, try to detect from URL
                   if (contentType === 'application/octet-stream' || contentType === '') {
@@ -104,8 +107,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                   }
 
                   if (contentType.startsWith('image')) {
-                        const arrayBuffer = await response.arrayBuffer()
-                        // Ensure we use the PDF content type
+                        const arrayBuffer = response.data
                         const blob = new Blob([arrayBuffer], { type: contentType })
                         return URL.createObjectURL(blob)
                   }
@@ -381,16 +383,18 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
       const fetchFileFromUrl = async (fileContentUrl: string, fileName: string): Promise<File> => {
             const actualUrlToFetch = ensureDomainUrlHasSSL(fileContentUrl)
-            const response = await fetch(actualUrlToFetch, {
+            const response = await apiClient.get(actualUrlToFetch, {
                   headers: { nonce: `${session?.nonce}` },
+                  responseType: 'arraybuffer',
+                  validateStatus: (status) => status < 500,
             })
 
-            if (!response.ok) {
+            if (response.status < 200 || response.status >= 300) {
                   toast.error(`${fileName} not found in system`)
                   throw new Error(`Failed to fetch file: ${response.status}`)
             }
 
-            let contentType = response.headers.get('Content-Type') || ''
+            let contentType = response.headers['content-type'] || ''
 
             // Detect content type from URL if missing
             if (contentType === 'application/octet-stream' || contentType === '') {
@@ -399,7 +403,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                   }
             }
 
-            const arrayBuffer = await response.arrayBuffer()
+            const arrayBuffer = response.data
             const finalContentType = contentType || 'application/pdf'
             const blob = new Blob([arrayBuffer], { type: finalContentType })
             const urlObject = URL.createObjectURL(blob)

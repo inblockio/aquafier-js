@@ -24,7 +24,8 @@ import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_cla
 import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
-import { useContacts } from '@/hooks/useContactResolver'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { contactsDB } from '@/storage/databases/contactsDb'
 import ENSClaim from './ENSClaim'
 
 
@@ -39,7 +40,11 @@ export default function ClaimsWorkflowPage() {
       // const [_pagination, setPagination] = useState<GlobalPagination | null>(null)
       const [files, setFiles] = useState<Array<ApiFileInfo>>([])
 
-      const { contacts: contactProfiles, loading: contactsLoading } = useContacts();
+      // Watch contacts in IndexedDB for live updates
+      const contactProfiles = useLiveQuery(
+            () => contactsDB.contacts.toArray(),
+            []
+      )
 
       const { walletAddress } = useParams()
       const urlHash = useLocation().hash
@@ -321,7 +326,7 @@ export default function ClaimsWorkflowPage() {
                   // await processAllAddressClaims(aquaTrees)
 
                   // search for contact from contacts
-                  let contact = contactProfiles.find(contact => contact.walletAddress === walletAddress)
+                  let contact = contactProfiles?.find(contact => contact.walletAddress === walletAddress)
                   if (contact) {
                         setFiles(contact.files)
                         // Process claims after setting files
@@ -367,7 +372,7 @@ export default function ClaimsWorkflowPage() {
 
       useEffect(() => {
             loadClaimsFileData()
-      }, [walletAddress, contactsLoading]);
+      }, [walletAddress, contactProfiles]);
 
       return (
             <div className='py-6 flex flex-col gap-4'>

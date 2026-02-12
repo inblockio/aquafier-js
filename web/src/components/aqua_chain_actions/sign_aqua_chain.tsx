@@ -9,7 +9,7 @@ import { RevionOperation } from '../../models/RevisionOperation'
 import { toast } from 'sonner'
 import { useAppKit } from '@reown/appkit/react'
 import { getAppKitProvider, unwrapERC6492Signature } from '@/utils/appkit-wallet-utils'
-import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 
 
 
@@ -75,6 +75,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index, children 
                                                 headers: {
                                                       nonce: nonce,
                                                 },
+                                                reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
                                           }
                                     )
                                     // #FIX: Remove selected file info update for now, incase required we can update this
@@ -222,6 +223,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index, children 
                                           headers: {
                                                 nonce: nonce,
                                           },
+                                          reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
                                     }
                               )
 
@@ -283,10 +285,6 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index, children 
                   }
 
             }
-
-            // Trigger actions
-            await triggerWorkflowReload(RELOAD_KEYS.user_files, true)
-            await triggerWorkflowReload(RELOAD_KEYS.all_files, true)
 
       }
 

@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { LuEye, LuPen, LuTrash } from 'react-icons/lu'
 import apiClient from '@/api/axiosInstance'
 import { ensureDomainUrlHasSSL } from '../../utils/functions'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 
 // /components//ui components
 import { Button } from '@/components/ui/button'
@@ -61,6 +62,7 @@ const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
                         headers: {
                               nonce: session?.nonce,
                         },
+                        reloadKeys: [RELOAD_KEYS.user_stats],
                   })
 
                   if (res.status === 200 || res.status === 201) {

@@ -8,6 +8,7 @@ import type {
   PercentageUsed,
 } from '../stores/subscriptionStore';
 import appStore from '../store';
+import { RELOAD_KEYS } from '../utils/reloadDatabase';
 import { ensureDomainUrlHasSSL } from '@/utils/functions';
 
 const getBackendUrl = () => {
@@ -79,7 +80,7 @@ export async function createSubscription(data: {
   const response = await apiClient.post(
     url,
     data,
-    { headers }
+    { headers, reloadKeys: [RELOAD_KEYS.user_stats] }
   );
 
   if (response.data.success) {
@@ -103,7 +104,7 @@ export async function cancelSubscription(data?: {
   const response = await apiClient.put(
     url,
     data || {},
-    { headers }
+    { headers, reloadKeys: [RELOAD_KEYS.user_stats] }
   );
 
   if (response.data.success) {
@@ -127,7 +128,7 @@ export async function changePlan(data: {
   const response = await apiClient.put(
     url,
     data,
-    { headers }
+    { headers, reloadKeys: [RELOAD_KEYS.user_stats] }
   );
 
   if (response.data.success) {
