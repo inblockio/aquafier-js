@@ -277,7 +277,7 @@ export default async function shareController(fastify: FastifyInstance) {
             Logger.error("Error updating contract:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
-    });
+    }); 
 
     fastify.get('/contracts/:genesis_hash', async (request, reply) => {
         const { genesis_hash } = request.params as { genesis_hash: string };
@@ -463,7 +463,7 @@ export default async function shareController(fastify: FastifyInstance) {
             });
 
             // Filter out contracts where the current user (sender or receiver) has deleted it
-            const currentUser = sender || receiver; // Get the current user from query params
+            const currentUser = (sender || receiver)?.trim().toLowerCase(); // Get the current user from query params
             const filteredResult = result.filter(contract => {
                 if (!currentUser) return true; // If no user specified, return all
                 return !contract.receiver_has_deleted.includes(currentUser);
