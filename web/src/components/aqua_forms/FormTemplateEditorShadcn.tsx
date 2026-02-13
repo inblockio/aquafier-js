@@ -188,6 +188,7 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
                   type: 'text',
                   required: false,
                   is_array: false,
+                  is_editable: true,
             }
             setFormFields(prev => [...prev, field])
       }
