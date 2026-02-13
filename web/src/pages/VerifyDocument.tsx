@@ -6,7 +6,6 @@ import apiClient from '@/api/axiosInstance'
 import { ApiFileInfo } from '../models/FileInfo'
 // import { ClipLoader } from "react-spinners";
 import { IDrawerStatus } from '../models/AquaTreeDetails'
-import { ImportAquaChainFromChain } from '../components/dropzone_file_actions/import_aqua_tree_from_aqua_tree'
 import { toast } from 'sonner'
 import { extractEmbeddedAquaData } from '@/utils/pdf-digital-signature'
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert'
@@ -279,9 +278,9 @@ const CustomPDFMetada = ({ metadata, drawerStatus }: { metadata: IMetadata | nul
 } 
  
 const VerifyDocument = () => {
-      const { backend_url, metamaskAddress, session } = useStore(appStore)
+      const { backend_url, session } = useStore(appStore)
       const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
-      const [contractData, setContractData] = useState<any | null>(null)
+      // const [_contractData, setContractData] = useState<any | null>(null)
       const [loading, setLoading] = useState(false)
       const [hasError, setHasError] = useState<string | null>(null)
       const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
@@ -310,7 +309,7 @@ const VerifyDocument = () => {
 
                         if (response.status === 200) {
                               setFileInfo(response.data.data.displayData[0])
-                              setContractData(response.data.data.contractData)
+                              // setContractData(response.data.data.contractData)
                         }
                         setLoading(false)
                   } catch (error: any) {
