@@ -287,6 +287,7 @@ export const downloadPdfWithAnnotations = async ({
         // Save PDF with annotations
         const pdfBytes = await pdfDoc.save();
 
+
         // Collect all signers from annotations
         // Filter to ensure we have name and walletAddress
         const signers = annotations

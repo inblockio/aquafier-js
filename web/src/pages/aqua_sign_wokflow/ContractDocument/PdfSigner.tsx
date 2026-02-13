@@ -12,9 +12,11 @@ import {
       ensureDomainUrlHasSSL,
       estimateFileSize,
       fetchImage,
+      formatAddressForFilename,
       getGenesisHash,
       getLastRevisionVerificationHash,
       getRandomNumber,
+      isWorkFlowData,
       reorderRevisionsInAquaTree,
       timeStampToDateObject,
 } from '../../../utils/functions'
@@ -32,6 +34,7 @@ import { signMessageWithAppKit } from '@/utils/appkit-wallet-utils'
 import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocketContext'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { reloadDB, RELOAD_KEYS } from '../../../utils/reloadDatabase'
+import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 
 interface PdfSignerProps {
       fileData: File | null
@@ -1279,40 +1282,40 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
 
                               <div className="flex flex-col">
-                                                <h4 className="font-bold mt-2">Other Signatures:</h4>
-                                                <div className="max-h-[200px] overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md">
-                                                      <div className="flex flex-col">
-                                                            {documentSignatures ? (
-                                                                  documentSignatures.map(signature => (
+                                    <h4 className="font-bold mt-2">Other Signatures:</h4>
+                                    <div className="max-h-[200px] overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md">
+                                          <div className="flex flex-col">
+                                                {documentSignatures ? (
+                                                      documentSignatures.map(signature => (
+                                                            <div
+                                                                  key={signature.id}
+                                                                  className={`p-2 cursor-pointer ${selectedSignatureId === signature.id ? 'bg-blue-50' : 'bg-transparent'} hover:bg-gray-50`}
+                                                            >
+                                                                  <div className="flex items-center space-x-3">
                                                                         <div
-                                                                              key={signature.id}
-                                                                              className={`p-2 cursor-pointer ${selectedSignatureId === signature.id ? 'bg-blue-50' : 'bg-transparent'} hover:bg-gray-50`}
-                                                                        >
-                                                                              <div className="flex items-center space-x-3">
-                                                                                    <div
-                                                                                          className="w-[60px] h-[40px] bg-contain bg-no-repeat bg-center border border-gray-200 rounded-sm"
-                                                                                          style={{
-                                                                                                backgroundImage: `url(${signature.dataUrl})`,
-                                                                                          }}
-                                                                                    />
-                                                                                    <div className="flex flex-col space-y-0">
-                                                                                          <p className="text-sm font-medium">{signature.name}</p>
-                                                                                          {/* <p className="text-xs text-gray-600">
+                                                                              className="w-[60px] h-[40px] bg-contain bg-no-repeat bg-center border border-gray-200 rounded-sm"
+                                                                              style={{
+                                                                                    backgroundImage: `url(${signature.dataUrl})`,
+                                                                              }}
+                                                                        />
+                                                                        <div className="flex flex-col space-y-0">
+                                                                              <p className="text-sm font-medium">{signature.name}</p>
+                                                                              {/* <p className="text-xs text-gray-600">
                                                                                                 {signature.walletAddress.length > 10
                                                                                                       ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
                                                                                                       : signature.walletAddress}
                                                                                           </p> */}
-                                                                                          <WalletAddressClaim walletAddress={signature.walletAddress} />
-                                                                                    </div>
-                                                                              </div>
+                                                                              <WalletAddressClaim walletAddress={signature.walletAddress} />
                                                                         </div>
-                                                                  ))
-                                                            ) : (
-                                                                  <></>
-                                                            )}
-                                                      </div>
-                                                </div>
+                                                                  </div>
+                                                            </div>
+                                                      ))
+                                                ) : (
+                                                      <></>
+                                                )}
                                           </div>
+                                    </div>
+                              </div>
                         </div>
                   </div>
             )
@@ -1556,6 +1559,40 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   return;
             }
 
+
+            let fileName = `${pdfFile.name.replace('.pdf', '')}_signed.pdf`
+            // If the file is not an aqua sign workflow, just download the PDF directly
+            let isAquaSignWorkflow = false;
+            if (selectedFileInfo?.aquaTree) {
+                  const workflows = await AquaSystemNamesService.getInstance().getSystemNames()
+                  const workFlow = isWorkFlowData(selectedFileInfo.aquaTree, workflows)
+                  isAquaSignWorkflow = workFlow.isWorkFlow && workFlow.workFlow === 'aqua_sign'
+                  console.log('handleDownload - workflow check:', { isWorkFlow: workFlow.isWorkFlow, workFlowType: workFlow.workFlow, isAquaSignWorkflow })
+            } else {
+                  console.log('handleDownload - no aquaTree on selectedFileInfo, skipping workflow check')
+            }
+
+            if (!isAquaSignWorkflow) {
+                  console.log('handleDownload - not an aqua_sign workflow, downloading plain PDF')
+                  const blob = new Blob([pdfFile], { type: 'application/pdf' });
+                  const link = document.createElement('a');
+                  link.href = URL.createObjectURL(blob);
+                  const addressSuffix = formatAddressForFilename(appStore.getState().session?.address);
+                  let downloadName = fileName || (pdfFile.name ? `${pdfFile.name.replace('.pdf', '')}_raw.pdf` : `${getRandomNumber(99, 999)}_document.pdf`);
+                  if (downloadName.toLowerCase().endsWith('.pdf')) {
+                        downloadName = downloadName.slice(0, -4) + addressSuffix + '.pdf';
+                  } else {
+                        downloadName = downloadName + addressSuffix;
+                  }
+                  link.download = downloadName;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  toast.success("Download Started - PDF downloaded.");
+                  return;
+            }
+
+
             // Combine existing document signatures + new user-placed signatures
             const existingSigs = (documentSignatures || []).map((sig: SignatureData) => ({
                   type: 'profile' as const,
@@ -1595,10 +1632,12 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   fileObjectLength: selectedFileInfo?.fileObject?.length,
             });
 
+
+
             await downloadPdfWithAnnotations({
                   pdfFile,
                   annotations: allAnnotations as any,
-                  fileName: `${pdfFile.name.replace('.pdf', '')}_signed.pdf`,
+                  fileName: fileName,
                   backupFn: createFileBackupOnServer,
                   fileInfo: selectedFileInfo
             });
