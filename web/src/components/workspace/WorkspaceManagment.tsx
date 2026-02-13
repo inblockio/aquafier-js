@@ -73,7 +73,7 @@ const WorkspaceManagment = () => {
                 const fileName = getAquaTreeFileName(aquaTree)
                 if (!fileName) continue
 
-                console.log("Downloading file: index ", i)
+                // console.log("Downloading file: index ", i)
 
                 // setOperationMessage(`Processing files... (${i + 1}/${totalFiles})`)
                 // setOperationProgress(Math.round(((i + 1) / totalFiles) * 100))

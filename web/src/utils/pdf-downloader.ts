@@ -3,8 +3,9 @@ import { toast } from 'sonner';
 import { signPdfWithAquafier } from './pdf-digital-signature';
 import { Annotation, ImageAnnotation, ProfileAnnotation, TextAnnotation } from '../pages/aqua_sign_wokflow/ContractDocument/signer/types';
 import appStore from '../store';
-import { formatAddressForFilename } from './functions';
+import { formatAddressForFilename, isWorkFlowData } from './functions';
 import { ApiFileInfo } from '../models/FileInfo';
+import { AquaSystemNamesService } from '../storage/databases/aquaSystemNames';
 
 /**
  * Parses a font size string (e.g., "12pt", "16px") to points.
@@ -100,6 +101,38 @@ export const downloadPdfWithAnnotations = async ({
 }: DownloadPdfOptions) => {
     if (!pdfFile) {
         toast.error("No PDF - Please upload or load a PDF file first.");
+        return;
+    }
+
+    console.log("File Info: ", fileInfo)
+
+    // Check if this is an aqua_sign workflow — only aqua_sign gets annotations and digital signing
+    let isAquaSignWorkflow = false;
+    if (fileInfo?.aquaTree) {
+        const workflows = await AquaSystemNamesService.getInstance().getSystemNames();
+        const workFlowResult = isWorkFlowData(fileInfo.aquaTree, workflows);
+        isAquaSignWorkflow = workFlowResult.isWorkFlow && workFlowResult.workFlow.includes("aqua_sign");
+    }
+
+    // If not an aqua_sign workflow, download the plain PDF without annotations or signing
+    if (!isAquaSignWorkflow) {
+        console.log("Not Aqua sign")
+        const blob = new Blob([pdfFile], { type: 'application/pdf' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        const addressSuffix = formatAddressForFilename(appStore.getState().session?.address);
+        let downloadName = pdfFile.name || fileName || 'document.pdf';
+        console.log("fileName: ", fileName, pdfFile)
+        if (downloadName.toLowerCase().endsWith('.pdf')) {
+            downloadName = downloadName.slice(0, -4) + addressSuffix + '.pdf';
+        } else {
+            downloadName = downloadName + addressSuffix;
+        }
+        link.download = downloadName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success("Download Started - PDF downloaded.");
         return;
     }
 
