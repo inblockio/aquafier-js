@@ -177,7 +177,7 @@ export function SharedContracts() {
                               </div>
                         </div>
                   </div>
-            </div>
+            </div> 
       )
 }
 
