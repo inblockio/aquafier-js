@@ -156,6 +156,7 @@ export const testWitness = {
 }
  
 export const API_ENDPOINTS = {
+      NOTIFICATIONS_AQUA_SIGN: '/api/notifications/aqua_sign',
       NOTIFICATIONS: '/notifications',
       NOTIFICATIONS_READ_ALL: '/notifications/read-all',
       MARK_NOTIFICATION_AS_READ: '/notifications/:id/read',
@@ -171,7 +172,8 @@ export const API_ENDPOINTS = {
       GET_AQUA_TREE: 'tree/revision_hash',
       TRIGGER_WEBSOCKET: 'trigger/websocket',
       CREATE_ENS_CLAIM: 'user/create_ens_claim',
-      CREATE_SERVER_ACCOUNT_BACKUP: 'server/backup-aqua-sign' 
+      CREATE_SERVER_ACCOUNT_BACKUP: 'server/backup-aqua-sign',
+      GET_SYSTEM_INFO: 'system/server-identity'
 }
 
 

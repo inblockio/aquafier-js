@@ -10,7 +10,7 @@ import {
       DropdownMenuSeparator,
       DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { Download, Eye, FileText, MoreHorizontal, Send, Trash2 } from 'lucide-react'
+import { Download, Eye, FileText, MoreHorizontal, Trash2 } from 'lucide-react'
 import appStore from '@/store'
 import { useStore } from 'zustand'
 import {
@@ -24,7 +24,7 @@ import { FileObject } from 'aqua-js-sdk'
 import { DownloadAquaChain } from '../components/aqua_chain_actions/download_aqua_chain'
 import { DeleteAquaChain } from '../components/aqua_chain_actions/delete_aqua_chain'
 import { Contract, IWorkflowItem } from '@/types/types'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { OpenClaimsWorkFlowButton } from '@/components/aqua_chain_actions/open_identity_claim_workflow'
 import { useNavigate } from 'react-router-dom'
 import { ApiFileInfo } from '@/models/FileInfo'
@@ -35,6 +35,8 @@ import { API_ENDPOINTS, IDENTITY_CLAIMS } from '@/utils/constants'
 import CustomPagination from '@/components/common/CustomPagination'
 import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 import { RELOAD_KEYS } from '@/utils/reloadDatabase'
+import { LuShare2 } from 'react-icons/lu'
+import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
 
 
 const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowItem) => {
@@ -70,7 +72,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
       const loadSharedContractsData = async (_latestRevisionHash: string, _genesisHash: string) => {
             try {
                   const url = ensureDomainUrlHasSSL(`${backend_url}/contracts`)
-                  const response = await axios.get(url, {
+                  const response = await apiClient.get(url, {
                         params: {
                               sender: session?.address,
                               // genesis_hash: genesisHash,
@@ -214,10 +216,16 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                                                 View Claim
                                           </DropdownMenuItem>
                                     </OpenClaimsWorkFlowButton>
-                                    <DropdownMenuItem disabled>
+                                    {/* <DropdownMenuItem disabled>
                                           <Send className="mr-2 h-4 w-4" />
                                           Send Reminder
-                                    </DropdownMenuItem>
+                                    </DropdownMenuItem> */}
+                                    <ShareButton item={apiFileInfo} index={index}>
+                                          <DropdownMenuItem className='cursor-pointer'>
+                                                <LuShare2 className="mr-2 h-4 w-4" />
+                                                Share
+                                          </DropdownMenuItem>
+                                    </ShareButton>
                                     <DownloadAquaChain file={apiFileInfo} index={index}>
                                           <DropdownMenuItem>
                                                 <Download className="mr-2 h-4 w-4" />
@@ -268,7 +276,7 @@ const ClaimsAndAttestationPage = () => {
                         claim_types: JSON.stringify(IDENTITY_CLAIMS),
                         wallet_address: session?.address
                   }
-                  const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
+                  const filesDataQuery = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
                         headers: {
                               'Content-Type': 'application/json',
                               'nonce': `${session!.nonce}`

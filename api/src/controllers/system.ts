@@ -8,6 +8,7 @@ import path from 'path';
 import * as fs from "fs"
 import { getAquaAssetDirectory } from '../utils/file_utils';
 import { getTemplateInformation } from '../utils/server_attest';
+import { getServerWalletInformation } from '../utils/server_utils';
 import Logger from "../utils/logger";
 import { deleteChildrenFieldFromAquaTrees } from '../utils/revisions_operations_utils';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
@@ -233,6 +234,16 @@ export default async function systemController(fastify: FastifyInstance) {
 
 
         return reply.code(200).send({ data: systemAquaTreeFileNames })
+    });
+
+    fastify.get('/system/server-identity', async (request, reply) => {
+        const serverWalletInformation = await getServerWalletInformation();
+
+        if (!serverWalletInformation) {
+            return reply.code(500).send({ error: "Server wallet information is not configured" });
+        }
+
+        return reply.code(200).send({ data: { walletAddress: serverWalletInformation.walletAddress } });
     });
 
     // Handle backing up an aqua tree to the server

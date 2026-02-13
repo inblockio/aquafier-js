@@ -3,7 +3,7 @@ import appStore from "@/store"
 import { GlobalPagination } from "@/types"
 import { API_ENDPOINTS } from "@/utils/constants"
 import { ensureDomainUrlHasSSL } from "@/utils/functions"
-import axios from "axios"
+import apiClient from '@/api/axiosInstance'
 import { useEffect, useState } from "react"
 import { useStore } from "zustand"
 import { RenderFilesList, RenderFilesListCard } from "./commons"
@@ -15,6 +15,7 @@ import { RELOAD_KEYS, triggerWorkflowReload } from "@/utils/reloadDatabase"
 import { useNotificationWebSocketContext } from "@/contexts/NotificationWebSocketContext"
 
 interface IWorkflowSpecificTable {
+    showFileActions : boolean
     workflowName: string
     view: 'table' | 'card'
     filesListProps: FilesListProps
@@ -22,8 +23,8 @@ interface IWorkflowSpecificTable {
     systemAquaFileNames: string[]
     sortBy: 'date' | 'name' | 'size'
 } 
-
-const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScreen, systemAquaFileNames, sortBy }: IWorkflowSpecificTable) => {
+ 
+const WorkflowSpecificTable = ({ showFileActions, workflowName, view, filesListProps, isSmallScreen, systemAquaFileNames, sortBy }: IWorkflowSpecificTable) => {
  
     const { session, backend_url } = useStore(appStore)
 
@@ -57,7 +58,7 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
                 params.fileType = workflowName
             }
 
-            const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${endpoint}`), {
+            const filesDataQuery = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${endpoint}`), {
                 headers: {
                     'Content-Type': 'application/json',
                     'nonce': `${session!.nonce}`
@@ -152,6 +153,7 @@ const WorkflowSpecificTable = ({ workflowName, view, filesListProps, isSmallScre
                                         .map((file, index) => (
                                             <div key={`mobile-${index}`}>
                                                 <FilesListItem
+                                                showFileActions={showFileActions}
                                                     showWorkFlowsOnly={false}
                                                     // key={`mobile-item-${index}`}
                                                     index={index}

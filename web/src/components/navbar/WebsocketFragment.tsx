@@ -1,7 +1,7 @@
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import { convertToWebsocketUrl, ensureDomainUrlHasSSL } from '../../utils/functions'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { useEffect, useRef, useState } from 'react'
 import { WebSocketMessage } from '../../types/types'
 import WebSocketActions from '../../constants/constants'
@@ -36,7 +36,7 @@ const WebsocketFragment = () => {
             try {
                   // Step 1: Ensure SSL if needed
                   const validHttpAndDomain = ensureDomainUrlHasSSL(backend_url)
-                  const response = await axios.get(`${validHttpAndDomain}/ws/clients`)
+                  const response = await apiClient.get(`${validHttpAndDomain}/ws/clients`)
                   response.data.clients.map((client: any) => client.userId)
                   // setConnectedUsers(users);
             } catch (error) {
@@ -46,7 +46,7 @@ const WebsocketFragment = () => {
 
       const checkServerStatus = async () => {
             try {
-                  const response = await axios.get(ensureDomainUrlHasSSL(`${backend_url}`))
+                  const response = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}`))
                   if (response.status === 200) {
                         return true
                   }
@@ -165,7 +165,7 @@ const WebsocketFragment = () => {
                                     ; (async () => {
                                           try {
                                                 const url = ensureDomainUrlHasSSL(`${backend_url}/contracts`)
-                                                const response = await axios.get(url, {
+                                                const response = await apiClient.get(url, {
                                                       params: {
                                                             receiver: session?.address, // walletAddressRef.current
                                                       },

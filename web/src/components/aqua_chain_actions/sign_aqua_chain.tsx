@@ -1,21 +1,20 @@
 import { LuSignature } from 'react-icons/lu'
-import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash, getLastRevisionVerificationHash, stringToHex } from '../../utils/functions'
+import { dummyCredential, ensureDomainUrlHasSSL, getLastRevisionVerificationHash } from '../../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../../store'
-import axios from 'axios'
-import { ApiFileInfo } from '../../models/FileInfo'
+import apiClient from '@/api/axiosInstance'
 import { useState } from 'react'
 import Aquafier, { AquaTreeWrapper, OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import { RevionOperation } from '../../models/RevisionOperation'
 import { toast } from 'sonner'
 import { useAppKit } from '@reown/appkit/react'
-import { getAppKitProvider } from '@/utils/appkit-wallet-utils'
-import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
+import { signMessageWithAppKit } from '@/utils/appkit-wallet-utils'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 
 
 
-export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionOperation) => {
-      const { files, setFiles, setSelectedFileInfo, selectedFileInfo, user_profile, session, backend_url, webConfig } = useStore(appStore)
+export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index, children }: RevionOperation) => {
+      const { user_profile, session, webConfig } = useStore(appStore)
       const [signing, setSigning] = useState(false)
       const { } = useAppKit()
 
@@ -65,63 +64,63 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                                     // send to server
                                     const url = ensureDomainUrlHasSSL(`${backendUrl}/tree`)
 
-                                    const response = await axios.post(
+                                    await apiClient.post(
                                           url,
                                           {
                                                 revision: lastRevision,
                                                 revisionHash: lastHash,
-                                                orginAddress: session?.address,
+                                                originAddress: session?.address,
                                           },
                                           {
                                                 headers: {
                                                       nonce: nonce,
                                                 },
+                                                reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
                                           }
                                     )
+                                    // #FIX: Remove selected file info update for now, incase required we can update this
+                                    // if (response.status === 200 || response.status === 201) {
+                                    //       if (response.data.data) {
+                                    //             const newFiles: ApiFileInfo[] = response.data.data
+                                    //             try {
+                                    //                   const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
+                                    //                   const filesApi = await fetchFiles(session!.address, url, session!.nonce)
+                                    //                   setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
-                                    if (response.status === 200 || response.status === 201) {
-                                          if (response.data.data) {
-                                                const newFiles: ApiFileInfo[] = response.data.data
-                                                try {
-                                                      const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
-                                                      const filesApi = await fetchFiles(session!.address, url, session!.nonce)
-                                                      setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
-
-
-                                                      if (selectedFileInfo) {
-                                                            const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
-                                                            for (let i = 0; i < newFiles.length; i++) {
-                                                                  const newFile = newFiles[i]
-                                                                  const newGenesisHash = getGenesisHash(newFile.aquaTree!)
-                                                                  if (newGenesisHash == genesisHash) {
-                                                                        setSelectedFileInfo(newFile)
-                                                                  }
-                                                            }
-                                                      }
-                                                } catch (e) {
-                                                      toast.error('Error updating files')
-                                                      // document.location.reload()
-                                                }
-                                          } else {
-                                                const newFiles: ApiFileInfo[] = []
-                                                const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
-                                                files.fileData.forEach(item => {
-                                                      const keys = Object.keys(item.aquaTree!.revisions!)
-                                                      if (areArraysEqual(keys, keysPar)) {
-                                                            newFiles.push({
-                                                                  ...apiFileInfo,
-                                                                  aquaTree: result.data.aquaTree!,
-                                                            })
-                                                      } else {
-                                                            newFiles.push(item)
-                                                      }
-                                                })
-                                                const _selectFileInfo = selectedFileInfo!
-                                                _selectFileInfo.aquaTree = result.data.aquaTree!
-                                                setSelectedFileInfo(_selectFileInfo)
-                                                setFiles({ fileData: newFiles, status: 'loaded' })
-                                          }
-                                    }
+                                    //                   if (selectedFileInfo) {
+                                    //                         const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
+                                    //                         for (let i = 0; i < newFiles.length; i++) {
+                                    //                               const newFile = newFiles[i]
+                                    //                               const newGenesisHash = getGenesisHash(newFile.aquaTree!)
+                                    //                               if (newGenesisHash == genesisHash) {
+                                    //                                     setSelectedFileInfo(newFile)
+                                    //                               }
+                                    //                         }
+                                    //                   }
+                                    //             } catch (e) {
+                                    //                   toast.error('Error updating files')
+                                    //                   // document.location.reload()
+                                    //             }
+                                    //       } else {
+                                    //             const newFiles: ApiFileInfo[] = []
+                                    //             const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
+                                    //             files.fileData.forEach(item => {
+                                    //                   const keys = Object.keys(item.aquaTree!.revisions!)
+                                    //                   if (areArraysEqual(keys, keysPar)) {
+                                    //                         newFiles.push({
+                                    //                               ...apiFileInfo,
+                                    //                               aquaTree: result.data.aquaTree!,
+                                    //                         })
+                                    //                   } else {
+                                    //                         newFiles.push(item)
+                                    //                   }
+                                    //             })
+                                    //             const _selectFileInfo = selectedFileInfo!
+                                    //             _selectFileInfo.aquaTree = result.data.aquaTree!
+                                    //             setSelectedFileInfo(_selectFileInfo)
+                                    //             setFiles({ fileData: newFiles, status: 'loaded' })
+                                    //       }
+                                    // }
 
                                     toast.success(`Signing successfull`)
                               }
@@ -169,31 +168,13 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                               return
                         }
 
-                        // Sign using WalletConnect via ethers adapter
+                        // Sign using AppKit provider directly (personal_sign with hex encoding)
                         const messageToSign = `I sign this revision: [${targetRevisionHash}]`
-                        const provider = await getAppKitProvider()
-
-                        // Convert message to hex format for Core Wallet compatibility
-                        const messageHex = stringToHex(messageToSign)
-
-                        // Try with hex format first (for Core Wallet), fallback to plain text
-                        let signature: string
-                        try {
-                              signature = await provider.request({
-                                    method: 'personal_sign',
-                                    params: [messageHex, session?.address!]
-                              })
-                        } catch (hexError) {
-                              // Fallback to plain text for wallets that don't accept hex
-                              signature = await provider.request({
-                                    method: 'personal_sign',
-                                    params: [messageToSign, session?.address!]
-                              })
-                        }
+                        const { signature, signerAddress } = await signMessageWithAppKit(messageToSign, session?.address!)
 
                         const result = await aquafier.signAquaTree(aquaTreeWrapper, 'inline', xCredentials, true, undefined, {
-                              signature: signature,
-                              walletAddress: session?.address!,
+                              signature,
+                              walletAddress: signerAddress,
                         })
 
                         if (result.isErr()) {
@@ -210,65 +191,67 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                               // send to server
                               const url = ensureDomainUrlHasSSL(`${backendUrl}/tree`)
 
-                              const response = await axios.post(
+                              await apiClient.post(
                                     url,
                                     {
                                           revision: lastRevision,
                                           revisionHash: lastHash,
-                                          orginAddress: session?.address,
+                                          originAddress: session?.address,
                                     },
                                     {
                                           headers: {
                                                 nonce: nonce,
                                           },
+                                          reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
                                     }
                               )
 
-                              if (response.status === 200 || response.status === 201) {
-                                    if (response.data.data) {
-                                          const newFiles: ApiFileInfo[] = response.data.data
+                              // #FIX: Remove selected file info update for now, incase required we can update this
+                              // if (response.status === 200 || response.status === 201) {
+                              // if (response.data.data) {
+                              //       const newFiles: ApiFileInfo[] = response.data.data
 
-                                          try {
-                                                const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
-                                                
-
-                                                const filesApi = await fetchFiles(session!.address, url, session!.nonce)
-                                                setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+                              //       try {
+                              //             const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
 
 
-                                                if (selectedFileInfo) {
-                                                      const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
-                                                      for (let i = 0; i < newFiles.length; i++) {
-                                                            const newFile = newFiles[i]
-                                                            const newGenesisHash = getGenesisHash(newFile.aquaTree!)
-                                                            if (newGenesisHash == genesisHash) {
-                                                                  setSelectedFileInfo(newFile)
-                                                            }
-                                                      }
-                                                }
-                                          } catch (e) {
-                                                toast.error('Error updating files')
-                                          }
-                                    } else {
-                                          const newFiles: ApiFileInfo[] = []
-                                          const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
-                                          files.fileData.forEach(item => {
-                                                const keys = Object.keys(item.aquaTree!.revisions!)
-                                                if (areArraysEqual(keys, keysPar)) {
-                                                      newFiles.push({
-                                                            ...apiFileInfo,
-                                                            aquaTree: result.data.aquaTree!,
-                                                      })
-                                                } else {
-                                                      newFiles.push(item)
-                                                }
-                                          })
-                                          const _selectFileInfo = selectedFileInfo!
-                                          _selectFileInfo.aquaTree = result.data.aquaTree!
-                                          setSelectedFileInfo(_selectFileInfo)
-                                          setFiles({ fileData: newFiles, status: 'loaded' })
-                                    }
-                              }
+                              //             const filesApi = await fetchFiles(session!.address, url, session!.nonce)
+                              //             setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+
+
+                              //             if (selectedFileInfo) {
+                              //                   const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
+                              //                   for (let i = 0; i < newFiles.length; i++) {
+                              //                         const newFile = newFiles[i]
+                              //                         const newGenesisHash = getGenesisHash(newFile.aquaTree!)
+                              //                         if (newGenesisHash == genesisHash) {
+                              //                               setSelectedFileInfo(newFile)
+                              //                         }
+                              //                   }
+                              //             }
+                              //       } catch (e) {
+                              //             toast.error('Error updating files')
+                              //       }
+                              // } else {
+                              //       const newFiles: ApiFileInfo[] = []
+                              //       const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
+                              //       files.fileData.forEach(item => {
+                              //             const keys = Object.keys(item.aquaTree!.revisions!)
+                              //             if (areArraysEqual(keys, keysPar)) {
+                              //                   newFiles.push({
+                              //                         ...apiFileInfo,
+                              //                         aquaTree: result.data.aquaTree!,
+                              //                   })
+                              //             } else {
+                              //                   newFiles.push(item)
+                              //             }
+                              //       })
+                              //       const _selectFileInfo = selectedFileInfo!
+                              //       _selectFileInfo.aquaTree = result.data.aquaTree!
+                              //       setSelectedFileInfo(_selectFileInfo)
+                              //       setFiles({ fileData: newFiles, status: 'loaded' })
+                              // }
+                              // }
 
                               toast.success(`Signing successfull`)
                         }
@@ -282,10 +265,20 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
 
             }
 
-            // Trigger actions
-            await triggerWorkflowReload(RELOAD_KEYS.user_files, true)
-            await triggerWorkflowReload(RELOAD_KEYS.all_files, true)
+      }
 
+      if (children) {
+            return (
+                  <div onClick={() => {
+                        if (!signing) {
+                              signFileHandler()
+                        } else {
+                              toast.info('Signing is already in progress')
+                        }
+                  }}>
+                        {children}
+                  </div>
+            )
       }
 
       return (

@@ -273,7 +273,7 @@ export async function checkFolderExists(folderPath: string) {
     } catch (error: any) {
         return false;
     }
-}
+}  
 
 const setUpSystemTemplates = async () => {
 
@@ -331,7 +331,7 @@ const setUpSystemTemplates = async () => {
     //     "ens_claim",
     //     "aqua_certificate",
     // ]
-
+ 
     let templates = Object.keys(TEMPLATE_HASHES)
     for (let index = 0; index < templates.length; index++) {
         const templateItem = templates[index];
@@ -635,10 +635,28 @@ async function setupPaymentPlans() {
         enterprise: enterprisePlan.id,
     });
 
-    // Save the free plan ID to .env file (for reference)
-    console.log('\n⚠️  IMPORTANT: Add the following to your .env file:');
-    console.log(`DEFAULT_FREE_PLAN_ID=${freePlan.id}`);
-    console.log('\n✅ Database seeding completed successfully!');
+    if (!process.env.DEFAULT_FREE_PLAN_ID) {
+        process.env.DEFAULT_FREE_PLAN_ID = freePlan.id;
+        console.log(`DEFAULT_FREE_PLAN_ID not set, using seeded free plan: ${freePlan.id}`);
+    }
+
+    console.log('Database seeding completed successfully!');
 }
 
-export { getHost, getPort, fetchEnsName, fetchEnsExpiry, setUpSystemTemplates, setupPaymentPlans }
+async function ensureDefaultFreePlanId() {
+    if (process.env.DEFAULT_FREE_PLAN_ID) return;
+
+    const freePlan = await prisma.subscriptionPlan.findFirst({
+        where: { name: 'free' },
+        select: { id: true },
+    });
+
+    if (freePlan) {
+        process.env.DEFAULT_FREE_PLAN_ID = freePlan.id;
+        console.log(`DEFAULT_FREE_PLAN_ID not set, resolved from DB: ${freePlan.id}`);
+    } else {
+        console.warn('DEFAULT_FREE_PLAN_ID not set and no free plan found in DB');
+    }
+}
+
+export { getHost, getPort, fetchEnsName, fetchEnsExpiry, setUpSystemTemplates, setupPaymentPlans, ensureDefaultFreePlanId }

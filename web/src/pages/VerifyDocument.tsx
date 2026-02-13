@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react'
 import { PDFDocument, PDFName, PDFString, PDFHexString, PDFDict } from 'pdf-lib'
 import { useStore } from 'zustand'
 import appStore from '../store'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { ApiFileInfo } from '../models/FileInfo'
 // import { ClipLoader } from "react-spinners";
 import { IDrawerStatus } from '../models/AquaTreeDetails'
 import { ImportAquaChainFromChain } from '../components/dropzone_file_actions/import_aqua_tree_from_aqua_tree'
 import { toast } from 'sonner'
-
+import { extractEmbeddedAquaData } from '@/utils/pdf-digital-signature'
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert'
 import { PdfDropzone } from '@/components/ui/pdf-dropzone'
 import { CompleteChainView } from '../components/files_chain_details'
@@ -16,7 +16,7 @@ import { ensureDomainUrlHasSSL } from '@/utils/functions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EasyPDFRenderer } from '@/pages/aqua_sign_wokflow/ContractDocument/signer/SignerPage'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle, FileText, User, Calendar, Link, Hash, ShieldCheck, AlertCircle, Loader2, X, ShieldCheckIcon, Wallet2, Copy, InfoIcon, ShieldUser } from 'lucide-react'
+import { CheckCircle, FileText, User, Calendar, Link, Hash, ShieldCheck, AlertCircle, Loader2, X, ShieldCheckIcon, Wallet2, Copy, InfoIcon, ShieldUser, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import WalletAdrressClaim from './v2_claims_workflow/WalletAdrressClaim'
 
@@ -138,8 +138,8 @@ const CustomPDFMetada = ({ metadata, drawerStatus }: { metadata: IMetadata | nul
                                     </p>
                                     {
                                           metadata?.signerWallet?.split(",").map(item => item.trim()).map((_address, idx) => (
-                                                <div className="flex items-center gap-2">
-                                                      <WalletAdrressClaim key={`${_address}_${idx}`} walletAddress={_address} />
+                                                <div key={`wallet_${_address}_${idx}`} className="flex items-center gap-2">
+                                                      <WalletAdrressClaim walletAddress={_address} />
                                                 </div>
                                           ))
                                     }
@@ -276,8 +276,8 @@ const CustomPDFMetada = ({ metadata, drawerStatus }: { metadata: IMetadata | nul
             </section>
 
       )
-}
-
+} 
+ 
 const VerifyDocument = () => {
       const { backend_url, metamaskAddress, session } = useStore(appStore)
       const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
@@ -301,7 +301,7 @@ const VerifyDocument = () => {
                   try {
                         setLoading(true)
                         const url = ensureDomainUrlHasSSL(`${backend_url}/share_data/${documentId}`)
-                        const response = await axios.get(url, {
+                        const response = await apiClient.get(url, {
                               headers: {
                                     'Content-Type': 'application/x-www-form-urlencoded',
                                     nonce: "RANDOM_NONCE",
@@ -314,15 +314,22 @@ const VerifyDocument = () => {
                         }
                         setLoading(false)
                   } catch (error: any) {
-                        if (error.response.status == 401) {
-                        } else if (error.response.status == 404) {
-                              setHasError(`File could not be found (probably it was deleted)`)
-                        } else if (error.response.status == 412) {
-                              setHasError(`File not found or no permission for access granted.`)
+                        if (error.response) {
+                              if (error.response.status == 401) {
+                                    // Unauthorized - do nothing special
+                              } else if (error.response.status == 404) {
+                                    setHasError(`File could not be found (probably it was deleted)`)
+                              } else if (error.response.status == 412) {
+                                    setHasError(`File not found or no permission for access granted.`)
+                              } else {
+                                    setHasError(`Error : ${error}`)
+                              }
+                        } else if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+                              setHasError(`Cannot connect to server. Please check your connection.`)
                         } else {
-                              setHasError(`Error : ${error}`)
+                              setHasError(`Error : ${error.message || error}`)
                         }
-
+                        setLoading(false)
                         toast.error(`Error fetching data`)
                   }
             }
@@ -330,6 +337,7 @@ const VerifyDocument = () => {
 
       const loadPDFMetadata = async (file: File) => {
             try {
+                  setLoading(true)
                   const arrayBuffer = await file.arrayBuffer()
                   const pdfDoc = await PDFDocument.load(arrayBuffer)
 
@@ -375,13 +383,127 @@ const VerifyDocument = () => {
 
                   setPdfMetadata(metadata)
 
-                  // Set document ID if found
-                  if (metadata.documentId) {
+                  // Try to extract embedded aqua data first
+                  const uint8Array = new Uint8Array(arrayBuffer)
+                  const embeddedData = await extractEmbeddedAquaData(uint8Array)
+
+                  // If embedded aqua.json exists, use it for verification
+                  if (embeddedData.aquaJson) {
+                        toast.success('Using embedded aqua chain data for verification', {
+                              description: 'Verifying document from embedded metadata (offline)',
+                              duration: 4000,
+                        })
+
+                        try {
+                              const aquaJson = embeddedData.aquaJson
+
+                              // Validate aqua.json structure
+                              if (!aquaJson.genesis || !aquaJson.name_with_hash || !Array.isArray(aquaJson.name_with_hash)) {
+                                    throw new Error('Invalid aqua.json structure: missing genesis or name_with_hash')
+                              }
+
+                              // Get the main aqua tree file
+                              const mainAquaTreeFileName = `${aquaJson.genesis}.aqua.json`
+                              const mainAquaTreeFile = embeddedData.aquaChainFiles.find(f => f.filename === mainAquaTreeFileName)
+
+                              if (!mainAquaTreeFile) {
+                                    throw new Error(`Main aqua tree file not found: ${mainAquaTreeFileName}`)
+                              }
+
+                              // Parse the main aqua tree
+                              const aquaTreeData = JSON.parse(mainAquaTreeFile.content)
+
+                              // Validate it's a proper aqua tree
+                              if (!aquaTreeData.revisions || !aquaTreeData.file_index) {
+                                    throw new Error('Invalid aqua tree structure: missing revisions or file_index')
+                              }
+
+                              // Create Aquafier instance for validation
+                              // const aquafier = new Aquafier()
+
+                              // Validate all files in name_with_hash exist and match hashes
+                              const fileObjects: any[] = []
+
+                              for (const nameHash of aquaJson.name_with_hash) {
+                                    if (nameHash.name.endsWith('.aqua.json')) {
+                                          // For aqua tree files, find them in embedded files
+                                          const aquaFile = embeddedData.aquaChainFiles.find(f => f.filename === nameHash.name)
+                                          if (!aquaFile) {
+                                                continue // Skip if not found instead of throwing
+                                          }
+
+                                          // Validate hash
+                                          // const calculatedHash = aquafier.getFileHash(aquaFile.content)
+
+                                          // SDK expects aqua tree fileContent as parsed object, not string
+                                          let parsedContent: any = aquaFile.content;
+                                          try {
+                                                parsedContent = JSON.parse(aquaFile.content);
+                                          } catch {
+                                                // Keep as string if not valid JSON
+                                          }
+
+                                          fileObjects.push({
+                                                fileName: nameHash.name,
+                                                fileContent: parsedContent,
+                                                fileSize: aquaFile.content.length,
+                                          })
+                                    } else {
+                                          // This is an asset file - check if it's embedded
+                                          const assetFile = embeddedData.assetFiles.find(f => f.filename === nameHash.name)
+                                          if (assetFile) {
+                                                // Convert ArrayBuffer to Uint8Array for binary files (SDK expects string | Uint8Array)
+                                                const content = assetFile.content instanceof ArrayBuffer
+                                                      ? new Uint8Array(assetFile.content)
+                                                      : assetFile.content;
+                                                fileObjects.push({
+                                                      fileName: nameHash.name,
+                                                      fileContent: content,
+                                                      fileSize: typeof assetFile.content === 'string' ? assetFile.content.length : (assetFile.content as ArrayBuffer).byteLength,
+                                                })
+                                          }
+                                    }
+                              }
+
+                              // Create ApiFileInfo from embedded data
+                              const mockFileInfo: ApiFileInfo = {
+                                    aquaTree: aquaTreeData,
+                                    fileObject: fileObjects,
+                                    linkedFileObjects: [],
+                                    mode: 'view',
+                                    owner: metadata.signerWallet || '',
+                              }
+
+                              setFileInfo(mockFileInfo)
+                              setLoading(false)
+                              return
+
+                        } catch (error) {
+                              toast.error('Failed to process embedded data', {
+                                    description: error instanceof Error ? error.message : 'Falling back to online verification',
+                              })
+                              setLoading(false)
+                        }
+                  }
+
+                  // Fallback to loading from backend if documentId exists and no embedded data
+                  if (metadata.documentId && !embeddedData.aquaJson) {
+                        toast.info('Checking document metadata online', {
+                              description: 'Verifying document via backend API',
+                              duration: 3000,
+                        })
                         loadPageData(metadata.documentId)
+                  } else if (!metadata.documentId && !embeddedData.aquaJson) {
+                        toast.warning('No verification data found', {
+                              description: 'This PDF does not contain Aquafier signature data',
+                              duration: 5000,
+                        })
+                        setLoading(false)
                   }
 
             } catch (error) {
                   toast.error('Failed to read PDF metadata')
+                  setLoading(false)
             }
       }
 
@@ -404,7 +526,7 @@ const VerifyDocument = () => {
             <div className="min-h-screen bg-linear-to-b from-background to-muted/20 relative">
                   <div className="container max-w-8xl mx-auto px-4 pb-8 relative">
                         {/* Page Header */}
-                        <div className="mb-8 sticky top-0 z-10 py-2 px-2 bg-white/95 border border-b rounded-md">
+                        <div className="mb-8 mt-4 sticky top-0 z-10 py-2 px-2 bg-white/95 border border-b rounded-md">
                               <div className="flex items-center gap-3 mb-2">
                                     <div className="p-2 rounded-lg bg-primary/10">
                                           <ShieldCheck className="h-6 w-6 text-primary" />
@@ -423,8 +545,17 @@ const VerifyDocument = () => {
                               <Alert className="mb-6 border-amber-200 bg-amber-50 dark:bg-amber-950/20">
                                     <AlertCircle className="h-4 w-4 text-amber-600" />
                                     <AlertTitle className="text-amber-800 dark:text-amber-200">Login Required</AlertTitle>
-                                    <AlertDescription className="text-amber-700 dark:text-amber-300">
-                                          You need to be logged in to verify documents and view full details.
+                                    <AlertDescription className="text-amber-700 dark:text-amber-300 flex items-center justify-between">
+                                          <span>You need to be logged in to verify documents and view full details.</span>
+                                          <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="ml-4 border-amber-300 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-900/30"
+                                                onClick={() => window.location.href = '/app'}
+                                          >
+                                                <LogIn className="h-4 w-4 mr-2" />
+                                                Login
+                                          </Button>
                                     </AlertDescription>
                               </Alert>
                         )}
@@ -446,7 +577,7 @@ const VerifyDocument = () => {
                                           <PdfDropzone pdfFile={pdfFile} setPdfFile={setPDFFile} />
                                     </CardContent>
                               </Card>
-                        ) : (
+                        ) : (  
                               /* Document View Section */
                               <div className="space-y-6">
                                     {/* Top Action Bar */}
@@ -516,7 +647,7 @@ const VerifyDocument = () => {
                                                             <CardHeader className="pb-3">
                                                                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                                                                         <CheckCircle className="h-4 w-4 text-green-500" />
-                                                                        Blockchain Verification
+                                                                        Aqua File  Verification
                                                                   </CardTitle>
                                                             </CardHeader>
                                                             <CardContent>

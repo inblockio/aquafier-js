@@ -36,9 +36,10 @@ function getBucketName(): string {
 /**
  * Returns whether the Minio/S3 client configuration is fully provided via environment variables.
  *
- * Checks that S3_PASSWORD, S3_USER, S3_URL, and S3_BUCKET are all defined and non-empty in process.env.
+ * Checks that S3_USER, S3_PASSWORD, S3_URL, S3_BUCKET, and DISABLE_S3
+ * are all defined and non-empty in process.env.
  *
- * @returns `true` if all four environment variables are present and non-empty; otherwise `false`.
+ * @returns `true` if all required environment variables are present and non-empty; otherwise `false`.
  */
 function minioClientCompleted(): boolean{
     return !!process.env.S3_USER && !!process.env.S3_PASSWORD && !!process.env.S3_URL && !!process.env.S3_BUCKET && !!process.env.DISABLE_S3

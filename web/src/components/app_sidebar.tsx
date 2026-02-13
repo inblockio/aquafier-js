@@ -19,11 +19,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       const { usage, limits, percentageUsed, setUsage } = useSubscriptionStore()
 
-      // Load usage stats on mount if not already loaded
+      // Load usage stats only when session with nonce is available
       React.useEffect(() => {
+            if (!session?.nonce) return;
             const loadUsage = async () => {
                   try {
-                        // Dynamically import API to avoid circular deps if any, or just import at top
                         const { fetchUsageStats } = await import('@/api/subscriptionApi');
                         const data = await fetchUsageStats();
                         setUsage(data.usage, data.limits, data.percentage_used);
@@ -32,7 +32,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   }
             };
             loadUsage();
-      }, []);
+      }, [session?.nonce]);
 
       React.useEffect(() => {
             if (webConfig.BACKEND_URL) {
@@ -201,6 +201,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                                 <CustomNavLink
                                                       item={{ label: 'Admin Dashboard', icon: Shield, id: '/app/admin/dashboard' }}
                                                       index={20}
+                                                      callBack={() => {
+                                                            const isMobileView = window.innerWidth < 768
+                                                            if (isMobileView) {
+                                                                  toggleSidebar()
+                                                            }
+                                                      }}
+                                                />
+                                                <CustomNavLink
+                                                      item={{ label: 'Manage Plans', icon: CreditCard, id: '/app/admin/plans' }}
+                                                      index={21}
                                                       callBack={() => {
                                                             const isMobileView = window.innerWidth < 768
                                                             if (isMobileView) {

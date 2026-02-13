@@ -4,8 +4,9 @@ import { useStore } from 'zustand'
 import appStore from '../../store'
 import { toast } from 'sonner'
 import { LuEye, LuPen, LuTrash } from 'react-icons/lu'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { ensureDomainUrlHasSSL } from '../../utils/functions'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 
 // /components//ui components
 import { Button } from '@/components/ui/button'
@@ -57,10 +58,11 @@ const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
             setIsLoading(true)
 
             try {
-                  const res = await axios.delete(ensureDomainUrlHasSSL(`${backend_url}/templates/${templateToDelete.id}`), {
+                  const res = await apiClient.delete(ensureDomainUrlHasSSL(`${backend_url}/templates/${templateToDelete.id}`), {
                         headers: {
                               nonce: session?.nonce,
                         },
+                        reloadKeys: [RELOAD_KEYS.user_stats],
                   })
 
                   if (res.status === 200 || res.status === 201) {

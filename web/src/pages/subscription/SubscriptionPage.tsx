@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Calendar, AlertCircle, X, HardDrive, FileText, File, Layout, RefreshCcw } from 'lucide-react';
+import { CreditCard, Calendar, AlertCircle, X, HardDrive, FileText, File, RefreshCcw } from 'lucide-react';
 import { useSubscriptionStore } from '../../stores/subscriptionStore';
 import {
   fetchCurrentSubscription,
@@ -92,6 +92,15 @@ export default function SubscriptionPage() {
     });
   };
 
+  const getPaymentMethod = (method: string) => {
+    if(method === "STRIPE"){
+      return "Credit Card"
+    }else if(method === "CRYPTO"){
+      return "Crypto"
+    }
+    return "Aquafier Licence"
+  }
+
   // const getStatusColor = (status: string) => {
   //   switch (status) {
   //     case 'ACTIVE':
@@ -107,6 +116,7 @@ export default function SubscriptionPage() {
   //   }
   // };
 
+  
   if (!currentSubscription && !isFreeTier) {
     return (
       <div className="max-w-4xl mx-auto p-6">
@@ -116,6 +126,7 @@ export default function SubscriptionPage() {
       </div>
     );
   }
+
 
   const plan = currentSubscription?.Plan;
 
@@ -205,17 +216,17 @@ export default function SubscriptionPage() {
                 <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                   <span className="text-gray-600 dark:text-gray-400 text-sm flex items-center">
                     <File className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" />
-                    Contract Limit
+                    Aqua Sign Contract Limit
                   </span>
                   <span className="font-semibold text-gray-900 dark:text-white">{plan?.max_contracts}</span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                {/* <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                   <span className="text-gray-600 dark:text-gray-400 text-sm flex items-center">
                     <Layout className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500" />
-                    Template Limit
+                    Custom Template Limit
                   </span>
                   <span className="font-semibold text-gray-900 dark:text-white">{plan?.max_templates}</span>
-                </div>
+                </div> */}
               </div>
             </div>
 
@@ -239,7 +250,7 @@ export default function SubscriptionPage() {
                       Payment Method
                     </span>
                     <span className="font-semibold text-gray-900 dark:text-white inline-flex items-center">
-                      {currentSubscription.payment_method === 'STRIPE' ? 'Credit Card' : 'Crypto'}
+                      {getPaymentMethod(currentSubscription.payment_method)}
                     </span>
                   </div>
 
@@ -285,7 +296,7 @@ export default function SubscriptionPage() {
             {isFreeTier ? 'Upgrade to Pro' : 'Change Plan'}
           </button>
 
-          {currentSubscription && !currentSubscription.cancel_at_period_end && (
+          {currentSubscription && currentSubscription.Plan.name !== "free" && !currentSubscription.cancel_at_period_end && (
             <button
               onClick={handleCancelSubscription}
               disabled={cancelLoading}

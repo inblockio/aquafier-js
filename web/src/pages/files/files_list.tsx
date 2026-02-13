@@ -5,7 +5,7 @@ import { useStore } from 'zustand'
 import appStore from '../../store'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { emptyUserStats, FilesListProps, IUserStats } from '@/types/types'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { API_ENDPOINTS } from '@/utils/constants'
 import { ensureDomainUrlHasSSL } from '@/utils/functions'
 import WorkflowSpecificTable from './WorkflowSpecificTable'
@@ -19,9 +19,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [view, setView] = useState<'table' | 'card'>('table')
       const [isSmallScreen, setIsSmallScreen] = useState(false)
       const [uniqueWorkflows, setUniqueWorkflows] = useState<{ name: string, count: number }[]>([])
-      const [selectedWorkflow, setSelectedWorkflow] = useState<string>(
-            filesListProps.hideAllFilesAndUserAquaFiles ? '' : 'user_files'
-      )
+      const [selectedWorkflow, setSelectedWorkflow] = useState<string>(filesListProps.hideAllFilesAndUserAquaFiles ? '' : 'user_files')
       const [stats, setStats] = useState<IUserStats>(emptyUserStats)
       const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date')
 
@@ -29,7 +27,7 @@ export default function FilesList(filesListProps: FilesListProps) {
 
       // Read the tab parameter from URL
       const tabFromUrl = searchParams.get('tab');
-
+  
       // Filter states
       const [showFilterModal, setShowFilterModal] = useState(false)
       const [selectedFilters, setSelectedFilters] = useState<string[]>(['all'])
@@ -54,15 +52,26 @@ export default function FilesList(filesListProps: FilesListProps) {
                   getUserStats()
             }
 
+            if (tabFromUrl) {
+                  setSelectedWorkflow(tabFromUrl)
+            }
+            //  else {
+            //       setSelectedWorkflow(filesListProps.hideAllFilesAndUserAquaFiles ? '' : 'user_files')
+            // }
+
+
             return () => {
                   window.removeEventListener('resize', checkScreenSize)
             }
+
+
+
       }, [])
 
       const getUserStats = async () => {
             if (session) {
                   try {
-                        let result = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.USER_STATS}`), {
+                        let result = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.USER_STATS}`), {
                               headers: {
                                     'nonce': session.nonce,
                                     'metamask_address': session.address
@@ -109,7 +118,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       }, [tabFromUrl, stats])
 
       useEffect(() => {
-            if (stats) {
+            if (stats && !tabFromUrl) {
                   if (stats?.claimTypeCounts?.user_files > 0) {
                         setSelectedWorkflow('user_files')
                   } else {
@@ -219,6 +228,11 @@ export default function FilesList(filesListProps: FilesListProps) {
       const filteredFiles = getFilteredFiles()
 
       const capitalizeWords = (str: string): string => {
+            if(str === "domain claim"){
+                  return "DNS Claim"
+            }else if(str === "ens claim"){
+                  return "ENS Claim"
+            }
             return str.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1))
       }
 
@@ -416,7 +430,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                   </div>
             )
       }
-
+ 
       const renderFilterModal = () => {
             if (!showFilterModal) return null
 
@@ -492,6 +506,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                                                 <h1 className="text-xl font-semibold text-gray-900">
                                                       {getFilteredTitle()}
                                                 </h1>
+                               
                                                 {selectedFilters.includes('all') ? (
                                                       <div className="flex items-center space-x-2">
                                                             <div className="px-3 py-1 bg-gray-100 rounded-full">
@@ -539,6 +554,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                         {renderWorkflowTabs()}
 
                         <WorkflowSpecificTable
+                        showFileActions={filesListProps.showFileActions}
                               workflowName={selectedWorkflow}
                               view={view}
                               filesListProps={filesListProps}

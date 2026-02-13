@@ -1,0 +1,65 @@
+[
+    {
+        "name": "sender",
+        "label": "Sender",
+        "type": "wallet_address",
+        "required": true,
+        "isEditable": false,
+        "isArray": false
+    },
+    {
+        "name": "receiver",
+        "label": "Receiver",
+        "type": "wallet_address",
+        "required": false,
+        "isArray": true
+    },
+    {
+        "name": "created_at",
+        "label": "Created At",
+        "type": "date",
+        "required": true,
+        "isArray": false,
+        "isEditable": false,
+        "isHidden": true
+    },
+    {
+        "name": "duration_days",
+        "label": "Duration (in Days)",
+        "type": "number",
+        "required": true,
+        "isArray": false
+    },
+    {
+        "name": "users_subscription_limit",
+        "label": "Users Subscription Limit",
+        "type": "number",
+        "required": false,
+        "isArray": false,
+        "isHidden": true,
+        "isEditable": false
+    },
+    {
+    "name": "package_id",
+    "label": "Subscription Package",
+    "type": "options",
+    "options": [
+      {
+        "label": "Free Plan",
+        "value": "dd60e70d-2f85-4512-8d29-87e4c69ac8df"
+      },
+      {
+        "label": "Pro Plan",
+        "value": "6a262c61-7506-4b63-baa2-eabe65c6384c"
+      },
+      {
+        "label": "Enterprise Plan",
+        "value": "67a8539d-f95b-4058-98a8-17400d2a0db6"
+      }
+    ],
+    "isHidden": false,
+    "required": true,
+    "isArray": false,
+    "description": "Select the licence package"
+  }
+]

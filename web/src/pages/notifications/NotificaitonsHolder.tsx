@@ -5,10 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Check, Loader2 } from 'lucide-react'
 import { ScrollArea } from '../../components/ui/scroll-area'
 import { formatDistanceToNow } from 'date-fns'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import appStore from '../../store'
 import { API_ENDPOINTS } from '../../utils/constants'
 import { ensureDomainUrlHasSSL } from '../../utils/functions'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 import { Badge } from '../../components/ui/badge'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -40,13 +41,14 @@ const NotificationItem = ({ notification, onRead }: NotificationItemProps) => {
 
             setIsMarking(true)
             try {
-                  await axios.patch(
+                  await apiClient.patch(
                         ensureDomainUrlHasSSL(`${backend_url}${API_ENDPOINTS.MARK_NOTIFICATION_AS_READ.replace(':id', notification.id)}`),
                         {},
                         {
                               headers: {
                                     nonce: session?.nonce,
                               },
+                              reloadKeys: [RELOAD_KEYS.notifications],
                         }
                   )
                   onRead()

@@ -26,10 +26,12 @@ import { useNavigate } from 'react-router-dom'
 import { ClipLoader } from 'react-spinners'
 import { toast } from 'sonner'
 import { useStore } from 'zustand'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { getDNSStatusBadge, IDnsVerificationResult, verifyDNS } from '@/utils/verifiy_dns'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
-import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { contactsDB } from '@/storage/databases/contactsDb'
 import { API_ENDPOINTS } from '@/utils/constants'
 import { FaEthereum } from 'react-icons/fa6'
 
@@ -253,7 +255,7 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                   const hashes = Object.keys(reorderedAquaTree.revisions)
                   const genesisHash = hashes[0]
                   const genesisRevision = reorderedAquaTree.revisions[genesisHash]
-                  const result = await verifyDNS(backend_url, claim.claimName!, genesisRevision["forms_wallet_address"], triggerReload)
+                  const result = await verifyDNS(backend_url, claim.claimName!, genesisRevision["forms_wallet_address"], triggerReload, genesisHash, genesisRevision['forms_unique_id'], genesisRevision['forms_claim_secret'])
 
                   setDnsVerificationResult(result)
             } catch (error) {
@@ -296,12 +298,17 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
 }
 
 const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, showShadow, hideOpenProfileButton, noBg, timestamp, files, signatureHash }: ISignatureWalletAddressCard) => {
-      const { workflows, session, setFiles, backend_url, setOpenDialog, setSelectedFileInfo, user_profile } = useStore(appStore)
+      const { workflows, session, setFiles, backend_url, setOpenDialog, setSelectedFileInfo } = useStore(appStore)
       const [claims, setClaims] = useState<IClaim[]>([])
       const [loading, setLoading] = useState(true)
       const [isLoading, setIsLoading] = useState<boolean>(true)
       const [ensName, setEnsName] = useState<string | null>(null)
       const navigate = useNavigate()
+      // Watch this specific contact in IndexedDB for live updates
+      const contactProfile = useLiveQuery(
+            () => walletAddress ? contactsDB.contacts.get(walletAddress) : undefined,
+            [walletAddress]
+      )
 
       const loadSystemAquaFileNames = async () => {
             const aquaSystemNamesService = AquaSystemNamesService.getInstance();
@@ -424,7 +431,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
       const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false, isWorkflow: boolean = false, account: string = session?.address || '') => {
             try {
-                  const url = `${backend_url}/explorer_aqua_file_upload`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_aqua_file_upload`)
 
                   // Create a FormData object to send multipart data
                   const formData = new FormData()
@@ -491,11 +498,12 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         formData.append('has_asset', 'false')
                   }
 
-                  const response = await axios.post(url, formData, {
+                  const response = await apiClient.post(url, formData, {
                         headers: {
                               nonce: session?.nonce,
                               // Don't set Content-Type header - axios will set it automatically with the correct boundary
                         },
+                        reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
                   })
 
                   if (response.status === 200 || response.status === 201) {
@@ -508,12 +516,6 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                               toast.success('Profile Aqua tree created successfully')
                               callBack && callBack()
-
-
-                              // trigger file reloads 
-                              await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
-                              await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
-
 
                               // Create the profile item to share
                               const profileItem: ApiFileInfo = {
@@ -597,7 +599,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                   try {
                         const url = ensureDomainUrlHasSSL(`${backend_url}/fetch_template_aqua_tree`)
-                        const response = await axios.post(url, {
+                        const response = await apiClient.post(url, {
                               template_name: 'user_profile',
                               name: `User Profile Template`,
                         }, {
@@ -786,18 +788,15 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             }
             //`${backend_url}/${API_ENDPOINTS.CREATE_ENS_CLAIM}`
             const createENSClaimUrl = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.CREATE_ENS_CLAIM}`)
-            const res = await axios.post(createENSClaimUrl, {}, {
+            const res = await apiClient.post(createENSClaimUrl, {}, {
                   headers: {
                         metamask_address: session.address,
                         nonce: `${session.nonce}`
-                  }
+                  },
+                  reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files, RELOAD_KEYS.ens_claim, RELOAD_KEYS.contacts],
             })
 
             if (res.status === 200 || res.status === 201) {
-                  await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
-                  await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
-                  await triggerWorkflowReload(RELOAD_KEYS.ens_claim, true);
-                  await triggerWorkflowReload(RELOAD_KEYS.contacts, true);
                   toast.success("You have successfully created your ENS Claim")
             } else {
                   toast.error(`An error occured ${res.status}`)
@@ -819,8 +818,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                   return
             }
             try {
-                  const response = await fetch(`${backend_url}/resolve/${session?.address}?useEns=true`, {
-                        method: 'GET',
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/resolve/${session?.address}?useEns=true`)
+                  const response = await apiClient.get(url, {
                         headers: {
                               metamask_address: session?.address!,
                               'nonce': session?.nonce!,
@@ -828,10 +827,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         }
                   });
 
-                  const data = await response.json();
-
-                  if (response.ok && data.success) {
-                        setEnsName(data.result);
+                  if (response.data.success) {
+                        setEnsName(response.data.result);
                   }
             } catch (_err) {
                   // console.error('Resolution error:', err);
@@ -842,8 +839,11 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
       useEffect(() => {
             if (walletAddress && session?.nonce) {
                   loadWorkflows()
+            } else {
+                  setIsLoading(false)
+                  setLoading(false)
             }
-      }, [walletAddress, session?.nonce, files])
+      }, [walletAddress, session?.nonce, files, contactProfile])
 
       useEffect(() => {
             if (session?.address && session.nonce && backend_url) {
@@ -943,7 +943,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                           <div className="flex flex-col gap-1">
                                                 <p className="text-sm font-medium text-green-800">You have an ENS name</p>
                                                 <p className="text-sm text-green-700">Would you like to create your claim?</p>
-                                                <p className="text-sm font-semibold text-green-900 bg-green-100 px-2 py-1 rounded w-fit">{user_profile?.ens_name}</p>
+                                                <p className="text-sm font-semibold text-green-900 bg-green-100 px-2 py-1 rounded w-fit">{ensName}</p>
                                           </div>
                                           <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleCreateEnsClaim}>Create</Button>
                                     </div>

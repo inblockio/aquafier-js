@@ -6,7 +6,7 @@ import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
 import { ensureDomainUrlHasSSL, getGenesisHash, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
 import { ClipLoader } from 'react-spinners'
 import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileInfo'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { Contract, ICompleteClaimInformation } from '@/types/types'
 import { SharedContract } from '../files_share/files_shared_contracts_item'
 import AttestationEntry from './AttestationEntry'
@@ -20,11 +20,13 @@ import WalletAddressProfile from './WalletAddressProfile'
 import UserSignatureClaim from './UserSignatureClaim'
 import { AddressView } from './AddressView'
 import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_claim'
-import { GlobalPagination } from '@/types'
-import { API_ENDPOINTS, IDENTITY_CLAIMS } from '@/utils/constants'
+// import { GlobalPagination } from '@/types'
 import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { contactsDB } from '@/storage/databases/contactsDb'
+import ENSClaim from './ENSClaim'
 
 
 export default function ClaimsWorkflowPage() {
@@ -34,9 +36,15 @@ export default function ClaimsWorkflowPage() {
       const [isLoading, setIsLoading] = useState(true)
       const [isProcessingClaims, setIsProcessingClaims] = useState(true)
 
-      const [currentPage, _setCurrentPage] = useState(1)
-      const [_pagination, setPagination] = useState<GlobalPagination | null>(null)
+      // const [_currentPage, _setCurrentPage] = useState(1)
+      // const [_pagination, setPagination] = useState<GlobalPagination | null>(null)
       const [files, setFiles] = useState<Array<ApiFileInfo>>([])
+
+      // Watch contacts in IndexedDB for live updates
+      const contactProfiles = useLiveQuery(
+            () => contactsDB.contacts.toArray(),
+            []
+      )
 
       const { walletAddress } = useParams()
       const urlHash = useLocation().hash
@@ -45,7 +53,7 @@ export default function ClaimsWorkflowPage() {
             try {
                   //`${backend_url}/contracts`
                   const url = ensureDomainUrlHasSSL(`${backend_url}/contracts`)
-                  const response = await axios.get(url, {
+                  const response = await apiClient.get(url, {
                         params: {
                               sender: session?.address,
                               // genesis_hash: genesisHash,
@@ -124,7 +132,7 @@ export default function ClaimsWorkflowPage() {
                   setIsProcessingClaims(false)
                   return
             }
-            const claimTemplateNames = ["simple_claim", "identity_claim", "dns_claim", "domain_claim", "phone_number_claim", "email_claim", "user_signature"]
+            const claimTemplateNames = ["simple_claim", "identity_claim", "ens_claim", "dns_claim", "domain_claim", "phone_number_claim", "email_claim", "user_signature"]
 
             const aquaSystemFileNames = await loadSystemAquaFileNames()
 
@@ -149,7 +157,7 @@ export default function ClaimsWorkflowPage() {
                         if (_walletAddress === walletAddress) {
                               const processedClaimInfo = processSimpleWorkflowClaim(file)
                               let processedAttestations: Array<IAttestationEntry> = []
-                              if (["simple_claim", "identity_claim", "dns_claim", "domain_claim", "phone_number_claim", "email_claim", "user_signature"].includes(processedClaimInfo.claimInformation.forms_type)) {
+                              if (["simple_claim", "identity_claim", "dns_claim", "ens_claim", "domain_claim", "phone_number_claim", "email_claim", "user_signature"].includes(processedClaimInfo.claimInformation.forms_type)) {
                                     processedAttestations = await loadAttestationData(processedClaimInfo.genesisHash!, _attestations)
                               }
                               const sharedContracts = await loadSharedContractsData(lastRevisionHash)
@@ -163,8 +171,15 @@ export default function ClaimsWorkflowPage() {
       }
 
       const renderClaim = (claim: ICompleteClaimInformation) => {
+            // console.log("Claim: ", claim)
             const claimInfo = claim.processedInfo.claimInformation
             const genesisRevisionHash = getGenesisHash(claim.file.aquaTree!)
+
+            if(!claimInfo.forms_type){
+                  return (
+                        <ENSClaim claimInfo={claimInfo} />
+                  )
+            }
 
             if (claimInfo.forms_type === 'dns_claim') {
                   return (
@@ -288,29 +303,37 @@ export default function ClaimsWorkflowPage() {
             // }
             setIsLoading(true);
             try {
-                  const params = {
-                        page: currentPage,
-                        limit: 100,
-                        claim_types: JSON.stringify(IDENTITY_CLAIMS),
-                        wallet_address: walletAddress,
-                        use_wallet: session?.address,
-                  }
-                  const filesDataQuery = await axios.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
-                        headers: {
-                              'Content-Type': 'application/json',
-                              'nonce': `${session!.nonce}`
-                        },
-                        params
-                  })
-                  const response = filesDataQuery.data
-                  const aquaTrees = response.aquaTrees
-                  setPagination(response.pagination)
-                  setFiles(aquaTrees)
+                  // DO NOT REMOVE, commented this out to use data from contacts table
+                  // const params = {
+                  //       page: currentPage,
+                  //       limit: 100,
+                  //       claim_types: JSON.stringify(IDENTITY_CLAIMS),
+                  //       wallet_address: walletAddress,
+                  //       use_wallet: session?.address,
+                  // }
+                  // const filesDataQuery = await apiClient.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
+                  //       headers: {
+                  //             'Content-Type': 'application/json',
+                  //             'nonce': `${session!.nonce}`
+                  //       },
+                  //       params
+                  // })
+                  // const response = filesDataQuery.data
+                  // const aquaTrees = response.aquaTrees
+                  // setPagination(response.pagination)
+                  // setFiles(aquaTrees)
+                  // // Process claims after setting files
+                  // await processAllAddressClaims(aquaTrees)
 
-                  // Process claims after setting files
-                  await processAllAddressClaims(aquaTrees)
+                  // search for contact from contacts
+                  let contact = contactProfiles?.find(contact => contact.walletAddress === walletAddress)
+                  if (contact) {
+                        setFiles(contact.files)
+                        // Process claims after setting files
+                        await processAllAddressClaims(contact.files)
+                  }
+
             } catch (error) {
-                  console.error('Error loading claims:', error);
                   toast.error('Failed to load claims');
                   setIsProcessingClaims(false)
             } finally {
@@ -349,12 +372,12 @@ export default function ClaimsWorkflowPage() {
 
       useEffect(() => {
             loadClaimsFileData()
-      }, [walletAddress]);
+      }, [walletAddress, contactProfiles]);
 
       return (
             <div className='py-6 flex flex-col gap-4'>
 
-                  <div className="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 p-4 sm:p-6 lg:p-8 rounded-lg">
+                  <div className="bg-linear-to-br from-slate-100 via-blue-50 to-indigo-100 p-4 sm:p-6 lg:p-8 rounded-lg">
                         <div className="max-w-2xl mx-auto">
                               <div className="text-center mb-8">
                                     <h1 className="text-3xl font-bold text-gray-900 mb-2">Identity Profiles</h1>
@@ -406,8 +429,8 @@ export default function ClaimsWorkflowPage() {
 
                   <div className="flex flex-col gap-4">
                         {
-                              claims.filter(item => ["simple_claim", "identity_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
-                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg border-[2px] border-gray-400">
+                              claims.filter(item => ["simple_claim", "identity_claim", "ens_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
+                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg border-2 border-gray-400">
                                           {renderClaim(claim)}
                                           <Collapsible className=' bg-gray-50 p-2 rounded-lg'>
                                                 <CollapsibleTrigger className='cursor-pointer w-full p-2 border-2 border-gray-200 rounded-lg flex justify-between items-center'>
@@ -452,8 +475,8 @@ export default function ClaimsWorkflowPage() {
                               ))
                         }
                         {
-                              claims.filter(item => !["simple_claim", "identity_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
-                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg border-[2px] border-gray-400">
+                              claims.filter(item => !["simple_claim", "identity_claim", "ens_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
+                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg border-2 border-gray-400">
                                           {renderClaim(claim)}
                                           <Collapsible className='mt-4 bg-gray-50 p-2 rounded-lg'>
                                                 <CollapsibleTrigger className='cursor-pointer w-full p-2 border-2 border-gray-200 rounded-lg flex justify-between items-center'>

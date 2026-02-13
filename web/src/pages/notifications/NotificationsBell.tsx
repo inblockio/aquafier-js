@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import { Bell } from 'lucide-react'
 
 import NotificationsHolder from './NotificaitonsHolder'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { INotification } from '../../types/index'
 import appStore from '../../store'
 import { API_ENDPOINTS } from '../../utils/constants'
 import { ensureDomainUrlHasSSL } from '../../utils/functions'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover'
 import { Badge } from '../../components/ui/badge'
 import { Button } from '../../components/ui/button'
@@ -28,7 +29,8 @@ const NotificationsBell = () => {
 
             setIsLoading(true)
             try {
-                  const response = await axios.get(ensureDomainUrlHasSSL(`${backend_url}${API_ENDPOINTS.NOTIFICATIONS}`), {
+                  let url=ensureDomainUrlHasSSL(`${backend_url}${API_ENDPOINTS.NOTIFICATIONS}`)
+                  const response = await apiClient.get(url, {
                         headers: {
                               nonce: session.nonce,
                         },
@@ -47,13 +49,14 @@ const NotificationsBell = () => {
             if (!session?.address) return
 
             try {
-                  await axios.patch(
+                  await apiClient.patch(
                         ensureDomainUrlHasSSL(`${backend_url}${API_ENDPOINTS.NOTIFICATIONS_READ_ALL}`),
                         {},
                         {
                               headers: {
                                     nonce: session.nonce,
                               },
+                              reloadKeys: [RELOAD_KEYS.notifications],
                         }
                   )
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { FileText, X } from 'lucide-react'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { useStore } from 'zustand'
 import appStore from '@/store'
 import { Contract } from '@/types/types'
@@ -21,7 +21,7 @@ export function SharedContracts() {
             }
             try {
                   const url = ensureDomainUrlHasSSL(`${backend_url}/contracts`)
-                  const response = await axios.get(url, {
+                  const response = await apiClient.get(url, {
                         params: {
                               receiver: session?.address,
                               sender: session?.address,
@@ -177,7 +177,7 @@ export function SharedContracts() {
                               </div>
                         </div>
                   </div>
-            </div>
+            </div> 
       )
 }
 

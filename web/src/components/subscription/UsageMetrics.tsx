@@ -51,7 +51,7 @@ export default function UsageMetrics() {
     },
     {
       icon: File,
-      label: 'Contracts',
+      label: 'Aqua Sign Contracts',
       used: usage?.contracts_count || 0,
       limit: limits?.max_contracts || 0,
       unit: '',

@@ -5,6 +5,7 @@ import { useStore } from 'zustand'
 import { SummaryDetailsDisplayData, WorkFlowTimeLine } from '../../types/types'
 import {
       convertTemplateNameToTitle,
+      ensureDomainUrlHasSSL,
       getFileName,
       getHighestFormIndex,
       isAquaTree,
@@ -20,17 +21,24 @@ import { HiDocumentText } from 'react-icons/hi'
 import { FaCircleInfo } from 'react-icons/fa6'
 import { Check } from 'lucide-react'
 import { toast } from 'sonner'
+import { API_ENDPOINTS } from '@/utils/constants'
+import apiClient from '@/api/axiosInstance'
+import { ApiFileInfo } from '@/models/FileInfo'
+
 
 export default function PdfWorkflowPage() {
       const [activeStep, setActiveStep] = useState(1)
       const [timeLineTitle, setTimeLineTitle] = useState('')
       const [error, _setError] = useState('')
       const [timeLineItems, setTimeLineItems] = useState<Array<WorkFlowTimeLine>>([])
-      const { selectedFileInfo, setSelectedFileInfo } = useStore(appStore)
+      const { selectedFileInfo, setSelectedFileInfo, backend_url, session } = useStore(appStore)
+      const [selectedFileInfoLocal, setSelectedFileInfoLocal] = useState<ApiFileInfo | null>(null)
+      const [errorMessage, setErrorMessage] = useState<string | null>(null)
+      const [loadingFromApiSelectedFileInfo, setLoadingFromApiSelectedFileInfo] = useState(false)
 
       const navigate = useNavigate()
 
-      const { page } = useParams();
+      const { page, genesisHash } = useParams();
 
       const getSignatureRevionHashes = (hashesToLoopPar: Array<string>): Array<SummaryDetailsDisplayData> => {
             const signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
@@ -45,9 +53,9 @@ export default function PdfWorkflowPage() {
                   let walletAddress = ''
 
                   if (hashSigPosition.length > 0) {
-                        const allAquaTrees = selectedFileInfo?.fileObject.filter(e => isAquaTree(e.fileContent))
+                        const allAquaTrees = selectedFileInfoLocal?.fileObject.filter(e => isAquaTree(e.fileContent))
 
-                        const hashSigPositionHashString = selectedFileInfo!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0]
+                        const hashSigPositionHashString = selectedFileInfoLocal!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0]
 
                         if (allAquaTrees) {
                               for (const anAquaTreeFileObject of allAquaTrees) {
@@ -67,7 +75,7 @@ export default function PdfWorkflowPage() {
                         }
                   }
 
-                  const metaMaskRevision = selectedFileInfo!.aquaTree!.revisions[hashSigMetamak]
+                  const metaMaskRevision = selectedFileInfoLocal!.aquaTree!.revisions[hashSigMetamak]
                   if (metaMaskRevision) {
                         walletAddress = metaMaskRevision.signature_wallet_address ?? ''
                   }
@@ -84,16 +92,16 @@ export default function PdfWorkflowPage() {
 
             return signatureRevionHashes
       }
- 
+
       function computeIsWorkflowCOmplete(): boolean {
-            if (selectedFileInfo) {
-                  const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
+            if (selectedFileInfoLocal) {
+                  const orderedTree = OrderRevisionInAquaTree(selectedFileInfoLocal!.aquaTree!)
 
                   const revisions = orderedTree.revisions
                   const revisionHashes = Object.keys(revisions)
 
                   const firstHash: string = revisionHashes[0]
-                  const firstRevision: Revision = selectedFileInfo!.aquaTree!.revisions[firstHash]
+                  const firstRevision: Revision = selectedFileInfoLocal!.aquaTree!.revisions[firstHash]
 
                   const signers: string[] = firstRevision?.forms_signers.split(',')
 
@@ -128,7 +136,7 @@ export default function PdfWorkflowPage() {
       function loadTimeline() {
             const items: Array<WorkFlowTimeLine> = []
 
-            if (!selectedFileInfo) {
+            if (!selectedFileInfoLocal) {
                   return items
             }
 
@@ -137,7 +145,7 @@ export default function PdfWorkflowPage() {
                   completed: true,
                   content: (
                         <ContractSummaryView
-                              selectedFileInfo={selectedFileInfo}
+                              selectedFileInfo={selectedFileInfoLocal}
                               setActiveStep={(index: number) => {
                                     setActiveStep(index)
                               }}
@@ -154,7 +162,7 @@ export default function PdfWorkflowPage() {
                   completed: computeIsWorkflowCOmplete(),
                   content: (
                         <ContractDocumentView
-                              selectedFileInfo={selectedFileInfo}
+                              selectedFileInfo={selectedFileInfoLocal}
                               setActiveStep={(index: number) => {
                                     setActiveStep(index)
                               }}
@@ -170,8 +178,8 @@ export default function PdfWorkflowPage() {
       }
 
       const loadData = () => {
-            if (selectedFileInfo) {
-                  const workflowName = getFileName(selectedFileInfo.aquaTree!)
+            if (selectedFileInfoLocal) {
+                  const workflowName = getFileName(selectedFileInfoLocal.aquaTree!)
 
                   setTimeLineTitle(convertTemplateNameToTitle(workflowName))
 
@@ -193,6 +201,61 @@ export default function PdfWorkflowPage() {
 
 
       useEffect(() => {
+            if (selectedFileInfoLocal == null && genesisHash == undefined) {
+
+                  setErrorMessage("No file selected and no genesis hash provided.")
+                  return
+            }
+
+            if (selectedFileInfoLocal == null) {
+
+
+                  // Fetch the file info from the API using the genesisHash
+
+
+                  const fetchSelectedFileInfo = async () => {
+                        const targetHash = genesisHash!;
+                        setLoadingFromApiSelectedFileInfo(true)
+                        try {
+                              const url = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`)
+                              const res = await apiClient.post(url, {
+                                    revisionHashes: [targetHash]
+                              }, {
+                                    headers: {
+                                          'Content-Type': 'application/json',
+                                          nonce: session?.nonce,
+                                    },
+                              })
+
+                              let fileInfoFromApi: ApiFileInfo = res.data.data;
+                              // if (files.length === 0) {
+                              //       setErrorMessage("No file found for the provided genesis hash.")
+                              //       setLoadingFromApiSelectedFileInfo(false)
+                              //       return
+                              // }
+                              // const fileInfoFromApi: ApiFileInfo = files[0];
+                              setSelectedFileInfoLocal(fileInfoFromApi)
+                              setSelectedFileInfo(fileInfoFromApi)
+                        } catch (error) {
+                              console.error("Error fetching file info from API:", error)
+                              setErrorMessage("Error fetching file info from server.")
+                        } finally {
+                              setLoadingFromApiSelectedFileInfo(false)
+                        }
+                  }
+                  fetchSelectedFileInfo()
+            }else {
+                  setSelectedFileInfoLocal(selectedFileInfo)
+            }
+      }, [])
+
+      useEffect(() => {
+            if(selectedFileInfo){
+                  setSelectedFileInfoLocal(selectedFileInfo)
+            }
+      }, [JSON.stringify(selectedFileInfo)])
+
+      useEffect(() => {
             if (page && timeLineItems.length > 0) {
                   updateStepOnPageParam()
             }
@@ -200,7 +263,7 @@ export default function PdfWorkflowPage() {
 
       useEffect(() => {
             loadData()
-      }, [JSON.stringify(selectedFileInfo)])
+      }, [JSON.stringify(selectedFileInfoLocal)])
 
       // Find the currently active content
       const activeContent = () => {
@@ -218,6 +281,7 @@ export default function PdfWorkflowPage() {
                                           <Button
                                                 variant="outline"
                                                 onClick={() => {
+                                                      setSelectedFileInfoLocal(null)
                                                       setSelectedFileInfo(null)
                                                       navigate('/app', { replace: true })
                                                 }}
@@ -315,13 +379,40 @@ export default function PdfWorkflowPage() {
                         </Alert>
                   )
             }
-            if (selectedFileInfo == null) {
+            if (loadingFromApiSelectedFileInfo) {
+                  return (
+                        <div className="flex justify-center items-center h-64">
+                              <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+                        </div>
+                  )
+            }
+            // if (selectedFileInfoLocal == null) {
+            //       return (
+            //             <Alert variant="destructive">
+            //                   <AlertDescription>Selected file not found</AlertDescription>
+            //             </Alert>
+            //       )
+            // }
+
+            if (errorMessage) {
                   return (
                         <Alert variant="destructive">
-                              <AlertDescription>Selected file not found</AlertDescription>
+                              <AlertDescription>{errorMessage}</AlertDescription>
                         </Alert>
                   )
             }
+
+          
+            if (selectedFileInfoLocal == null) {
+                        return (
+                              <Alert variant="destructive">
+                                    <AlertDescription>Selected File not found.</AlertDescription>
+                              </Alert>
+                        )
+                  }           
+            
+
+            
 
             return aquaTreeTimeLine()
       }

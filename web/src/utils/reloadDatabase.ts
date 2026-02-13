@@ -90,6 +90,8 @@ export const RELOAD_KEYS = {
     identity_card: "identity_card",
     ens_claim: "ens_claim",
     aqua_certificate: "aqua_certificate",
+    aquafier_licence: "aquafier_licence",
+    reload_aqua_sign: "reload_aqua_sign"
 };
 
 /**

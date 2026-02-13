@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import apiClient from '@/api/axiosInstance'
 import { useStore } from 'zustand';
 import appStore from '@/store';
 import { ensureDomainUrlHasSSL } from '@/utils/functions';
@@ -113,7 +113,7 @@ const AdminEntityList = () => {
         
         setLoading(true);
         try {
-            const res = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/admin/data/${type}`), {
+            const res = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/admin/data/${type}`), {
                 headers: { 'nonce': session.nonce },
                 params: { page, limit: pagination.limit }
             });

@@ -4,22 +4,22 @@
 echo "Starting PostgreSQL command line interface..."
 sudo -u postgres psql -d postgres <<EOF
 
-CREATE DATABASE aquafier_js1;
-CREATE USER aquafier_js1 WITH ENCRYPTED PASSWORD 'aquafier_js1' CREATEDB;
-GRANT ALL PRIVILEGES ON DATABASE aquafier_js1 TO aquafier_js1;
+CREATE DATABASE aquafier_js;
+CREATE USER aquafier_js WITH ENCRYPTED PASSWORD 'aquafier_js' CREATEDB;
+GRANT ALL PRIVILEGES ON DATABASE aquafier_js TO aquafier_js;
 
--- Connect to the aquafier_js1 database to grant schema permissions
-\c aquafier_js1
+-- Connect to the aquafier_js database to grant schema permissions
+\c aquafier_js
 
 -- Grant schema-level permissions
-GRANT ALL ON SCHEMA public TO aquafier_js1;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO aquafier_js1;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO aquafier_js1;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO aquafier_js1;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO aquafier_js1;
+GRANT ALL ON SCHEMA public TO aquafier_js;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO aquafier_js;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO aquafier_js;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO aquafier_js;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO aquafier_js;
 
 -- Optional: superuser privileges if needed
--- ALTER USER aquafier_js1 WITH SUPERUSER;
+-- ALTER USER aquafier_js WITH SUPERUSER;
 EOF
 
 # Exit PostgreSQL command line interface

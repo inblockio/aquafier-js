@@ -1,5 +1,5 @@
 import  { useEffect, useState } from 'react';
-import axios from 'axios';
+import apiClient from '@/api/axiosInstance'
 import { useStore } from 'zustand';
 import appStore from '@/store';
 import { 
@@ -65,8 +65,8 @@ const Dashboard = () => {
             let url1 = ensureDomainUrlHasSSL(`${backend_url}/metrics`)
             let url2 = ensureDomainUrlHasSSL(`${backend_url}/metrics/range?startDate=${new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()}`)
             const [metricsRes, advancedRes] = await Promise.all([
-                axios.get(url1, { headers }),
-                axios.get(url2, { headers })
+                apiClient.get(url1, { headers }),
+                apiClient.get(url2, { headers })
             ]);
 
             setMetrics(metricsRes.data.data);

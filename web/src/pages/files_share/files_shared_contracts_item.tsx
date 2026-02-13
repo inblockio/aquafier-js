@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { CircleCheckBigIcon, Hash, Users, Wallet } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { useStore } from 'zustand'
 import appStore from '@/store'
 import { arraysEqualIgnoreOrder, ensureDomainUrlHasSSL, formatCryptoAddress, getGenesisHash, timeToHumanFriendly } from '@/utils/functions'
@@ -16,7 +16,7 @@ import { toast } from 'sonner'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { ImportAquaChainFromChain } from '@/components/dropzone_file_actions/import_aqua_tree_from_aqua_tree'
 import { API_ENDPOINTS, SYSTEM_WALLET_ADDRESS } from '@/utils/constants'
-
+  
 
 export const SharedContract = ({ type, contract, index, contractDeleted }: { type: 'outgoing' | 'incoming', contract: Contract; index: number; contractDeleted: (hash: string) => void }) => {
       const navigate = useNavigate()
@@ -56,7 +56,7 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
       async function deleteContract() {
             setLoading(true)
             try {
-                  const response = await axios.delete(ensureDomainUrlHasSSL(`${backend_url}/contracts/${contract.hash}`), {
+                  const response = await apiClient.delete(ensureDomainUrlHasSSL(`${backend_url}/contracts/${contract.hash}`), {
                         headers: {
                               nonce: session?.nonce,
                         }
@@ -79,7 +79,7 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
             try {
                   setLoadingSharedFileData(true)
                   const url = ensureDomainUrlHasSSL(`${backend_url}/share_data/${contract.hash}`)
-                  const response = await axios.get(url, {
+                  const response = await apiClient.get(url, {
                         headers: {
                               'Content-Type': 'application/x-www-form-urlencoded',
                               nonce: session?.nonce ?? '',
@@ -102,7 +102,7 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
                               // fetch my aqaua tree using gen hash
 
                               const url = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`)
-                              const res = await axios.post(url, {
+                              const res = await apiClient.post(url, {
                                     revisionHashes: [contractFileGenHash]
                               }, {
                                     headers: {

@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
+import apiClient from '@/api/axiosInstance'
 
 export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }: IDropzoneAction) => {
     const aquafier = new Aquafier()
@@ -50,23 +51,18 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }:
 
         setUploading(true)
         try {
-            const url = `${backend_url}/explorer_aqua_file_upload`
-            await fetch(url, {
-                method: 'POST',
-                body: formData,
+            const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_aqua_file_upload`)
+            await apiClient.post(url, formData, {
                 headers: {
                     nonce: session?.nonce || '',
                 },
+                reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
             })
 
             setUploading(false)
             setSelectedFileName('')
             toast.success('File uploaded successfully')
             removeFilesListForUpload(filesWrapper)
-
-            // Trigger reload for all files and stats
-            await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
-            await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
 
             return
         } catch (error) {
@@ -96,14 +92,14 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }:
         const genRevision = aquaTree.revisions[genHash!]
         const actualUrlToFetch = ensureDomainUrlHasSSL(backend_url)
 
-        const response = await fetch(`${actualUrlToFetch}/files/${genRevision.file_hash}`, {
-            method: 'GET',
+        const response = await apiClient.get(`${actualUrlToFetch}/files/${genRevision.file_hash}`, {
             headers: {
                 Nonce: session?.nonce ?? '--error--',
             },
+            validateStatus: (status) => status < 500,
         })
 
-        if (!response.ok) {
+        if (response.status !== 200) {
             setExpectedFile({
                 displayText: `please upload ${aquaTree.file_index[genHash]}`,
                 exectedFileHash: genRevision.file_hash!,
@@ -161,14 +157,15 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }:
             const fileHash = findFileRevision(aquaTree)
             const actualUrlToFetch = ensureDomainUrlHasSSL(backend_url)
 
-            const response = await fetch(`${actualUrlToFetch}/files/${fileHash}`, {
-                method: 'GET',
+            const response = await apiClient.get(`${actualUrlToFetch}/files/${fileHash}`, {
                 headers: {
                     Nonce: session?.nonce ?? '--error--',
                 },
+                validateStatus: (status) => status < 500,
+                responseType: 'blob',
             })
 
-            if (!response.ok) {
+            if (response.status !== 200) {
                 if (fileHash) {
                     setRequiredFileHash(fileHash)
                     setIsOpen(true)
@@ -180,7 +177,7 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }:
                 }
             }
 
-            const blob: Blob = await response.blob()
+            const blob: Blob = response.data
             const fileName = getFileName(aquaTree)
             const arrayBuffer = await blob.arrayBuffer()
             const uint8Array = new Uint8Array(arrayBuffer)

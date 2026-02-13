@@ -21,6 +21,7 @@ import {
 } from '../utils/revisions_utils';
 import { getHost, getPort } from '../utils/api_utils';
 import { DeleteRevision } from '../models/request_models';
+import { usageService } from '../services/usageService';
 import { getGenesisHash, removeFilePathFromFileIndex, saveFileAndCreateOrUpdateFileIndex, validateAquaTree } from '../utils/aqua_tree_utils';
 // import { systemTemplateHashes } from '../models/constants';
 import { dummyCredential, getServerWalletInformation, saveAttestationFileAndAquaTree } from '../utils/server_utils';
@@ -35,7 +36,7 @@ import { systemTemplateHashes } from '../models/constants';
 
 /**
  * Registers Explorer-related HTTP routes on the provided Fastify instance.
- *
+ * 
  * This controller attaches endpoints for importing, uploading, listing, deleting,
  * transferring, and merging AquaTree revisions and their associated files. Routes
  * include nonce-based authentication, multipart handling, ZIP and file processing,
@@ -104,6 +105,9 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
             let aquaJson = JSON.parse(aquaJsonContent);
+            if(!aquaJson.type){
+                aquaJson.type = "aqua_file_backup"
+            }
 
             if (aquaJson.type !== "aqua_workspace_backup" && aquaJson.type !== "aqua_file_backup") {
                 return reply.code(400).send({ error: 'Invalid aqua.json type' });
@@ -113,7 +117,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             if (aquaJson.type !== "aqua_file_backup") {
                 return reply.code(400).send({ error: 'Invalid aqua.json type for workspace upload' });
             }
-
+   
             // Process aqua.json metadata first
             await processAquaMetadata(zipData, session.address);
 
@@ -464,6 +468,10 @@ export default async function explorerController(fastify: FastifyInstance) {
                     Logger.error(`Attestation Error ${e}`);
                 }
             }
+
+            usageService.recalculateUserUsage(walletAddress).catch(err =>
+                Logger.error('Failed to recalculate usage after aqua file upload:', err)
+            );
 
             return reply.code(200).send({
                 success: true,
@@ -917,6 +925,10 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             }
 
+            usageService.recalculateUserUsage(session.address).catch(err =>
+                Logger.error('Failed to recalculate usage after file upload:', err)
+            );
+
             // Return success response
             return reply.code(200).send({
                 aquaTree: resData,
@@ -954,6 +966,12 @@ export default async function explorerController(fastify: FastifyInstance) {
         }
 
         let response = await deleteAquaTreeFromSystem(session.address, revisionDataPar.revisionHash)
+
+        if (response[0] === 200) {
+            usageService.recalculateUserUsage(session.address).catch(err =>
+                Logger.error('Failed to recalculate usage after file deletion:', err)
+            );
+        }
 
         return reply.code(response[0]).send({ success: response[0] == 200 ? true : false, message: response[1] });
     });
@@ -1025,7 +1043,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             // Transfer the chain to the target user (session.address)
             const transferResult = await transferRevisionChainData(
                 session.address,
-                entireChain[0],
+                entireChain[0],null, false    
             );
 
             if (!transferResult.success) {

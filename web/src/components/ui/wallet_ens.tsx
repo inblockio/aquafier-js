@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import appStore from '@/store'
 import { ensureDomainUrlHasSSL, formatCryptoAddress } from '@/utils/functions'
 import { Button } from '../ui/button'
+import apiClient from '@/api/axiosInstance'
 
 export interface WalletEnsViewData {
       walletAddress: string
@@ -22,17 +23,12 @@ export const WalletEnsView = ({ walletAddress, inline = false }: WalletEnsViewDa
             try {
                   setIsLoading(true)
                   const url = ensureDomainUrlHasSSL(`${backend_url}/user_ens/${walletAddress}`)
-                  const response = await fetch(url, {
+                  const response = await apiClient.get(url, {
                         headers: { Nonce: session?.nonce ?? '--error--' },
                         signal: controller.signal,
                   })
 
-                  if (response.ok) {
-                        const data = await response.json()
-                        setEnsName(data.success ? data.ens : walletAddress)
-                  } else {
-                        setEnsName(walletAddress)
-                  }
+                  setEnsName(response.data.success ? response.data.ens : walletAddress)
             } catch (e) {
                   if ((e as Error).name !== 'AbortError') {
                         console.error(`Error fetching ENS: ${e}`)

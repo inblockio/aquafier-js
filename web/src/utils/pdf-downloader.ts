@@ -2,6 +2,9 @@ import { degrees, PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { toast } from 'sonner';
 import { signPdfWithAquafier } from './pdf-digital-signature';
 import { Annotation, ImageAnnotation, ProfileAnnotation, TextAnnotation } from '../pages/aqua_sign_wokflow/ContractDocument/signer/types';
+import appStore from '../store';
+import { formatAddressForFilename } from './functions';
+import { ApiFileInfo } from '../models/FileInfo';
 
 /**
  * Parses a font size string (e.g., "12pt", "16px") to points.
@@ -57,27 +60,43 @@ export interface DownloadPdfOptions {
     annotations: Annotation[];
     fileName?: string;
     backupFn?: () => Promise<string | null>;
+    fileInfo?: ApiFileInfo;
 }
 
 /**
  * Sanitizes text to ensure it can be encoded in WinAnsi (standard PDF font encoding).
  * Replaces unsupported characters with '?' or removes them.
  */
-const sanitizeTextForWinAnsi = (text: string): string => {
+export const sanitizeTextForWinAnsi = (text: string): string => {
     if (!text) return "";
-    // Regex matches characters that are NOT in the WinAnsi printable range (roughly).
-    // WinAnsi supports: 
-    // - ASCII printable (32-126)
-    // - Most IS0-8859-1 chars (128-255)
-    // We'll filter out anything else for safety to avoid crash.
-    return text.replace(/[^\x20-\x7E\xA0-\xFF]/g, '?');
+    // Map common Unicode chars to their WinAnsi equivalents (these exist in WinAnsi
+    // but have Unicode codepoints outside the Latin-1 \xA0-\xFF range)
+    const winAnsiMap: Record<string, string> = {
+        '\u2022': '\xB7', // bullet • → middle dot (WinAnsi safe)
+        '\u2013': '\x96', // en dash
+        '\u2014': '\x97', // em dash
+        '\u2018': '\x91', // left single quote
+        '\u2019': '\x92', // right single quote
+        '\u201C': '\x93', // left double quote
+        '\u201D': '\x94', // right double quote
+        '\u2026': '\x85', // ellipsis
+        '\u2122': '\x99', // trademark
+    };
+    let mapped = text;
+    for (const [unicode, winAnsi] of Object.entries(winAnsiMap)) {
+        mapped = mapped.replace(unicode, winAnsi);
+    }
+    // Filter out anything not in WinAnsi printable range
+    // WinAnsi supports: ASCII printable (32-126), codes 128-159 (special chars), ISO-8859-1 (160-255)
+    return mapped.replace(/[^\x20-\x7E\x80-\xFF]/g, '?');
 };
-
+ 
 export const downloadPdfWithAnnotations = async ({
     pdfFile,
     annotations,
     fileName,
-    backupFn
+    backupFn,
+    fileInfo
 }: DownloadPdfOptions) => {
     if (!pdfFile) {
         toast.error("No PDF - Please upload or load a PDF file first.");
@@ -288,22 +307,52 @@ export const downloadPdfWithAnnotations = async ({
             let docBackupId = "";
             if (backupFn) {
                 const id = await backupFn();
-                if (id) docBackupId = id;
+                if (id) {
+                    docBackupId = id;
+                }
             }
+            console.log("Initiating digital signature with primary signer:", primarySigner);
 
             const { signedPdf, signatureInfo } = await signPdfWithAquafier(
                 pdfBytes,
                 primarySigner.name,
                 primarySigner.walletAddress,
                 additionalSigners,
-                docBackupId
+                docBackupId,
+                fileInfo
             );
 
+            // Update selectedFileInfo with the signed PDF blob and metadata
+            const { selectedFileInfo, setSelectedFileInfo } = appStore.getState();
+            if (selectedFileInfo) {
+                // Create a File object from the signed PDF
+                const signedPdfFile = new File(
+                    [signedPdf as any],
+                    fileName || (pdfFile.name ? `${pdfFile.name.replace('.pdf', '')}_signed.pdf` : 'signed_document.pdf'),
+                    { type: 'application/pdf' }
+                );
+
+                // Update the selectedFileInfo with the signed PDF
+                setSelectedFileInfo({
+                    ...selectedFileInfo,
+                    signedPdfBlob: signedPdfFile,
+                    signatureInfo: signatureInfo,
+                    lastSignedAt: new Date().toISOString(),
+                });
+            }
+
             // Download the digitally signed PDF
-            const blob = new Blob([signedPdf as BlobPart], { type: 'application/pdf' });
+            const blob = new Blob([signedPdf as any], { type: 'application/pdf' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = fileName || (pdfFile.name ? `${pdfFile.name.replace('.pdf', '')}_signed.pdf` : 'signed_document.pdf');
+            const addressSuffix = formatAddressForFilename(appStore.getState().session?.address);
+            let downloadName = fileName || (pdfFile.name ? `${pdfFile.name.replace('.pdf', '')}_signed.pdf` : 'signed_document.pdf');
+            if (downloadName.toLowerCase().endsWith('.pdf')) {
+                downloadName = downloadName.slice(0, -4) + addressSuffix + '.pdf';
+            } else {
+                downloadName = downloadName + addressSuffix;
+            }
+            link.download = downloadName;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -316,14 +365,21 @@ export const downloadPdfWithAnnotations = async ({
 
             message += `via ${signatureInfo.platform}`;
             toast.success("Download Started - " + message);
-        
+
         } catch (signError) {
             console.warn("Digital signature failed, downloading without signature:", signError);
             // Fallback: download without digital signature
-            const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
+            const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = fileName || (pdfFile.name ? `${pdfFile.name.replace('.pdf', '')}_signed.pdf` : 'document_signed.pdf');
+            const addressSuffix = formatAddressForFilename(appStore.getState().session?.address);
+            let downloadName = fileName || (pdfFile.name ? `${pdfFile.name.replace('.pdf', '')}_signed.pdf` : 'document_signed.pdf');
+            if (downloadName.toLowerCase().endsWith('.pdf')) {
+                downloadName = downloadName.slice(0, -4) + addressSuffix + '.pdf';
+            } else {
+                downloadName = downloadName + addressSuffix;
+            }
+            link.download = downloadName;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

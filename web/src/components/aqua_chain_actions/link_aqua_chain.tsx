@@ -4,13 +4,13 @@ import {
       ensureDomainUrlHasSSL,
       fetchFiles,
       getAquaTreeFileObject,
-      getGenesisHash,
+      getGenesisHash
 } from '../../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../../store'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { ApiFileInfo } from '../../models/FileInfo'
-import Aquafier, { AquaTreeWrapper, FileObject } from 'aqua-js-sdk'
+import Aquafier, { AquaTreeWrapper, FileObject, reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk'
 import { IShareButton } from '../../types/types'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { AlertCircle, Link as LinkIcon, Loader2 } from 'lucide-react'
@@ -20,8 +20,8 @@ import { toast } from 'sonner'
 import FilesList from '@/pages/files/files_list'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 
-export const LinkButton = ({ item, nonce, index }: IShareButton) => {
-      const { backend_url, setFiles,  session } = useStore(appStore)
+export const LinkButton = ({ item, nonce, index, children }: IShareButton) => {
+      const { backend_url, setFiles, session } = useStore(appStore)
       const [isOpen, setIsOpen] = useState(false)
       const [linking, setLinking] = useState(false)
       const [primaryFileObject, setPrimaryFileObject] = useState<FileObject | null | "loading">("loading")
@@ -73,7 +73,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                   for (let i = 0; i < linkItems.length; i++) {
                         let currentItem = linkItems[i]
                         const linkAquaTreeWrapper: AquaTreeWrapper = {
-                              aquaTree: currentItem.aquaTree!,
+                              aquaTree: reorderAquaTreeRevisionsProperties(currentItem.aquaTree!),
                               revision: '',
                               fileObject: primaryFileObject,
                         }
@@ -94,12 +94,12 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                         // send to server
                         const url = ensureDomainUrlHasSSL(`${backend_url}/tree`)
 
-                        await axios.post(
+                        await apiClient.post(
                               url,
                               {
                                     revision: lastRevision,
                                     revisionHash: lastHash,
-                                    orginAddress: session?.address,
+                                    originAddress: session?.address,
                               },
                               {
                                     headers: {
@@ -137,29 +137,47 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
             }
       }
 
-
       return (
             <>
                   {/* Link Button */}
-                  <button
-                        data-testid={'link-action-button-' + index}
-                        onClick={() => {
-                              if (primaryFileObject !== null && primaryFileObject !== "loading") {
-                                    setIsOpen(true)
-                              } else if (primaryFileObject === "loading") {
-                                    toast.error("File is still loading, please wait a moment and try again")
-                              } else {
-                                    toast.error("Error loading file, please refresh the page and try again")
-                              }
-                        }}
-                        className="flex items-center space-x-1 bg-yellow-100 text-yellow-700 px-3 py-2 rounded hover:bg-yellow-200 transition-colors text-xs w-full justify-center"
-                  >
-                        <LuLink2 className="w-4 h-4" />
-                        <span>Link</span>
-                  </button>
+                  {
+                        children ? (
+                              <div onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    if (primaryFileObject !== null && primaryFileObject !== "loading") {
+                                          setIsOpen(true)
+                                    } else if (primaryFileObject === "loading") {
+                                          toast.error("File is still loading, please wait a moment and try again")
+                                    } else {
+                                          toast.error("Error loading file, please refresh the page and try again")
+                                    }
+                              }}>
+                                    {children}
+                              </div>
+                        ) : (
+                              <button
+                                    data-testid={'link-action-button-' + index}
+                                    onClick={() => {
+                                          if (primaryFileObject !== null && primaryFileObject !== "loading") {
+                                                setIsOpen(true)
+                                          } else if (primaryFileObject === "loading") {
+                                                toast.error("File is still loading, please wait a moment and try again")
+                                          } else {
+                                                toast.error("Error loading file, please refresh the page and try again")
+                                          }
+                                    }}
+                                    className="flex items-center space-x-1 bg-yellow-100 text-yellow-700 px-3 py-2 rounded hover:bg-yellow-200 transition-colors text-xs w-full justify-center"
+                              >
+                                    <LuLink2 className="w-4 h-4" />
+                                    <span>Link</span>
+                              </button>
 
+                        )
+                  }
+                  
                   <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                        <DialogContent className="[&>button]:hidden sm:!max-w-[85vw] sm:!w-[85vw] sm:h-[85vh] sm:max-h-[85vh] !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-0 gap-0">
+                        <DialogContent className="[&>button]:hidden sm:max-w-[85vw]! sm:w-[85vw]! sm:h-[85vh] sm:max-h-[85vh] max-w-[95vw]! w-[95vw]! h-[95vh] max-h-[95vh] flex flex-col p-0 gap-0">
                               <DialogHeader className="px-6 py-4 border-b border-gray-200">
                                     <DialogTitle>
                                           <div className="flex items-center space-x-3">
@@ -180,54 +198,54 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
 
                               <div className="flex-1 px-6 py-4 space-y-6 overflow-auto">
                                     <div className="space-y-6 flex flex-col flex-1">
-                                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                                      <div className="flex items-start space-x-3">
-                                                            <div className="p-1 bg-blue-100 rounded">
-                                                                  <AlertCircle className="h-4 w-4 text-blue-600" />
-                                                            </div>
-                                                            <div className="flex-1">
-                                                                  <h5 className="font-medium text-blue-900 text-sm">Important Note</h5>
-                                                                  <p className="text-sm text-blue-700 mt-1">
-                                                                        Once a file is linked, don't delete it otherwise it will be broken if one tries to use the Aqua tree.
-                                                                  </p>
-                                                            </div>
+                                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                                <div className="flex items-start space-x-3">
+                                                      <div className="p-1 bg-blue-100 rounded">
+                                                            <AlertCircle className="h-4 w-4 text-blue-600" />
+                                                      </div>
+                                                      <div className="flex-1">
+                                                            <h5 className="font-medium text-blue-900 text-sm">Important Note</h5>
+                                                            <p className="text-sm text-blue-700 mt-1">
+                                                                  Once a file is linked, don't delete it otherwise it will be broken if one tries to use the Aqua tree.
+                                                            </p>
                                                       </div>
                                                 </div>
-
-                                                <div className="flex flex-col flex-1">
-                                                      <h5 className="text-sm font-semibold text-gray-900 mb-4">
-                                                            Select the file you want to link to:
-                                                      </h5>
-
-                                                      {/* File List */}
-                                                      <div className="overflow-hidden flex-1 px-2">
-
-                                                            <FilesList
-                                                                  showFileActions={false}
-                                                                  selectedFiles={linkItems} 
-                                                                  activeFile={item}
-                                                                  showCheckbox={true}
-                                                                  showHeader={true}
-                                                                  onFileDeSelected={(file) => {
-                                                                        let newData = linkItems.filter((f: ApiFileInfo) => getGenesisHash(f.aquaTree!) !== getGenesisHash(file.aquaTree!));
-                                                                        setLinkItems(newData)
-                                                                  }} onFileSelected={(file) => {
-                                                                        setLinkItems([...linkItems, file])
-                                                                  }}
-                                                            />
-                                                      </div>
-                                                </div>
-
-                                                {/* Loading State */}
-                                                {linking && (
-                                                      <div className="flex justify-center items-center py-8">
-                                                            <div className="flex flex-col items-center space-y-3">
-                                                                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                                                                  <span className="text-sm text-gray-600 font-medium">Linking files...</span>
-                                                            </div>
-                                                      </div>
-                                                )}
                                           </div>
+
+                                          <div className="flex flex-col flex-1">
+                                                <h5 className="text-sm font-semibold text-gray-900 mb-4">
+                                                      Select the file you want to link to:
+                                                </h5>
+
+                                                {/* File List */}
+                                                <div className="overflow-hidden flex-1 px-2">
+
+                                                      <FilesList
+                                                            showFileActions={false}
+                                                            selectedFiles={linkItems}
+                                                            activeFile={item}
+                                                            showCheckbox={true}
+                                                            showHeader={true}
+                                                            onFileDeSelected={(file) => {
+                                                                  let newData = linkItems.filter((f: ApiFileInfo) => getGenesisHash(f.aquaTree!) !== getGenesisHash(file.aquaTree!));
+                                                                  setLinkItems(newData)
+                                                            }} onFileSelected={(file) => {
+                                                                  setLinkItems([...linkItems, file])
+                                                            }}
+                                                      />
+                                                </div>
+                                          </div>
+
+                                          {/* Loading State */}
+                                          {linking && (
+                                                <div className="flex justify-center items-center py-8">
+                                                      <div className="flex flex-col items-center space-y-3">
+                                                            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                                                            <span className="text-sm text-gray-600 font-medium">Linking files...</span>
+                                                      </div>
+                                                </div>
+                                          )}
+                                    </div>
                               </div>
 
                               <DialogFooter className="px-6 py-4 border-t border-gray-200 bg-gray-50 shrink-0">

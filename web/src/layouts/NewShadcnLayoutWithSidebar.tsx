@@ -1,5 +1,5 @@
 import { ConnectWallet } from '../components/connect_wallet_button'
-import { ConnectWalletPage } from '../components/connect_wallet_page'
+import { ConnectWalletPage } from '../components/connect_wallet_page' 
 import { Separator } from '../components/ui/separator'
 import NotificationsBell from '../pages/notifications/NotificationsBell'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar'
@@ -119,10 +119,10 @@ export default function NewShadcnLayoutWithSidebar() {
                                                       <Crown className="w-8 h-8 text-orange-600" />
                                                 </div>
                                                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                                                      Free Pilot Version
+                                                      Free Version
                                                 </h2>
                                                 <p className="text-gray-600 leading-relaxed mb-4">
-                                                      You are using a free pilot version of the{' '}
+                                                      You are using a free version <br /> of the{' '}
 
                                                       <a href="https://aquafier.inblock.io"
                                                             target="_blank"
@@ -209,6 +209,9 @@ export default function NewShadcnLayoutWithSidebar() {
 
 
 
+                                  
+
+
 
 
                                     {openDialog?.dialogType === 'form_template_editor' && (
@@ -217,6 +220,19 @@ export default function NewShadcnLayoutWithSidebar() {
                                                       setOpenDialog(null)
                                                 }}
                                           />)}
+
+                                    {openDialog?.dialogType === 'aquafier_licence' && (
+                                          <CreateFormFromTemplate
+                                                selectedTemplate={formTemplates.find(template => template.name === 'aquafier_licence')!}
+                                                callBack={async function (): Promise<void> {
+                                                      await triggerWorkflowReload(RELOAD_KEYS.aquafier_licence, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
+                                                      await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
+                                                      setOpenDialog(null)
+                                                }}
+                                                openCreateTemplatePopUp={false}
+                                          />
+                                    )}
 
                                     {openDialog?.dialogType === 'aqua_certificate' && (
                                           <CreateFormFromTemplate
@@ -230,6 +246,10 @@ export default function NewShadcnLayoutWithSidebar() {
                                                 openCreateTemplatePopUp={false}
                                           />
                                     )}
+
+                                      
+                                      
+
 
                                     {openDialog?.dialogType === 'aqua_sign' && (
                                           <CreateFormFromTemplate

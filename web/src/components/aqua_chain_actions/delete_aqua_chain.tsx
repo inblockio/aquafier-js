@@ -2,10 +2,10 @@ import { LuDelete } from 'react-icons/lu'
 import { useEffect, useState } from 'react'
 import { RevionOperation } from '../../models/RevisionOperation'
 import { toast } from 'sonner'
-import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { ensureDomainUrlHasSSL, getGenesisHash } from '@/utils/functions'
 import { useStore } from 'zustand'
 import appStore from '@/store'
@@ -61,7 +61,7 @@ export const DeleteAquaChainDialog = ({
       )
 }
 
-const LoadLinkedFiles = ({ genesisHash }: { genesisHash: string | null }) => {
+const LoadLinkedFiles = ({ genesisHash, allRevisionHashes }: { genesisHash: string | null, allRevisionHashes: string[] }) => {
 
       const { backend_url, session } = useStore(appStore)
 
@@ -73,9 +73,10 @@ const LoadLinkedFiles = ({ genesisHash }: { genesisHash: string | null }) => {
             if (!genesisHash || !backend_url || !session) return
             setIsLoading(true)
             const url = ensureDomainUrlHasSSL(`${backend_url}${API_ENDPOINTS.LINKED_FILES}`)
-            axios.get(url, {
+            apiClient.get(url, {
                   params: {
                         genesis_hash: genesisHash,
+                        allRevisionHashes: JSON.stringify(allRevisionHashes)
                   },
                   headers: {
                         nonce: session.nonce,
@@ -152,7 +153,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                   const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!)
                   const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
                   const url = ensureDomainUrlHasSSL(`${backendUrl}/explorer_delete_file`)
-                  const response = await axios.post(
+                  const response = await apiClient.post(
                         url,
                         {
                               revisionHash: lastRevisionHash,
@@ -161,6 +162,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                               headers: {
                                     nonce: nonce,
                               },
+                              reloadKeys: [RELOAD_KEYS.all_files, RELOAD_KEYS.user_files, RELOAD_KEYS.contacts],
                         }
                   )
 
@@ -180,9 +182,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
       }
 
       const refetchAllUserFiles = () => {
-            // triggerWorkflowReload(RELOAD_KEYS.user_stats)
-            triggerWorkflowReload(RELOAD_KEYS.all_files, true)
-            triggerWorkflowReload(RELOAD_KEYS.user_files, true)
+            // Reloads are now handled by the axios interceptor via reloadKeys
       }
 
       // If used inside dropdown, use callback pattern
@@ -252,7 +252,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                                     </AlertDialogDescription>
                               </AlertDialogHeader>
                               <div>
-                                    <LoadLinkedFiles genesisHash={getGenesisHash(apiFileInfo.aquaTree!)} />
+                                    <LoadLinkedFiles allRevisionHashes={Object.keys(apiFileInfo.aquaTree?.revisions!)} genesisHash={getGenesisHash(apiFileInfo.aquaTree!)} />
                               </div>
                               <AlertDialogFooter>
                                     <Button

@@ -21,7 +21,6 @@
     "label": "Signers",
     "type": "wallet_address",
     "required": true,
-    "isArray": true,
-    "description": "Add multiple wallet addresses for document signers"
+    "isArray": true
   }
 ]

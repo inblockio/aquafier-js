@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { useStore } from 'zustand';
 import appStore from '../store';
+import { ensureDomainUrlHasSSL } from '@/utils/functions';
+import apiClient from '@/api/axiosInstance';
 
 const EnsResolverPage = () => {
   const [address, setAddress] = useState('');
@@ -31,17 +33,17 @@ const EnsResolverPage = () => {
     setEnsType(null);
 
     try {
-      const response = await fetch(`${backend_url}/resolve/${trimmedInput}?useEns=true`, {
-        method: 'GET',
+      let url = ensureDomainUrlHasSSL(`${backend_url}/resolve/${trimmedInput}?useEns=true`)
+      const response = await apiClient.get(url, {
         headers: {
           'nonce': session.nonce,
           'Content-Type': 'application/json'
         }
       });
 
-      const data = await response.json();
-      
-      if (response.ok && data.success) {
+      const data = response.data;
+
+      if (data.success) {
         setEnsName(data.result);
         setEnsType(data.type);
       } else {

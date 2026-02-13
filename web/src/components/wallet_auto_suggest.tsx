@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import appStore from '@/store';
 import { useStore } from 'zustand';
 import { cn } from '@/lib/utils';
+import { ensureDomainUrlHasSSL } from '@/utils/functions';
+import apiClient from '@/api/axiosInstance';
 
 interface WalletAutosuggestProps {
   field: {
@@ -26,7 +28,7 @@ export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
   address,
   multipleAddresses,
   setMultipleAddresses,
-  placeholder = "For autosuggest, enter any details of the contact (Wallet, Name in Identity claim, Email in Email claim, ENS name or user Alias) ...",
+  placeholder = "Add Wallet address or contact details.",//"For autosuggest, enter any details of the contact (Wallet, Name in Identity claim, Email in Email claim, ENS name or user Alias) ...",
   className = "",
   disabled = false 
 }) => {
@@ -58,17 +60,17 @@ export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
     setLoadingEns(true);
 
     try {
-      const response = await fetch(`${backend_url}/resolve/${trimmedInput}?useEns=true`, {
-        method: 'GET',
+      const url = ensureDomainUrlHasSSL(`${backend_url}/resolve/${trimmedInput}?useEns=true`)
+      const response = await apiClient.get(url, {
         headers: {
           'nonce': session.nonce,
           'Content-Type': 'application/json'
         }
       });
 
-      const data = await response.json();
+      const data = response.data;
 
-      if (response.ok && data.success) {
+      if (data.success) {
         // data.type indicates what the result is:
         // 'ens_name' means input was address, result is ENS name
         // Otherwise, input was ENS name, result is wallet address

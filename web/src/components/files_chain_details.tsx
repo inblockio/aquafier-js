@@ -11,6 +11,7 @@ import {
       isWorkFlowData
 } from '@/utils/functions'
 import Aquafier, { getAquaTreeFileName, getAquaTreeFileObject, getLatestVH, LogData, OrderRevisionInAquaTree } from 'aqua-js-sdk'
+import apiClient from '@/api/axiosInstance'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { Suspense, useCallback, useEffect, useState } from 'react'
 import { useStore } from 'zustand'
@@ -49,15 +50,15 @@ export const CompleteChainView = ({ callBack, selectedFileInfo, hideFilePreview 
 
       const fetchFileData = async (url: string): Promise<string | ArrayBuffer | null> => {
             try {
-                  const response = await fetch(ensureDomainUrlHasSSL(url), {
+                  const response = await apiClient.get(ensureDomainUrlHasSSL(url), {
                         headers: { nonce: `${session?.nonce}` },
+                        responseType: 'arraybuffer',
                   })
-                  if (!response.ok) throw new Error('Failed to fetch file')
-                  const contentType = response.headers.get('Content-Type') || ''
+                  const contentType = response.headers['content-type'] || ''
                   if (contentType.startsWith('text/') || ['application/json', 'application/xml', 'application/javascript'].includes(contentType)) {
-                        return await response.text()
+                        return new TextDecoder().decode(response.data)
                   }
-                  return await response.arrayBuffer()
+                  return response.data
             } catch (e) {
                   console.error('Error fetching file:', e)
                   return null
@@ -140,6 +141,13 @@ export const CompleteChainView = ({ callBack, selectedFileInfo, hideFilePreview 
                         })
                   } catch (e) {
                         console.error('Verification error:', e)
+                        const fallbackFileName = selectedFileInfo?.aquaTree ? getFileName(selectedFileInfo.aquaTree) : 'unknown'
+                        callBack({
+                              fileName: fallbackFileName,
+                              colorLight: '',
+                              colorDark: '',
+                              isVerificationSuccessful: false,
+                        })
                   } finally {
                         setIsProcessing(false)
                   }

@@ -2,7 +2,7 @@ import {v4 as uuidv4} from 'uuid'
 import {FormField, FormTemplate} from './types'
 import {useForm} from 'react-hook-form'
 import {useEffect, useState} from 'react'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import {useStore} from 'zustand'
 import appStore from '../../store'
 import {toast} from 'sonner'
@@ -137,7 +137,7 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
                         method = 'put'
                   }
 
-                  const response = await axios.request({
+                  const response = await apiClient.request({
                         method,
                         url,
                         data: formValues,
@@ -188,6 +188,7 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
                   type: 'text',
                   required: false,
                   is_array: false,
+                  is_editable: true,
             }
             setFormFields(prev => [...prev, field])
       }
@@ -241,7 +242,7 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
                         onSubmit={handleSubmit(handleFormSubmit, errors => {
                               console.error('Form validation errors:', errors)
                               // This function runs when validation fails
-                              toast.error('Please fix the form errors before submitting (more thatn 3 characters  and atleast one form field is required)')
+                              toast.error('Please fix the form errors before submitting (more than 3 characters  and atleast one form field is required)')
                         })}
                         className="space-y-6"
                   >

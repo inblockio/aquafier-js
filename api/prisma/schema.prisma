@@ -359,6 +359,7 @@ model VerificationAttempt {
 model DNSClaimVerification {
   id                  Int      @id @default(autoincrement())
   wallet_address      String
+  genesis_hash        String?
   domain              String
   verification_logs   Json
   verification_status String
@@ -435,6 +436,9 @@ model Subscription {
   crypto_payment_id       String?
   crypto_currency         String? // "BTC", "ETH", "USDT", etc.
   crypto_last_payment_hash String? // Last successful transaction hash
+
+  // Aquafier Licences
+  licence_genesis_hash    String?
 
   // Subscription period
   current_period_start    DateTime
@@ -574,6 +578,7 @@ enum SubscriptionStatus {
 enum PaymentMethod {
   STRIPE        // Credit/debit card via Stripe
   CRYPTO        // Cryptocurrency via NOWPayments
+  AQUAFIER      // Aquafier licence via admin dashboard
 }
 
 enum PaymentStatus {

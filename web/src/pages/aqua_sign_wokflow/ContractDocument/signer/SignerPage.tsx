@@ -11,7 +11,7 @@ import { ensureDomainUrlHasSSL } from '@/utils/functions'
 import { toast } from 'sonner'
 import { useStore } from 'zustand'
 import appStore from '@/store'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { API_ENDPOINTS } from '@/utils/constants'
 import { downloadPdfWithAnnotations } from '@/utils/pdf-downloader'
 // import { ScrollArea } from '@/components/ui/scroll-area';
@@ -50,7 +50,7 @@ interface PdfRendererProps {
       onDownload?: () => void
 }
 
-function PdfRendererComponent({
+export function PdfRendererComponent({
       pdfFile,
       annotations,
       annotationsInDocument,
@@ -70,10 +70,10 @@ function PdfRendererComponent({
       const handleDownload = () => {
             if (onDownload) {
                   // onDownload()
-                  console.log("Download triggered from PdfRenderer");
+                  // console.log("Download triggered from PdfRenderer");
                   onDownload()
             } else {
-                  console.log("No onDownload prop provided to PdfRenderer");
+                  // console.log("No onDownload prop provided to PdfRenderer");
                   toast.error("Download function not implemented.");
             }
             // else if (pdfFile) {
@@ -147,7 +147,7 @@ function PdfRendererComponent({
 //   );
 // });
 
-export const PdfRenderer = PdfRendererComponent
+// export const PdfRenderer = PdfRendererComponent
 
 interface EasyPDFRendererProps {
       latestRevisionHash: string
@@ -175,7 +175,7 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, l
             let documentBackupID: string | null = null
             try {
                   const endpoint = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.CREATE_SERVER_ACCOUNT_BACKUP}`)
-                  const res = await axios.post(endpoint, {
+                  const res = await apiClient.post(endpoint, {
                         latestRevisionHash: latestRevisionHash,
                   }, {
                         headers: {
@@ -224,7 +224,7 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, l
       };
 
       return (
-            <PdfRenderer
+            <PdfRendererComponent
                   pdfFile={pdfFile}
                   annotations={mappedAnnotations}
                   annotationsInDocument={annotationsInDocument}
@@ -361,7 +361,8 @@ export default function SignerPage({
                   // or just let the utility handle the signing without a fresh backup if that's the intent.
                   // Looking at old code: using `documentId` directly. 
                   // Ideally we pass a wrapper that returns documentId.
-                  backupFn: async () => documentId ?? null
+                  backupFn: async () => documentId ?? null,
+                  // fileInfo: fil
             });
 
             /* 
@@ -648,7 +649,7 @@ export default function SignerPage({
                               <div className="bg-gray-100 col-span-12 md:col-span-9 overflow-x-auto overflow-y-scroll h-full">
                                     <div className="h-auto md:h-full p-0 m-0">
 
-                                          <PdfRenderer
+                                          <PdfRendererComponent
                                                 pdfFile={pdfFile}
                                                 annotations={annotations}
                                                 annotationsInDocument={annotationsInDocument}

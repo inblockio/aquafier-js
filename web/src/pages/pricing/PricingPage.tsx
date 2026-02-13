@@ -200,15 +200,15 @@ export default function PricingPage() {
                     <li className="flex items-start">
                       <Check className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
                       <span className="text-gray-700 dark:text-gray-300">
-                        {plan.max_contracts} Contracts
+                        {plan.max_contracts} Aqua Sign Contracts
                       </span>
                     </li>
-                    <li className="flex items-start">
+                    {/* <li className="flex items-start">
                       <Check className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
                       <span className="text-gray-700 dark:text-gray-300">
                         {plan.max_templates} Templates
                       </span>
-                    </li>
+                    </li> */}
                     {plan.features.file_versioning && (
                       <li className="flex items-start">
                         <Check className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />

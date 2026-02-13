@@ -1,21 +1,21 @@
-import {ensureDomainUrlHasSSL, getGenesisHash} from '../../utils/functions'
-import {useStore} from 'zustand'
+import { ensureDomainUrlHasSSL, getGenesisHash } from '../../utils/functions'
+import { useStore } from 'zustand'
 import appStore from '../../store'
-import {ApiFileInfo} from '../../models/FileInfo'
-import {toast} from 'sonner'
-import {Album} from 'lucide-react'
-import {Revision} from 'aqua-js-sdk'
-import {Button} from '../ui/button'
-import axios from 'axios'
+import { ApiFileInfo } from '../../models/FileInfo'
+import { toast } from 'sonner'
+import { Album } from 'lucide-react'
+import { Revision } from 'aqua-js-sdk'
+import { Button } from '../ui/button'
+import apiClient from '@/api/axiosInstance'
 import { API_ENDPOINTS } from '@/utils/constants'
 
 export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; index: number; children?: React.ReactNode }) => {
-      const { session, openDialog, setOpenDialog, setSelectedFileInfo , backend_url} = useStore(appStore)
+      const { session, openDialog, setOpenDialog, setSelectedFileInfo, backend_url } = useStore(appStore)
       // const [isAttesting, setIsAttesting] = useState(false)
       // const [open, setOpen] = useState(false)
       // const [isLoading, setIsloading] = useState(false)
       // const [aquaTreesAffected, setAquaTreesAffected] = useState<ApiFileInfo[]>([])
- 
+
       const allHashes = Object.keys(file.aquaTree!.revisions!)
       let secondRevision: Revision | null = null
       if (allHashes.length >= 2) {
@@ -24,23 +24,32 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
 
       const attestAquaClaimAction = async () => {
 
-          const toastId =   toast.info('Checking for existing attestations...')
 
-
-            let endpoint  = API_ENDPOINTS.GET_PER_TYPE
-            const params = {
-                page: 1,
-                limit:  10_000,//Number.MIN_SAFE_INTEGER,
-                claim_types: JSON.stringify(['identity_attestation']),
-                // filter_by: "date",//
-                // wallet_address: session?.address
+            const genesisHash = getGenesisHash(file.aquaTree!)
+            const genesisRevision = file.aquaTree?.revisions[genesisHash!]
+            const creatorWalletAddress = genesisRevision?.forms_creator || genesisRevision?.forms_wallet_address
+            if (creatorWalletAddress?.toLocaleLowerCase() === session?.address?.toLocaleLowerCase()) {
+                  toast.warning("You cannot attest yourself. Kindly share to another user for attestation")
+                  return
             }
-            const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${endpoint}`), {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'nonce': `${session!.nonce}`
-                },
-                params
+
+
+            const toastId = toast.info('Checking for existing attestations...')
+
+            let endpoint = API_ENDPOINTS.GET_PER_TYPE
+            const params = {
+                  page: 1,
+                  limit: 10_000,//Number.MIN_SAFE_INTEGER,
+                  claim_types: JSON.stringify(['identity_attestation']),
+                  // filter_by: "date",//
+                  // wallet_address: session?.address
+            }
+            const filesDataQuery = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${endpoint}`), {
+                  headers: {
+                        'Content-Type': 'application/json',
+                        'nonce': `${session!.nonce}`
+                  },
+                  params
             })
             const response = filesDataQuery.data
             const aquaTrees = response.aquaTrees as ApiFileInfo[]
@@ -48,38 +57,38 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
 
             // check if already attested
             // get all aqua trees in the system
-            for (const anAquaTree of aquaTrees ) {
-                  
-                      
-                        const genHashOfFile = getGenesisHash(file.aquaTree!)
-                        const genHashOfCurrentAquatree = getGenesisHash(anAquaTree!.aquaTree!)
-                        // let orderdRevisionInAquaTree = OrderRevisionInAquaTree(anAquaTree.aquaTree!)
-                        // const genRevision: Revision = Object.values(orderdRevisionInAquaTree.revisions!)[0]
-                        const genRevision: Revision | undefined = anAquaTree.aquaTree!.revisions[genHashOfCurrentAquatree || '']
-                        if (genRevision) {
-                              const identityClaimId: string | undefined = genRevision[`forms_identity_claim_id`]
-                              const attestorWalletAddress : string | undefined = genRevision[`forms_wallet_address`]
-                              //  console.log(`identityClaimId  ${identityClaimId} genHash ${genHash} fileName ${getFileName(file.aquaTree!)}`)
-                              if (identityClaimId == genHashOfFile && attestorWalletAddress == session?.address) {
-                                    toast.dismiss(toastId); 
-                                    toast.error('This file is already attested')
-                                    return
-                              }
+            for (const anAquaTree of aquaTrees) {
 
-                              const jsonData: Record<string, any> = {}
-                              const genKeys = Object.keys(genRevision)
-                              for (const key of genKeys) {
-                                    if (key.startsWith('forms_')) {
-                                          jsonData[key] = genRevision[key]
-                                    }
+
+                  const genHashOfFile = getGenesisHash(file.aquaTree!)
+                  const genHashOfCurrentAquatree = getGenesisHash(anAquaTree!.aquaTree!)
+                  // let orderdRevisionInAquaTree = OrderRevisionInAquaTree(anAquaTree.aquaTree!)
+                  // const genRevision: Revision = Object.values(orderdRevisionInAquaTree.revisions!)[0]
+                  const genRevision: Revision | undefined = anAquaTree.aquaTree!.revisions[genHashOfCurrentAquatree || '']
+                  if (genRevision) {
+                        const identityClaimId: string | undefined = genRevision[`forms_identity_claim_id`]
+                        const attestorWalletAddress: string | undefined = genRevision[`forms_wallet_address`]
+                        //  console.log(`identityClaimId  ${identityClaimId} genHash ${genHash} fileName ${getFileName(file.aquaTree!)}`)
+                        if (identityClaimId == genHashOfFile && attestorWalletAddress == session?.address) {
+                              toast.dismiss(toastId);
+                              toast.error('This file is already attested')
+                              return
+                        }
+
+                        const jsonData: Record<string, any> = {}
+                        const genKeys = Object.keys(genRevision)
+                        for (const key of genKeys) {
+                              if (key.startsWith('forms_')) {
+                                    jsonData[key] = genRevision[key]
                               }
                         }
+                  }
 
             }
 
             setSelectedFileInfo(file)
             // Later, to dismiss this specific toast:
-toast.dismiss(toastId); 
+            toast.dismiss(toastId);
             // setOpenCreateClaimAttestationPopUp(true)
             setOpenDialog({
                   dialogType: 'identity_attestation',
@@ -100,7 +109,7 @@ toast.dismiss(toastId);
                               <Button
                                     disabled
                                     className={`w-full cursor-not-allowed flex items-center justify-center space-x-1 text-gray-600 px-3 py-2 rounded transition-colors text-xs bg-gray-200 `}
-                                    // disabled={openCreateClaimAttestationPopUp}
+                              // disabled={openCreateClaimAttestationPopUp}
                               >
                                     <Album className="w-4 h-4" />
                                     <span>Attest</span>
@@ -108,7 +117,7 @@ toast.dismiss(toastId);
                         )
                   } else {
                         return (
-                              <div className="w-[100px]">
+                              <>
                                     {children ? (
                                           <div
                                                 data-testid={'attest-in-progress-aqua-claim-button-' + index}
@@ -123,35 +132,37 @@ toast.dismiss(toastId);
                                                 {children}
                                           </div>
                                     ) : (
-                                          <button
-                                                data-testid={'attest-aqua-claim-button-' + index}
-                                               onClick={() => {
-                                                      if (openDialog && openDialog.dialogType == 'identity_attestation') {
-                                                            toast('Attesting is already in progress')
-                                                      } else {
-                                                            attestAquaClaimAction()
-                                                      }
-                                                }}
-                                                className={`w-full flex items-center justify-center space-x-1 bg-[#009c6e] text-white px-3 py-2 rounded transition-colors text-xs ${openDialog && openDialog.dialogType == 'identity_attestation' ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#7ECEB7]'}`}
+                                          <div className="w-25">
+                                                <button
+                                                      data-testid={'attest-aqua-claim-button-' + index}
+                                                      onClick={() => {
+                                                            if (openDialog && openDialog.dialogType == 'identity_attestation') {
+                                                                  toast('Attesting is already in progress')
+                                                            } else {
+                                                                  attestAquaClaimAction()
+                                                            }
+                                                      }}
+                                                      className={`w-full flex items-center justify-center space-x-1 bg-[#009c6e] text-white px-3 py-2 rounded transition-colors text-xs ${openDialog && openDialog.dialogType == 'identity_attestation' ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#7ECEB7]'}`}
                                                 // disabled={openCreateClaimAttestationPopUp}
-                                          >
-                                                {openDialog && openDialog.dialogType == 'identity_attestation' ? (
-                                                      <>
-                                                            <svg className="animate-spin h-3 w-3 mr-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                                                            </svg>
-                                                            <span>Attesting...</span>
-                                                      </>
-                                                ) : (
-                                                      <>
-                                                            <Album className="w-4 h-4" />
-                                                            <span>Attest</span>
-                                                      </>
-                                                )}
-                                          </button>
+                                                >
+                                                      {openDialog && openDialog.dialogType == 'identity_attestation' ? (
+                                                            <>
+                                                                  <svg className="animate-spin h-3 w-3 mr-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                                                  </svg>
+                                                                  <span>Attesting...</span>
+                                                            </>
+                                                      ) : (
+                                                            <>
+                                                                  <Album className="w-4 h-4" />
+                                                                  <span>Attest</span>
+                                                            </>
+                                                      )}
+                                                </button>
+                                          </div>
                                     )}
-                              </div>
+                              </>
                         )
                   }
             } else {

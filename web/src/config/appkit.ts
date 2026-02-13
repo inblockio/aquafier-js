@@ -77,6 +77,10 @@ export const appKit = createAppKit({
   projectId,
   siweConfig,
   metadata,
+  defaultAccountTypes:{
+    "eip155":"eoa"
+  },
+  themeMode: 'light',
   features: {
     email: true,
     socials: [

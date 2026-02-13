@@ -1,5 +1,4 @@
 import { HiShieldCheck } from 'react-icons/hi'
-import { formatCryptoAddress } from '@/utils/functions'
 import { Mail, Phone } from 'lucide-react'
 import CopyButton from '@/components/CopyButton'
 
@@ -9,6 +8,7 @@ interface ISimpleClaim {
 
 const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
       // Extract relevant information from claimInfo
+      console.log("claimInfo: ", claimInfo)
 
       function getClaimTitle(claimType: string) {
             if (claimType === 'simple_claim') {
@@ -16,6 +16,9 @@ const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
             } else if (claimType === 'phone_number_claim') {
                   return 'Phone Number Claim'
             } else if (claimType === 'email_claim') {
+                  return 'Email Claim'
+            }
+            else if (claimType === 'ens_claim') {
                   return 'Email Claim'
             }
             return 'Unknown Claim'
@@ -61,7 +64,8 @@ const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
             let processedValue = value
             let cssClass = {}
             if (key === 'forms_wallet_address') {
-                  processedValue = formatCryptoAddress(processedValue, 6, 4)
+                  // Disable wallet minification
+                  // processedValue = formatCryptoAddress(processedValue, 6, 4)
                   cssClass = 'font-mono'
             }
 
@@ -75,7 +79,7 @@ const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
                         <div className="flex gap-2 " style={{
                               alignItems: 'center'
                         }}>
-                              <span className={`text-sm font-medium max-w-[200px] ${cssClass}`}
+                              <span className={`text-sm font-medium max-w-50 ${cssClass}`}
                                     style={{
                                           textAlign: 'right',
                                           whiteSpace: 'normal',

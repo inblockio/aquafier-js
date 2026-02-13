@@ -12,6 +12,7 @@ import {
       DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import {
+      Album,
       Download,
       Eye,
       FileText,
@@ -27,7 +28,8 @@ import {
       ensureDomainUrlHasSSL,
       getAquaTreeFileName,
       getAquaTreeFileObject,
-      getGenesisHash} from '@/utils/functions'
+      getGenesisHash
+} from '@/utils/functions'
 import { FileObject } from 'aqua-js-sdk'
 import { DownloadAquaChain } from '../../components/aqua_chain_actions/download_aqua_chain'
 import { DeleteAquaChain, DeleteAquaChainDialog } from '../../components/aqua_chain_actions/delete_aqua_chain'
@@ -35,7 +37,7 @@ import { IAquaCertWorkflowDrawer, ICertificateAttestor, IWorkflowItem } from '@/
 import WalletAdrressClaim from '../v2_claims_workflow/WalletAdrressClaim'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { toast } from 'sonner'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { API_ENDPOINTS } from '@/utils/constants'
 import { GlobalPagination } from '@/types'
 import CustomPagination from '@/components/common/CustomPagination'
@@ -44,9 +46,12 @@ import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 import { OpenSelectedFileDetailsButton } from '@/components/aqua_chain_actions/details_button'
 import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 import AquaCertWorkflowDrawer from './AquaCertWorkflowDrawer'
+import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
+import { LuShare2 } from 'react-icons/lu'
+import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_claim'
 
 const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer }: IWorkflowItem) => {
-     
+
       const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined)
       // const [attestations, setAttestations] = useState<ApiFileInfo[]>([])
       const [attesters, setAttesters] = useState<ICertificateAttestor[]>([])
@@ -105,7 +110,7 @@ const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer
                         limit: 200,
                         claim_types: JSON.stringify(["identity_attestation"]) //default to aqua_sign if no type provided
                   }
-                  const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
+                  const filesDataQuery = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
                         headers: {
                               'Content-Type': 'application/json',
                               'nonce': `${session!.nonce}`
@@ -148,17 +153,15 @@ const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer
                   const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!)
                   const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
                   const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_delete_file`)
-                  const response = await axios.post(
+                  const response = await apiClient.post(
                         url,
                         { revisionHash: lastRevisionHash },
-                        { headers: { nonce: session?.nonce } }
+                        { headers: { nonce: session?.nonce }, reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files, RELOAD_KEYS.aqua_certificate, RELOAD_KEYS.contacts] }
                   )
 
                   if (response.status === 200) {
                         setDeleteDialogOpen(false)
                         toast.success('File deleted successfully')
-                        // Trigger reload - you may need to add this reload logic
-                        window.location.reload()
                   }
             } catch (e) {
                   toast.error('File deletion error')
@@ -178,10 +181,13 @@ const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer
             <>
                   <TableRow key={`${workflowName}-${index}`} className="hover:bg-muted/50 h-fit cursor-pointer" onClick={e => {
                         e.preventDefault()
+                        //todo fix me
                         // setSelectedFileInfo(apiFileInfo)
                         // navigate('/app/pdf/workflow')
                   }}>
-                        <TableCell className="font-medium w-75 max-w-75 min-w-75">
+                        <TableCell className="font-medium w-75 max-w-75 min-w-75" onClick={() => {
+                              openDrawer && openDrawer(apiFileInfo, attesters)
+                        }}>
                               <div className='space-y-1'>
                                     <div className="w-full flex items-center gap-3">
                                           <div className="shrink-0">
@@ -203,14 +209,18 @@ const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer
                                     </div>
                               </div>
                         </TableCell>
-                        <TableCell className="w-50">
+                        <TableCell className="w-50" onClick={() => {
+                              openDrawer && openDrawer(apiFileInfo, attesters)
+                        }}>
                               <div className="flex items-center gap-2 w-fit capitalize" onClick={e => {
                                     e.stopPropagation()
                               }}>
                                     {certType}
                               </div>
                         </TableCell>
-                        <TableCell className="w-37.5">
+                        <TableCell className="w-37.5" onClick={() => {
+                              openDrawer && openDrawer(apiFileInfo, attesters)
+                        }}>
                               <div className="space-y-1">
                                     {/* attestations/attesters */}
                                     <div className="flex items-center gap-2 w-fit" onClick={e => {
@@ -235,7 +245,7 @@ const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer
                                     </div>
                               </div>
                         </TableCell>
-                        <TableCell className="text-right w-25">
+                        <TableCell className="text-right w-25"  >
                               <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                           <Button
@@ -253,14 +263,26 @@ const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer
                                                 openDrawer && openDrawer(apiFileInfo, attesters)
                                           }}>
                                                 <FileText className="mr-2 h-4 w-4" />
-                                                View Information
+                                                View
                                           </DropdownMenuItem>
+                                          <AttestAquaClaim file={apiFileInfo} index={index}>
+                                                <DropdownMenuItem className='cursor-pointer'>
+                                                      <Album className="mr-2 h-4 w-4" />
+                                                      Attest
+                                                </DropdownMenuItem>
+                                          </AttestAquaClaim>
                                           <OpenSelectedFileDetailsButton file={apiFileInfo} index={index}>
                                                 <DropdownMenuItem className='cursor-pointer'>
                                                       <Eye className="mr-2 h-4 w-4" />
                                                       Details
                                                 </DropdownMenuItem>
                                           </OpenSelectedFileDetailsButton>
+                                          <ShareButton item={apiFileInfo} index={index}>
+                                                <DropdownMenuItem className='cursor-pointer'>
+                                                      <LuShare2 className="mr-2 h-4 w-4" />
+                                                      Share
+                                                </DropdownMenuItem>
+                                          </ShareButton>
                                           <DownloadAquaChain file={apiFileInfo} index={index}>
                                                 <DropdownMenuItem className='cursor-pointer'>
                                                       <Download className="mr-2 h-4 w-4" />
@@ -336,7 +358,7 @@ export default function AquaCertWorkflows() {
                         limit: 10,
                         claim_types: workflowType ? JSON.stringify([workflowType]) : JSON.stringify(['aqua_certificate']) //default to aqua_sign if no type provided
                   }
-                  const filesDataQuery = await axios.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
+                  const filesDataQuery = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
                         headers: {
                               'Content-Type': 'application/json',
                               'nonce': `${session!.nonce}`
@@ -357,7 +379,14 @@ export default function AquaCertWorkflows() {
 
       // Watch for reload triggers
       useReloadWatcher({
-            key: RELOAD_KEYS.aqua_sign,
+            key: RELOAD_KEYS.aqua_certificate,
+            onReload: () => {
+                  loadWorkflowsData();
+            }
+      });
+
+      useReloadWatcher({
+            key: RELOAD_KEYS.identity_attestation,
             onReload: () => {
                   loadWorkflowsData();
             }
@@ -366,8 +395,6 @@ export default function AquaCertWorkflows() {
       useEffect(() => {
             loadWorkflowsData(currentPage);
       }, [currentPage])
-
-      console.log("Drawerinfo: ", drawerInfo)
 
 
       return (

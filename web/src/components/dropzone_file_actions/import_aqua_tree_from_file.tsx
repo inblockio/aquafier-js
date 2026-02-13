@@ -1,5 +1,5 @@
 import {LuImport} from 'react-icons/lu'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import {useStore} from 'zustand'
 import appStore from '../../store'
 import {useState} from 'react'
@@ -7,6 +7,7 @@ import {IDropzoneAction} from '../../types/types'
 import {Button} from '@/components/ui/button'
 import {toast} from 'sonner'
 import {ensureDomainUrlHasSSL, fetchFiles} from '@/utils/functions'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 
 // export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
 export const ImportAquaChainFromFile = ({ file, filesWrapper, removeFilesListForUpload}: IDropzoneAction) => {
@@ -33,11 +34,12 @@ export const ImportAquaChainFromFile = ({ file, filesWrapper, removeFilesListFor
             setUploading(true)
             try {
                   const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_aqua_file_upload`)
-                   await axios.post(url, formData, {
+                   await apiClient.post(url, formData, {
                         headers: {
                               'Content-Type': 'multipart/form-data',
                               metamask_address: metamaskAddress,
                         },
+                        reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
                   })
 
                 const urlPath = `${backend_url}/explorer_files`

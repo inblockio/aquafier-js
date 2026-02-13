@@ -16,7 +16,7 @@ export default async function paymentsController(fastify: FastifyInstance) {
   // ============================================================================
   // STRIPE PAYMENT ENDPOINTS
   // ============================================================================
-
+ 
   /**
    * POST /payments/stripe/create-checkout
    * Create a Stripe checkout session for subscription payment

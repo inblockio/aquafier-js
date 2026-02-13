@@ -20,8 +20,12 @@ import { ApiFileInfo } from "@/models/FileInfo"
 import { useStore } from "zustand"
 import appStore from "@/store"
 import { API_ENDPOINTS } from "@/utils/constants"
-import axios, { AxiosResponse } from "axios"
+import apiClient from '@/api/axiosInstance'
+import { AxiosResponse } from 'axios'
 import { getLatestVH } from "aqua-js-sdk"
+import { AttestAquaClaim } from "@/components/aqua_chain_actions/attest_aqua_claim"
+import { Album } from "lucide-react"
+import { Alert } from "@/components/ui/alert"
 
 export default function AquaCertWorkflowDrawer({ open, onClose, attestors, fileInfo }: IAquaCertWorkflowDrawer) {
     const { backend_url, session } = useStore(appStore)
@@ -34,7 +38,7 @@ export default function AquaCertWorkflowDrawer({ open, onClose, attestors, fileI
 
     const generateFileFetchPromis = (targetHash: string) => {
         const url = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`)
-        const res = axios.post(url, {
+        const res = apiClient.post(url, {
             revisionHashes: [targetHash]
         }, {
             headers: {
@@ -87,7 +91,7 @@ export default function AquaCertWorkflowDrawer({ open, onClose, attestors, fileI
                 open={open}
                 onClose={onClose}
             >
-                <DrawerContent className="rounded-tl-2xl rounded-bl-2xl max-w-none! w-full! sm:w-100! md:w-125! lg:w-200!">
+                <DrawerContent className="rounded-tl-2xl rounded-bl-2xl max-w-none! w-[calc(100vw-2rem)]! sm:w-[calc(100vw-4rem)]! md:w-[calc(100vw-6rem)]! h-[calc(100vh-2rem)]! my-auto mr-0">
                     <DrawerHeader>
                         <div className="flex justify-between">
                             <div>
@@ -112,37 +116,51 @@ export default function AquaCertWorkflowDrawer({ open, onClose, attestors, fileI
                                 <TabsTrigger value="linked_files" className="rounded-xl">Linked Files</TabsTrigger>
                             </TabsList>
                             <TabsContent value="attestations">
-                                {
-                                    attestors.length > 0 ? (
-                                        <Table className="table-fixed w-full">
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead className="w-1/2">Name</TableHead>
-                                                    <TableHead className="w-1/2">Context</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {
-                                                    attestors.map((attester, index) => (
-                                                        <TableRow key={`attestation_${index}`}>
-                                                            <TableCell className="truncate max-w-0">
-                                                                <WalletAdrressClaim walletAddress={attester.walletAddress} />
-                                                            </TableCell>
-                                                            <TableCell className="wrap-break-word" style={{
-                                                                whiteSpace: "wrap"
-                                                            }}>
-                                                                {attester.context}
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ))
-                                                }
+                                <div className="flex flex-col gap-2">
+                                    <Alert className="border-green-300 bg-green-50 text-green-800">
+                                        <div className="flex flex-col gap-2 col-span-full">
+                                            <p className="text-sm font-medium">Attest this certificate to confirm its authenticity.</p>
+                                            <AttestAquaClaim file={fileInfo!} index={1}>
+                                                <Button className='cursor-pointer bg-green-600 hover:bg-green-700 text-white'>
+                                                    <Album className="mr-2 h-4 w-4" />
+                                                    Attest
+                                                </Button>
+                                            </AttestAquaClaim>
+                                        </div>
+                                    </Alert>
+                                    {
+                                        attestors.length > 0 ? (
+                                            <Table className="table-fixed w-full">
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead className="w-1/2">Name</TableHead>
+                                                        <TableHead className="w-1/2">Context</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {
+                                                        attestors.map((attester, index) => (
+                                                            <TableRow key={`attestation_${index}`}>
+                                                                <TableCell className="truncate max-w-0">
+                                                                    <WalletAdrressClaim walletAddress={attester.walletAddress} />
+                                                                </TableCell>
+                                                                <TableCell className="wrap-break-word" style={{
+                                                                    whiteSpace: "wrap"
+                                                                }}>
+                                                                    {attester.context}
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ))
+                                                    }
 
-                                            </TableBody>
-                                        </Table>
-                                    ) : (
-                                        <NoAttestationsAlert />
-                                    )
-                                }
+                                                </TableBody>
+                                            </Table>
+                                        ) : (
+                                            <NoAttestationsAlert />
+                                        )
+                                    }
+
+                                </div>
                             </TabsContent>
                             <TabsContent value="file_content">
                                 <Suspense

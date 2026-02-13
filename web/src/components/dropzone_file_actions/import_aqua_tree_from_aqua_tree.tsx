@@ -1,10 +1,10 @@
 import { LuCheck, LuChevronRight, LuImport, LuMinus, LuX } from 'react-icons/lu'
-import axios from 'axios'
+import apiClient from '@/api/axiosInstance'
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import { useEffect, useState } from 'react'
 import { ApiFileInfo } from '../../models/FileInfo'
-import { ensureDomainUrlHasSSL, formatCryptoAddress, isWorkFlowData, reorderRevisionsInAquaTree } from '../../utils/functions'
+import { ensureDomainUrlHasSSL, formatCryptoAddress, getGenesisHash, isWorkFlowData, reorderRevisionsInAquaTree } from '../../utils/functions'
 import { analyzeAndMergeRevisions } from '../../utils/aqua_funcs'
 import { RevisionsComparisonResult } from '../../models/revision_merge'
 import { OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk'
@@ -23,6 +23,7 @@ import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 // import { Badge } from "@/components/ui/badge";
 // import { Separator } from "@/components/ui/separator";
 import { useNavigate } from 'react-router-dom'
+import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 
 export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificationSuccessful, contractData }: ImportChainFromChainProps) => {
       const navigate = useNavigate()
@@ -99,6 +100,7 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                   setLastLocalRevisionHash(lastRevision)
                   setRevisionsToImport(_revisionsToImport)
                   setModalOpen(true)
+
                   return
             }
 
@@ -112,7 +114,7 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                   const revisionHashes = Object.keys(revisions)
                   const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
 
-                  const res = await axios.post(
+                  await apiClient.post(
                         url,
                         {
                               latestRevisionHash: latestRevisionHash,
@@ -125,22 +127,47 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                         }
                   )
 
-                  if (res.status === 200) {
-                        toast.success('Aqua Chain imported successfully')
 
-                        // Use setTimeout to ensure state is updated before navigation
-                        const aquaSystemFileNames = await loadSystemAquaFileNames()
-                        const { isWorkFlow, workFlow } = isWorkFlowData(fileInfo.aquaTree!, aquaSystemFileNames)
+                  toast.success('Aqua Chain imported successfully')
 
-                        if (isWorkFlow && workFlow == "aqua_sign") {
-                              setSelectedFileInfo(fileInfo)
-                              navigate('/app/pdf/workflow/2')
-                        } else {
-                              navigate('/app')
+                  // Use setTimeout to ensure state is updated before navigation
+                  const aquaSystemFileNames = await loadSystemAquaFileNames()
+                  const { isWorkFlow, workFlow } = isWorkFlowData(fileInfo.aquaTree!, aquaSystemFileNames)
+
+                  if (isWorkFlow && workFlow == "aqua_sign") {
+                        setSelectedFileInfo(fileInfo)
+                        let genesisHash = getGenesisHash(fileInfo.aquaTree!)
+                        if (!genesisHash) {
+                              toast.error('Could not determine genesis hash for this workflow.')
+                              return
                         }
+                        let gensesiRevision = fileInfo.aquaTree?.revisions[genesisHash]
+                        let signers = gensesiRevision?.forms_signers
+
+                        // check if am in the signer only then navigate to 2
+                        if (signers) {
+
+                              let signersArray = signers.split(",").map((item: string) => item.trim().toLocaleLowerCase())
+                              let activeUserAddress = session?.address?.toLocaleLowerCase()
+                              let isUserSigner = signersArray.find((signer: string) => signer === activeUserAddress)
+                              if (isUserSigner) {
+                                    await triggerWorkflowReload(RELOAD_KEYS.contacts, true);
+                                    navigate('/app/pdf/workflow/2/' + genesisHash)
+                                    return
+                              }
+                        } else {
+                              await triggerWorkflowReload(RELOAD_KEYS.contacts, true);
+                              navigate('/app/pdf/workflow/1/' + genesisHash)
+                              return
+                        }
+
                   } else {
-                        toast.error('Failed to import chain')
+                        await triggerWorkflowReload(RELOAD_KEYS.user_files, false);
+                        await triggerWorkflowReload(RELOAD_KEYS.all_files, false);
+                        await triggerWorkflowReload(RELOAD_KEYS.contacts, true);
+                        navigate('/app')
                   }
+
 
                   setUploading(false)
                   setUploaded(true)
@@ -176,7 +203,7 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                   const revisionHashes = Object.keys(reorderedRevisions.revisions)
                   const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
 
-                  const res = await axios.post(
+                  const res = await apiClient.post(
                         url,
                         {
                               latestRevisionHash: latestRevisionHash,
@@ -200,8 +227,36 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
 
                         if (isWorkFlow && workFlow == "aqua_sign") {
                               setSelectedFileInfo(fileInfo)
-                              navigate('/app/pdf/workflow/2')
+                              let genesisHash = getGenesisHash(fileInfo.aquaTree!)
+                              if (!genesisHash) {
+                                    toast.error('Could not determine genesis hash for this workflow.')
+                                    return
+                              }
+                              let gensesiRevision = fileInfo.aquaTree?.revisions[genesisHash]
+                              let signers = gensesiRevision?.forms_signers
+
+                              // check if am in the signer only then navigate to 2
+                              if (signers) {
+
+                                    let signersArray = signers.split(",").map((item: string) => item.trim().toLocaleLowerCase())
+                                    let activeUserAddress = session?.address?.toLocaleLowerCase()
+                                    let isUserSigner = signersArray.find((signer: string) => signer === activeUserAddress)
+                                    if (isUserSigner) {
+                                          await triggerWorkflowReload(RELOAD_KEYS.contacts, true);
+                                          navigate('/app/pdf/workflow/2/' + genesisHash)
+                                          return
+                                    }
+                              } else {
+                                    await triggerWorkflowReload(RELOAD_KEYS.contacts, true);
+                                    navigate('/app/pdf/workflow/1/' + genesisHash)
+                                    return
+                              }
+
+
                         } else {
+                              await triggerWorkflowReload(RELOAD_KEYS.user_files, false);
+                              await triggerWorkflowReload(RELOAD_KEYS.all_files, false);
+                              await triggerWorkflowReload(RELOAD_KEYS.contacts, true);
                               navigate('/app')
                         }
 
@@ -231,7 +286,7 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                   const orderedRevisionHashes = reorderRevisionsInAquaTree(fileInfo.aquaTree!)
                   setUploading(true)
                   const url = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`)
-                  const res = await axios.post(url, {
+                  const res = await apiClient.post(url, {
                         revisionHashes: orderedRevisionHashes
                   }, {
                         headers: {

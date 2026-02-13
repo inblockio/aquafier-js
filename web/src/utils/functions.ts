@@ -8,6 +8,7 @@ import jdenticon from 'jdenticon/standalone'
 import { IContractInformation } from '@/types/contract_workflow'
 import { ApiFileInfoState, ApiFilePaginationData, DNSProof, IIdentityClaimDetails, SummaryDetailsDisplayData } from '@/types/types'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
+import apiClient from '@/api/axiosInstance'
 
 export function formatDate(date: Date) {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -31,21 +32,19 @@ export const fetchFileData = async (url: string, nonce: string): Promise<string 
       try {
             const actualUrlToFetch = ensureDomainUrlHasSSL(url)
 
-            const response = await fetch(actualUrlToFetch, {
-                  headers: {
-                        nonce: nonce,
-                  },
+            const response = await apiClient.get(actualUrlToFetch, {
+                  headers: { nonce },
+                  responseType: 'arraybuffer',
             })
-            if (!response.ok) throw new Error('Failed to fetch file')
 
             // Get MIME type from headers
-            const contentType = response.headers.get('Content-Type') || ''
+            const contentType = response.headers['content-type'] || ''
 
             // Process based on content type
             if (contentType.startsWith('text/') || contentType === 'application/json' || contentType === 'application/xml' || contentType === 'application/javascript') {
-                  return await response.text()
+                  return new TextDecoder().decode(response.data)
             } else {
-                  return await response.arrayBuffer()
+                  return response.data
             }
       } catch (e) {
             console.error('Error fetching file:', e)
@@ -293,6 +292,11 @@ export function formatCryptoAddress(address?: string, start: number = 10, end: n
       return `${firstPart}...${lastPart}`
 }
 
+export function formatAddressForFilename(address?: string): string {
+      if (!address || address.length < 8) return ''
+      return `_${address.slice(0, 4)}_${address.slice(-4)}`
+}
+
 export function remove0xPrefix(input: string): string {
       // Check if the input string starts with '0x'
       if (input.startsWith('0x')) {
@@ -484,19 +488,13 @@ export function getValidChecksumAddress(address: string): string | null {
 
 export async function fetchSystemFiles(url: string, metamaskAddress: string = ''): Promise<Array<ApiFileInfo>> {
       try {
-            const query = await fetch(url, {
-                  method: 'GET',
+            const response = await apiClient.get(url, {
                   headers: {
                         metamask_address: metamaskAddress,
                   },
             })
-            const response = await query.json()
 
-            if (!query.ok) {
-                  throw new Error(`HTTP error! status: ${query.status}`)
-            }
-
-            return response.data
+            return response.data.data
       } catch (error) {
             console.error('Error fetching files:', error)
             return []
@@ -508,22 +506,16 @@ export async function fetchFiles(publicMetaMaskAddress: string, url: string, non
       pagination: ApiFilePaginationData
 }> {
       try {
-            const query = await fetch(url, {
-                  method: 'GET',
+            const response = await apiClient.get(url, {
                   headers: {
                         metamask_address: publicMetaMaskAddress,
                         nonce: nonce,
                   },
             })
-            const response = await query.json()
-
-            if (!query.ok) {
-                  throw new Error(`HTTP error! status: ${query.status}`)
-            }
 
             return {
-                  files: response.data,
-                  pagination: response.pagination
+                  files: response.data.data,
+                  pagination: response.data.pagination
             }
       } catch (error) {
             console.error('Error fetching files:', error)
@@ -2650,7 +2642,13 @@ export const processContractInformation = (selectedFileInfo: ApiFileInfo): ICont
             signatureRevisionHashes = getSignatureRevionHashes(fourthItemHashOnwards, selectedFileInfo)
 
             const signatureRevisionHashesDataAddress = signatureRevisionHashes.map(e => e.walletAddress)
-            const remainingSigners = signers.filter(item => !signatureRevisionHashesDataAddress.includes(item))
+            let remainingSigners = signers.filter(item => !signatureRevisionHashesDataAddress.includes(item))
+
+            // Duct tape fix: if signature group count >= signer count, all signers have signed
+            // Reown social login uses rotating ephemeral session keys, so wallet addresses may not match
+            // if (remainingSigners.length > 0 && signatureRevisionHashes.length >= signers.length) {
+            //       remainingSigners = []
+            // }
 
             // verifyAquaTreeRevisions(selectedFileInfo);
 
@@ -2691,7 +2689,7 @@ export const processSimpleWorkflowClaim = (selectedFileInfo: ApiFileInfo): Claim
             // 'forms_wallet_address',
             // 'forms_claim_context',
       ]
-      const isClaimValid = mustContainkeys.every(key => firstRevisionKeys.includes(key))
+      const isClaimValid = mustContainkeys.every(key => firstRevisionKeys.includes(key)) || firstRevisionKeys.includes("forms_ens_name")
 
       if (!isClaimValid) {
             return {
@@ -2800,21 +2798,14 @@ export const extractDNSClaimInfo = (
 
 export const fetchImage = async (fileUrl: string, nonce: string) => {
       try {
-            (`fetchImage fileUrl ${fileUrl}`)
             const actualUrlToFetch = ensureDomainUrlHasSSL(fileUrl)
-            const response = await fetch(actualUrlToFetch, {
-                  headers: {
-                        nonce: `${nonce}`,
-                  },
+            const response = await apiClient.get(actualUrlToFetch, {
+                  headers: { nonce: `${nonce}` },
+                  responseType: 'arraybuffer',
             })
 
-            if (!response.ok) {
-                  console.error('FFFailed to fetch file:', response.status, response.statusText)
-                  return null
-            }
-
             // Get content type from headers
-            let contentType = response.headers.get('Content-Type') || ''
+            let contentType = response.headers['content-type'] || ''
 
             // If content type is missing or generic, try to detect from URL
             if (contentType === 'application/octet-stream' || contentType === '') {
@@ -2822,9 +2813,7 @@ export const fetchImage = async (fileUrl: string, nonce: string) => {
             }
 
             if (contentType.startsWith('image')) {
-                  const arrayBuffer = await response.arrayBuffer()
-                  // Ensure we use the PDF content type
-                  const blob = new Blob([arrayBuffer], { type: contentType })
+                  const blob = new Blob([response.data], { type: contentType })
                   return URL.createObjectURL(blob)
             }
 
