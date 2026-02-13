@@ -35,6 +35,7 @@ import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocke
 import { useLiveQuery } from 'dexie-react-hooks'
 import { reloadDB, RELOAD_KEYS } from '../../../utils/reloadDatabase'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
+import { extractEmbeddedAquaData } from '@/utils/pdf-digital-signature'
 
 interface PdfSignerProps {
       fileData: File | null
@@ -1593,8 +1594,22 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
             }
 
 
+            // Check if the PDF already has signatures baked in (from a previous signing).
+            // If so, skip documentSignatures to avoid drawing them twice.
+            let pdfAlreadyHasEmbeddedSignatures = false;
+            try {
+                  const pdfBytes = await pdfFile.arrayBuffer();
+                  const embeddedData = await extractEmbeddedAquaData(new Uint8Array(pdfBytes));
+                  if (embeddedData.aquaJson) {
+                        pdfAlreadyHasEmbeddedSignatures = true;
+                  }
+            } catch (error) {
+                  console.error('Error checking PDF for embedded signatures:', error);
+            }
+
             // Combine existing document signatures + new user-placed signatures
-            const existingSigs = (documentSignatures || []).map((sig: SignatureData) => ({
+            // Skip existing signatures if they are already baked into the PDF bytes
+            const existingSigs = pdfAlreadyHasEmbeddedSignatures ? [] : (documentSignatures || []).map((sig: SignatureData) => ({
                   type: 'profile' as const,
                   id: sig.id,
                   x: sig.x,
