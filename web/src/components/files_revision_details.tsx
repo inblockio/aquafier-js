@@ -6,25 +6,41 @@ import {Card, CardContent} from '@/components/ui/card'
 import {Button} from '@/components/ui/button'
 import {Badge} from '@/components/ui/badge'
 import {ChevronRight, Clock, Copy, ExternalLink, Eye, FileSignature, Hash, Link2, Network} from 'lucide-react'
-import {ERROR_TEXT, ERROR_UKNOWN, WITNESS_NETWORK_MAP} from '@/utils/constants'
+import {API_ENDPOINTS, ERROR_TEXT, ERROR_UKNOWN, WITNESS_NETWORK_MAP} from '@/utils/constants'
 import {
     displayTime,
+    ensureDomainUrlHasSSL,
+    fetchFiles,
     fetchLinkedFileName,
     formatCryptoAddress,
     getAquaTreeFileObject,
     getFileNameWithDeepLinking,
-    isDeepLinkRevision
+    isDeepLinkRevision,
+    isPDFFile,
+    isHttpUrl,
+    isValidUrl,
 } from '@/utils/functions'
 import {ApiFileInfo} from '@/models/FileInfo'
 import {toast} from 'sonner'
-import {lazy, Suspense} from 'react'
+import {lazy, Suspense, useEffect, useState} from 'react'
 import {ClipLoader} from 'react-spinners'
+import {extractEmbeddedAquaData} from '@/utils/pdf-digital-signature'
+import {LuSave} from 'react-icons/lu'
+import JSZip from 'jszip'
+import apiClient from '@/api/axiosInstance'
+import {RELOAD_KEYS} from '@/utils/reloadDatabase'
 
 const WalletAddressProfile = lazy(() => import('@/pages/v2_claims_workflow/WalletAddressProfile'))
 
 export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetailsSummaryData) => {
-      const { files, setSelectedFileInfo } = useStore(appStore)
+      const { files, setSelectedFileInfo, session, backend_url, metamaskAddress, setFiles } = useStore(appStore)
       const revisionHashes = Object.keys(fileInfo!.aquaTree!.revisions)
+
+      const [pdfHasAquaData, setPdfHasAquaData] = useState(false)
+      const [pdfAquaDataChecked, setPdfAquaDataChecked] = useState(false)
+      const [importingPdf, setImportingPdf] = useState(false)
+      const [pdfEmbeddedData, setPdfEmbeddedData] = useState<Awaited<ReturnType<typeof extractEmbeddedAquaData>> | null>(null)
+      const [aquaSignAlreadyImported, setAquaSignAlreadyImported] = useState(false)
 
       const revisionsWithSignatures: Array<Revision> = []
       const revisionsWithWitness: Array<Revision> = []
@@ -47,6 +63,153 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
             }
       }
 
+      // Check if the main file is a PDF with embedded aqua data
+      useEffect(() => {
+            const checkPdfForAquaData = async () => {
+                  const mainFileObj = getAquaTreeFileObject(fileInfo)
+                  if (!mainFileObj || !isPDFFile(mainFileObj.fileName)) {
+                        setPdfAquaDataChecked(true)
+                        return
+                  }
+
+                  try {
+                        let pdfBytes: Uint8Array | null = null
+
+                        if (typeof mainFileObj.fileContent === 'string' && isValidUrl(mainFileObj.fileContent) && isHttpUrl(mainFileObj.fileContent)) {
+                              // Fetch PDF from URL
+                              const response = await apiClient.get(ensureDomainUrlHasSSL(mainFileObj.fileContent), {
+                                    headers: { nonce: `${session?.nonce}` },
+                                    responseType: 'arraybuffer',
+                              })
+                              pdfBytes = new Uint8Array(response.data)
+                        } else if (mainFileObj.fileContent instanceof Uint8Array) {
+                              pdfBytes = mainFileObj.fileContent
+                        } else if (mainFileObj.fileContent instanceof ArrayBuffer) {
+                              pdfBytes = new Uint8Array(mainFileObj.fileContent)
+                        }
+
+                        if (!pdfBytes) {
+                              setPdfAquaDataChecked(true)
+                              return
+                        }
+
+                        const embeddedData = await extractEmbeddedAquaData(pdfBytes)
+                        if (embeddedData.aquaJson && embeddedData.aquaJson.genesis && embeddedData.aquaJson.name_with_hash) {
+                              setPdfHasAquaData(true)
+                              setPdfEmbeddedData(embeddedData)
+
+                              // Check if this aqua sign is already imported
+                              try {
+                                    // Find the genesis hash from the embedded main aqua tree
+                                    const mainAquaTreeFileName = `${embeddedData.aquaJson.genesis}.aqua.json`
+                                    const mainAquaTreeFile = embeddedData.aquaChainFiles.find(f => f.filename === mainAquaTreeFileName)
+                                    if (mainAquaTreeFile) {
+                                          const aquaTreeData = JSON.parse(mainAquaTreeFile.content)
+                                          const embeddedGenesisHash = getGenesisHash(aquaTreeData)
+
+                                          if (embeddedGenesisHash) {
+                                                // Query backend for existing aqua_sign files
+                                                const response = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
+                                                      headers: {
+                                                            'Content-Type': 'application/json',
+                                                            'nonce': `${session?.nonce}`,
+                                                      },
+                                                      params: {
+                                                            claim_types: JSON.stringify(['aqua_sign']),
+                                                            page: 1,
+                                                            limit: 100,
+                                                      }
+                                                })
+
+                                                const existingAquaSigns: ApiFileInfo[] = response.data?.aquaTrees ?? []
+                                                const alreadyExists = existingAquaSigns.some((f: ApiFileInfo) => {
+                                                      if (!f.aquaTree) return false
+                                                      const existingGenesis = getGenesisHash(f.aquaTree)
+                                                      return existingGenesis === embeddedGenesisHash
+                                                })
+
+                                                if (alreadyExists) {
+                                                      setAquaSignAlreadyImported(true)
+                                                }
+                                          }
+                                    }
+                              } catch (error) {
+                                    console.error('Error checking for existing aqua sign:', error)
+                              }
+                        }
+                  } catch (error) {
+                        console.error('Error checking PDF for aqua data:', error)
+                  } finally {
+                        setPdfAquaDataChecked(true)
+                  }
+            }
+
+            setPdfAquaDataChecked(false)
+            setPdfHasAquaData(false)
+            setPdfEmbeddedData(null)
+            setAquaSignAlreadyImported(false)
+            checkPdfForAquaData()
+      }, [fileInfo])
+
+      const handleImportAquaSign = async () => {
+            if (!pdfEmbeddedData?.aquaJson || importingPdf) return
+
+            setImportingPdf(true)
+            try {
+                  const zip = new JSZip()
+                  const assetFileNames = new Set(pdfEmbeddedData.assetFiles.map(f => f.filename))
+
+                  zip.file('aqua.json', JSON.stringify(pdfEmbeddedData.aquaJson))
+
+                  for (const chainFile of pdfEmbeddedData.aquaChainFiles) {
+                        zip.file(chainFile.filename, chainFile.content)
+
+                        const assetName = chainFile.filename.replace(/\.aqua\.json$/, '')
+                        if (assetName !== chainFile.filename && !assetFileNames.has(assetName)) {
+                              zip.file(assetName, chainFile.content)
+                              assetFileNames.add(assetName)
+                        }
+                  }
+
+                  for (const assetFile of pdfEmbeddedData.assetFiles) {
+                        if (assetFile.content instanceof ArrayBuffer) {
+                              zip.file(assetFile.filename, new Uint8Array(assetFile.content))
+                        } else {
+                              zip.file(assetFile.filename, assetFile.content)
+                        }
+                  }
+
+                  const zipBlob = await zip.generateAsync({ type: 'blob' })
+                  const mainFileObj = getAquaTreeFileObject(fileInfo)
+                  const zipFile = new File([zipBlob], `${mainFileObj?.fileName ?? 'pdf'}.aqua.zip`, { type: 'application/zip' })
+
+                  const formData = new FormData()
+                  formData.append('file', zipFile)
+                  formData.append('account', `${metamaskAddress}`)
+
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_aqua_zip`)
+                  await apiClient.post(url, formData, {
+                        headers: {
+                              'Content-Type': 'multipart/form-data',
+                              nonce: session?.nonce,
+                        },
+                        reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
+                  })
+
+                  const urlPath = `${backend_url}/explorer_files`
+                  const url2 = ensureDomainUrlHasSSL(urlPath)
+                  const filesApi = await fetchFiles(session!.address, url2, session!.nonce)
+                  setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
+
+                  toast.success('Aqua Sign imported successfully from PDF')
+                  setPdfHasAquaData(false)
+            } catch (error) {
+                  toast.error(`Failed to import Aqua Sign: ${error}`)
+            } finally {
+                  setImportingPdf(false)
+            }
+      }
+
       const copyToClipboard = (text: string) => {
             navigator.clipboard.writeText(text)
       }
@@ -63,6 +226,44 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                     {revisionHashes.length} Total
                 </Badge> */}
                   </div>
+
+                  {/* Import Aqua Sign from PDF */}
+                  {pdfAquaDataChecked && pdfHasAquaData && (
+                        <Card className={`border-0 shadow-lg bg-gradient-to-br ${aquaSignAlreadyImported ? 'from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20' : 'from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20'}`}>
+                              <CardContent className="p-3">
+                                    <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-3">
+                                                <div className={`p-2 ${aquaSignAlreadyImported ? 'bg-blue-500' : 'bg-orange-500'} rounded-lg`}>
+                                                      <FileSignature className="h-5 w-5 text-white" />
+                                                </div>
+                                                <div>
+                                                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                            {aquaSignAlreadyImported ? 'Aqua Sign Already Imported' : 'Aqua Sign Detected in PDF'}
+                                                      </h3>
+                                                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                                                            {aquaSignAlreadyImported
+                                                                  ? 'This Aqua Sign has already been imported to your files'
+                                                                  : 'This PDF contains embedded Aqua chain data that can be imported'}
+                                                      </p>
+                                                </div>
+                                          </div>
+                                          {!aquaSignAlreadyImported && (
+                                                <Button
+                                                      data-testid="action-import-pdf-aqua-revision-button"
+                                                      size="sm"
+                                                      variant="outline"
+                                                      className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                                                      onClick={handleImportAquaSign}
+                                                      disabled={importingPdf}
+                                                >
+                                                      {importingPdf ? <span className="w-4 h-4 animate-spin border-2 border-green-600 border-t-transparent rounded-full mr-1" /> : <LuSave className="w-4 h-4 mr-1" />}
+                                                      Import Aqua Sign
+                                                </Button>
+                                          )}
+                                    </div>
+                              </CardContent>
+                        </Card>
+                  )}
 
                   {/* Signatures Section */}
                   {revisionsWithSignatures.length === 0 ? (

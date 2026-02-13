@@ -12,6 +12,7 @@ import {
       isAquaTree,
       isJSONFile,
       isJSONKeyValueStringContent,
+      isPDFFile,
       isZipFile,
       readFileContent
 } from '@/utils/functions'
@@ -35,8 +36,10 @@ import { LuTrash2, LuUpload } from 'react-icons/lu'
 import { toast } from 'sonner'
 import { ImportAquaTree } from '@/components/dropzone_file_actions/import_aqua_tree'
 import { ImportAquaTreeZip } from '@/components/dropzone_file_actions/import_aqua_tree_zip'
+import { ImportAquaTreeFromPdf } from '@/components/dropzone_file_actions/import_aqua_tree_from_pdf'
 import { FormRevisionFile } from '@/components/dropzone_file_actions/form_revision'
 
+import { extractEmbeddedAquaData } from '@/utils/pdf-digital-signature'
 import ClaimTypesDropdownButton from '@/components/button_claim_dropdown'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 import { useReloadWatcher } from '@/hooks/useReloadWatcher'
@@ -200,6 +203,47 @@ const FilesPage = () => {
             for (const file of selectedFiles) {
                   const isJson = isJSONFile(file.name)
                   const isZip = isZipFile(file.name)
+                  const isPdf = isPDFFile(file.name)
+
+                  // Check if PDF contains embedded aqua data
+                  if (isPdf) {
+                        try {
+                              const arrayBuffer = await file.arrayBuffer()
+                              const uint8Array = new Uint8Array(arrayBuffer)
+                              const embeddedData = await extractEmbeddedAquaData(uint8Array)
+
+                              if (embeddedData.aquaJson) {
+                                    // PDF has aqua data — add to special upload list
+                                    const fileExists = filesListForUpload.some(existingFile =>
+                                          existingFile.file.name === file.name &&
+                                          existingFile.file.size === file.size &&
+                                          existingFile.file.lastModified === file.lastModified
+                                    )
+
+                                    if (!fileExists) {
+                                          const fileItemWrapper: FileItemWrapper = {
+                                                status: 'pending',
+                                                file,
+                                                isJson: false,
+                                                isZip: false,
+                                                isLoading: false,
+                                                isJsonForm: false,
+                                                isJsonAquaTreeData: false,
+                                                isPdfWithAquaData: true,
+                                          }
+                                          setFilesListForUpload(prev => [...prev, fileItemWrapper])
+                                    } else {
+                                          toast.error(`1. Error file exist in upload list`)
+                                    }
+                                    continue
+                              }
+                              // If no aqua data, fall through to normal upload
+                        } catch (error) {
+                              console.error('Error checking PDF for aqua data:', error)
+                              // Fall through to normal upload on error
+                        }
+                  }
+
                   if (isJson || isZip) {
                         let isJsonForm = false
                         let isJsonAquaTreeData = false
@@ -238,6 +282,7 @@ const FilesPage = () => {
                                     isLoading: false,
                                     isJsonForm: isJsonForm,
                                     isJsonAquaTreeData: isJsonAquaTreeData,
+                                    isPdfWithAquaData: false,
                               }
                               setFilesListForUpload(prev => [...prev, fileItemWrapper])
                         } else {
@@ -602,6 +647,18 @@ const FilesPage = () => {
 
                                                             {fileData.isZip ? (
                                                                   <ImportAquaTreeZip
+                                                                        file={fileData.file}
+                                                                        filesWrapper={fileData}
+                                                                        removeFilesListForUpload={(item) => {
+                                                                              let newFilesList = filesListForUpload.filter((item2) => item2.file.name != item.file.name)
+                                                                              setFilesListForUpload(newFilesList)
+                                                                        }}
+                                                                        autoUpload={false}
+                                                                  />
+                                                            ) : null}
+
+                                                            {fileData.isPdfWithAquaData ? (
+                                                                  <ImportAquaTreeFromPdf
                                                                         file={fileData.file}
                                                                         filesWrapper={fileData}
                                                                         removeFilesListForUpload={(item) => {

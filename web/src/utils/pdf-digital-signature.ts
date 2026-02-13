@@ -372,17 +372,42 @@ export async function signPdfDocument(
   // Use passed fileInfo if available, fall back to store
   const resolvedFileInfo = fileInfo ?? appStore.getState().selectedFileInfo;
 
-  // console.log('resolvedFileInfo for PDF attachments:', {
-  //   source: fileInfo ? 'passed as parameter' : 'from store',
-  //   exists: !!resolvedFileInfo,
-  //   hasAquaTree: !!resolvedFileInfo?.aquaTree,
-  //   hasFileObject: !!resolvedFileInfo?.fileObject,
-  //   fileObjectLength: resolvedFileInfo?.fileObject?.length,
-  //   hasLinkedFileObjects: !!resolvedFileInfo?.linkedFileObjects,
-  //   linkedFileObjectsLength: resolvedFileInfo?.linkedFileObjects?.length,
-  // });
+  // Check for existing embedded files to avoid duplication
+  const existingEmbeddedFileNames = new Set<string>();
+  const existingNamesDict = tempDoc.catalog.lookup(PDFName.of('Names'));
+  if (existingNamesDict instanceof PDFDict) {
+    const existingEmbeddedFiles = existingNamesDict.lookup(PDFName.of('EmbeddedFiles'));
+    if (existingEmbeddedFiles instanceof PDFDict) {
+      const existingNamesArray = existingEmbeddedFiles.lookup(PDFName.of('Names'));
+      if (existingNamesArray instanceof PDFArray) {
+        for (let i = 0; i < existingNamesArray.size(); i += 2) {
+          const filenameObj = existingNamesArray.get(i);
+          if (filenameObj instanceof PDFString || filenameObj instanceof PDFHexString) {
+            existingEmbeddedFileNames.add(filenameObj.decodeText());
+          }
+        }
+      }
+    }
+  }
+  const hasExistingAquaJson = existingEmbeddedFileNames.has('aqua.json');
+  console.log('signPdfDocument - existing embedded files:', [...existingEmbeddedFileNames], 'hasExistingAquaJson:', hasExistingAquaJson);
 
-  if (resolvedFileInfo && resolvedFileInfo.aquaTree) {
+  // Check if PDF was already processed (has existing signature platform metadata)
+  // const existingInfoDictRef = tempDoc.context.trailerInfo.Info;
+  // let hasExistingSecurityPage = false;
+  // if (existingInfoDictRef) {
+  //   const existingInfoDict = tempDoc.context.lookup(existingInfoDictRef);
+  //   if (existingInfoDict instanceof PDFDict) {
+  //     const sigPlatform = existingInfoDict.lookup(PDFName.of('SignaturePlatform'));
+  //     if (sigPlatform) {
+  //       hasExistingSecurityPage = true;
+  //     }
+  //   }
+  // }
+
+  // console.log('signPdfDocument - hasExistingSecurityPage:', hasExistingSecurityPage);
+
+  if (resolvedFileInfo && resolvedFileInfo.aquaTree && !hasExistingAquaJson) {
     try {
       const aquafier = new Aquafier();
 
@@ -596,15 +621,20 @@ export async function signPdfDocument(
     }
   }
 
-  // Add security information page
-  await addSecurityInfoPage(tempDoc, {
-    signers: allSigners,
-    signedAt,
-    documentId: options.documentId,
-    reason,
-    platformName: PLATFORM_NAME,
-    platformUrl: PLATFORM_URL,
-  });
+  // Add security information page (skip if already present)
+  if (!hasExistingAquaJson) {
+    console.log('signPdfDocument - adding security info page');
+    await addSecurityInfoPage(tempDoc, {
+      signers: allSigners,
+      signedAt,
+      documentId: options.documentId,
+      reason,
+      platformName: PLATFORM_NAME,
+      platformUrl: PLATFORM_URL,
+    });
+  } else {
+    console.log('signPdfDocument - skipping security info page (already present)');
+  }
 
   // Save the prepared document
   let currentPdfBytes = await tempDoc.save({ useObjectStreams: false });

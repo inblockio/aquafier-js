@@ -159,7 +159,7 @@ interface EasyPDFRendererProps {
 
 export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, latestRevisionHash }: EasyPDFRendererProps) => {
 
-      const { session, backend_url } = useStore(appStore)
+      const { session, backend_url, selectedFileInfo } = useStore(appStore)
 
       const mappedAnnotations = annotations.map((anno: any) => ({
             ...anno,
@@ -194,7 +194,7 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, l
       }
 
       const handleDownload = async () => {
-            if (!pdfFile) {
+            if (!pdfFile || !selectedFileInfo) {
                   toast.error("No PDF - Please upload or load a PDF file first.");
                   return;
             }
@@ -219,7 +219,8 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, l
                   pdfFile,
                   annotations: allAnnotations as any, // Cast to any because our ad-hoc objects match the shape but TS might complain about 'as const' vs flexible string types
                   fileName: `${pdfFile.name.replace('.pdf', '')}_signed.pdf`,
-                  backupFn: createFileBackupOnServer
+                  backupFn: createFileBackupOnServer,
+                  fileInfo: selectedFileInfo
             });
       };
 
@@ -274,6 +275,7 @@ export default function SignerPage({
       const [_selectedSignatureHash, setSelectedSignatureHash] = useState<string | null>(null)
       const [canPlaceSignature, setCanPlaceSignature] = useState(false)
       const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null)
+      const {selectedFileInfo} = useStore(appStore)
 
       const addAnnotation = useCallback(
             (newAnnotationData: Annotation) => {
@@ -341,7 +343,8 @@ export default function SignerPage({
 
       // FEATURE: This method will help us do the download of the pdf
       const handleDownload = async () => {
-            if (!pdfFile) {
+            console.log("Donwloading")
+            if (!pdfFile || !selectedFileInfo) {
                   toast.error("No PDF - Please upload or load a PDF file first.");
                   return;
             }
@@ -362,7 +365,7 @@ export default function SignerPage({
                   // Looking at old code: using `documentId` directly. 
                   // Ideally we pass a wrapper that returns documentId.
                   backupFn: async () => documentId ?? null,
-                  // fileInfo: fil
+                  fileInfo: selectedFileInfo
             });
 
             /* 
