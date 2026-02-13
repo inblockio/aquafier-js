@@ -20,11 +20,11 @@ export default async function systemController(fastify: FastifyInstance) {
 
     // Register rate limiter plugin
     await fastify.register(fastifyRateLimit, {
-        max: 100, // Maximum 100 requests
-        timeWindow: '15m' // Per 15 minutes
+        max: 1000, // Maximum 1000 requests
+        timeWindow: '5m' // Per 5 minutes
     });
 
-    fastify.get('/system/templates', { config: { rateLimit: { max: 100, timeWindow: '15m' } } }, async (request, reply) => {
+    fastify.get('/system/templates', { config: { rateLimit: { max: 1000, timeWindow: '5m' } } }, async (request, reply) => {
 
         let assetsPath = getAquaAssetDirectory()
         Logger.info(`Assets path ${assetsPath}`)
