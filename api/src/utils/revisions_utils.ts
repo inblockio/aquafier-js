@@ -2401,7 +2401,7 @@ async function createSubscriptionFromAquafierLicence(aquaTree: AquaTree, userAdd
                 address: 'Aquafier Instance',
             },
             billingFrom: {
-                name: 'Inblokcio GmbH Assets',
+                name: 'Inblock.io GmbH Assets',
                 address: '456 Business Rd\nTech City',
                 email: 'billing@inblockio.com',
                 website: 'www.inblockio.com'

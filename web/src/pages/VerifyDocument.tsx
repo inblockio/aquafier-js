@@ -647,7 +647,7 @@ const VerifyDocument = () => {
                                                             <CardHeader className="pb-3">
                                                                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                                                                         <CheckCircle className="h-4 w-4 text-green-500" />
-                                                                        Blockchain Verification
+                                                                        Aqua File  Verification
                                                                   </CardTitle>
                                                             </CardHeader>
                                                             <CardContent>

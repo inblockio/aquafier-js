@@ -1133,6 +1133,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   }
             }
 
+            // Handle aquafier_licence specific logic - share with receivers
+            if (selectedTemplate && selectedTemplate.name === 'aquafier_licence' && session?.address) {
+                  if (completeFormData['receiver']) {
+                        await shareAquaTree(signedAquaTree, completeFormData['receiver'] as string)
+                  }
+            }
+
             // Handle identity_attestation specific logic
             if (selectedTemplate && selectedTemplate.name === 'identity_attestation') {
                   console.log(`handling identity attestation post signing`)
@@ -1885,9 +1892,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         {field.type === 'wallet_address' && (
                               <WalletAutosuggest
                                     field={field}
-                                    index={1}
+                                    index={0}
                                     address={formData[field.name] ? (formData[field.name] as string) : ''}
-                                    multipleAddresses={[]}
+                                    multipleAddresses={[formData[field.name] as string || '']}
                                     setMultipleAddresses={(data) => handleWalletAddressSelect(data, field.name)}
                                     // placeholder="Enter signer wallet address"
                                     className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
