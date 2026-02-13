@@ -393,19 +393,19 @@ export async function signPdfDocument(
   console.log('signPdfDocument - existing embedded files:', [...existingEmbeddedFileNames], 'hasExistingAquaJson:', hasExistingAquaJson);
 
   // Check if PDF was already processed (has existing signature platform metadata)
-  const existingInfoDictRef = tempDoc.context.trailerInfo.Info;
-  let hasExistingSecurityPage = false;
-  if (existingInfoDictRef) {
-    const existingInfoDict = tempDoc.context.lookup(existingInfoDictRef);
-    if (existingInfoDict instanceof PDFDict) {
-      const sigPlatform = existingInfoDict.lookup(PDFName.of('SignaturePlatform'));
-      if (sigPlatform) {
-        hasExistingSecurityPage = true;
-      }
-    }
-  }
+  // const existingInfoDictRef = tempDoc.context.trailerInfo.Info;
+  // let hasExistingSecurityPage = false;
+  // if (existingInfoDictRef) {
+  //   const existingInfoDict = tempDoc.context.lookup(existingInfoDictRef);
+  //   if (existingInfoDict instanceof PDFDict) {
+  //     const sigPlatform = existingInfoDict.lookup(PDFName.of('SignaturePlatform'));
+  //     if (sigPlatform) {
+  //       hasExistingSecurityPage = true;
+  //     }
+  //   }
+  // }
 
-  console.log('signPdfDocument - hasExistingSecurityPage:', hasExistingSecurityPage);
+  // console.log('signPdfDocument - hasExistingSecurityPage:', hasExistingSecurityPage);
 
   if (resolvedFileInfo && resolvedFileInfo.aquaTree && !hasExistingAquaJson) {
     try {
@@ -622,7 +622,7 @@ export async function signPdfDocument(
   }
 
   // Add security information page (skip if already present)
-  if (!hasExistingSecurityPage) {
+  if (!hasExistingAquaJson) {
     console.log('signPdfDocument - adding security info page');
     await addSecurityInfoPage(tempDoc, {
       signers: allSigners,
