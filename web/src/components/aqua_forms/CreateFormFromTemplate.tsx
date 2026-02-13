@@ -1134,6 +1134,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   }
             }
 
+            // Handle aquafier_licence specific logic - share with receivers
+            if (selectedTemplate && selectedTemplate.name === 'aquafier_licence' && session?.address) {
+                  if (completeFormData['receiver']) {
+                        await shareAquaTree(signedAquaTree, completeFormData['receiver'] as string)
+                  }
+            }
+
             // Handle identity_attestation specific logic
             if (selectedTemplate && selectedTemplate.name === 'identity_attestation') {
                   console.log(`handling identity attestation post signing`)
