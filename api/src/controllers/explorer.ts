@@ -20,6 +20,7 @@ import {
     transferRevisionChainData
 } from '../utils/revisions_utils';
 import { getHost, getPort } from '../utils/api_utils';
+import { extractAquaDataFromPdf } from '../utils/pdf_utils';
 import { DeleteRevision } from '../models/request_models';
 import { usageService } from '../services/usageService';
 import { getGenesisHash, removeFilePathFromFileIndex, saveFileAndCreateOrUpdateFileIndex, validateAquaTree } from '../utils/aqua_tree_utils';
@@ -1189,6 +1190,119 @@ export default async function explorerController(fastify: FastifyInstance) {
             });
         }
     })
+
+    fastify.post('/explorer_aqua_pdf', async (request: any, reply: any) => {
+        try {
+            // Authentication
+            const nonce = request.headers['nonce'];
+            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+            }
+
+            const session = await prisma.siweSession.findUnique({ where: { nonce } });
+            if (!session) {
+                return reply.code(403).send({ success: false, message: "Nonce is invalid" });
+            }
+
+            // Validate multipart request
+            if (!request.isMultipart()) {
+                return reply.code(400).send({ error: 'Expected multipart form data' });
+            }
+
+            // Process file upload
+            const data = await request.file();
+            if (!data?.file) {
+                return reply.code(400).send({ error: 'No file uploaded' });
+            }
+
+            // Verify file size (200MB limit)
+            const maxFileSize = 200 * 1024 * 1024;
+            if (data.file.bytesRead > maxFileSize) {
+                return reply.code(413).send({ error: 'File too large. Maximum file size is 200MB' });
+            }
+
+            // Read PDF buffer
+            const pdfBuffer = await streamToBuffer(data.file);
+
+            // Extract embedded aqua data from PDF
+            const extractedData = await extractAquaDataFromPdf(pdfBuffer);
+
+            if (!extractedData.aquaJson) {
+                return reply.code(400).send({ error: 'No embedded aqua data found in PDF' });
+            }
+
+            const aquaJson = extractedData.aquaJson;
+            if (!aquaJson.type) {
+                aquaJson.type = "aqua_file_backup";
+            }
+
+            if (aquaJson.type !== "aqua_workspace_backup" && aquaJson.type !== "aqua_file_backup") {
+                return reply.code(400).send({ error: 'Invalid aqua.json type' });
+            }
+
+            if (aquaJson.type !== "aqua_file_backup") {
+                return reply.code(400).send({ error: 'Invalid aqua.json type for workspace upload' });
+            }
+
+            // Build a JSZip from extracted files so we can reuse existing processing
+            const zip = new JSZip();
+            zip.file('aqua.json', JSON.stringify(aquaJson));
+
+            // Collect asset filenames for quick lookup
+            const assetFileNames = new Set(extractedData.assetFiles.map(f => f.filename));
+
+            for (const chainFile of extractedData.aquaChainFiles) {
+                zip.file(chainFile.filename, chainFile.content);
+
+                // During PDF signing, asset files whose content is an aqua tree get
+                // embedded only under the .aqua.json name. We need to also add the
+                // content under the original asset name so processAquaMetadata can find it.
+                const assetName = chainFile.filename.replace(/\.aqua\.json$/, '');
+                if (assetName !== chainFile.filename && !assetFileNames.has(assetName)) {
+                    zip.file(assetName, chainFile.content);
+                    assetFileNames.add(assetName);
+                }
+            }
+
+            for (const assetFile of extractedData.assetFiles) {
+                if (Buffer.isBuffer(assetFile.content)) {
+                    zip.file(assetFile.filename, assetFile.content);
+                } else {
+                    zip.file(assetFile.filename, assetFile.content as string);
+                }
+            }
+
+            // Process aqua.json metadata first
+            await processAquaMetadata(zip, session.address);
+
+            const isTemplateId = request.headers['is_template_id'];
+            let templateId = null;
+            if (isTemplateId != undefined || isTemplateId != null || isTemplateId != "") {
+                templateId = isTemplateId;
+            }
+
+            // Process individual .aqua.json files
+            await processAquaFiles(zip, session.address, templateId);
+
+            // Return response with file info
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
+            const protocol = request.protocol || 'https';
+            const url = `${protocol}://${host}`;
+            const displayData = await getUserApiFileInfo(url, session.address);
+
+            return reply.code(200).send({
+                success: true,
+                message: 'Aqua tree imported from PDF successfully',
+                data: displayData
+            });
+
+        } catch (error: any) {
+            request.log.error(error);
+            return reply.code(500).send({
+                error: error instanceof Error ? error.message : 'PDF import failed'
+            });
+        }
+    });
 
 }
 

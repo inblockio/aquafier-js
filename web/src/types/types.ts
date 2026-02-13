@@ -169,6 +169,7 @@ export interface FileItemWrapper {
       isZip: boolean
       isJsonForm: boolean
       isJsonAquaTreeData: boolean
+      isPdfWithAquaData: boolean
 }
 
 export interface WebSocketMessage {

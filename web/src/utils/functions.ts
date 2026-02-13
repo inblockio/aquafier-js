@@ -1701,6 +1701,10 @@ export const isJSONKeyValueStringContent = (fileContent: string): boolean => {
 export const isZipFile = (fileName: string) => {
       return fileName.trim().toLowerCase().endsWith('.zip')
 }
+
+export const isPDFFile = (fileName: string) => {
+      return fileName.trim().toLowerCase().endsWith('.pdf')
+}
 // export function generateAvatar(_address: string) {
 //     const address = ethers.getAddress(_address)
 //     const generator = new AvatarGenerator()
