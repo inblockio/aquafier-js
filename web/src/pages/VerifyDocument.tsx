@@ -661,14 +661,14 @@ const VerifyDocument = () => {
                                                 )}
 
                                                 {/* Import to Account Card */}
-                                                {fileInfo && metamaskAddress && drawerStatus && (
+                                                {/* {fileInfo && metamaskAddress && drawerStatus && (
                                                       <ImportAquaChainFromChain
                                                             showButtonOnly={false}
                                                             fileInfo={fileInfo}
                                                             contractData={contractData}
                                                             isVerificationSuccessful={drawerStatus?.isVerificationSuccessful ?? false}
                                                       />
-                                                )}
+                                                )} */}
                                           </div>
                                     </div>
                               </div>
