@@ -42,9 +42,10 @@ interface PdfSignerProps {
       setActiveStep: (page: number) => void
       documentSignatures?: SignatureData[]
       selectedFileInfo: ApiFileInfo
+      onSidebarReady?: (sidebar: React.ReactNode) => void
 }
 
-const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, selectedFileInfo, setActiveStep }) => {
+const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, selectedFileInfo, setActiveStep, onSidebarReady }) => {
       const { setSelectedFileInfo, setOpenDialog, openDialog } = useStore(appStore)
       // State for PDF document
       const [pdfFile, setPdfFile] = useState<File | null>(null)
@@ -71,6 +72,13 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
       // PDF viewer container ref
       const pdfMainContainerRef = useRef<HTMLDivElement>(null)
+
+      // Lift sidebar content to parent via callback
+      useEffect(() => {
+            if (onSidebarReady) {
+                  onSidebarReady(signatureSideBar())
+            }
+      }, [signers, mySignaturesAquaTree, selectedSignatureId, canPlaceSignature, signaturePositions, submittingSignatureData, documentSignatures, allSignersBeforeMe, mySignatureData, openDialog])
 
       // Old individual revision saving - kept for reference
       // const saveRevisionsToServerForUser = async (aquaTrees: AquaTree[], address: string) => {
@@ -1161,7 +1169,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
             }
 
             return (
-                  <div className="col-span-12 md:col-span-1 h-auto md:h-full overflow-hidden md:overflow-auto">
+                  <div className="col-span-12 md:col-span-1  overflow-hidden md:overflow-auto">
                         <div className="flex flex-col gap-4 p-4 border border-gray-100 dark:border-gray-800 rounded-md">
                               <Button data-testid="action-create-signature-button" className="flex items-center gap-2" onClick={() => {
                                     // setIsOpen(true)
@@ -1278,11 +1286,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                     onClick={handleSignatureSubmission}
                                     className={signaturePositions.length === 0 || submittingSignatureData ? '' : 'bg-green-600 hover:bg-green-700 text-white'}
                               >
-                                    Sign document
+                                    Sign document..
                               </Button>
 
 
-                              <div className="flex flex-col">
+                              {/* <div className="flex flex-col">
                                     <h4 className="font-bold mt-2">Other Signatures:</h4>
                                     <div className="max-h-[200px] overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md">
                                           <div className="flex flex-col">
@@ -1301,11 +1309,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                                                         />
                                                                         <div className="flex flex-col space-y-0">
                                                                               <p className="text-sm font-medium">{signature.name}</p>
-                                                                              {/* <p className="text-xs text-gray-600">
-                                                                                                {signature.walletAddress.length > 10
-                                                                                                      ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
-                                                                                                      : signature.walletAddress}
-                                                                                          </p> */}
                                                                               <WalletAddressClaim walletAddress={signature.walletAddress} />
                                                                         </div>
                                                                   </div>
@@ -1316,7 +1319,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                                 )}
                                           </div>
                                     </div>
-                              </div>
+                              </div> */}
                         </div>
                   </div>
             )
@@ -1671,7 +1674,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                     <div className="h-auto md:h-full">
                                           <div className="h-auto md:h-full">
                                                 <div className="grid grid-cols-12 gap-0 h-auto md:h-full">
-                                                      <div className="col-span-12 md:col-span-9 bg-gray-100 overflow-x-auto overflow-y-scroll h-full">
+                                                      <div className="col-span-12 bg-gray-100 overflow-x-auto overflow-y-scroll h-full">
                                                             <div className="h-auto md:h-full p-0 m-0">
                                                                   {/* This is a custom component do not convert to tailwind, we will convert it separately */}
                                                                   <PdfRendererComponent
@@ -1687,10 +1690,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                                                         onAnnotationRotate={() => { }}
                                                                         onDownload={handleDownload}
                                                                   />
-                                                            </div>+
-                                                      </div>
-                                                      <div className="col-span-12 md:col-span-3 bg-gray-100 overflow-hidden">
-                                                            <div className="p-4 h-auto md:h-full overflow-y-scroll overflow-x-hidden break-words">{signatureSideBar()}</div>
+                                                            </div>
                                                       </div>
                                                 </div>
                                           </div>

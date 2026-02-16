@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Alert, AlertDescription } from '../../components/ui/alert'
 import appStore from '../../store'
 import { useStore } from 'zustand'
@@ -30,6 +30,7 @@ export default function PdfWorkflowPage() {
       const [selectedFileInfoLocal, setSelectedFileInfoLocal] = useState<ApiFileInfo | null>(null)
       const [errorMessage, setErrorMessage] = useState<string | null>(null)
       const [loadingFromApiSelectedFileInfo, setLoadingFromApiSelectedFileInfo] = useState(false)
+      const [signerSidebar, setSignerSidebar] = useState<React.ReactNode>(null)
 
       const navigate = useNavigate()
 
@@ -213,9 +214,11 @@ export default function PdfWorkflowPage() {
                                           <ContractDocumentView
                                                 selectedFileInfo={selectedFileInfoLocal!}
                                                 setActiveStep={noOp}
+                                                onSidebarReady={setSignerSidebar}
                                           />
                                     </div>
                                     <div className="lg:col-span-1">
+                                          {signerSidebar}
                                           <ContractSummaryView
                                                 selectedFileInfo={selectedFileInfoLocal!}
                                                 setActiveStep={noOp}
