@@ -1174,13 +1174,15 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
             return (
                   <div className="col-span-12 md:col-span-1  overflow-hidden md:overflow-auto">
                         <div className="flex flex-col gap-4 p-4 border border-gray-100 dark:border-gray-800 rounded-md">
-                              <Button data-testid="action-create-signature-button" className="flex items-center gap-2" onClick={() => {
-                                    // setIsOpen(true)
-                                    setOpenDialog({ dialogType: 'user_signature', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
-                              }}>
-                                    <FaPlus className="h-4 w-4" />
-                                    Create Signature
-                              </Button>
+                              {mySignaturesAquaTree.length === 0 && (
+                                    <Button data-testid="action-create-signature-button" className="flex items-center gap-2" onClick={() => {
+                                          // setIsOpen(true)
+                                          setOpenDialog({ dialogType: 'user_signature', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
+                                    }}>
+                                          <FaPlus className="h-4 w-4" />
+                                          Create Signature
+                                    </Button>
+                              )}
 
                               {/* Signature List */}
                               {mySignaturesAquaTree.length > 0 && (

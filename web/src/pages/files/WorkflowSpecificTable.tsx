@@ -55,7 +55,10 @@ const WorkflowSpecificTable = ({ showFileActions, workflowName, view, filesListP
                 params.claim_types = JSON.stringify([workflowName])
             } else {
                 // For 'all' and 'user_files', use the new sorted endpoint
-                params.fileType = workflowName
+                // Only add fileType param if not 'all' (when 'all', backend returns all files)
+                if (workflowName !== 'all') {
+                    params.fileType = workflowName
+                }
             }
 
             const filesDataQuery = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${endpoint}`), {
