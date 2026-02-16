@@ -1,7 +1,7 @@
 import { degrees, PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { toast } from 'sonner';
 import { signPdfWithAquafier } from './pdf-digital-signature';
-import { Annotation, ImageAnnotation, ProfileAnnotation, TextAnnotation } from '../pages/aqua_sign_wokflow/ContractDocument/signer/types';
+import { Annotation, ImageAnnotation, ProfileAnnotation, TextAnnotation } from '../pages/pdf_workflow/pdf-viewer/types';
 import appStore from '../store';
 import { formatAddressForFilename, isWorkFlowData } from './functions';
 import { ApiFileInfo } from '../models/FileInfo';

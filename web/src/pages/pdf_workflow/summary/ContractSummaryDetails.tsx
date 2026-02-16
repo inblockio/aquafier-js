@@ -1,13 +1,12 @@
-import { FiAlertCircle, FiCalendar, FiCheck, FiCheckCircle, FiCheckSquare, FiFileText, FiInfo } from 'react-icons/fi'
+import { FiAlertCircle, FiCalendar, FiCheck, FiCheckCircle, FiCheckSquare, FiInfo, FiFileText } from 'react-icons/fi'
 import { BsCheckCircleFill } from 'react-icons/bs'
 import { IContractWorkFlowFirstPage } from '../../../types/contract_workflow'
-import { Button } from '../../../components/ui/button'
 import { Badge } from '../../../components/ui/badge'
 import { Card, CardContent } from '../../../components/ui/card'
 import { cn } from '../../../lib/utils'
 import WalletAdrressClaim from '@/pages/v2_claims_workflow/WalletAdrressClaim'
 
-const ContractSummaryDetails = ({ data, goToSecondPage, isValidTree }: IContractWorkFlowFirstPage) => {
+const ContractSummaryDetails = ({ data, isValidTree }: IContractWorkFlowFirstPage) => {
       const mockContractData = data
 
       const formatDateTime = (dateString: string) => {
@@ -195,7 +194,7 @@ const ContractSummaryDetails = ({ data, goToSecondPage, isValidTree }: IContract
                         <CustomDivider mt={2} mb={0} />
 
                         <div className={cn('pt-8 pb-8 dark:bg-black/80', getBgColorBasedOnVerificationStatus())}>
-                              <div className="px-2 md:px-8 flex justify-between items-center">
+                              <div className="px-2 md:px-8 flex items-center">
                                     {mockContractData.status === 'completed' && (
                                           <div className="flex items-center">
                                                 <BsCheckCircleFill className="text-green-500 mr-2" />
@@ -203,17 +202,6 @@ const ContractSummaryDetails = ({ data, goToSecondPage, isValidTree }: IContract
                                           </div>
                                     )}
                                     {mockContractData.status === 'pending' && <p className="text-sm opacity-90">{mockContractData?.footerMsg}</p>}
-                                    <Button
-                                          data-testid="action-view-contract-button"
-                                          className={cn(
-                                                'rounded-sm cursor-pointer',
-                                                mockContractData?.status === 'pending' ? 'bg-blue-600/80 text-white hover:bg-blue-700' : 'bg-black/80 text-white hover:bg-black/70'
-                                          )}
-                                          onClick={goToSecondPage}
-                                    >
-                                          <FiFileText className="mr-2 h-4 w-4" />
-                                          View Contract Informatioon
-                                    </Button>
                               </div>
                         </div>
                   </div>

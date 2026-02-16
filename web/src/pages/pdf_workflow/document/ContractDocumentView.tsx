@@ -11,7 +11,7 @@ import {
 } from 'aqua-js-sdk/web'
 import {ensureDomainUrlHasSSL, getAquatreeObject, getHighestFormIndex, isAquaTree, parseAquaTreeContent, reorderRevisionsInAquaTree} from '../../../utils/functions'
 
-import {PDFDisplayWithJustSimpleOverlay} from './components/signature_overlay'
+import {PDFDisplayWithJustSimpleOverlay} from './SignatureOverlay'
 import {toast} from 'sonner'
 import PdfSigner from './PdfSigner'
 import SignatureItem from '../../../components/pdf/SignatureItem'

@@ -29,7 +29,7 @@ export interface ContractWorkflowData {
 
 export interface IContractWorkFlowFirstPage {
       data: ContractWorkflowData
-      goToSecondPage: () => void
+      goToSecondPage?: () => void
       enableNameResolution: boolean
       isValidTree: 'pending' | 'successful' | 'failed'
 }

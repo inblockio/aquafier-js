@@ -480,9 +480,6 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                                                 ? ''
                                                 : `${isWorkFlowComplete.length} ${isWorkFlowComplete.length > 1 ? 'signatures' : 'Signature'} pending for workflow to be completed`,
                               }}
-                              goToSecondPage={() => {
-                                    setActiveStep(2) // Open the contract document
-                              }}
                               enableNameResolution={true}
                               isValidTree={getActualState() as 'pending' | 'successful' | 'failed'}
                         />

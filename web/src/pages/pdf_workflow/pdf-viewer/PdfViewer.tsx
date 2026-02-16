@@ -1,7 +1,7 @@
 import type React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Annotation, ImageAnnotation, ProfileAnnotation, TextAnnotation } from './types'
-import { SignatureData } from '../../../../types/types'
+import { SignatureData } from '../../../types/types'
 
 interface PdfViewerProps {
       file: File | null
