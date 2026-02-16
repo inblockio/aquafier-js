@@ -61,6 +61,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
       const [canPlaceSignature, setCanPlaceSignature] = useState(false)
       const [selectedTool, setSelectedTool] = useState<'text' | 'image' | 'profile' | 'signature' | null>(null)
       const [submittingSignatureData, setSubmittingSignatureData] = useState(false)
+      const [signingComplete, setSigningComplete] = useState(false)
 
       const { subscribe, triggerWebsockets } = useNotificationWebSocketContext();
 
@@ -76,9 +77,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
       // Lift sidebar content to parent via callback
       useEffect(() => {
             if (onSidebarReady) {
-                  onSidebarReady(signatureSideBar())
+                  onSidebarReady(signingComplete ? null : signatureSideBar())
             }
-      }, [signers, mySignaturesAquaTree, selectedSignatureId, canPlaceSignature, signaturePositions, submittingSignatureData, documentSignatures, allSignersBeforeMe, mySignatureData, openDialog])
+      }, [signers, mySignaturesAquaTree, selectedSignatureId, canPlaceSignature, signaturePositions, submittingSignatureData, documentSignatures, allSignersBeforeMe, mySignatureData, openDialog, signingComplete])
 
       // Old individual revision saving - kept for reference
       // const saveRevisionsToServerForUser = async (aquaTrees: AquaTree[], address: string) => {
@@ -727,9 +728,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   await updateUIAfterSuccess()
 
                   // Step 10: Hide signing sidebar
-                  if (onSidebarReady) {
-                        onSidebarReady(null)
-                  }
+                  setSigningComplete(true)
 
             } catch (error) {
                   console.error('Error in submitSignatureData:', error)
