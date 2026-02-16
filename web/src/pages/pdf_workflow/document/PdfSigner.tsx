@@ -726,6 +726,10 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   // Step 9: Update UI and refresh files
                   await updateUIAfterSuccess()
 
+                  // Step 10: Hide signing sidebar
+                  if (onSidebarReady) {
+                        onSidebarReady(null)
+                  }
 
             } catch (error) {
                   console.error('Error in submitSignatureData:', error)
