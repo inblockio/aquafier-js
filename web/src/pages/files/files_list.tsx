@@ -468,15 +468,17 @@ export default function FilesList(filesListProps: FilesListProps) {
                                                 <h1 className="text-xl font-semibold text-gray-900">
                                                       {getFilteredTitle()}
                                                 </h1>
-                               
+
                                                 {selectedFilters.includes('all') ? (
-                                                      <div className="flex items-center space-x-2">
-                                                            <div className="px-3 py-1 bg-gray-100 rounded-full">
-                                                                  <span className="text-sm text-gray-600">
-                                                                        {getWorkflowStat(selectedWorkflow)}
-                                                                  </span>
+                                                      selectedWorkflow !== 'all' && (
+                                                            <div className="flex items-center space-x-2">
+                                                                  <div className="px-3 py-1 bg-gray-100 rounded-full">
+                                                                        <span className="text-sm text-gray-600">
+                                                                              {getWorkflowStat(selectedWorkflow)}
+                                                                        </span>
+                                                                  </div>
                                                             </div>
-                                                      </div>
+                                                      )
                                                 ) : (
                                                       <div className="px-3 py-1 bg-blue-50 rounded-full">
                                                             <span className="text-sm text-blue-700">
