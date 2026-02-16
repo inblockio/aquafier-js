@@ -143,7 +143,7 @@ export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesis
 
             }
 
-            saveAquaTree(attestedData.aquaTree, walletAddress, null, false)
+            saveAquaTree(attestedData.aquaTree, walletAddress, null, true)
 
 
             return serverAttestationInfo

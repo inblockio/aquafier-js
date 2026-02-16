@@ -292,8 +292,6 @@ export default async function systemController(fastify: FastifyInstance) {
             });
         }
 
-        console.log("Entire chain: ", entireChain)
-
         // Transfer the chain to the target user (session.address)
         const transferResult = await transferRevisionChainData(
             SYSTEM_WALLET_ADDRESS,

@@ -97,6 +97,7 @@ async function buildServer() {
     // Ensure DEFAULT_FREE_PLAN_ID is set (resolves from DB if missing from .env)
     await ensureDefaultFreePlanId()
 
+    // Create the server identity here
     await createServerIdentity()
 
 
