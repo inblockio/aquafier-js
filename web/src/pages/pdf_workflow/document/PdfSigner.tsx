@@ -1674,7 +1674,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                                     <div className="h-auto md:h-full">
                                           <div className="h-auto md:h-full">
                                                 <div className="grid grid-cols-12 gap-0 h-auto md:h-full">
-                                                      <div className="col-span-12 bg-gray-100 overflow-x-auto overflow-y-scroll h-full">
+                                                      <div className="col-span-12 overflow-x-auto overflow-y-scroll h-full">
                                                             <div className="h-auto md:h-full p-0 m-0">
                                                                   {/* This is a custom component do not convert to tailwind, we will convert it separately */}
                                                                   <PdfRendererComponent
