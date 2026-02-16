@@ -464,6 +464,12 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
       // Check if user has already signed
       const isUserSignatureIncluded = signatures.some(sig => sig.walletAddress === session?.address)
 
+      useEffect(() => {
+            if (isUserSignatureIncluded && onSidebarReady) {
+                  onSidebarReady(null)
+            }
+      }, [isUserSignatureIncluded])
+
       if (isUserSignatureIncluded) {
             return (
                   <div>
