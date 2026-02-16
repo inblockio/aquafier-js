@@ -73,7 +73,7 @@ const FilesPage = () => {
       // const [isSelectedFileDialogOpen, setIsSelectedFileDialogOpen] = useState(false)
 
       // Use React Query hook for user stats
-      const { stats, isLoading: loading } = useUserStats()
+      const { stats, isLoading: loading, refetch: refetchStats } = useUserStats()
 
       // Reset hasUploadedFiles flag when stats actually show files
       React.useEffect(() => {
@@ -139,6 +139,9 @@ const FilesPage = () => {
 
                   // Mark that files have been uploaded so FilesList shows even if stats haven't updated yet
                   setHasUploadedFiles(true)
+
+                  // Force immediate refetch of stats to update UI
+                  refetchStats()
 
                   toast.success('File uploaded successfully')
             } catch (error) {

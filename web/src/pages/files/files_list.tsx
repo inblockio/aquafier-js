@@ -57,7 +57,7 @@ export default function FilesList(filesListProps: FilesListProps) {
 
       // Process stats to extract unique workflows
       useEffect(() => {
-            if (stats && stats.filesCount > 0) {
+            if (stats) {
                   setFilesStats(stats)
                   let uniqueWorkflows = new Set<{ name: string; count: number }>()
                   let claimTypeCounts = stats.claimTypeCounts
@@ -74,7 +74,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       }, [stats])
 
       useEffect(() => {
-            if (tabFromUrl && stats.filesCount > 0) {
+            if (tabFromUrl && stats) {
                   if (stats?.claimTypeCounts?.[tabFromUrl as keyof typeof stats.claimTypeCounts] > 0) {
                         setSelectedWorkflow(tabFromUrl)
                   } else {
