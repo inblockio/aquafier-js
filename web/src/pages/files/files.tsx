@@ -69,10 +69,18 @@ const FilesPage = () => {
       const [uploadQueue, setUploadQueue] = useState<UploadStatus[]>([])
       const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
       const [isMinimized, setIsMinimized] = useState(false)
+      const [hasUploadedFiles, setHasUploadedFiles] = useState(false)
       // const [isSelectedFileDialogOpen, setIsSelectedFileDialogOpen] = useState(false)
 
       // Use React Query hook for user stats
       const { stats, isLoading: loading } = useUserStats()
+
+      // Reset hasUploadedFiles flag when stats actually show files
+      React.useEffect(() => {
+            if (stats.filesCount > 0) {
+                  setHasUploadedFiles(false)
+            }
+      }, [stats.filesCount])
 
       // Helper function to clear file input
       const clearFileInput = () => {
@@ -129,6 +137,8 @@ const FilesPage = () => {
                   setFilesListForUpload(prev => prev.filter((_, i) => i !== index))
                   clearFileInput()
 
+                  // Mark that files have been uploaded so FilesList shows even if stats haven't updated yet
+                  setHasUploadedFiles(true)
 
                   toast.success('File uploaded successfully')
             } catch (error) {
@@ -462,7 +472,8 @@ const FilesPage = () => {
                   )
             }
 
-            if (stats.filesCount === 0 && !loading) {
+            // Show FilesList if files exist, have been uploaded, or are currently loading
+            if (stats.filesCount === 0 && !loading && !hasUploadedFiles) {
                   return <FileDropZone
                         setFiles={(files: File[]) => {
                               filesForUpload(files)
