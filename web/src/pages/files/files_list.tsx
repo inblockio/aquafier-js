@@ -21,6 +21,8 @@ export default function FilesList(filesListProps: FilesListProps) {
       // Use React Query hook for user stats
       const { stats, refetch: refetchStats } = useUserStats()
 
+      console.log('[FilesList] Render - stats:', stats, 'uniqueWorkflows:', uniqueWorkflows, 'selectedWorkflow:', selectedWorkflow)
+
       const [searchParams] = useSearchParams();
 
       // Read the tab parameter from URL
@@ -57,19 +59,24 @@ export default function FilesList(filesListProps: FilesListProps) {
 
       // Process stats to extract unique workflows
       useEffect(() => {
+            console.log('[FilesList] useEffect - Processing stats:', stats)
             if (stats) {
                   setFilesStats(stats)
                   let uniqueWorkflows = new Set<{ name: string; count: number }>()
                   let claimTypeCounts = stats.claimTypeCounts
                   const claimTypes = Object.keys(claimTypeCounts) as Array<keyof typeof claimTypeCounts>
+                  console.log('[FilesList] useEffect - claimTypes:', claimTypes, 'claimTypeCounts:', claimTypeCounts)
                   for (let i = 0; i < claimTypes.length; i++) {
                         let claimType = claimTypes[i]
                         const count = claimTypeCounts[claimType]
                         if (parseInt(count.toString()) > 0) {
+                              console.log('[FilesList] useEffect - Adding workflow:', claimType, 'count:', count)
                               uniqueWorkflows.add({ name: claimType, count: parseInt(count.toString()) })
                         }
                   }
-                  setUniqueWorkflows(Array.from(uniqueWorkflows))
+                  const workflowsArray = Array.from(uniqueWorkflows)
+                  console.log('[FilesList] useEffect - Setting uniqueWorkflows:', workflowsArray)
+                  setUniqueWorkflows(workflowsArray)
             }
       }, [stats])
 
@@ -307,12 +314,16 @@ export default function FilesList(filesListProps: FilesListProps) {
       }
 
       const hasUserFiles = () => {
+            console.log('[FilesList] hasUserFiles check - uniqueWorkflows:', uniqueWorkflows)
             if (uniqueWorkflows.length > 0) {
                   let userFiles = uniqueWorkflows.find(wf => wf.name === "user_files")
+                  console.log('[FilesList] hasUserFiles - found userFiles:', userFiles)
                   if (userFiles && userFiles.count > 0) {
+                        console.log('[FilesList] hasUserFiles - returning true')
                         return true
                   }
             }
+            console.log('[FilesList] hasUserFiles - returning false')
             return false
       }
 
@@ -344,8 +355,10 @@ export default function FilesList(filesListProps: FilesListProps) {
                                     {/* Only show "All Files" if hideAllFilesAndUserAquaFiles is false */}
                                     {!filesListProps.hideAllFilesAndUserAquaFiles && (
                                           <>
-                                                {
-                                                      hasUserFiles() ? (
+                                                {(() => {
+                                                      const hasFiles = hasUserFiles()
+                                                      console.log('[FilesList] Tab rendering - hasUserFiles:', hasFiles)
+                                                      return hasFiles ? (
                                                             <button
                                                                   onClick={() => setSelectedWorkflow('user_files')}
                                                                   className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${selectedWorkflow === 'user_files'
@@ -357,7 +370,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                                                                   {/* User Files ({uniqueWorkflows.find(wf => wf.name === "user_files")?.count}) */}
                                                             </button>
                                                       ) : null
-                                                }
+                                                })()}
                                                 <button
                                                       onClick={() => setSelectedWorkflow('all')}
                                                       className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${selectedWorkflow === 'all'

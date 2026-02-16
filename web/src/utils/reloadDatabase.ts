@@ -120,23 +120,20 @@ export const triggerWorkflowReload = async (workflowType: string, watchAll?: boo
         if (workflowType === 'all') {
             await triggerReload(RELOAD_KEYS.all_files);
             await triggerReload(RELOAD_KEYS.contacts);
-            // Invalidate and refetch React Query cache
+            // Force refetch React Query cache
             if (queryClient) {
-                await queryClient.invalidateQueries({
-                    queryKey: ['files'],
-                    refetchType: 'active'
+                await queryClient.refetchQueries({
+                    queryKey: ['files']
                 });
-                await queryClient.invalidateQueries({
-                    queryKey: ['contacts'],
-                    refetchType: 'active'
+                await queryClient.refetchQueries({
+                    queryKey: ['contacts']
                 });
             }
             if (watchAll) {
                 await triggerReload(RELOAD_KEYS.user_stats);
                 if (queryClient) {
-                    await queryClient.invalidateQueries({
-                        queryKey: ['userStats'],
-                        refetchType: 'active'
+                    await queryClient.refetchQueries({
+                        queryKey: ['userStats']
                     });
                 }
             }
@@ -145,19 +142,17 @@ export const triggerWorkflowReload = async (workflowType: string, watchAll?: boo
 
         if (workflowType === 'user_files') {
             await triggerReload(RELOAD_KEYS.user_files);
-            // Invalidate and refetch React Query cache
+            // Force refetch React Query cache
             if (queryClient) {
-                await queryClient.invalidateQueries({
-                    queryKey: ['files'],
-                    refetchType: 'active'
+                await queryClient.refetchQueries({
+                    queryKey: ['files']
                 });
             }
             if (watchAll) {
                 await triggerReload(RELOAD_KEYS.user_stats);
                 if (queryClient) {
-                    await queryClient.invalidateQueries({
-                        queryKey: ['userStats'],
-                        refetchType: 'active'
+                    await queryClient.refetchQueries({
+                        queryKey: ['userStats']
                     });
                 }
             }
@@ -166,11 +161,10 @@ export const triggerWorkflowReload = async (workflowType: string, watchAll?: boo
 
         if (workflowType === 'contacts') {
             await triggerReload(RELOAD_KEYS.contacts);
-            // Invalidate and refetch React Query cache
+            // Force refetch React Query cache
             if (queryClient) {
-                await queryClient.invalidateQueries({
-                    queryKey: ['contacts'],
-                    refetchType: 'active'
+                await queryClient.refetchQueries({
+                    queryKey: ['contacts']
                 });
             }
             return;
@@ -180,11 +174,10 @@ export const triggerWorkflowReload = async (workflowType: string, watchAll?: boo
             await triggerReload(RELOAD_KEYS.claims_and_attestations);
             await triggerReload(workflowType);
             await triggerReload(RELOAD_KEYS.contacts);
-            // Invalidate and refetch React Query cache
+            // Force refetch React Query cache
             if (queryClient) {
-                await queryClient.invalidateQueries({
-                    queryKey: ['contacts'],
-                    refetchType: 'active'
+                await queryClient.refetchQueries({
+                    queryKey: ['contacts']
                 });
             }
             return;
@@ -210,23 +203,21 @@ export const triggerWorkflowReload = async (workflowType: string, watchAll?: boo
             await triggerReload(RELOAD_KEYS.user_stats);
         }
 
-        // Invalidate and refetch React Query cache if queryClient is available
+        // Force refetch React Query cache if queryClient is available
         if (queryClient) {
             const queryKeys = QUERY_KEY_MAPPING[workflowType];
             if (queryKeys) {
                 for (const queryKey of queryKeys) {
-                    await queryClient.invalidateQueries({
-                        queryKey: [queryKey],
-                        refetchType: 'active'
+                    await queryClient.refetchQueries({
+                        queryKey: [queryKey]
                     });
                 }
             }
 
-            // Also invalidate for specific reload keys
+            // Also refetch for specific reload keys
             if (watchAll) {
-                await queryClient.invalidateQueries({
-                    queryKey: ['userStats'],
-                    refetchType: 'active'
+                await queryClient.refetchQueries({
+                    queryKey: ['userStats']
                 });
             }
         }

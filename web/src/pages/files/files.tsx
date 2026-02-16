@@ -75,9 +75,13 @@ const FilesPage = () => {
       // Use React Query hook for user stats
       const { stats, isLoading: loading, refetch: refetchStats } = useUserStats()
 
+      console.log('[FilesPage] Render - stats:', stats, 'loading:', loading, 'hasUploadedFiles:', hasUploadedFiles)
+
       // Reset hasUploadedFiles flag when stats actually show files
       React.useEffect(() => {
+            console.log('[FilesPage] useEffect - stats.filesCount:', stats.filesCount)
             if (stats.filesCount > 0) {
+                  console.log('[FilesPage] Resetting hasUploadedFiles to false')
                   setHasUploadedFiles(false)
             }
       }, [stats.filesCount])
@@ -137,9 +141,11 @@ const FilesPage = () => {
                   setFilesListForUpload(prev => prev.filter((_, i) => i !== index))
                   clearFileInput()
 
+                  console.log('[FilesPage] Upload successful - setting hasUploadedFiles to true')
                   // Mark that files have been uploaded so FilesList shows even if stats haven't updated yet
                   setHasUploadedFiles(true)
 
+                  console.log('[FilesPage] Triggering refetchStats()')
                   // Force immediate refetch of stats to update UI
                   refetchStats()
 
@@ -476,7 +482,16 @@ const FilesPage = () => {
             }
 
             // Show FilesList if files exist, have been uploaded, or are currently loading
-            if (stats.filesCount === 0 && !loading && !hasUploadedFiles) {
+            const shouldShowDropZone = stats.filesCount === 0 && !loading && !hasUploadedFiles
+            console.log('[FilesPage] Render decision:', {
+                  filesCount: stats.filesCount,
+                  loading,
+                  hasUploadedFiles,
+                  shouldShowDropZone
+            })
+
+            if (shouldShowDropZone) {
+                  console.log('[FilesPage] Rendering FileDropZone')
                   return <FileDropZone
                         setFiles={(files: File[]) => {
                               filesForUpload(files)
@@ -484,7 +499,7 @@ const FilesPage = () => {
                   />
             }
 
-
+            console.log('[FilesPage] Rendering FilesList')
             return (
                   <FilesList
                         selectedFiles={[]}
