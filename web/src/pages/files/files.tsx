@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import appStore from '../../store'
 import { useStore } from 'zustand'
 import FilesList from './files_list'
 import { AlertCircle, CheckCircle, FileText, Loader2, Minimize2, Plus, Upload, X } from 'lucide-react'
-import { emptyUserStats, FileItemWrapper, IUserStats, UploadStatus } from '@/types/types'
+import { FileItemWrapper, UploadStatus } from '@/types/types'
 import { useSubscriptionStore } from '../../stores/subscriptionStore'
-import { fetchUsageStats } from '../../api/subscriptionApi'
+import { useSubscriptionUsage } from '@/hooks/useSubscriptionUsage'
 import {
       checkIfFileExistInUserFiles,
       ensureDomainUrlHasSSL,
@@ -16,7 +16,7 @@ import {
       isZipFile,
       readFileContent
 } from '@/utils/functions'
-import { API_ENDPOINTS, maxFileSizeForUpload } from '@/utils/constants'
+import { maxFileSizeForUpload } from '@/utils/constants'
 import apiClient from '@/api/axiosInstance'
 
 
@@ -42,7 +42,7 @@ import { FormRevisionFile } from '@/components/dropzone_file_actions/form_revisi
 import { extractEmbeddedAquaData } from '@/utils/pdf-digital-signature'
 import ClaimTypesDropdownButton from '@/components/button_claim_dropdown'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
-import { useReloadWatcher } from '@/hooks/useReloadWatcher'
+import { useUserStats } from '@/hooks/useUserStats'
 
 const FilesPage = () => {
       const {
@@ -54,29 +54,11 @@ const FilesPage = () => {
       const fileInputRef = React.useRef<HTMLInputElement>(null)
       const [filesListForUpload, setFilesListForUpload] = useState<FileItemWrapper[]>([])
 
-      const {
-            usage,
-            limits,
-            setUsage,
-            setUsageLoading
-      } = useSubscriptionStore()
+      // Use subscription store for backward compatibility (synced by useSubscriptionUsage hook)
+      const { usage, limits } = useSubscriptionStore()
 
-      useEffect(() => {
-            const loadUsage = async () => {
-                  if (!usage || !limits) {
-                        try {
-                              setUsageLoading(true)
-                              const data = await fetchUsageStats()
-                              setUsage(data.usage, data.limits, data.percentage_used)
-                        } catch (error) {
-                              console.error('Failed to load usage stats:', error)
-                        } finally {
-                              setUsageLoading(false)
-                        }
-                  }
-            }
-            loadUsage()
-      }, [])
+      // Use React Query hook for subscription usage (auto-syncs with store)
+      useSubscriptionUsage()
 
       // Calculate remaining limits
       const filesRemaining = (limits?.max_files || 0) - (usage?.files_count || 0)
@@ -87,9 +69,10 @@ const FilesPage = () => {
       const [uploadQueue, setUploadQueue] = useState<UploadStatus[]>([])
       const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
       const [isMinimized, setIsMinimized] = useState(false)
-      const [stats, setStats] = useState<IUserStats>(emptyUserStats)
-      const [loading, setLoading] = useState(false)
       // const [isSelectedFileDialogOpen, setIsSelectedFileDialogOpen] = useState(false)
+
+      // Use React Query hook for user stats
+      const { stats, isLoading: loading } = useUserStats()
 
       // Helper function to clear file input
       const clearFileInput = () => {
@@ -97,43 +80,6 @@ const FilesPage = () => {
                   fileInputRef.current.value = ''
             }
       }
-
-
-      const getUserStats = async () => {
-            if (!session?.nonce || !session?.address) return
-
-            try {
-                  if (stats.filesCount === 0) {
-                        setLoading(true)
-                  }
-                  const result = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.USER_STATS}`), {
-                        headers: {
-                              'nonce': session.nonce,
-                              'metamask_address': session.address
-                        }
-                  })
-                  setStats(result.data)
-            } catch (error) {
-                  console.log("Error getting stats", error)
-            } finally {
-                  setLoading(false)
-            }
-      }
-
-      useEffect(() => {
-            if (session?.address && session?.nonce && backend_url) {
-                  getUserStats()
-            }
-      }, [session?.address, session?.nonce, backend_url])
-
-      // Watch for stats reload triggers
-      useReloadWatcher({
-            key: RELOAD_KEYS.user_stats,
-            onReload: () => {
-                  // console.log('Reloading user stats...');
-                  getUserStats();
-            }
-      });
 
  
       const handleUploadClick = () => {
@@ -370,13 +316,6 @@ const FilesPage = () => {
                   }
             }
 
-            // fetch all files from the api
-            // const url2 = `${backend_url}/explorer_files`
-            // const files = await fetchFiles(session?.address!, url2, session?.nonce!)
-            // setFiles({ fileData: files, status: 'loaded' })
-
-            // const filesApi = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-            // setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
             // Trigger reload for all files and stats
             await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
             await triggerWorkflowReload(RELOAD_KEYS.all_files, true);

@@ -37,7 +37,7 @@ const WorkflowSpecificTable = ({ showFileActions, workflowName, view, filesListP
 
     const loadFiles = async () => {
         if (!session?.address || !backend_url || !workflowName) return;
-        setFiles([])
+
         try {
             setLoading(true)
 
@@ -69,7 +69,7 @@ const WorkflowSpecificTable = ({ showFileActions, workflowName, view, filesListP
                 params
             })
             const response = filesDataQuery.data
-            const aquaTrees = response.aquaTrees
+            const aquaTrees = response.aquaTrees || []
             setPagination(response.pagination)
             setFiles(aquaTrees)
             setLoading(false)
@@ -81,12 +81,17 @@ const WorkflowSpecificTable = ({ showFileActions, workflowName, view, filesListP
     }
 
     useEffect(() => {
+        // Clear files and reset to page 1 when workflow changes
+        setFiles([])
         setCurrentPage(1)
     }, [workflowName])
 
     useEffect(() => {
-        loadFiles()
-    }, [backend_url, JSON.stringify(session), `${currentPage}-${workflowName}`, sortBy]);
+        // Only load if we have the necessary data
+        if (session?.address && session?.nonce && backend_url) {
+            loadFiles()
+        }
+    }, [backend_url, session?.address, session?.nonce, currentPage, workflowName, sortBy]);
 
     // Determine the appropriate reload key based on workflow type
     const getReloadKey = (workflowName: string): string => {

@@ -10,6 +10,7 @@ import { useStore } from 'zustand'
 import appStore from '@/store'
 import { WebConfig } from '@/types/types'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
+import { useSubscriptionUsage } from '@/hooks/useSubscriptionUsage'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const { webConfig, session, filesStats, isAdmin } = useStore(appStore)
@@ -17,22 +18,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const [webConfigData, setWebConfigData] = useState<WebConfig>(webConfig)
       const { toggleSidebar } = useSidebar()
 
-      const { usage, limits, percentageUsed, setUsage } = useSubscriptionStore()
+      // Use subscription store for backward compatibility (synced by useSubscriptionUsage hook)
+      const { usage, limits, percentageUsed } = useSubscriptionStore()
 
-      // Load usage stats only when session with nonce is available
-      React.useEffect(() => {
-            if (!session?.nonce) return;
-            const loadUsage = async () => {
-                  try {
-                        const { fetchUsageStats } = await import('@/api/subscriptionApi');
-                        const data = await fetchUsageStats();
-                        setUsage(data.usage, data.limits, data.percentage_used);
-                  } catch (error) {
-                        console.error('Failed to load usage stats for sidebar:', error);
-                  }
-            };
-            loadUsage();
-      }, [session?.nonce]);
+      // Use React Query hook for subscription usage (auto-syncs with store)
+      useSubscriptionUsage()
 
       React.useEffect(() => {
             if (webConfig.BACKEND_URL) {

@@ -4,13 +4,9 @@ import { Grid3X3, List, X } from 'lucide-react'
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import { ApiFileInfo } from '@/models/FileInfo'
-import { emptyUserStats, FilesListProps, IUserStats } from '@/types/types'
-import apiClient from '@/api/axiosInstance'
-import { API_ENDPOINTS } from '@/utils/constants'
-import { ensureDomainUrlHasSSL } from '@/utils/functions'
+import { FilesListProps } from '@/types/types'
 import WorkflowSpecificTable from './WorkflowSpecificTable'
-import { useReloadWatcher } from '@/hooks/useReloadWatcher'
-import { RELOAD_KEYS } from '@/utils/reloadDatabase'
+import { useUserStats } from '@/hooks/useUserStats'
 import { useAquaSystemNames } from '@/hooks/useAquaSystemNames'
 import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocketContext'
 import { useSearchParams } from 'react-router-dom'
@@ -20,8 +16,10 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [isSmallScreen, setIsSmallScreen] = useState(false)
       const [uniqueWorkflows, setUniqueWorkflows] = useState<{ name: string, count: number }[]>([])
       const [selectedWorkflow, setSelectedWorkflow] = useState<string>(filesListProps.hideAllFilesAndUserAquaFiles ? '' : 'user_files')
-      const [stats, setStats] = useState<IUserStats>(emptyUserStats)
       const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date')
+
+      // Use React Query hook for user stats
+      const { stats, refetch: refetchStats } = useUserStats()
 
       const [searchParams] = useSearchParams();
 
@@ -33,7 +31,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [selectedFilters, setSelectedFilters] = useState<string[]>(['all'])
       const [tempSelectedFilters, setTempSelectedFilters] = useState<string[]>(['all'])
 
-      const { backend_url, session, setFilesStats } = useStore(appStore)
+      const { setFilesStats } = useStore(appStore)
       const { subscribe } = useNotificationWebSocketContext();
 
       // Use live query hook - automatically updates when DB changes
@@ -48,60 +46,32 @@ export default function FilesList(filesListProps: FilesListProps) {
             checkScreenSize()
             window.addEventListener('resize', checkScreenSize)
 
-            if (session?.nonce && backend_url) {
-                  getUserStats()
-            }
-
             if (tabFromUrl) {
                   setSelectedWorkflow(tabFromUrl)
             }
-            //  else {
-            //       setSelectedWorkflow(filesListProps.hideAllFilesAndUserAquaFiles ? '' : 'user_files')
-            // }
-
 
             return () => {
                   window.removeEventListener('resize', checkScreenSize)
             }
-
-
-
       }, [])
 
-      const getUserStats = async () => {
-            if (session) {
-                  try {
-                        let result = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.USER_STATS}`), {
-                              headers: {
-                                    'nonce': session.nonce,
-                                    'metamask_address': session.address
-                              }
-                        })
-                        setStats(result.data)
-                        setFilesStats(result.data)
-                        let uniqueWorkflows = new Set<{ name: string; count: number }>()
-                        let claimTypeCounts = result.data.claimTypeCounts
-                        const claimTypes = Object.keys(claimTypeCounts)
-                        for (let i = 0; i < claimTypes.length; i++) {
-                              let claimType = claimTypes[i]
-                              if (parseInt(claimTypeCounts[claimType]) > 0) {
-                                    uniqueWorkflows.add({ name: claimType, count: parseInt(claimTypeCounts[claimType]) })
-                              }
-                        }
-                        setUniqueWorkflows(Array.from(uniqueWorkflows))
-                  } catch (error) {
-                        console.log("Error getting stats", error)
-                  }
-            }
-      }
-
-
-      // Upgraded way of identifying different workflows based on user stats endpoint
+      // Process stats to extract unique workflows
       useEffect(() => {
-            if (session?.nonce && backend_url) {
-                  getUserStats()
+            if (stats && stats.filesCount > 0) {
+                  setFilesStats(stats)
+                  let uniqueWorkflows = new Set<{ name: string; count: number }>()
+                  let claimTypeCounts = stats.claimTypeCounts
+                  const claimTypes = Object.keys(claimTypeCounts) as Array<keyof typeof claimTypeCounts>
+                  for (let i = 0; i < claimTypes.length; i++) {
+                        let claimType = claimTypes[i]
+                        const count = claimTypeCounts[claimType]
+                        if (parseInt(count.toString()) > 0) {
+                              uniqueWorkflows.add({ name: claimType, count: parseInt(count.toString()) })
+                        }
+                  }
+                  setUniqueWorkflows(Array.from(uniqueWorkflows))
             }
-      }, [session?.address, session?.nonce, backend_url])
+      }, [stats])
 
       useEffect(() => {
             if (tabFromUrl && stats.filesCount > 0) {
@@ -151,19 +121,11 @@ export default function FilesList(filesListProps: FilesListProps) {
             }
       }, [uniqueWorkflows, filesListProps.hideAllFilesAndUserAquaFiles, filesListProps.allowedWorkflows])
 
-      // Watch for stats reload triggers
-      useReloadWatcher({
-            key: RELOAD_KEYS.user_stats,
-            onReload: () => {
-                  getUserStats();
-            }
-      });
-
       useEffect(() => {
             const unsubscribe = subscribe((message) => {
                   // Handle notification reload specifically
                   if (message.type === 'notification_reload' && message.data && message.data.target === "workflows") {
-                        getUserStats()
+                        refetchStats()
                   }
 
             });

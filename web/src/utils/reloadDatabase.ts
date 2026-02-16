@@ -1,6 +1,13 @@
 import Dexie, { Table } from 'dexie';
 import { IDENTITY_CLAIMS } from './constants';
 
+// Import queryClient for React Query integration
+let queryClient: any = null;
+
+export const setQueryClient = (client: any) => {
+  queryClient = client;
+};
+
 export interface ReloadConfig {
     id?: number;
     key: string;
@@ -94,6 +101,15 @@ export const RELOAD_KEYS = {
     reload_aqua_sign: "reload_aqua_sign"
 };
 
+// Map reload keys to React Query query keys
+export const QUERY_KEY_MAPPING: Record<string, string[]> = {
+    [RELOAD_KEYS.user_stats]: ['userStats'],
+    [RELOAD_KEYS.user_files]: ['files'],
+    [RELOAD_KEYS.all_files]: ['files'],
+    [RELOAD_KEYS.notifications]: ['notifications'],
+    [RELOAD_KEYS.contacts]: ['contacts'],
+};
+
 /**
  * Trigger reload for a specific workflow type
  * Handles special cases for custom file views and identity claims
@@ -104,16 +120,59 @@ export const triggerWorkflowReload = async (workflowType: string, watchAll?: boo
         if (workflowType === 'all') {
             await triggerReload(RELOAD_KEYS.all_files);
             await triggerReload(RELOAD_KEYS.contacts);
+            // Invalidate and refetch React Query cache
+            if (queryClient) {
+                await queryClient.invalidateQueries({
+                    queryKey: ['files'],
+                    refetchType: 'active'
+                });
+                await queryClient.invalidateQueries({
+                    queryKey: ['contacts'],
+                    refetchType: 'active'
+                });
+            }
+            if (watchAll) {
+                await triggerReload(RELOAD_KEYS.user_stats);
+                if (queryClient) {
+                    await queryClient.invalidateQueries({
+                        queryKey: ['userStats'],
+                        refetchType: 'active'
+                    });
+                }
+            }
             return;
         }
-        
+
         if (workflowType === 'user_files') {
             await triggerReload(RELOAD_KEYS.user_files);
+            // Invalidate and refetch React Query cache
+            if (queryClient) {
+                await queryClient.invalidateQueries({
+                    queryKey: ['files'],
+                    refetchType: 'active'
+                });
+            }
+            if (watchAll) {
+                await triggerReload(RELOAD_KEYS.user_stats);
+                if (queryClient) {
+                    await queryClient.invalidateQueries({
+                        queryKey: ['userStats'],
+                        refetchType: 'active'
+                    });
+                }
+            }
             return;
         }
 
         if (workflowType === 'contacts') {
             await triggerReload(RELOAD_KEYS.contacts);
+            // Invalidate and refetch React Query cache
+            if (queryClient) {
+                await queryClient.invalidateQueries({
+                    queryKey: ['contacts'],
+                    refetchType: 'active'
+                });
+            }
             return;
         }
 
@@ -121,6 +180,13 @@ export const triggerWorkflowReload = async (workflowType: string, watchAll?: boo
             await triggerReload(RELOAD_KEYS.claims_and_attestations);
             await triggerReload(workflowType);
             await triggerReload(RELOAD_KEYS.contacts);
+            // Invalidate and refetch React Query cache
+            if (queryClient) {
+                await queryClient.invalidateQueries({
+                    queryKey: ['contacts'],
+                    refetchType: 'active'
+                });
+            }
             return;
         }
 
@@ -142,6 +208,27 @@ export const triggerWorkflowReload = async (workflowType: string, watchAll?: boo
         // If watchAll is true, always trigger stats reload since any workflow change affects stats
         if (watchAll) {
             await triggerReload(RELOAD_KEYS.user_stats);
+        }
+
+        // Invalidate and refetch React Query cache if queryClient is available
+        if (queryClient) {
+            const queryKeys = QUERY_KEY_MAPPING[workflowType];
+            if (queryKeys) {
+                for (const queryKey of queryKeys) {
+                    await queryClient.invalidateQueries({
+                        queryKey: [queryKey],
+                        refetchType: 'active'
+                    });
+                }
+            }
+
+            // Also invalidate for specific reload keys
+            if (watchAll) {
+                await queryClient.invalidateQueries({
+                    queryKey: ['userStats'],
+                    refetchType: 'active'
+                });
+            }
         }
     } catch (error) {
         console.error(`Error triggering reload for ${workflowType}:`, error);

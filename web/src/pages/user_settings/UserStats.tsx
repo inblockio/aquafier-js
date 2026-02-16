@@ -1,17 +1,10 @@
-import React, { useEffect } from 'react';
 import {
     FileText,
     Shield,
     CheckCircle
 } from 'lucide-react';
-import apiClient from '@/api/axiosInstance'
-import { useStore } from 'zustand';
-import appStore from '@/store';
-import { API_ENDPOINTS, getClaimIcon } from '@/utils/constants';
-import { ensureDomainUrlHasSSL } from '@/utils/functions';
-import { emptyUserStats, IUserStats } from '@/types/types';
-import { useReloadWatcher } from '@/hooks/useReloadWatcher';
-import { RELOAD_KEYS } from '@/utils/reloadDatabase';
+import { getClaimIcon } from '@/utils/constants';
+import { useUserStats } from '@/hooks/useUserStats';
 import { Link, useNavigate } from 'react-router-dom';
 
 const formatClaimName = (claimType: string) => {
@@ -22,42 +15,13 @@ const formatClaimName = (claimType: string) => {
 };
 
 const UserStats = () => {
-
-    const { session, backend_url } = useStore(appStore)
-    const [stats, setStats] = React.useState<IUserStats>(emptyUserStats)
     const navigate = useNavigate();
 
-    const getUserStats = async () => {
-        if (session) {
-            try {
-                let result = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.USER_STATS}`), {
-                    headers: {
-                        'nonce': session.nonce,
-                        'metamask_address': session.address
-                    }
-                })
-                setStats(result.data)
-            } catch (error) {
-                console.log("Error getting stats", error)
-            }
-        }
-    }
+    // Use React Query hook for user stats
+    const { stats } = useUserStats()
 
     const totalClaims = Object.values(stats.claimTypeCounts).reduce((sum, count) => sum + count, 0) - (stats.claimTypeCounts.user_files || 0);
     const activeClaims = Object.entries(stats.claimTypeCounts).filter(([_, count]) => count > 0).length;
-
-    useEffect(() => {
-        getUserStats()
-    }, [backend_url, JSON.stringify(session)])
-
-    // Watch for stats reload triggers
-    useReloadWatcher({
-        key: RELOAD_KEYS.user_stats,
-        onReload: () => {
-            // console.log('Reloading user stats...');
-            getUserStats();
-        }
-    });
 
     return (
         <div className="bg-gradient-to-br from-slate-50 to-slate-100 p-2 md:p-8 rounded-2xl">
