@@ -13,9 +13,7 @@ import {
 import { ContractDocumentView } from './document/ContractDocumentView'
 import { ContractSummaryView } from './summary/ContractSummaryView'
 import { AquaTree, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk/web'
-import { Button } from '../../components/ui/button'
-import { LuArrowLeft } from 'react-icons/lu'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { API_ENDPOINTS } from '@/utils/constants'
 import apiClient from '@/api/axiosInstance'
@@ -24,7 +22,7 @@ import { SummaryDetailsDisplayData } from '../../types/types'
 
 
 export default function PdfWorkflowPage() {
-      const [timeLineTitle, setTimeLineTitle] = useState('')
+      const [_timeLineTitle, setTimeLineTitle] = useState('')
       const [error, _setError] = useState('')
       const { selectedFileInfo, setSelectedFileInfo, backend_url, session } = useStore(appStore)
       const [selectedFileInfoLocal, setSelectedFileInfoLocal] = useState<ApiFileInfo | null>(null)
@@ -32,7 +30,7 @@ export default function PdfWorkflowPage() {
       const [loadingFromApiSelectedFileInfo, setLoadingFromApiSelectedFileInfo] = useState(false)
       const [signerSidebar, setSignerSidebar] = useState<React.ReactNode>(null)
 
-      const navigate = useNavigate()
+      // const navigate = useNavigate()
 
       const { genesisHash } = useParams();
 

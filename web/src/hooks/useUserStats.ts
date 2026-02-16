@@ -7,7 +7,6 @@ import { ensureDomainUrlHasSSL } from '../utils/functions'
 import { useReloadWatcher } from './useReloadWatcher'
 import { RELOAD_KEYS } from '../utils/reloadDatabase'
 import { IUserStats, emptyUserStats } from '../types/types'
-import { queryClient } from '../providers/QueryProvider'
 
 export const USER_STATS_QUERY_KEY = 'userStats'
 

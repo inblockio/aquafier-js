@@ -18,7 +18,7 @@ import { ApiFileInfo } from '../../../models/FileInfo'
 import { IDrawerStatus, VerificationHashAndResult } from '../../../models/AquaTreeDetails'
 import ContractSummaryDetails from './ContractSummaryDetails'
 
-export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setActiveStep, selectedFileInfo }) => {
+export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ selectedFileInfo }) => {
       const [isLoading, setIsLoading] = useState(true)
       const [signatureRevionHashesData, setSignatureRevionHashes] = useState<SummaryDetailsDisplayData[]>([])
       const [isWorkFlowComplete, setIsWorkFlowComplete] = useState<string[]>([])

@@ -89,7 +89,7 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
       };
 
       // Fetch user's own identity claims and server wallet address in parallel
-      const [filesDataQuery, serverInfoResponse] = await Promise.all([
+      const [filesDataQuery] = await Promise.all([
         apiClient.get(ensureDomainUrlHasSSL(`${localBackendUrl}/${API_ENDPOINTS.GET_PER_TYPE}`), {
           headers: {
             'Content-Type': 'application/json',
@@ -97,7 +97,7 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
           },
           params
         }),
-        apiClient.get(ensureDomainUrlHasSSL(`${localBackendUrl}/${API_ENDPOINTS.GET_SYSTEM_INFO}`))
+        // apiClient.get(ensureDomainUrlHasSSL(`${localBackendUrl}/${API_ENDPOINTS.GET_SYSTEM_INFO}`))
       ]);
 
       const response = filesDataQuery.data;
