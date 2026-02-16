@@ -38,6 +38,7 @@ import adminController from './controllers/admin';
 import plansController from './controllers/plans';
 import subscriptionsController from './controllers/subscriptions';
 import paymentsController from './controllers/payments';
+import contactController from './controllers/contact';
 import { prisma } from './database/db';
 import logger from './utils/logger';
 import { createServerIdentity } from './utils/server_attest';
@@ -180,6 +181,7 @@ async function buildServer() {
     fastify.register(plansController);
     fastify.register(subscriptionsController);
     fastify.register(paymentsController);
+    fastify.register(contactController);
 
     // Hook to add wallet address to labels when user is authenticated
     fastify.addHook("onRequest", async function (request, reply) {
