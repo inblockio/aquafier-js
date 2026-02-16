@@ -28,6 +28,15 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
             initializeComponent()
       }, [selectedFileInfo])
 
+      // Check if user has already signed (computed early so useEffect below is always called)
+      const isUserSignatureIncluded = signatures.some(sig => sig.walletAddress === session?.address)
+
+      useEffect(() => {
+            if (isUserSignatureIncluded && onSidebarReady) {
+                  onSidebarReady(null)
+            }
+      }, [isUserSignatureIncluded])
+
       const getSignatureRevionHashes = (hashesToLoopPar: Array<string>): Array<SummaryDetailsDisplayData> => {
             const signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
 
@@ -460,15 +469,6 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
                   </div>
             )
       }
-
-      // Check if user has already signed
-      const isUserSignatureIncluded = signatures.some(sig => sig.walletAddress === session?.address)
-
-      useEffect(() => {
-            if (isUserSignatureIncluded && onSidebarReady) {
-                  onSidebarReady(null)
-            }
-      }, [isUserSignatureIncluded])
 
       if (isUserSignatureIncluded) {
             return (
