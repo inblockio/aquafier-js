@@ -130,14 +130,6 @@ const WebsocketFragment = () => {
                               if (message.action === WebSocketActions.REFETCH_FILES) {
                                     ; (async () => {
                                           if (walletAddressRef.current && nounceRef.current) {
-                                                // const url = `${backend_url}/explorer_files`
-                                                // const actualUrlToFetch = ensureDomainUrlHasSSL(url)
-                                                // // const files = await fetchFiles(walletAddressRef.current, actualUrlToFetch, nounceRef.current)
-                                                // // setFiles({ fileData: files, status: 'loaded' })
-
-
-                                                // const filesApi = await fetchFiles(session!.address, actualUrlToFetch, session!.nonce)
-                                                // setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
 
                                                 // const currentSelectedFile = selectedFileRef.current

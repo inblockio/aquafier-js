@@ -1,0 +1,46 @@
+meta {
+  name: 2_list
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:3600/aqua-api/list?include_metadata=true&type=file
+  body: none
+  auth: none
+}
+
+headers {
+  nonce: {{nonce}}
+}
+
+params:query {
+  include_metadata: true
+  type: file
+}
+
+docs {
+  # GET /aqua-api/list
+
+  Returns a catalog of all files accessible to the authenticated user.
+
+  ## Query Parameters:
+  - `include_metadata` (boolean) — enrich results with title, type, signature/witness info
+  - `type` (string) — filter by revision type (e.g., "file", "form")
+
+  ## Response:
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "hash": "0x...",
+        "title": "document.pdf",
+        "type": "file",
+        "has_signature": true,
+        "has_witness": false
+      }
+    ]
+  }
+  ```
+}

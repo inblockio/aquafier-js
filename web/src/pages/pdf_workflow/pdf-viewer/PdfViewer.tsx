@@ -1,7 +1,7 @@
 import type React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Annotation, ImageAnnotation, ProfileAnnotation, TextAnnotation } from './types'
-import { SignatureData } from '../../../../types/types'
+import { SignatureData } from '../../../types/types'
 
 interface PdfViewerProps {
       file: File | null
@@ -680,7 +680,7 @@ const loadingTask = window.pdfjsLib.getDocument({
       }
 
       return (
-            <div className="py-4 px-2 h-auto md:h-full" ref={viewerRef} onClick={handleViewerClick} data-testid="pdf-canvas-wrapper">
+            <div className="py-0 px-0 h-auto md:h-full" ref={viewerRef} onClick={handleViewerClick} data-testid="pdf-canvas-wrapper">
                   {!file && <p className="text-gray-700 dark:text-gray-400">Upload a PDF to start annotating.</p>}
                   {file && !isPdfjsLibLoaded && !pdfLoadingError && <p className="text-gray-700 dark:text-gray-400">Initializing PDF viewer...</p>}
                   {pdfLoadingError && <p className="text-center px-4">{pdfLoadingError}</p>}
@@ -689,7 +689,7 @@ const loadingTask = window.pdfjsLib.getDocument({
                         <>
                               {!pdfDoc && !pdfLoadingError && <p className="text-gray-700 dark:text-gray-400">Loading PDF document...</p>}
                               {pdfDoc && (
-                                    <div className="relative flex flex-col justify-start overflow-x-auto">
+                                    <div className="relative flex flex-col items-center overflow-x-auto">
                                           <div
                                                 data-testid="pdf-canvas-container"
                                                 className="relative h-auto md:h-full shadow-lg bg-white"

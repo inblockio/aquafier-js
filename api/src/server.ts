@@ -38,6 +38,8 @@ import adminController from './controllers/admin';
 import plansController from './controllers/plans';
 import subscriptionsController from './controllers/subscriptions';
 import paymentsController from './controllers/payments';
+import contactController from './controllers/contact';
+import aquaRestApiController from './controllers/aqua_rest_api';
 import { prisma } from './database/db';
 import logger from './utils/logger';
 import { createServerIdentity } from './utils/server_attest';
@@ -96,6 +98,7 @@ async function buildServer() {
     // Ensure DEFAULT_FREE_PLAN_ID is set (resolves from DB if missing from .env)
     await ensureDefaultFreePlanId()
 
+    // Create the server identity here
     await createServerIdentity()
 
 
@@ -180,6 +183,8 @@ async function buildServer() {
     fastify.register(plansController);
     fastify.register(subscriptionsController);
     fastify.register(paymentsController);
+    fastify.register(contactController);
+    fastify.register(aquaRestApiController);
 
     // Hook to add wallet address to labels when user is authenticated
     fastify.addHook("onRequest", async function (request, reply) {

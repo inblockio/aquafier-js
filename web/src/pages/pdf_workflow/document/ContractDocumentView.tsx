@@ -11,13 +11,12 @@ import {
 } from 'aqua-js-sdk/web'
 import {ensureDomainUrlHasSSL, getAquatreeObject, getHighestFormIndex, isAquaTree, parseAquaTreeContent, reorderRevisionsInAquaTree} from '../../../utils/functions'
 
-import {PDFDisplayWithJustSimpleOverlay} from './components/signature_overlay'
+import {PDFDisplayWithJustSimpleOverlay} from './SignatureOverlay'
 import {toast} from 'sonner'
 import PdfSigner from './PdfSigner'
-import SignatureItem from '../../../components/pdf/SignatureItem'
 import apiClient from '@/api/axiosInstance'
 
-export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setActiveStep, selectedFileInfo }) => {
+export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSidebarReady?: (sidebar: React.ReactNode) => void }> = ({ setActiveStep, selectedFileInfo, onSidebarReady }) => {
       const [pdfLoadingFile, setLoadingPdfFile] = useState<boolean>(true)
       const [pdfFile, setPdfFile] = useState<File | null>(null)
       const [pdfURLObject, setPdfURLObject] = useState<string | null>(null)
@@ -28,6 +27,15 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
       useEffect(() => {
             initializeComponent()
       }, [selectedFileInfo])
+
+      // Check if user has already signed (computed early so useEffect below is always called)
+      const isUserSignatureIncluded = signatures.some(sig => sig.walletAddress === session?.address)
+
+      useEffect(() => {
+            if (isUserSignatureIncluded && onSidebarReady) {
+                  onSidebarReady(null)
+            }
+      }, [isUserSignatureIncluded])
 
       const getSignatureRevionHashes = (hashesToLoopPar: Array<string>): Array<SummaryDetailsDisplayData> => {
             const signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
@@ -462,27 +470,14 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
             )
       }
 
-      // Check if user has already signed
-      const isUserSignatureIncluded = signatures.some(sig => sig.walletAddress === session?.address)
-
       if (isUserSignatureIncluded) {
             return (
-                  <div className="grid grid-cols-4">
-                        <div className="col-span-12 md:col-span-3">
-                              <PDFDisplayWithJustSimpleOverlay pdfUrl={pdfURLObject!} annotationsInDocument={signatures} signatures={signatures} latestRevisionHash={getLatestVH(selectedFileInfo.aquaTree!)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-1 m-5">
-                              <div className="flex flex-col space-y-2">
-                                    <p className="font-bold">Signatures in document.</p>
-                                    {signatures.map((signature: SignatureData, index: number) => (
-                                          <SignatureItem signature={signature} key={index} />
-                                    ))}
-                              </div>
-                        </div>
+                  <div>
+                        <PDFDisplayWithJustSimpleOverlay pdfUrl={pdfURLObject!} annotationsInDocument={signatures} signatures={signatures} latestRevisionHash={getLatestVH(selectedFileInfo.aquaTree!)} />
                   </div>
             )
       } 
 
       // Default case - show signing interface
-      return <PdfSigner selectedFileInfo={selectedFileInfo} documentSignatures={signatures} fileData={pdfFile} setActiveStep={setActiveStep} />
+      return <PdfSigner selectedFileInfo={selectedFileInfo} documentSignatures={signatures} fileData={pdfFile} setActiveStep={setActiveStep} onSidebarReady={onSidebarReady} />
 }

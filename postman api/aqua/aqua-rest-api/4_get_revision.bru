@@ -1,0 +1,36 @@
+meta {
+  name: 4_get_revision
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://localhost:3600/aqua-api/get_revision/{{revision_hash}}
+  body: none
+  auth: none
+}
+
+headers {
+  nonce: {{nonce}}
+}
+
+docs {
+  # GET /aqua-api/get_revision/:revision_hash
+
+  Returns a complete single revision object including signatures, witnesses, links, and forms.
+
+  ## Path Parameters:
+  - `revision_hash` — the revision hash to retrieve
+
+  ## Response:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "revision": { ... },
+      "aquaTree": { ... },
+      "fileObjects": [ ... ]
+    }
+  }
+  ```
+}

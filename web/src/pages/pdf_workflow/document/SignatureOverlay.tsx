@@ -1,9 +1,9 @@
 import {useEffect, useState} from 'react'
 // import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 // import { PDFJSViewer } from 'pdfjs-react-viewer';
-import {SignatureData} from '../../../../types/types'
-import {EasyPDFRenderer} from '../signer/SignerPage'
-import {ensureDomainUrlHasSSL, handleLoadFromUrl} from '../../../../utils/functions'
+import {SignatureData} from '../../../types/types'
+import {EasyPDFRenderer} from '../pdf-viewer/SignerPage'
+import {ensureDomainUrlHasSSL, handleLoadFromUrl} from '../../../utils/functions'
 import {toast} from 'sonner'
 
 export const SignatureOverlay = ({

@@ -48,14 +48,18 @@ const WorkspaceManagment = () => {
             // setOperationProgress(0)
             // setOperationFileName("")
 
-            // Fetch list of all files (limit=1000000)
-            const listResponse = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/explorer_files?limit=1000000`), {
+            // Fetch list of all files using new endpoint
+            const listResponse = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/tree/sorted_files`), {
                 headers: {
                     'nonce': session.nonce
+                },
+                params: {
+                    limit: 1000000,
+                    page: 1
                 }
             })
 
-            const allFiles: ApiFileInfo[] = listResponse.data.data
+            const allFiles: ApiFileInfo[] = listResponse.data.aquaTrees || listResponse.data.data || []
             const totalFiles = allFiles.length
             const zip = new JSZip()
             const nameWithHash: { name: string, hash: string }[] = []

@@ -78,49 +78,6 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index, children 
                                                 reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
                                           }
                                     )
-                                    // #FIX: Remove selected file info update for now, incase required we can update this
-                                    // if (response.status === 200 || response.status === 201) {
-                                    //       if (response.data.data) {
-                                    //             const newFiles: ApiFileInfo[] = response.data.data
-                                    //             try {
-                                    //                   const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
-                                    //                   const filesApi = await fetchFiles(session!.address, url, session!.nonce)
-                                    //                   setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
-
-                                    //                   if (selectedFileInfo) {
-                                    //                         const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
-                                    //                         for (let i = 0; i < newFiles.length; i++) {
-                                    //                               const newFile = newFiles[i]
-                                    //                               const newGenesisHash = getGenesisHash(newFile.aquaTree!)
-                                    //                               if (newGenesisHash == genesisHash) {
-                                    //                                     setSelectedFileInfo(newFile)
-                                    //                               }
-                                    //                         }
-                                    //                   }
-                                    //             } catch (e) {
-                                    //                   toast.error('Error updating files')
-                                    //                   // document.location.reload()
-                                    //             }
-                                    //       } else {
-                                    //             const newFiles: ApiFileInfo[] = []
-                                    //             const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
-                                    //             files.fileData.forEach(item => {
-                                    //                   const keys = Object.keys(item.aquaTree!.revisions!)
-                                    //                   if (areArraysEqual(keys, keysPar)) {
-                                    //                         newFiles.push({
-                                    //                               ...apiFileInfo,
-                                    //                               aquaTree: result.data.aquaTree!,
-                                    //                         })
-                                    //                   } else {
-                                    //                         newFiles.push(item)
-                                    //                   }
-                                    //             })
-                                    //             const _selectFileInfo = selectedFileInfo!
-                                    //             _selectFileInfo.aquaTree = result.data.aquaTree!
-                                    //             setSelectedFileInfo(_selectFileInfo)
-                                    //             setFiles({ fileData: newFiles, status: 'loaded' })
-                                    //       }
-                                    // }
 
                                     toast.success(`Signing successfull`)
                               }
@@ -205,53 +162,6 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index, children 
                                           reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
                                     }
                               )
-
-                              // #FIX: Remove selected file info update for now, incase required we can update this
-                              // if (response.status === 200 || response.status === 201) {
-                              // if (response.data.data) {
-                              //       const newFiles: ApiFileInfo[] = response.data.data
-
-                              //       try {
-                              //             const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
-
-
-                              //             const filesApi = await fetchFiles(session!.address, url, session!.nonce)
-                              //             setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
-
-
-                              //             if (selectedFileInfo) {
-                              //                   const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
-                              //                   for (let i = 0; i < newFiles.length; i++) {
-                              //                         const newFile = newFiles[i]
-                              //                         const newGenesisHash = getGenesisHash(newFile.aquaTree!)
-                              //                         if (newGenesisHash == genesisHash) {
-                              //                               setSelectedFileInfo(newFile)
-                              //                         }
-                              //                   }
-                              //             }
-                              //       } catch (e) {
-                              //             toast.error('Error updating files')
-                              //       }
-                              // } else {
-                              //       const newFiles: ApiFileInfo[] = []
-                              //       const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
-                              //       files.fileData.forEach(item => {
-                              //             const keys = Object.keys(item.aquaTree!.revisions!)
-                              //             if (areArraysEqual(keys, keysPar)) {
-                              //                   newFiles.push({
-                              //                         ...apiFileInfo,
-                              //                         aquaTree: result.data.aquaTree!,
-                              //                   })
-                              //             } else {
-                              //                   newFiles.push(item)
-                              //             }
-                              //       })
-                              //       const _selectFileInfo = selectedFileInfo!
-                              //       _selectFileInfo.aquaTree = result.data.aquaTree!
-                              //       setSelectedFileInfo(_selectFileInfo)
-                              //       setFiles({ fileData: newFiles, status: 'loaded' })
-                              // }
-                              // }
 
                               toast.success(`Signing successfull`)
                         }

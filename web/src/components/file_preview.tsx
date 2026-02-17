@@ -10,7 +10,7 @@ import {
     isValidUrl
 } from '../utils/functions'
 import {FilePreviewAquaTreeFromTemplate} from './file_preview_aqua_tree_from_template'
-import {EasyPDFRenderer} from '@/pages/aqua_sign_wokflow/ContractDocument/signer/SignerPage'
+import {EasyPDFRenderer} from '@/pages/pdf_workflow/pdf-viewer/SignerPage'
 import heic2any from "heic2any"
 import apiClient from '@/api/axiosInstance'
 
@@ -722,7 +722,7 @@ export default FilePreview
 //     isValidUrl
 // } from '../utils/functions'
 // import {FilePreviewAquaTreeFromTemplate} from './file_preview_aqua_tree_from_template'
-// import {EasyPDFRenderer} from '@/pages/aqua_sign_wokflow/ContractDocument/signer/SignerPage'
+// import {EasyPDFRenderer} from '@/pages/pdf_workflow/pdf-viewer/SignerPage'
 // import heic2any from "heic2any"
 
 // // Define file extensions to content type mappings

@@ -1,0 +1,39 @@
+meta {
+  name: 6_import_revision
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://localhost:3600/aqua-api/import_revision
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  nonce: {{nonce}}
+}
+
+body:multipart-form {
+  metadata: {"revision":{"previous_verification_hash":"0x...","local_timestamp":"20260101120000","revision_type":"file","file_hash":"abc123...","version":"https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar"},"revisionHash":"0x...","originAddress":"0xYOUR_WALLET_ADDRESS"}
+}
+
+docs {
+  # POST /aqua-api/import_revision
+
+  Imports a new revision via multipart form data.
+
+  ## Body (multipart/form-data):
+  - `metadata` (JSON string) — contains `revision`, `revisionHash`, and `originAddress`
+  - `file` (optional, binary) — file attachment for file-type revisions
+
+  ## Response:
+  ```json
+  {
+    "success": true,
+    "hash": "0x..."
+  }
+  ```
+
+  Returns 201 on success.
+}

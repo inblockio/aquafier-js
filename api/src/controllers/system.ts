@@ -20,11 +20,11 @@ export default async function systemController(fastify: FastifyInstance) {
 
     // Register rate limiter plugin
     await fastify.register(fastifyRateLimit, {
-        max: 100, // Maximum 100 requests
-        timeWindow: '15m' // Per 15 minutes
+        max: 1000, // Maximum 1000 requests
+        timeWindow: '5m' // Per 5 minutes
     });
 
-    fastify.get('/system/templates', { config: { rateLimit: { max: 100, timeWindow: '15m' } } }, async (request, reply) => {
+    fastify.get('/system/templates', { config: { rateLimit: { max: 1000, timeWindow: '5m' } } }, async (request, reply) => {
 
         let assetsPath = getAquaAssetDirectory()
         Logger.info(`Assets path ${assetsPath}`)
@@ -291,8 +291,6 @@ export default async function systemController(fastify: FastifyInstance) {
                 message: "Multiple revisions found for the provided hash. Please provide a unique revision hash."
             });
         }
-
-        console.log("Entire chain: ", entireChain)
 
         // Transfer the chain to the target user (session.address)
         const transferResult = await transferRevisionChainData(

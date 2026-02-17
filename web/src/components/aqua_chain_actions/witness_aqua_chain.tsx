@@ -67,29 +67,6 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: R
                                                 reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
                                           }
                                     )
-                                    // #FIX: Remove selected file info update for now, incase required we can update this
-                                    // if (response.status === 200 || response.status === 201) {
-                                    //       const urlPath = `${backend_url}/explorer_files`
-                                    //       const url2 = ensureDomainUrlHasSSL(urlPath)
-
-                                    //       const filesApi = await fetchFiles(session!.address, url2, session!.nonce)
-                                    //       setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
-
-
-
-                                    //       const newFiles: ApiFileInfo[] = filesApi.files
-
-                                    //       if (selectedFileInfo) {
-                                    //             const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
-                                    //             for (let i = 0; i < newFiles.length; i++) {
-                                    //                   const newFile = newFiles[i]
-                                    //                   const newGenesisHash = getGenesisHash(newFile.aquaTree!)
-                                    //                   if (newGenesisHash == genesisHash) {
-                                    //                         setSelectedFileInfo(newFile)
-                                    //                   }
-                                    //             }
-                                    //       }
-                                    // }
 
                                     toast.success(`Witnessing successfull`)
                               }
@@ -183,31 +160,6 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: R
                                           reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files],
                                     }
                               )
-
-                              // #FIX: Remove selected file info update for now, incase required we can update this
-                              // if (response.status === 200 || response.status === 201) {
-
-
-                              //       const urlPath = `${backend_url}/explorer_files`
-                              //       const url2 = ensureDomainUrlHasSSL(urlPath)
-
-                              //       const filesApi = await fetchFiles(session!.address, url2, session!.nonce)
-                              //       setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
-
-
-                              //       const newFiles: ApiFileInfo[] = filesApi.files
-
-                              //       if (selectedFileInfo) {
-                              //             const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
-                              //             for (let i = 0; i < newFiles.length; i++) {
-                              //                   const newFile = newFiles[i]
-                              //                   const newGenesisHash = getGenesisHash(newFile.aquaTree!)
-                              //                   if (newGenesisHash == genesisHash) {
-                              //                         setSelectedFileInfo(newFile)
-                              //                   }
-                              //             }
-                              //       }
-                              // }
 
                               toast.success(`Witnessing successfull`)
                         }

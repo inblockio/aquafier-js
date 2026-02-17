@@ -18,7 +18,7 @@ import { ApiFileInfo } from '../../../models/FileInfo'
 import { IDrawerStatus, VerificationHashAndResult } from '../../../models/AquaTreeDetails'
 import ContractSummaryDetails from './ContractSummaryDetails'
 
-export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setActiveStep, selectedFileInfo }) => {
+export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ selectedFileInfo }) => {
       const [isLoading, setIsLoading] = useState(true)
       const [signatureRevionHashesData, setSignatureRevionHashes] = useState<SummaryDetailsDisplayData[]>([])
       const [isWorkFlowComplete, setIsWorkFlowComplete] = useState<string[]>([])
@@ -479,9 +479,6 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                                           isWorkFlowComplete.length === 0
                                                 ? ''
                                                 : `${isWorkFlowComplete.length} ${isWorkFlowComplete.length > 1 ? 'signatures' : 'Signature'} pending for workflow to be completed`,
-                              }}
-                              goToSecondPage={() => {
-                                    setActiveStep(2) // Open the contract document
                               }}
                               enableNameResolution={true}
                               isValidTree={getActualState() as 'pending' | 'successful' | 'failed'}

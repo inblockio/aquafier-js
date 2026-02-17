@@ -4,13 +4,9 @@ import { Grid3X3, List, X } from 'lucide-react'
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import { ApiFileInfo } from '@/models/FileInfo'
-import { emptyUserStats, FilesListProps, IUserStats } from '@/types/types'
-import apiClient from '@/api/axiosInstance'
-import { API_ENDPOINTS } from '@/utils/constants'
-import { ensureDomainUrlHasSSL } from '@/utils/functions'
+import { FilesListProps } from '@/types/types'
 import WorkflowSpecificTable from './WorkflowSpecificTable'
-import { useReloadWatcher } from '@/hooks/useReloadWatcher'
-import { RELOAD_KEYS } from '@/utils/reloadDatabase'
+import { useUserStats } from '@/hooks/useUserStats'
 import { useAquaSystemNames } from '@/hooks/useAquaSystemNames'
 import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocketContext'
 import { useSearchParams } from 'react-router-dom'
@@ -20,8 +16,12 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [isSmallScreen, setIsSmallScreen] = useState(false)
       const [uniqueWorkflows, setUniqueWorkflows] = useState<{ name: string, count: number }[]>([])
       const [selectedWorkflow, setSelectedWorkflow] = useState<string>(filesListProps.hideAllFilesAndUserAquaFiles ? '' : 'user_files')
-      const [stats, setStats] = useState<IUserStats>(emptyUserStats)
       const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date')
+
+      // Use React Query hook for user stats
+      const { stats, refetch: refetchStats } = useUserStats()
+
+      console.log('[FilesList] Render - stats:', stats, 'uniqueWorkflows:', uniqueWorkflows, 'selectedWorkflow:', selectedWorkflow)
 
       const [searchParams] = useSearchParams();
 
@@ -33,7 +33,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [selectedFilters, setSelectedFilters] = useState<string[]>(['all'])
       const [tempSelectedFilters, setTempSelectedFilters] = useState<string[]>(['all'])
 
-      const { backend_url, session, setFilesStats } = useStore(appStore)
+      const { setFilesStats } = useStore(appStore)
       const { subscribe } = useNotificationWebSocketContext();
 
       // Use live query hook - automatically updates when DB changes
@@ -48,63 +48,40 @@ export default function FilesList(filesListProps: FilesListProps) {
             checkScreenSize()
             window.addEventListener('resize', checkScreenSize)
 
-            if (session?.nonce && backend_url) {
-                  getUserStats()
-            }
-
             if (tabFromUrl) {
                   setSelectedWorkflow(tabFromUrl)
             }
-            //  else {
-            //       setSelectedWorkflow(filesListProps.hideAllFilesAndUserAquaFiles ? '' : 'user_files')
-            // }
-
 
             return () => {
                   window.removeEventListener('resize', checkScreenSize)
             }
-
-
-
       }, [])
 
-      const getUserStats = async () => {
-            if (session) {
-                  try {
-                        let result = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.USER_STATS}`), {
-                              headers: {
-                                    'nonce': session.nonce,
-                                    'metamask_address': session.address
-                              }
-                        })
-                        setStats(result.data)
-                        setFilesStats(result.data)
-                        let uniqueWorkflows = new Set<{ name: string; count: number }>()
-                        let claimTypeCounts = result.data.claimTypeCounts
-                        const claimTypes = Object.keys(claimTypeCounts)
-                        for (let i = 0; i < claimTypes.length; i++) {
-                              let claimType = claimTypes[i]
-                              if (parseInt(claimTypeCounts[claimType]) > 0) {
-                                    uniqueWorkflows.add({ name: claimType, count: parseInt(claimTypeCounts[claimType]) })
-                              }
+      // Process stats to extract unique workflows
+      useEffect(() => {
+            console.log('[FilesList] useEffect - Processing stats:', stats)
+            if (stats) {
+                  setFilesStats(stats)
+                  let uniqueWorkflows = new Set<{ name: string; count: number }>()
+                  let claimTypeCounts = stats.claimTypeCounts
+                  const claimTypes = Object.keys(claimTypeCounts) as Array<keyof typeof claimTypeCounts>
+                  console.log('[FilesList] useEffect - claimTypes:', claimTypes, 'claimTypeCounts:', claimTypeCounts)
+                  for (let i = 0; i < claimTypes.length; i++) {
+                        let claimType = claimTypes[i]
+                        const count = claimTypeCounts[claimType]
+                        if (parseInt(count.toString()) > 0) {
+                              console.log('[FilesList] useEffect - Adding workflow:', claimType, 'count:', count)
+                              uniqueWorkflows.add({ name: claimType, count: parseInt(count.toString()) })
                         }
-                        setUniqueWorkflows(Array.from(uniqueWorkflows))
-                  } catch (error) {
-                        console.log("Error getting stats", error)
                   }
+                  const workflowsArray = Array.from(uniqueWorkflows)
+                  console.log('[FilesList] useEffect - Setting uniqueWorkflows:', workflowsArray)
+                  setUniqueWorkflows(workflowsArray)
             }
-      }
-
-
-      // Upgraded way of identifying different workflows based on user stats endpoint
-      useEffect(() => {
-            if (session?.nonce && backend_url) {
-                  getUserStats()
-            }
-      }, [session?.address, session?.nonce, backend_url])
+      }, [stats])
 
       useEffect(() => {
-            if (tabFromUrl && stats.filesCount > 0) {
+            if (tabFromUrl && stats) {
                   if (stats?.claimTypeCounts?.[tabFromUrl as keyof typeof stats.claimTypeCounts] > 0) {
                         setSelectedWorkflow(tabFromUrl)
                   } else {
@@ -151,19 +128,11 @@ export default function FilesList(filesListProps: FilesListProps) {
             }
       }, [uniqueWorkflows, filesListProps.hideAllFilesAndUserAquaFiles, filesListProps.allowedWorkflows])
 
-      // Watch for stats reload triggers
-      useReloadWatcher({
-            key: RELOAD_KEYS.user_stats,
-            onReload: () => {
-                  getUserStats();
-            }
-      });
-
       useEffect(() => {
             const unsubscribe = subscribe((message) => {
                   // Handle notification reload specifically
                   if (message.type === 'notification_reload' && message.data && message.data.target === "workflows") {
-                        getUserStats()
+                        refetchStats()
                   }
 
             });
@@ -345,12 +314,16 @@ export default function FilesList(filesListProps: FilesListProps) {
       }
 
       const hasUserFiles = () => {
+            console.log('[FilesList] hasUserFiles check - uniqueWorkflows:', uniqueWorkflows)
             if (uniqueWorkflows.length > 0) {
                   let userFiles = uniqueWorkflows.find(wf => wf.name === "user_files")
+                  console.log('[FilesList] hasUserFiles - found userFiles:', userFiles)
                   if (userFiles && userFiles.count > 0) {
+                        console.log('[FilesList] hasUserFiles - returning true')
                         return true
                   }
             }
+            console.log('[FilesList] hasUserFiles - returning false')
             return false
       }
 
@@ -382,8 +355,10 @@ export default function FilesList(filesListProps: FilesListProps) {
                                     {/* Only show "All Files" if hideAllFilesAndUserAquaFiles is false */}
                                     {!filesListProps.hideAllFilesAndUserAquaFiles && (
                                           <>
-                                                {
-                                                      hasUserFiles() ? (
+                                                {(() => {
+                                                      const hasFiles = hasUserFiles()
+                                                      console.log('[FilesList] Tab rendering - hasUserFiles:', hasFiles)
+                                                      return hasFiles ? (
                                                             <button
                                                                   onClick={() => setSelectedWorkflow('user_files')}
                                                                   className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${selectedWorkflow === 'user_files'
@@ -395,7 +370,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                                                                   {/* User Files ({uniqueWorkflows.find(wf => wf.name === "user_files")?.count}) */}
                                                             </button>
                                                       ) : null
-                                                }
+                                                })()}
                                                 <button
                                                       onClick={() => setSelectedWorkflow('all')}
                                                       className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${selectedWorkflow === 'all'
@@ -403,7 +378,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                                                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                                             }`}
                                                 >
-                                                      All Files ({stats.filesCount})
+                                                      All Files
                                                 </button>
                                           </>
                                     )}
@@ -506,15 +481,17 @@ export default function FilesList(filesListProps: FilesListProps) {
                                                 <h1 className="text-xl font-semibold text-gray-900">
                                                       {getFilteredTitle()}
                                                 </h1>
-                               
+
                                                 {selectedFilters.includes('all') ? (
-                                                      <div className="flex items-center space-x-2">
-                                                            <div className="px-3 py-1 bg-gray-100 rounded-full">
-                                                                  <span className="text-sm text-gray-600">
-                                                                        {getWorkflowStat(selectedWorkflow)}
-                                                                  </span>
+                                                      selectedWorkflow !== 'all' && (
+                                                            <div className="flex items-center space-x-2">
+                                                                  <div className="px-3 py-1 bg-gray-100 rounded-full">
+                                                                        <span className="text-sm text-gray-600">
+                                                                              {getWorkflowStat(selectedWorkflow)}
+                                                                        </span>
+                                                                  </div>
                                                             </div>
-                                                      </div>
+                                                      )
                                                 ) : (
                                                       <div className="px-3 py-1 bg-blue-50 rounded-full">
                                                             <span className="text-sm text-blue-700">

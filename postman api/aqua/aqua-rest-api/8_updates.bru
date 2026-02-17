@@ -1,0 +1,61 @@
+meta {
+  name: 8_updates
+  type: http
+  seq: 8
+}
+
+get {
+  url: http://localhost:3600/aqua-api/updates?start_time=1700000000&include_metadata=true&page=1&limit=50
+  body: none
+  auth: none
+}
+
+headers {
+  nonce: {{nonce}}
+}
+
+params:query {
+  start_time: 1700000000
+  include_metadata: true
+  page: 1
+  limit: 50
+}
+
+docs {
+  # GET /aqua-api/updates
+
+  Returns paginated change tracking data for the authenticated user's revisions.
+
+  ## Query Parameters:
+  - `start_time` (required, UNIX seconds) — start of the time range
+  - `end_time` (optional, UNIX seconds) — end of the time range (defaults to now)
+  - `type` (optional) — filter by revision type
+  - `include_metadata` (boolean) — enrich with file names and types
+  - `page` (default: 1) — page number
+  - `limit` (default: 50, max: 200) — items per page
+
+  ## Response:
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "hash": "0x...",
+        "action": "added",
+        "timestamp": 1700000000,
+        "type": "file",
+        "title": "document.pdf"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 50,
+      "total": 120,
+      "total_pages": 3
+    }
+  }
+  ```
+
+  Note: Currently only "added" actions are tracked. A future RevisionAuditLog table
+  could enable "deleted" action tracking.
+}

@@ -1,4 +1,4 @@
-import { SignatureData } from '../../../../types/types'
+import { SignatureData } from '../../../types/types'
 
 export interface BaseAnnotation {
       id: string

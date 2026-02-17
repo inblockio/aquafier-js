@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Annotation } from './types'
-import PdfViewer from './pdf-viewer'
-import AnnotationSidebar from './annotation-sidebar'
+import PdfViewer from './PdfViewer'
+import AnnotationSidebar from './AnnotationSidebar'
 import { ArrowLeft, ArrowRight, Download, ZoomIn, ZoomOut } from 'lucide-react'
-import { SignatureData } from '../../../../types/types'
+import { SignatureData } from '../../../types/types'
 import { LuInfo } from 'react-icons/lu'
-import { Button } from '../../../../components/ui/button'
-import { Slider } from '../../../../components/ui/slider'
+import { Button } from '../../../components/ui/button'
+import { Slider } from '../../../components/ui/slider'
 import { ensureDomainUrlHasSSL } from '@/utils/functions'
 import { toast } from 'sonner'
 import { useStore } from 'zustand'
@@ -65,7 +65,7 @@ export function PdfRendererComponent({
 
       const [currentPage, setCurrentPage] = useState(1)
       const [numPages, setNumPages] = useState(0)
-      const [scale, setScale] = useState(1.15)
+      const [scale, setScale] = useState(1.5)
 
       const handleDownload = () => {
             if (onDownload) {
@@ -113,7 +113,7 @@ export function PdfRendererComponent({
                               </Button>
                         </div>
                   )}
-                  <div className={'h-auto md:h-[calc(100%-60px)] w-full md:w-full max-h-auto md:max-h-full !max-w-full overflow-x-auto px-[10px]'}>
+                  <div className={'h-auto md:h-[calc(100%-60px)] w-full md:w-full max-h-auto md:max-h-full !max-w-full overflow-x-auto px-0'}>
                         {/* <ScrollArea className='h-auto md:h-full'> */}
                         <PdfViewer
                               file={pdfFile}
@@ -753,7 +753,7 @@ export default function SignerPage({
                                                                         Processing...
                                                                   </>
                                                             ) : (
-                                                                  'Sign document'
+                                                                  'Sign document.'
                                                             )}
                                                       </Button>
                                                 </div>
