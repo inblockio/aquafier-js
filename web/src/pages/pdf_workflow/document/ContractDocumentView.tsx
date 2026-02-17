@@ -149,9 +149,9 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
             let fourthItmeHashOnwards: string[] = []
             let signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
 
-            if (revisionHashes.length > 4) {
+            if (revisionHashes.length > 5) {
                   // remove the first 4 elements from the revision list
-                  fourthItmeHashOnwards = revisionHashes.slice(4)
+                  fourthItmeHashOnwards = revisionHashes.slice(5)
                   signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
             }
 

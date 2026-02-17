@@ -2641,8 +2641,8 @@ export const processContractInformation = (selectedFileInfo: ApiFileInfo): ICont
       let signatureRevisionHashes: SummaryDetailsDisplayData[] = []
       const signers: string[] = firstRevision.forms_signers.split(',').map((e: string) => e.trim())
 
-      if (revisionHashes.length > 4) {
-            fourthItemHashOnwards = revisionHashes.slice(4)
+      if (revisionHashes.length > 5) {
+            fourthItemHashOnwards = revisionHashes.slice(5)
             signatureRevisionHashes = getSignatureRevionHashes(fourthItemHashOnwards, selectedFileInfo)
 
             const signatureRevisionHashesDataAddress = signatureRevisionHashes.map(e => e.walletAddress)
