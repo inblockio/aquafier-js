@@ -8,7 +8,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { IAquaCertWorkflowDrawer } from "@/types/types"
 import { ensureDomainUrlHasSSL, getAquaTreeFileObject, getFileName } from "@/utils/functions"
-import WalletAdrressClaim from "../v2_claims_workflow/WalletAdrressClaim"
+import WalletAddressClaim from "../v2_claims_workflow/WalletAddressClaim"
 import { Button } from "@/components/ui/button"
 import { LuX } from "react-icons/lu"
 import { Suspense, useEffect, useState } from "react"
@@ -142,7 +142,7 @@ export default function AquaCertWorkflowDrawer({ open, onClose, attestors, fileI
                                                         attestors.map((attester, index) => (
                                                             <TableRow key={`attestation_${index}`}>
                                                                 <TableCell className="truncate max-w-0">
-                                                                    <WalletAdrressClaim walletAddress={attester.walletAddress} />
+                                                                    <WalletAddressClaim walletAddress={attester.walletAddress} />
                                                                 </TableCell>
                                                                 <TableCell className="wrap-break-word" style={{
                                                                     whiteSpace: "wrap"

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { ReactNode, useEffect, useMemo, useState } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
 import appStore from '../../store'
 import { useStore } from 'zustand'
@@ -20,13 +20,66 @@ import WalletAddressProfile from './WalletAddressProfile'
 import UserSignatureClaim from './UserSignatureClaim'
 import { AddressView } from './AddressView'
 import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_claim'
-// import { GlobalPagination } from '@/types'
 import { useReloadWatcher } from '@/hooks/useReloadWatcher'
 import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { contactsDB } from '@/storage/databases/contactsDb'
 import ENSClaim from './ENSClaim'
+
+
+function ClaimSectionItem({
+      claim,
+      claimContent,
+      isSelected,
+      onContractDeleted,
+}: {
+      claim: ICompleteClaimInformation
+      claimContent: ReactNode
+      isSelected: boolean
+      onContractDeleted: (file: ApiFileInfo, hash: string) => void
+}) {
+      const [isOpen, setIsOpen] = useState(false)
+
+      return (
+            <div className={`container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg border border-slate-200 shadow-sm${isSelected ? " border-l-4 border-l-green-500" : ""}`}>
+                  {claimContent}
+                  <Collapsible open={isOpen} onOpenChange={setIsOpen} className='mt-4 bg-gray-50 p-2 rounded-lg'>
+                        <CollapsibleTrigger aria-label="Toggle sharing information" className='cursor-pointer w-full p-2 border border-gray-200 rounded-lg flex justify-between items-center'>
+                              <div className="flex flex-col text-start">
+                                    <p className='font-bold text-gray-700'>Sharing Information</p>
+                                    <p className='text-gray-600'>Who have you shared the claim with</p>
+                              </div>
+                              {isOpen ? <ChevronUp /> : <ChevronDown />}
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                              <div className="flex flex-col gap-2 p-2">
+                                    {
+                                          claim.sharedContracts?.map((contract, index) => (
+                                                <div key={`shared_contract_${index}`}>
+                                                      <SharedContract
+                                                            type='outgoing'
+                                                            key={`${contract.hash}`}
+                                                            contract={contract}
+                                                            index={index}
+                                                            contractDeleted={hash => onContractDeleted(claim.file, hash)}
+                                                      />
+                                                </div>
+                                          ))
+                                    }
+                              </div>
+                              {
+                                    claim.sharedContracts?.length === 0 ? (
+                                          <div className="flex flex-col gap-2 p-4 text-center">
+                                                <p>No shared contracts found</p>
+                                          </div>
+                                    ) : null
+                              }
+                        </CollapsibleContent>
+                  </Collapsible>
+            </div>
+      )
+}
 
 
 export default function ClaimsWorkflowPage() {
@@ -36,8 +89,6 @@ export default function ClaimsWorkflowPage() {
       const [isLoading, setIsLoading] = useState(true)
       const [isProcessingClaims, setIsProcessingClaims] = useState(true)
 
-      // const [_currentPage, _setCurrentPage] = useState(1)
-      // const [_pagination, setPagination] = useState<GlobalPagination | null>(null)
       const [files, setFiles] = useState<Array<ApiFileInfo>>([])
 
       // Watch contacts in IndexedDB for live updates
@@ -49,14 +100,19 @@ export default function ClaimsWorkflowPage() {
       const { walletAddress } = useParams()
       const urlHash = useLocation().hash
 
+      // Derive a stable key from the specific contact's data to avoid cascading re-renders
+      const contactFilesKey = useMemo(() => {
+            const contact = contactProfiles?.find(c => c.walletAddress === walletAddress)
+            if (!contact) return ''
+            return `${contact.files.length}-${contact.files.map(f => Object.keys(f.aquaTree?.revisions || {}).length).join(',')}`
+      }, [contactProfiles, walletAddress])
+
       const loadSharedContractsData = async (_latestRevisionHash: string) => {
             try {
-                  //`${backend_url}/contracts`
                   const url = ensureDomainUrlHasSSL(`${backend_url}/contracts`)
                   const response = await apiClient.get(url, {
                         params: {
                               sender: session?.address,
-                              // genesis_hash: genesisHash,
                               latest: _latestRevisionHash,
                         },
                         headers: {
@@ -64,7 +120,6 @@ export default function ClaimsWorkflowPage() {
                         },
                   })
                   if (response.status === 200) {
-                        // setSharedContracts(response.data?.contracts)
                         return response.data?.contracts
                   }
             } catch (error) {
@@ -73,34 +128,28 @@ export default function ClaimsWorkflowPage() {
             }
       }
 
-      const loadAttestationData = async (_latestRevisionHash: string, _attestations: Array<ApiFileInfo>) => {
-
-            try {
-                  const processedAttestations: Array<IAttestationEntry> = []
-
-                  for (let i = 0; i < _attestations.length; i++) {
-                        const file: ApiFileInfo = _attestations[i]
-                        const orderedAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
-                        const revisionHashes = Object.keys(orderedAquaTree.revisions)
-                        const firstRevisionHash = revisionHashes[0]
-                        const firstRevision = orderedAquaTree.revisions[firstRevisionHash]
-                        const identityClaimId = firstRevision.forms_identity_claim_id
-                        if (identityClaimId === _latestRevisionHash) {
-                              const attestationEntry: IAttestationEntry = {
-                                    walletAddress: firstRevision.forms_wallet_address,
-                                    context: firstRevision.forms_context,
-                                    createdAt: firstRevision.local_timestamp,
-                                    file: file,
-                                    nonce: session!.nonce,
-                              }
-                              processedAttestations.push(attestationEntry)
+      const buildAttestationIndex = (attestations: ApiFileInfo[]): Map<string, IAttestationEntry[]> => {
+            const index = new Map<string, IAttestationEntry[]>()
+            for (const file of attestations) {
+                  const orderedAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
+                  const revisionHashes = Object.keys(orderedAquaTree.revisions)
+                  const firstRevisionHash = revisionHashes[0]
+                  const firstRevision = orderedAquaTree.revisions[firstRevisionHash]
+                  const identityClaimId = firstRevision.forms_identity_claim_id
+                  if (identityClaimId) {
+                        const entry: IAttestationEntry = {
+                              walletAddress: firstRevision.forms_wallet_address,
+                              context: firstRevision.forms_context,
+                              createdAt: firstRevision.local_timestamp,
+                              file: file,
+                              nonce: session!.nonce,
                         }
+                        const existing = index.get(identityClaimId) || []
+                        existing.push(entry)
+                        index.set(identityClaimId, existing)
                   }
-                  return processedAttestations
-            } catch (error) {
-                  console.error('Error loading attestations:', error)
-                  return []
             }
+            return index
       }
 
       const loadSystemAquaFileNames = async () => {
@@ -115,8 +164,6 @@ export default function ClaimsWorkflowPage() {
             const _attestations: Array<ApiFileInfo> = []
             for (let i = 0; i < files?.length; i++) {
                   const file: ApiFileInfo = files[i]
-                  // const fileObject = getAquaTreeFileObject(file)
-
                   const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree!, aquaSystemFileNames)
                   if (isWorkFlow && workFlow === 'identity_attestation') {
                         _attestations.push(file)
@@ -137,41 +184,54 @@ export default function ClaimsWorkflowPage() {
             const aquaSystemFileNames = await loadSystemAquaFileNames()
 
             const _attestations = getAllAttestations(files, aquaSystemFileNames)
+            const attestationIndex = buildAttestationIndex(_attestations)
 
-            const _claims: Array<{ file: ApiFileInfo; processedInfo: ClaimInformation, attestations: Array<IAttestationEntry>, sharedContracts: Contract[] }> = []
+            // Phase 1: collect matching claims synchronously
+            const matchedClaims: Array<{ file: ApiFileInfo; processedInfo: ClaimInformation; lastRevisionHash: string }> = []
 
-            // We loop through files to find claims that match the wallet address
             for (let i = 0; i < files.length; i++) {
                   const file: ApiFileInfo = files[i]
-                  // const fileObject = getAquaTreeFileObject(file)
-
                   const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree!, aquaSystemFileNames)
 
                   if (isWorkFlow && claimTemplateNames.includes(workFlow)) {
                         const orderedAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
                         const revisionHashes = Object.keys(orderedAquaTree.revisions)
-                        const firstRevisionHash = revisionHashes[0]
                         const lastRevisionHash = revisionHashes[revisionHashes.length - 1]
-                        const firstRevision = orderedAquaTree.revisions[firstRevisionHash]
+                        const firstRevision = orderedAquaTree.revisions[revisionHashes[0]]
                         const _walletAddress = firstRevision.forms_wallet_address
                         if (_walletAddress === walletAddress) {
                               const processedClaimInfo = processSimpleWorkflowClaim(file)
-                              let processedAttestations: Array<IAttestationEntry> = []
-                              if (["simple_claim", "identity_claim", "dns_claim", "ens_claim", "domain_claim", "phone_number_claim", "email_claim", "user_signature"].includes(processedClaimInfo.claimInformation.forms_type)) {
-                                    processedAttestations = await loadAttestationData(processedClaimInfo.genesisHash!, _attestations)
-                              }
-                              const sharedContracts = await loadSharedContractsData(lastRevisionHash)
-                              _claims.push({ file: file, processedInfo: processedClaimInfo, attestations: processedAttestations, sharedContracts: sharedContracts })
+                              matchedClaims.push({ file, processedInfo: processedClaimInfo, lastRevisionHash })
                         }
                   }
             }
+
+            // Phase 2: load shared contracts in parallel
+            const sharedContractsResults = await Promise.all(
+                  matchedClaims.map(c => loadSharedContractsData(c.lastRevisionHash))
+            )
+
+            // Build final claims array
+            const _claims = matchedClaims.map((c, i) => ({
+                  file: c.file,
+                  processedInfo: c.processedInfo,
+                  attestations: attestationIndex.get(c.processedInfo.genesisHash!) || [],
+                  sharedContracts: sharedContractsResults[i] || [],
+            }))
 
             setClaims(_claims)
             setIsProcessingClaims(false)
       }
 
+      const handleContractDeleted = (claimFile: ApiFileInfo, contractHash: string) => {
+            setClaims(prev => prev.map(c =>
+                  c.file === claimFile
+                        ? { ...c, sharedContracts: c.sharedContracts?.filter(e => e.hash !== contractHash) }
+                        : c
+            ))
+      }
+
       const renderClaim = (claim: ICompleteClaimInformation) => {
-            // console.log("Claim: ", claim)
             const claimInfo = claim.processedInfo.claimInformation
             const genesisRevisionHash = getGenesisHash(claim.file.aquaTree!)
 
@@ -186,19 +246,9 @@ export default function ClaimsWorkflowPage() {
                         <DNSClaim claimInfo={claimInfo} apiFileInfo={claim.file} nonce={session!.nonce} sessionAddress={session!.address} />
                   )
             }
-            // else if (claimInfo.forms_type === 'phone_number_claim') {
-            //       return (
-            //             <PhoneNumberClaim claim={claim} />
-            //       )
-            // }
-            // else if (claimInfo.forms_type === 'email_claim') {
-            //       return (
-            //             <EmailClaim claim={claim} />
-            //       )
-            // }
             else if (claimInfo.forms_type === 'user_signature') {
                   return (
-                        <div className="grid lg:grid-cols-12 gap-4 relative" id={`${genesisRevisionHash}`}>
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 relative" id={`${genesisRevisionHash}`}>
                               <div className='col-span-7 bg-gray-50 p-2'>
                                     <div className="flex flex-col gap-2">
                                           <UserSignatureClaim claim={claim} />
@@ -241,14 +291,7 @@ export default function ClaimsWorkflowPage() {
             }
             else {
                   return (
-                        <div className="grid lg:grid-cols-12 gap-4 relative" id={`${genesisRevisionHash}`}>
-                              {
-                                    urlHash?.replace("#", "") === genesisRevisionHash ? (
-                                          <div className='absolute top-0 right-0 z-10 bg-green-500 w-fit px-2 py-1 text-white rounded-md'>
-                                                Selected
-                                          </div>
-                                    ) : null
-                              }
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 relative" id={`${genesisRevisionHash}`}>
                               <div className='col-span-7 bg-gray-50 p-2'>
                                     <div className="flex flex-col gap-2">
                                           <SimpleClaim claimInfo={claimInfo} />
@@ -294,37 +337,8 @@ export default function ClaimsWorkflowPage() {
       async function loadClaimsFileData() {
             setFiles([])
             setClaims([])
-            // let isGood = cleanEthAddress(walletAddress)
-            // if (!isGood) {
-            //       toast.warning("Invalid wallet address", {
-            //             position: "top-center"
-            //       })
-            //       return
-            // }
             setIsLoading(true);
             try {
-                  // DO NOT REMOVE, commented this out to use data from contacts table
-                  // const params = {
-                  //       page: currentPage,
-                  //       limit: 100,
-                  //       claim_types: JSON.stringify(IDENTITY_CLAIMS),
-                  //       wallet_address: walletAddress,
-                  //       use_wallet: session?.address,
-                  // }
-                  // const filesDataQuery = await apiClient.get(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`, {
-                  //       headers: {
-                  //             'Content-Type': 'application/json',
-                  //             'nonce': `${session!.nonce}`
-                  //       },
-                  //       params
-                  // })
-                  // const response = filesDataQuery.data
-                  // const aquaTrees = response.aquaTrees
-                  // setPagination(response.pagination)
-                  // setFiles(aquaTrees)
-                  // // Process claims after setting files
-                  // await processAllAddressClaims(aquaTrees)
-
                   // search for contact from contacts
                   let contact = contactProfiles?.find(contact => contact.walletAddress === walletAddress)
                   if (contact) {
@@ -338,30 +352,8 @@ export default function ClaimsWorkflowPage() {
                   setIsProcessingClaims(false)
             } finally {
                   setIsLoading(false);
-                  // setIsProcessingClaims(false)
             }
       }
-
-      // const watchFilesChange = useMemo(() => {
-      //       if (!files?.length) return '0';
-
-      //       let totalRevisions = 0;
-      //       let aquaTreeHashes: string[] = [];
-
-      //       for (const file of files) {
-      //             if (file.aquaTree?.revisions) {
-      //                   const revisionCount = Object.keys(file.aquaTree.revisions).length;
-      //                   totalRevisions += revisionCount;
-
-      //                   // Create a stable identifier for this aquaTree based on its revisions
-      //                   const revisionKeys = Object.keys(file.aquaTree.revisions).sort();
-      //                   const aquaTreeHash = `${revisionCount}-${revisionKeys.join(',')}`;
-      //                   aquaTreeHashes.push(aquaTreeHash);
-      //             }
-      //       }
-      //       // Create a stable watch value based on total revisions and aquaTree structure
-      //       return `${totalRevisions}-${aquaTreeHashes.sort().join('|')}`;
-      // }, [files]);
 
       useReloadWatcher({
             key: RELOAD_KEYS.user_profile,
@@ -372,7 +364,13 @@ export default function ClaimsWorkflowPage() {
 
       useEffect(() => {
             loadClaimsFileData()
-      }, [walletAddress, contactProfiles]);
+      }, [walletAddress, contactFilesKey]);
+
+      const simpleClaimFilter = (item: ICompleteClaimInformation) =>
+            ["simple_claim", "identity_claim", "ens_claim"].includes(item.processedInfo.claimInformation.forms_type)
+
+      const otherClaimFilter = (item: ICompleteClaimInformation) =>
+            !["simple_claim", "identity_claim", "ens_claim"].includes(item.processedInfo.claimInformation.forms_type)
 
       return (
             <div className='py-6 flex flex-col gap-4'>
@@ -429,96 +427,32 @@ export default function ClaimsWorkflowPage() {
 
                   <div className="flex flex-col gap-4">
                         {
-                              claims.filter(item => ["simple_claim", "identity_claim", "ens_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
-                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg border-2 border-gray-400">
-                                          {renderClaim(claim)}
-                                          <Collapsible className=' bg-gray-50 p-2 rounded-lg'>
-                                                <CollapsibleTrigger className='cursor-pointer w-full p-2 border-2 border-gray-200 rounded-lg flex justify-between items-center'>
-                                                      <div className="flex flex-col text-start">
-                                                            <p className='font-bold text-gray-700'>Sharing Information</p>
-                                                            <p className='text-gray-600'>Who have you shared the claim with</p>
-                                                      </div>
-                                                      <div className='flex flex-col gap-0 h-fit'>
-                                                            <ChevronDown />
-                                                            <ChevronUp />
-                                                      </div>
-                                                </CollapsibleTrigger>
-                                                <CollapsibleContent>
-                                                      <div className="flex flex-col gap-2 p-2">
-                                                            {
-                                                                  claim.sharedContracts?.map((contract, index) => (
-                                                                        <div key={`shared_contract_${index}`}>
-                                                                              <SharedContract
-                                                                                    type='outgoing'
-                                                                                    key={`${contract.hash}`}
-                                                                                    contract={contract}
-                                                                                    index={index}
-                                                                                    contractDeleted={hash => {
-                                                                                          let newState = claim.sharedContracts?.filter(e => e.hash != hash)
-                                                                                          claim.sharedContracts = newState
-                                                                                    }}
-                                                                              />
-                                                                        </div>
-                                                                  ))
-                                                            }
-                                                      </div>
-                                                      {
-                                                            claim.sharedContracts?.length === 0 ? (
-                                                                  <div className="flex flex-col gap-2 p-4 text-center">
-                                                                        <p>No shared contracts found</p>
-                                                                  </div>
-                                                            ) : null
-                                                      }
-                                                </CollapsibleContent>
-                                          </Collapsible>
-                                    </div>
-                              ))
+                              claims.filter(simpleClaimFilter).map((claim) => {
+                                    const genesisRevisionHash = getGenesisHash(claim.file.aquaTree!)
+                                    return (
+                                          <ClaimSectionItem
+                                                key={`claim_${genesisRevisionHash}`}
+                                                claim={claim}
+                                                claimContent={renderClaim(claim)}
+                                                isSelected={urlHash?.replace("#", "") === genesisRevisionHash}
+                                                onContractDeleted={handleContractDeleted}
+                                          />
+                                    )
+                              })
                         }
                         {
-                              claims.filter(item => !["simple_claim", "identity_claim", "ens_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
-                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg border-2 border-gray-400">
-                                          {renderClaim(claim)}
-                                          <Collapsible className='mt-4 bg-gray-50 p-2 rounded-lg'>
-                                                <CollapsibleTrigger className='cursor-pointer w-full p-2 border-2 border-gray-200 rounded-lg flex justify-between items-center'>
-                                                      <div className="flex flex-col text-start">
-                                                            <p className='font-bold text-gray-700'>Sharing Information</p>
-                                                            <p className='text-gray-600'>Who have you shared the claim with</p>
-                                                      </div>
-                                                      <div className='flex flex-col gap-0 h-fit'>
-                                                            <ChevronDown />
-                                                            <ChevronUp />
-                                                      </div>
-                                                </CollapsibleTrigger>
-                                                <CollapsibleContent>
-                                                      <div className="flex flex-col gap-2 p-2">
-                                                            {
-                                                                  claim.sharedContracts?.map((contract, index) => (
-                                                                        <div key={`shared_contract_${index}`}>
-                                                                              <SharedContract
-                                                                                    type='outgoing'
-                                                                                    key={`${contract.hash}`}
-                                                                                    contract={contract}
-                                                                                    index={index}
-                                                                                    contractDeleted={hash => {
-                                                                                          let newState = claim.sharedContracts?.filter(e => e.hash != hash)
-                                                                                          claim.sharedContracts = newState
-                                                                                    }}
-                                                                              />
-                                                                        </div>
-                                                                  ))
-                                                            }
-                                                      </div>
-                                                      {
-                                                            claim.sharedContracts?.length === 0 ? (
-                                                                  <div className="flex flex-col gap-2 p-4 text-center">
-                                                                        <p>No shared contracts found</p>
-                                                                  </div>
-                                                            ) : null
-                                                      }
-                                                </CollapsibleContent>
-                                          </Collapsible>
-                                    </div>
-                              ))
+                              claims.filter(otherClaimFilter).map((claim) => {
+                                    const genesisRevisionHash = getGenesisHash(claim.file.aquaTree!)
+                                    return (
+                                          <ClaimSectionItem
+                                                key={`claim_${genesisRevisionHash}`}
+                                                claim={claim}
+                                                claimContent={renderClaim(claim)}
+                                                isSelected={urlHash?.replace("#", "") === genesisRevisionHash}
+                                                onContractDeleted={handleContractDeleted}
+                                          />
+                                    )
+                              })
                         }
                   </div>
             </div>

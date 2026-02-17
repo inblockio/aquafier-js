@@ -13,7 +13,7 @@ import { RELOAD_KEYS } from '@/utils/reloadDatabase'
 import { Badge } from '../../components/ui/badge'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import WalletAdrressClaim from '../v2_claims_workflow/WalletAdrressClaim'
+import WalletAddressClaim from '../v2_claims_workflow/WalletAddressClaim'
 
 interface NotificationItemProps {
       notification: INotification
@@ -110,9 +110,9 @@ const NotificationItem = ({ notification, onRead }: NotificationItemProps) => {
                                                       variant="outline"
                                                       onClick={e => e.stopPropagation()}
                                                 >
-                                                      Sender: <WalletAdrressClaim walletAddress={notification.sender} />
+                                                      Sender: <WalletAddressClaim walletAddress={notification.sender} />
                                                       </Badge> */}
-                                                      <WalletAdrressClaim walletAddress={notification.sender} />
+                                                      <WalletAddressClaim walletAddress={notification.sender} />
                                                 </>
                                           )
                                     }
@@ -149,7 +149,7 @@ const NotificationItem = ({ notification, onRead }: NotificationItemProps) => {
       )
 }
 
-const NotificaitonsHolder = ({ notifications, isLoading, markAllAsRead, onNotificationRead }: NotificationsHolderProps) => {
+const NotificationsHolder = ({ notifications, isLoading, markAllAsRead, onNotificationRead }: NotificationsHolderProps) => {
       const hasUnread = notifications.some(notification => !notification.is_read)
 
       return (
@@ -182,4 +182,4 @@ const NotificaitonsHolder = ({ notifications, isLoading, markAllAsRead, onNotifi
       )
 }
 
-export default NotificaitonsHolder
+export default NotificationsHolder

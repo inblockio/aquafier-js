@@ -1,3 +1,4 @@
+import React from 'react'
 import CopyButton from '@/components/CopyButton'
 import { FaEthereum } from 'react-icons/fa6'
 
@@ -7,7 +8,6 @@ interface ISimpleClaim {
 
 const ENSClaim = ({ claimInfo }: ISimpleClaim) => {
       // Extract relevant information from claimInfo
-      console.log("claimInfo: ", claimInfo)
 
       function getClaimTitle() {
             return 'ENS Claim'
@@ -116,4 +116,4 @@ const ENSClaim = ({ claimInfo }: ISimpleClaim) => {
       )
 }
 
-export default ENSClaim
+export default React.memo(ENSClaim)

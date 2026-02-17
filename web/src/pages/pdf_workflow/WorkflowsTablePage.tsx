@@ -41,7 +41,7 @@ import { DownloadAquaChain } from '../../components/aqua_chain_actions/download_
 import { OpenAquaSignWorkFlowButton } from '../../components/aqua_chain_actions/open_aqua_sign_workflow'
 import { DeleteAquaChain, DeleteAquaChainDialog } from '../../components/aqua_chain_actions/delete_aqua_chain'
 import { IWorkflowItem } from '@/types/types'
-import WalletAdrressClaim from '../v2_claims_workflow/WalletAdrressClaim'
+import WalletAddressClaim from '../v2_claims_workflow/WalletAddressClaim'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { toast } from 'sonner'
 import apiClient from '@/api/axiosInstance'
@@ -238,7 +238,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                               }}>
                                     <div className="flex -space-x-2">
                                           {signers?.slice(0, 3).map((signer: string, index: number) => (
-                                                <WalletAdrressClaim key={index} avatarOnly={true} walletAddress={signer} />
+                                                <WalletAddressClaim key={index} avatarOnly={true} walletAddress={signer} />
                                           ))}
                                           {signers?.length > 3 && (
                                                 <Avatar className="h-8 w-8 border-2 border-background" onClick={e => {

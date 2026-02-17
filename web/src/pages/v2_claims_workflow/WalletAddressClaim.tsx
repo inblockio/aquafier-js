@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 const WalletAddressProfile = lazy(() => import('./WalletAddressProfile'))
 
-interface IWalletAdrressClaim {
+interface IWalletAddressClaim {
       walletAddress: string
       isShortened?: boolean
       avatarOnly?: boolean
@@ -28,7 +28,7 @@ const getInitials = (name: string) => {
             .toUpperCase()
 }
 
-const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
+const WalletAddressClaim = forwardRef<HTMLDivElement, IWalletAddressClaim>(
       ({ walletAddress, avatarOnly }, ref) => {
 
             const [identityClaimDetails, setIdentityClaimDetails] = useState<IIdentityClaimDetails | null>(null)
@@ -161,5 +161,5 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
       }
 )
 
-WalletAdrressClaim.displayName = 'WalletAdrressClaim'
-export default WalletAdrressClaim
+WalletAddressClaim.displayName = 'WalletAddressClaim'
+export default WalletAddressClaim

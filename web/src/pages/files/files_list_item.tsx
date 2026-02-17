@@ -29,7 +29,7 @@ import appStore from '@/store'
 import { FilesListProps } from '@/types/types'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
-import WalletAdrressClaim from '../v2_claims_workflow/WalletAdrressClaim'
+import WalletAddressClaim from '../v2_claims_workflow/WalletAddressClaim'
 import ActionsDropdown from './ActionsDropdown'
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import { LuBookOpen, LuGlasses, LuLink2, LuShare2, LuSignature } from 'react-icons/lu'
@@ -635,7 +635,7 @@ export default function FilesListItem({
 
                               <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
                                     <p className="text-xs ">Profile Owner   {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
-                                    <WalletAdrressClaim walletAddress={creatorWallet} />
+                                    <WalletAddressClaim walletAddress={creatorWallet} />
 
                               </div>
 
@@ -664,7 +664,7 @@ export default function FilesListItem({
                               </div>
                               <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
                                     <p className="text-xs ">Owner   {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
-                                    <WalletAdrressClaim walletAddress={creatorWallet} />
+                                    <WalletAddressClaim walletAddress={creatorWallet} />
                               </div>
 
                         </>
@@ -688,7 +688,7 @@ export default function FilesListItem({
                         return <>
                               <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
                                     <p className="text-xs ">Owner   {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
-                                    <WalletAdrressClaim walletAddress={creatorWallet} />
+                                    <WalletAddressClaim walletAddress={creatorWallet} />
                               </div>
 
                         </>
@@ -717,7 +717,7 @@ export default function FilesListItem({
                               </div>
                               <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
                                     <p className="text-xs ">Owner   {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
-                                    <WalletAdrressClaim walletAddress={creatorWallet} />
+                                    <WalletAddressClaim walletAddress={creatorWallet} />
                               </div>
 
                         </>
@@ -792,7 +792,7 @@ export default function FilesListItem({
                                     creatorWallet ?
                                           <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
                                                 <p className="text-xs ">Owner   {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
-                                                <WalletAdrressClaim walletAddress={creatorWallet} />
+                                                <WalletAddressClaim walletAddress={creatorWallet} />
 
                                           </div> : null
                               }
@@ -822,7 +822,7 @@ export default function FilesListItem({
                         return <>
                               <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
                                     <p className="text-xs ">Owner   {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
-                                    <WalletAdrressClaim walletAddress={creatorWallet} />
+                                    <WalletAddressClaim walletAddress={creatorWallet} />
                               </div>
                         </>
 
@@ -901,7 +901,7 @@ export default function FilesListItem({
                                     creatorWallet ?
                                           <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
                                                 <p className="text-xs ">Owner   {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
-                                                <WalletAdrressClaim walletAddress={creatorWallet} />
+                                                <WalletAddressClaim walletAddress={creatorWallet} />
 
                                           </div> : null
                               }

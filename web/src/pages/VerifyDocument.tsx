@@ -17,7 +17,7 @@ import { EasyPDFRenderer } from '@/pages/pdf_workflow/pdf-viewer/SignerPage'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle, FileText, User, Calendar, Link, Hash, ShieldCheck, AlertCircle, Loader2, X, ShieldCheckIcon, Wallet2, Copy, InfoIcon, ShieldUser, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import WalletAdrressClaim from './v2_claims_workflow/WalletAdrressClaim'
+import WalletAddressClaim from './v2_claims_workflow/WalletAddressClaim'
 
 
 interface IMetadata {
@@ -138,7 +138,7 @@ const CustomPDFMetada = ({ metadata, drawerStatus }: { metadata: IMetadata | nul
                                     {
                                           metadata?.signerWallet?.split(",").map(item => item.trim()).map((_address, idx) => (
                                                 <div key={`wallet_${_address}_${idx}`} className="flex items-center gap-2">
-                                                      <WalletAdrressClaim walletAddress={_address} />
+                                                      <WalletAddressClaim walletAddress={_address} />
                                                 </div>
                                           ))
                                     }

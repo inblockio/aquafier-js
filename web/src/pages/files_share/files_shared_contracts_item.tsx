@@ -11,7 +11,7 @@ import { useStore } from 'zustand'
 import appStore from '@/store'
 import { arraysEqualIgnoreOrder, ensureDomainUrlHasSSL, formatCryptoAddress, getGenesisHash, timeToHumanFriendly } from '@/utils/functions'
 import { Contract } from '@/types/types'
-import WalletAddresClaim from "../v2_claims_workflow/WalletAdrressClaim"
+import WalletAddressClaim from "../v2_claims_workflow/WalletAddressClaim"
 import { toast } from 'sonner'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { ImportAquaChainFromChain } from '@/components/dropzone_file_actions/import_aqua_tree_from_aqua_tree'
@@ -232,7 +232,7 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
                                                                               <div>
                                                                                     <p className="text-xs sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate">
                                                                                           {/* {formatCryptoAddress(contract.sender, 10, 10)} */}
-                                                                                          <WalletAddresClaim walletAddress={contract.sender!} isShortened={true} />
+                                                                                          <WalletAddressClaim walletAddress={contract.sender!} isShortened={true} />
                                                                                     </p>
                                                                                     <p className="text-xs text-gray-500">Sender</p>
                                                                               </div>
@@ -260,7 +260,7 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
                                                                                                 </Avatar>
                                                                                                 <div>
                                                                                                       <p className="text-xs break-words sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate">
-                                                                                                            <WalletAddresClaim walletAddress={recipient} isShortened={false} />
+                                                                                                            <WalletAddressClaim walletAddress={recipient} isShortened={false} />
                                                                                                       </p>
                                                                                                 </div>
                                                                                           </>
@@ -285,7 +285,7 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
                                                                                           {/* {formatCryptoAddress(contract.receiver)} */}
                                                                                           {
                                                                                                 recipient == SYSTEM_WALLET_ADDRESS ? <>Many potential receivers - file shared by link.</> :
-                                                                                                      <WalletAddresClaim walletAddress={recipient} isShortened={false} />
+                                                                                                      <WalletAddressClaim walletAddress={recipient} isShortened={false} />
                                                                                           }
 
                                                                                     </p>

@@ -1,6 +1,7 @@
+import React from 'react'
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
 import { IAttestationEntry } from '@/models/FileInfo'
-import WalletAdrressClaim from './WalletAdrressClaim'
+import WalletAddressClaim from './WalletAddressClaim'
 import { useNavigate } from 'react-router-dom'
 
 const AttestationEntry = ({ file, nonce, walletAddress, context, createdAt }: IAttestationEntry) => {
@@ -29,7 +30,7 @@ const AttestationEntry = ({ file, nonce, walletAddress, context, createdAt }: IA
                                                 />
                                           </svg>
                                     </div>
-                                    <WalletAdrressClaim walletAddress={walletAddress} />
+                                    <WalletAddressClaim walletAddress={walletAddress} />
                               </div>
                               <p className="text-gray-700 text-sm">{context}</p>
                         </div>
@@ -47,4 +48,4 @@ const AttestationEntry = ({ file, nonce, walletAddress, context, createdAt }: IA
       )
 }
 
-export default AttestationEntry
+export default React.memo(AttestationEntry)
