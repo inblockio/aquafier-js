@@ -1,0 +1,37 @@
+meta {
+  name: 3_get_branch
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://localhost:3600/aqua-api/get_branch/{{revision_hash}}
+  body: none
+  auth: none
+}
+
+headers {
+  nonce: {{nonce}}
+}
+
+docs {
+  # GET /aqua-api/get_branch/:revision_hash
+
+  Returns all revisions in the branch from genesis to the given revision hash.
+
+  ## Path Parameters:
+  - `revision_hash` — the pubkey_hash or revision hash to trace back from
+
+  ## Response:
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "hash": "0x...",
+        "children": ["0x..."]
+      }
+    ]
+  }
+  ```
+}

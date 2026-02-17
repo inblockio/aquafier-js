@@ -1,0 +1,38 @@
+meta {
+  name: 1_siwe_login
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:3600/session
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "message": "localhost:3600 wants you to sign in with your Ethereum account:\n0xYOUR_WALLET_ADDRESS\n\nSign in with Ethereum\n\nURI: http://localhost:3600\nVersion: 1\nChain ID: 1\nNonce: {{nonce}}\nIssued At: 2026-01-01T00:00:00.000Z",
+    "signature": "0xYOUR_SIGNATURE_HERE",
+    "domain": "localhost:3600"
+  }
+}
+
+docs {
+  # SIWE Login
+
+  Sign-In with Ethereum (SIWE) authentication flow.
+
+  ## Steps:
+  1. Generate a SIWE message with your wallet address, domain, and nonce
+  2. Sign the message with your Ethereum private key (using ethers.js or similar)
+  3. POST the message + signature to /session
+  4. Extract the `nonce` from the response — use it as the `nonce` header in all subsequent requests
+
+  ## Response:
+  Returns a session with a nonce that should be used as the `nonce` header for authenticated requests.
+}

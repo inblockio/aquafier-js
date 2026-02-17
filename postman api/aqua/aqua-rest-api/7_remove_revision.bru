@@ -1,0 +1,29 @@
+meta {
+  name: 7_remove_revision
+  type: http
+  seq: 7
+}
+
+delete {
+  url: http://localhost:3600/aqua-api/remove_revision/{{revision_hash}}
+  body: none
+  auth: none
+}
+
+headers {
+  nonce: {{nonce}}
+}
+
+docs {
+  # DELETE /aqua-api/remove_revision/:revision_hash
+
+  Deletes a revision. Only the owner can delete (not shared-access users).
+
+  ## Path Parameters:
+  - `revision_hash` — the revision hash to delete
+
+  ## Response:
+  - 200: Revision deleted successfully
+  - 403: Only the owner can delete
+  - 404: Revision not found
+}
