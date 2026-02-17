@@ -184,6 +184,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   signForm[`page_${index}`] = pageIndex.toString()
                   signForm[`width_${index}`] = signaturePositionItem.width.toString()
                   signForm[`height_${index}`] = signaturePositionItem.height.toString()
+                  signForm[`scale_${index}`] = (signaturePositionItem.scale ?? 1).toString()
             })
 
             return signForm
@@ -976,7 +977,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                               continue
                         }
 
-                        const forthRevision = userSignature.aquaTree?.revisions[allHashes[3]]
+                        const forthRevision = userSignature.aquaTree?.revisions[allHashes[4]]
                         if (!thirdRevision) {
                               continue
                         }
@@ -1445,7 +1446,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
             setSigners(signers)
 
-            const fourthItmeHashOnwards = allHashes.slice(4)
+            const fourthItmeHashOnwards = allHashes.slice(5)
             let allSignersData = [...signers]
 
             try {
@@ -1456,9 +1457,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                               const batch = fourthItmeHashOnwards.slice(i, i + 3)
                               // let hashSigPosition = batch[0] ?? ""
                               // let hashSigRev = batch[1] ?? ""
-                              const hashSigMetamak = batch[2] ?? ''
+                              const hashSigMetamask = batch[2] ?? ''
 
-                              const revision = selectedFileInfo!.aquaTree!.revisions![hashSigMetamak]
+                              const revision = selectedFileInfo!.aquaTree!.revisions![hashSigMetamask]
 
                               allSignersData = allSignersData.filter(item => item !== revision.signature_wallet_address) //pop()
 
@@ -1473,7 +1474,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         setAllSignersBeforeMe(allSignersBeforeMe)
                   }
             } catch (e) {
-                  // (`Error PDF Signer -  ${e}`)
+                  console.log(`Error PDF Signer --  ${e}`)
                   toast.error(`Error Loading pdf`)
             }
 
@@ -1630,6 +1631,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   imageAlt: sig.name,
                   name: sig.name,
                   walletAddress: sig.walletAddress,
+                  scale: sig.scale ?? 1,
             }));
 
             const newSigs = signaturePositions.map((sig: SignatureData) => ({
@@ -1645,6 +1647,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   imageAlt: sig.name,
                   name: sig.name,
                   walletAddress: sig.walletAddress,
+                  scale: sig.scale ?? 1,
             }));
 
             const allAnnotations = [...existingSigs, ...newSigs];

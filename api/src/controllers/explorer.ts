@@ -19,7 +19,7 @@ import {
     saveAquaTree,
     transferRevisionChainData
 } from '../utils/revisions_utils';
-import { getHost, getPort } from '../utils/api_utils';
+import { getAquaTreeFileName, getHost, getPort } from '../utils/api_utils';
 import { extractAquaDataFromPdf } from '../utils/pdf_utils';
 import { DeleteRevision } from '../models/request_models';
 import { usageService } from '../services/usageService';
@@ -27,6 +27,8 @@ import { getGenesisHash, removeFilePathFromFileIndex, saveFileAndCreateOrUpdateF
 // import { systemTemplateHashes } from '../models/constants';
 import { dummyCredential, getServerWalletInformation, saveAttestationFileAndAquaTree } from '../utils/server_utils';
 import Logger from "../utils/logger";
+import { createAquaTreeFromRevisions } from '../utils/revisions_operations_utils';
+import { getAddress } from 'ethers';
 import { sendNotificationReloadToWallet } from './websocketController2';
 import { createNotificationAndSendWebSocketNotification } from '../utils/notification_utils';
 import { systemTemplateHashes } from '../models/constants';
@@ -405,6 +407,90 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                     return reply.code(500).send({ error: "Server wallet information is not defined, server cannot sign" });
 
+                }
+
+                // Link server identity claim before signing
+                const serverWalletAddr = getAddress(serverWalletInformation.walletAddress)
+                const serverUrl = `http://localhost:${getPort()}`
+
+                const serverLatestEntries = await prisma.latest.findMany({
+                    where: { user: serverWalletAddr }
+                })
+
+                let serverIdentityAquaTree: AquaTree | null = null
+                let serverIdentityFileObjects: FileObject[] = []
+
+                for (const entry of serverLatestEntries) {
+                    try {
+                        const [entryAquaTree, entryFileObjects] = await createAquaTreeFromRevisions(entry.hash, serverUrl)
+                        const entryGenHash = getGenesisHash(entryAquaTree)
+                        if (entryGenHash) {
+                            const genRevision = entryAquaTree.revisions[entryGenHash]
+                            if (genRevision && genRevision["forms_type"] === "simple_claim") {
+                                serverIdentityAquaTree = entryAquaTree
+                                serverIdentityFileObjects = entryFileObjects
+                                break
+                            }
+                        }
+                    } catch (error) {
+                        Logger.error(`Error reconstructing aqua tree for latest entry ${entry.hash}: ${error}`)
+                    }
+                }
+
+                if (serverIdentityAquaTree) {
+                    let identityName = getAquaTreeFileName(serverIdentityAquaTree);
+                    if (identityName.length === 0) {
+                        identityName = "identity_claim.json"
+                    }
+
+                    const serverIdentityFileObject: FileObject = {
+                        fileName: identityName,
+                        fileContent: JSON.stringify(serverIdentityAquaTree),
+                        path: ""
+                    }
+
+                    const serverIdentityWrapper: AquaTreeWrapper = {
+                        aquaTree: serverIdentityAquaTree,
+                        fileObject: serverIdentityFileObject,
+                        revision: ""
+                    }
+
+                    const attestationWrapperForIdentityLink: AquaTreeWrapper = {
+                        aquaTree: aquaTree,
+                        fileObject: undefined,
+                        revision: ""
+                    }
+
+                    const identityLinkedResult = await aquafier.linkAquaTree(attestationWrapperForIdentityLink, serverIdentityWrapper, false)
+
+                    if (identityLinkedResult.isErr()) {
+                        Logger.error(`Error linking server identity: ${identityLinkedResult.data}`)
+                    } else {
+                        aquaTree = identityLinkedResult.data.aquaTree!
+                        Logger.info("Server identity linked into attestation successfully")
+                    }
+
+                    // Transfer server identity to user context
+                    await prisma.users.upsert({
+                        where: { address: walletAddress },
+                        create: { address: walletAddress },
+                        update: {}
+                    });
+
+                    const transferResult = await transferRevisionChainData(
+                        walletAddress,
+                        { aquaTree: serverIdentityAquaTree, fileObject: serverIdentityFileObjects },
+                        null,
+                        true
+                    )
+
+                    if (!transferResult.success) {
+                        Logger.error(`Error transferring server identity to user: ${transferResult.message}`)
+                    } else {
+                        Logger.info(`Server identity transferred to user ${walletAddress}`)
+                    }
+                } else {
+                    Logger.info("Server identity claim not found, proceeding without identity link")
                 }
 
                 const creds = dummyCredential()

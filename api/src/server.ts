@@ -22,7 +22,7 @@ import revisionsController from './controllers/revisions';
 import shareController from './controllers/share';
 import fetchChainController from './controllers/fetch-chain';
 import templatesController from './controllers/templates';
-import { setupPaymentPlans, setUpSystemTemplates, ensureDefaultFreePlanId } from './utils/api_utils';
+import { setupPaymentPlans, setUpSystemTemplates, ensureDefaultFreePlanId, seedAdminUsers } from './utils/api_utils';
 import systemController from './controllers/system';
 import notificationsController from './controllers/notifications';
 import ApiController from './controllers/api';
@@ -101,6 +101,8 @@ async function buildServer() {
     // Create the server identity here
     await createServerIdentity()
 
+    // Seed admin users from DASHBOARD_WALLETS env
+    await seedAdminUsers()
 
     let corsAllowedOrigins = process.env.ALLOWED_CORS ? [process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()), ...ensureDomainViewForCors(process.env.FRONTEND_URL)] : [
         'http://localhost:5173',

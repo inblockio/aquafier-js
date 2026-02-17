@@ -195,7 +195,7 @@ const CustomPDFMetada = ({ metadata, drawerStatus }: { metadata: IMetadata | nul
                               </div>
                         </div>
                         {/* Document Hash */}
-                        <div className="space-y-1.5">
+                        {/* <div className="space-y-1.5">
                               <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400">
                                     <Hash
                                           className="h-3.5 w-3.5"
@@ -223,7 +223,7 @@ const CustomPDFMetada = ({ metadata, drawerStatus }: { metadata: IMetadata | nul
                                           Copy
                                     </button>
                               </div>
-                        </div>
+                        </div> */}
                         {/* Platform */}
                         <div className="flex items-center gap-2 pt-1 text-neutral-500 dark:text-neutral-400">
                               <Link
