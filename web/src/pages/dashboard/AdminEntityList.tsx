@@ -4,11 +4,12 @@ import apiClient from '@/api/axiosInstance'
 import { useStore } from 'zustand';
 import appStore from '@/store';
 import { ensureDomainUrlHasSSL } from '@/utils/functions';
-import { 
-    ChevronLeft, 
-    ChevronRight, 
+import {
+    ChevronLeft,
+    ChevronRight,
     ArrowLeft,
-    RefreshCw
+    RefreshCw,
+    Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -28,11 +29,59 @@ const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
 };
 
+const AdminToggleButton = ({ row, session, backendUrl, onSuccess }: {
+    row: any;
+    session: any;
+    backendUrl: string;
+    onSuccess: () => void;
+}) => {
+    const [toggling, setToggling] = useState(false);
+    const isAdmin = row.is_admin;
+
+    const handleToggle = async () => {
+        setToggling(true);
+        try {
+            await apiClient.post(
+                ensureDomainUrlHasSSL(`${backendUrl}/admin/toggle-admin`),
+                { targetAddress: row.address, makeAdmin: !isAdmin },
+                { headers: { 'nonce': session.nonce } }
+            );
+            toast.success(`${isAdmin ? 'Removed admin from' : 'Made admin:'} ${formatAddress(row.address)}`);
+            onSuccess();
+        } catch (err: any) {
+            const msg = err.response?.data?.error || 'Failed to update admin status';
+            toast.error(msg);
+        } finally {
+            setToggling(false);
+        }
+    };
+
+    return (
+        <button
+            onClick={handleToggle}
+            disabled={toggling}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                isAdmin
+                    ? 'text-red-600 bg-red-50 hover:bg-red-100 border border-red-200'
+                    : 'text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200'
+            }`}
+        >
+            {toggling ? (
+                <Loader2 className="w-3 h-3 animate-spin inline" />
+            ) : isAdmin ? (
+                'Remove Admin'
+            ) : (
+                'Make Admin'
+            )}
+        </button>
+    );
+};
+
 const AdminEntityList = () => {
     const { type } = useParams<{ type: string }>();
     const navigate = useNavigate();
     const { session, backend_url } = useStore(appStore);
-    
+
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [pagination, setPagination] = useState({
@@ -42,14 +91,52 @@ const AdminEntityList = () => {
         totalPages: 0
     });
 
+    const fetchData = async (page: number) => {
+        if (!session || !backend_url || !type) return;
+
+        setLoading(true);
+        try {
+            const res = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/admin/data/${type}`), {
+                headers: { 'nonce': session.nonce },
+                params: { page, limit: pagination.limit }
+            });
+
+            setData(res.data.data);
+            setPagination(prev => ({ ...prev, ...res.data.pagination }));
+        } catch (err: any) {
+            console.error(err);
+            toast.error("Failed to fetch data");
+            if (err.response?.status === 403) {
+                navigate('/app/dashboard');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const columnsMap: Record<string, Column[]> = {
         users: [
             { key: 'index', label: '#', render: (_val, _row, rowIndex) => (pagination.page - 1) * pagination.limit + rowIndex + 1 },
             { key: 'address', label: 'Wallet Address', render: (val) => <span title={val} className="font-mono text-xs">{formatAddress(val)}</span> },
             { key: 'email', label: 'Email' },
             { key: 'ens_name', label: 'ENS Name' },
+            { key: 'is_admin', label: 'Admin', render: (val) => (
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    val ? 'text-emerald-600 bg-emerald-50' : 'text-slate-500 bg-slate-100'
+                }`}>
+                    {val ? 'Admin' : 'User'}
+                </span>
+            )},
             { key: 'createdAt', label: 'Created At', render: formatDate },
             { key: 'updatedAt', label: 'Last Active', render: formatDate },
+            { key: 'actions', label: 'Actions', render: (_val, row) => (
+                <AdminToggleButton
+                    row={row}
+                    session={session}
+                    backendUrl={backend_url}
+                    onSuccess={() => fetchData(pagination.page)}
+                />
+            )},
         ],
         contracts: [
             { key: 'index', label: '#', render: (_val, _row, rowIndex) => (pagination.page - 1) * pagination.limit + rowIndex + 1 },
@@ -108,29 +195,6 @@ const AdminEntityList = () => {
         }
     };
 
-    const fetchData = async (page: number) => {
-        if (!session || !backend_url || !type) return;
-        
-        setLoading(true);
-        try {
-            const res = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/admin/data/${type}`), {
-                headers: { 'nonce': session.nonce },
-                params: { page, limit: pagination.limit }
-            });
-            
-            setData(res.data.data);
-            setPagination(prev => ({ ...prev, ...res.data.pagination }));
-        } catch (err: any) {
-            console.error(err);
-            toast.error("Failed to fetch data");
-            if (err.response?.status === 403) {
-                navigate('/app/dashboard');
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
         setPagination(prev => ({ ...prev, page: 1 }));
         fetchData(1);
@@ -150,7 +214,7 @@ const AdminEntityList = () => {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <button 
+                    <button
                         onClick={() => navigate('/app/admin/dashboard')}
                         className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500"
                     >
@@ -161,7 +225,7 @@ const AdminEntityList = () => {
                         <p className="text-slate-500 text-sm">Viewing {type} records</p>
                     </div>
                 </div>
-                <button 
+                <button
                     onClick={() => fetchData(pagination.page)}
                     className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500"
                 >

@@ -659,4 +659,48 @@ async function ensureDefaultFreePlanId() {
     }
 }
 
-export { getHost, getPort, fetchEnsName, fetchEnsExpiry, setUpSystemTemplates, setupPaymentPlans, ensureDefaultFreePlanId }
+async function seedAdminUsers() {
+    const walletsEnv = process.env.DASHBOARD_WALLETS || "";
+    const addresses = walletsEnv.split(",").map(w => w.trim()).filter(Boolean);
+
+    if (addresses.length === 0) {
+        Logger.warn("No DASHBOARD_WALLETS configured, skipping admin seed.");
+        return;
+    }
+
+    console.log(`Seeding ${addresses.length} admin user(s) from DASHBOARD_WALLETS...`);
+
+    for (const address of addresses) {
+        await prisma.users.upsert({
+            where: { address },
+            create: { address, is_admin: true },
+            update: { is_admin: true },
+        });
+    }
+
+    console.log(`Admin user seeding complete.`);
+}
+
+async function isUserAdmin(address: string): Promise<{ isAdmin: boolean; isSuperAdmin: boolean }> {
+    const superAdmins = (process.env.DASHBOARD_WALLETS || "")
+        .split(",")
+        .map(w => w.trim().toLowerCase())
+        .filter(Boolean);
+
+    if (superAdmins.includes(address.toLowerCase())) {
+        return { isAdmin: true, isSuperAdmin: true };
+    }
+
+    const user = await prisma.users.findUnique({
+        where: { address },
+        select: { is_admin: true },
+    });
+
+    if (user?.is_admin) {
+        return { isAdmin: true, isSuperAdmin: false };
+    }
+
+    return { isAdmin: false, isSuperAdmin: false };
+}
+
+export { getHost, getPort, fetchEnsName, fetchEnsExpiry, setUpSystemTemplates, setupPaymentPlans, ensureDefaultFreePlanId, seedAdminUsers, isUserAdmin }
