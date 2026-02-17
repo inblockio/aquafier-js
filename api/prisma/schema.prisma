@@ -19,6 +19,7 @@ model Users {
   ens_name_type EnsNameType @default(ENS_NAME) 
   email         String?
   auth_provider String?                    @default("wallet") // "wallet", "google", "facebook", or "hybrid"
+  is_admin      Boolean                    @default(false) @map("is_admin")
   createdAt     DateTime                   @default(now()) @map("created_at")
   updatedAt     DateTime                   @updatedAt @map("updated_at")
   Latest        Latest[]
