@@ -19,6 +19,7 @@ interface PdfViewerProps {
       setScale: (scale: number) => void
       selectedAnnotationId?: string | null
       onAnnotationSelect: (id: string | null) => void
+      readOnly?: boolean
 }
 
 type ResizeHandleType = 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight'
@@ -26,7 +27,7 @@ type ResizeHandleType = 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight'
 interface ResizeState {
       annotationId: string
       handle: ResizeHandleType
-      targetPropertyPrefix?: 'image'
+      targetPropertyPrefix?: 'image' | 'scale'
       initialAnnotation: Annotation
       initialPageDimensions: { width: number; height: number }
       startX: number
@@ -53,6 +54,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
       // setScale,
       selectedAnnotationId,
       onAnnotationSelect,
+      readOnly,
 }) => {
       const canvasRef = useRef<HTMLCanvasElement>(null)
       const viewerRef = useRef<HTMLDivElement>(null)
@@ -351,7 +353,7 @@ const loadingTask = window.pdfjsLib.getDocument({
       }, [draggingAnnotationId])
 
       const handleResizeMouseDown = useCallback(
-            (event: React.MouseEvent, annotation: Annotation, handle: ResizeHandleType, targetPropertyPrefix?: 'image') => {
+            (event: React.MouseEvent, annotation: Annotation, handle: ResizeHandleType, targetPropertyPrefix?: 'image' | 'scale') => {
                   event.preventDefault()
                   event.stopPropagation()
                   onAnnotationSelect(annotation.id)
@@ -468,6 +470,14 @@ const loadingTask = window.pdfjsLib.getDocument({
                               y: newBlockYPercent,
                               imageWidth: finalWidthPercentString,
                               imageHeight: finalHeightPercentString,
+                        }
+                  } else if (currentAnnotation.type === 'signature' && targetPropertyPrefix === 'scale') {
+                        const initialScale = (resizeState.initialAnnotation as any).scale ?? 1
+                        const scaleRatio = newPixelWidth / initialPixelWidth
+                        const newScale = Math.max(0.3, Math.min(3.0, Math.round(initialScale * scaleRatio * 10) / 10))
+                        updatedAnno = {
+                              ...currentAnnotation,
+                              scale: newScale,
                         }
                   }
 
@@ -592,6 +602,7 @@ const loadingTask = window.pdfjsLib.getDocument({
                         hash: 'err',
                         dataUrl: 'err',
                         createdAt: new Date(),
+                        scale: 1,
 
                         nameFontSize: '12pt',
                         nameColor: '#333333',
@@ -610,7 +621,7 @@ const loadingTask = window.pdfjsLib.getDocument({
       if (annotationsInDocumentOnCurrentPage.length > 1) {
             annotationsOnCurrentPage = annotationsOnCurrentPage.filter(e => !annotationsInDocumentOnCurrentPage.some(exist => exist.id == e.id))
       }
-      const renderResizeHandle = (anno: Annotation, handleType: ResizeHandleType, targetPropertyPrefix?: 'image') => {
+      const renderResizeHandle = (anno: Annotation, handleType: ResizeHandleType, targetPropertyPrefix?: 'image' | 'scale') => {
             let cursorStyle = 'default'
             let positionStyle: React.CSSProperties = {}
 
@@ -867,8 +878,12 @@ const loadingTask = window.pdfjsLib.getDocument({
                                                                   )
                                                             } else if (anno.type === 'signature') {
                                                                   const profileAnno = anno as SignatureData
+                                                                  const sigScale = profileAnno.scale ?? 1
                                                                   const profileStyle: React.CSSProperties = {
                                                                         ...baseStyle,
+                                                                        transform: `scale(${effectiveScale * sigScale})`,
+                                                                        border: readOnly ? '1px solid transparent' : '2px solid rgb(26, 146, 216)',
+                                                                        cursor: readOnly ? 'default' : (draggingAnnotationId === anno.id || resizeState?.annotationId === anno.id ? 'grabbing' : 'move'),
                                                                         display: 'flex',
                                                                         flexDirection: 'column',
                                                                         gap: '4px',
@@ -886,28 +901,17 @@ const loadingTask = window.pdfjsLib.getDocument({
                                                                         >
                                                                               <div
                                                                                     className="relative"
-                                                                                    // style={{ width: profileAnno.imageWidth, height: profileAnno.imageHeight }}
                                                                                     data-annotation-id={`${anno.id}-image`}
                                                                               >
                                                                                     <img
                                                                                           src={profileAnno.dataUrl}
                                                                                           alt={profileAnno.imageAlt}
                                                                                           style={{
-                                                                                                // Fixed image width to avoid distorting the image with height
                                                                                                 width: '150px',
-                                                                                                // height: profileAnno.imageHeight,
                                                                                                 objectFit: 'cover',
                                                                                                 pointerEvents: 'none',
                                                                                           }}
                                                                                     />
-                                                                                    {isSelected && (
-                                                                                          <>
-                                                                                                {renderResizeHandle(anno, 'topLeft', 'image')}
-                                                                                                {renderResizeHandle(anno, 'topRight', 'image')}
-                                                                                                {renderResizeHandle(anno, 'bottomLeft', 'image')}
-                                                                                                {renderResizeHandle(anno, 'bottomRight', 'image')}
-                                                                                          </>
-                                                                                    )}
                                                                               </div>
                                                                               <div
                                                                                     style={{
@@ -929,6 +933,14 @@ const loadingTask = window.pdfjsLib.getDocument({
                                                                               >
                                                                                     {profileAnno.walletAddress}
                                                                               </div>
+                                                                              {!readOnly && (
+                                                                                    <>
+                                                                                          {renderResizeHandle(anno, 'topLeft', 'scale')}
+                                                                                          {renderResizeHandle(anno, 'topRight', 'scale')}
+                                                                                          {renderResizeHandle(anno, 'bottomLeft', 'scale')}
+                                                                                          {renderResizeHandle(anno, 'bottomRight', 'scale')}
+                                                                                    </>
+                                                                              )}
                                                                         </div>
                                                                   )
                                                             }
@@ -937,6 +949,7 @@ const loadingTask = window.pdfjsLib.getDocument({
 
                                                 {/* I have squashed this to avoid repeating annotations */}
                                                 {annotationsInDocumentOnCurrentPage.map(profileAnno => {
+                                                      const docSigScale = (profileAnno as any).scale ?? 1
                                                       const baseStyle: React.CSSProperties = {
                                                             position: 'absolute',
                                                             left: `${profileAnno.x}%`,
@@ -949,7 +962,7 @@ const loadingTask = window.pdfjsLib.getDocument({
                                                             cursor: 'pointer', // draggingAnnotationId === anno.id || resizeState?.annotationId === anno.id ? 'grabbing' : 'move',
                                                             userSelect: 'none',
                                                             boxSizing: 'border-box',
-                                                            // scale: scale
+                                                            transform: `scale(${docSigScale})`,
                                                       }
                                                       //  const profileAnno = anno as SignatureData;
                                                       const profileStyle: React.CSSProperties = {

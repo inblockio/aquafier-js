@@ -184,6 +184,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   signForm[`page_${index}`] = pageIndex.toString()
                   signForm[`width_${index}`] = signaturePositionItem.width.toString()
                   signForm[`height_${index}`] = signaturePositionItem.height.toString()
+                  signForm[`scale_${index}`] = (signaturePositionItem.scale ?? 1).toString()
             })
 
             return signForm
@@ -1630,6 +1631,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   imageAlt: sig.name,
                   name: sig.name,
                   walletAddress: sig.walletAddress,
+                  scale: sig.scale ?? 1,
             }));
 
             const newSigs = signaturePositions.map((sig: SignatureData) => ({
@@ -1645,6 +1647,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   imageAlt: sig.name,
                   name: sig.name,
                   walletAddress: sig.walletAddress,
+                  scale: sig.scale ?? 1,
             }));
 
             const allAnnotations = [...existingSigs, ...newSigs];

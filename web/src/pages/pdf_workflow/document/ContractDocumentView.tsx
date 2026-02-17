@@ -256,6 +256,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
                                     imageHeight: 120,
                                     imageAlt: 'err -img not found',
                                     rotation: 0,
+                                    scale: parseFloat(revisionSigPosition.forms_scale_0) || 1,
                               }
                               sigData.push(signatureDetails)
                         } else {
@@ -289,6 +290,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
                                           imageHeight: 120,
                                           imageAlt: 'error -img not found.',
                                           rotation: 0,
+                                          scale: parseFloat(revisionSigPosition[`forms_scale_${index}`]) || 1,
                                     }
                                     sigData.push(signatureDetails)
                               }
@@ -471,6 +473,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
       }
 
       if (isUserSignatureIncluded) {
+            console.log("annotations in doc: ", signatures)
             return (
                   <div>
                         <PDFDisplayWithJustSimpleOverlay pdfUrl={pdfURLObject!} annotationsInDocument={signatures} signatures={signatures} latestRevisionHash={getLatestVH(selectedFileInfo.aquaTree!)} />

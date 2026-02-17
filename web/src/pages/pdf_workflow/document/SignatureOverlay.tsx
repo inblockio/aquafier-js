@@ -19,6 +19,7 @@ export const SignatureOverlay = ({
 }) => {
     if (!pdfMainContainerRef) return null
     if (signature.page !== currentPage || !signature.signatureId) return null
+    const sigScale = signature.scale ?? 1
 
     return (
         <div
@@ -26,7 +27,8 @@ export const SignatureOverlay = ({
             style={{
                 left: `calc(${Number(signature.x) * 100}% - 40px)`, // Adjusted for better visibility
                 top: `calc(${(1 - Number(signature.y)) * 100}%)`, // Adjusted for better visibility
-                transform: 'translate(-50%, -50%)',
+                transform: `translate(-50%, -50%) scale(${sigScale})`,
+                transformOrigin: 'top left',
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
@@ -66,8 +68,7 @@ export const SignatureOverlay = ({
 }
 
 export const SimpleSignatureOverlay = ({signature, currentPage}: { signature: SignatureData; currentPage: number }) => {
-    // const { colorMode } = useColorMode();
-    // const isDarkMode = colorMode === "dark";
+    const sigScale = signature.scale ?? 1
     return (
         <div
             className="absolute overflow-hidden transition-[border] duration-200 ease-in-out pointer-events-auto"
@@ -75,7 +76,8 @@ export const SimpleSignatureOverlay = ({signature, currentPage}: { signature: Si
                 display: Number(currentPage) === Number(signature.page) ? 'block' : 'none',
                 left: `calc(${Number(signature.x) * 100}% - 40px)`, // Adjusted for better visibility
                 top: `calc(${(1 - Number(signature.y)) * 100}% - 40px)`, // Adjusted for better visibility
-                transform: `translate(-${Number(signature.width) * 50}%, -${Number(signature.height) * 50}%)`,
+                transform: `translate(-${Number(signature.width) * 50}%, -${Number(signature.height) * 50}%) scale(${sigScale})`,
+                transformOrigin: 'top left',
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
@@ -149,6 +151,7 @@ export const PDFDisplayWithJustSimpleOverlay = ({pdfUrl, signatures, latestRevis
                     y: signature.y,
                     name: signature.name,
                     walletAddress: signature.walletAddress,
+                    scale: signature.scale ?? 1,
                 }))}
                 latestRevisionHash={latestRevisionHash}
             />
