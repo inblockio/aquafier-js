@@ -1191,33 +1191,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             callBack && callBack()
       }
 
-      // Shared props for SingleFieldRenderer and AquaSignFormRenderer
-      const fieldRendererProps = {
-            formData,
-            setFormData,
-            selectedTemplate,
-            session,
-            multipleAddresses,
-            setMultipleAddresses,
-            addAddress,
-            removeAddress,
-            signatureRef,
-            containerRef,
-            canvasSize,
-            clearSignature,
-            generateSignatureFromText,
-            getUserNameForSignature,
-            getFieldDefaultValue,
-            verfyingFormFieldEnabled,
-            verifyingFormField,
-            handleTextInputChange,
-            handleFileInputChange,
-            handleSendVerificationCode,
-            handleVerificationCodeChange,
-            handleWalletAddressSelect,
-            SortableSignerItemComponent: SortableSignerItem,
-      }
-
       /** Handles text input change with validation */
       const handleTextInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: FormField) => {
             if (field.is_editable === false) {
@@ -1390,6 +1363,33 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         [fieldName]: selectedAddress,
                   })
             }
+      }
+
+      // Shared props for SingleFieldRenderer and AquaSignFormRenderer
+      const fieldRendererProps = {
+            formData,
+            setFormData,
+            selectedTemplate,
+            session,
+            multipleAddresses,
+            setMultipleAddresses,
+            addAddress,
+            removeAddress,
+            signatureRef,
+            containerRef,
+            canvasSize,
+            clearSignature,
+            generateSignatureFromText,
+            getUserNameForSignature,
+            getFieldDefaultValue,
+            verfyingFormFieldEnabled,
+            verifyingFormField,
+            handleTextInputChange,
+            handleFileInputChange,
+            handleSendVerificationCode,
+            handleVerificationCodeChange,
+            handleWalletAddressSelect,
+            SortableSignerItemComponent: SortableSignerItem,
       }
 
       const getTemplateTitle = () => {
