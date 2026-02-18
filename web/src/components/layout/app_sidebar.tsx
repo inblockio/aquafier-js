@@ -122,7 +122,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                               >
                                     {
                                           getLogoUrl(webConfigData) && (
-                                                <img className="h-[36px]" src={getLogoUrl(webConfigData)} />
+                                                <img className="h-[36px]" src={getLogoUrl(webConfigData)} alt="App logo" />
                                           )
                                     }
 

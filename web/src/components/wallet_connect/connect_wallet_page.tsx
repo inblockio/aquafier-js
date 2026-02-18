@@ -16,22 +16,28 @@ export const ConnectWalletPage = () => {
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
+    const controller = new AbortController()
     const loadConfig = async () => {
       // Only load if config is not already loaded
       if (!webConfig.AUTH_PROVIDER || !webConfig.BACKEND_URL) {
         setIsLoading(true)
         try {
-          const config: WebConfig = await fetch('/config.json').then(res => res.json())
+          const config: WebConfig = await fetch('/config.json', { signal: controller.signal }).then(res => res.json())
           setWebConfig(config)
         } catch (error) {
-          console.error('Failed to load config:', error)
+          if (!controller.signal.aborted) {
+            console.error('Failed to load config:', error)
+          }
         } finally {
-          setIsLoading(false)
+          if (!controller.signal.aborted) {
+            setIsLoading(false)
+          }
         }
       }
     }
 
     loadConfig()
+    return () => controller.abort()
   }, [webConfig.AUTH_PROVIDER, webConfig.BACKEND_URL, setWebConfig])
 
   if (isLoading || !webConfig.AUTH_PROVIDER) {

@@ -213,7 +213,7 @@ const InfoPage = () => {
                                                             rel="noopener noreferrer"
                                                             className="inline-flex items-center gap-1 sm:gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 px-3 sm:px-4 py-1 sm:py-2 rounded-lg transition-colors text-sm"
                                                       >
-                                                            <img className="h-[36px]" src="/images/ico.png" />
+                                                            <img className="h-[36px]" src="/images/ico.png" alt="Aqua Protocol icon" />
                                                             Powered by Aqua Protocol
                                                       </a>
 

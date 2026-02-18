@@ -6,6 +6,10 @@ import { Card, CardContent } from '../../../components/ui/card'
 import { cn } from '../../../lib/utils'
 import WalletAddressClaim from '@/pages/v2_claims_workflow/WalletAddressClaim'
 
+const CustomDivider = ({ mb, mt }: { mb: string | number; mt: string | number }) => {
+      return <div className="w-full h-px bg-gray-200 dark:bg-gray-800" style={{ marginTop: mt, marginBottom: mb }} />
+}
+
 const ContractSummaryDetails = ({ data, isValidTree }: IContractWorkFlowFirstPage) => {
       const mockContractData = data
 
@@ -41,10 +45,6 @@ const ContractSummaryDetails = ({ data, isValidTree }: IContractWorkFlowFirstPag
                               color: 'gray',
                         }
             }
-      }
-
-      const CustomDivider = ({ mb, mt }: { mb: string | number; mt: string | number }) => {
-            return <div className="w-full h-px bg-gray-200 dark:bg-gray-800" style={{ marginTop: mt, marginBottom: mb }} />
       }
 
       const getBgColorBasedOnVerificationStatus = () => {
