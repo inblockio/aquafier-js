@@ -2,26 +2,12 @@ import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
 import { AdvancedMetricsResponse, DateRangeQuery, MetricsResponse } from '../models/types';
 import Logger from "../utils/logger";
+import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
 
 export default async function metricsController(fastify: FastifyInstance) {
-    fastify.get('/metrics', async (request, reply) => {
-  const nonce = request.headers['nonce']; // Headers are case-insensitive
-
-        // Check if `nonce` is missing or empty
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
-
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce }
-        });
-
-        if (!session) {  
-            return reply.code(403).send({ success: false, message: "Nounce  is invalid "+nonce  });
-        }
-
+    fastify.get('/metrics', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
         const allowedWallets = (process.env.DASHBOARD_WALLETS || "").split(",").map(w => w.trim().toLowerCase());
-        if (!session.address || !allowedWallets.includes(session.address.toLowerCase())) {
+        if (!request.user?.address || !allowedWallets.includes(request.user.address.toLowerCase())) {
              return reply.code(403).send({ error: 'Unauthorized: Access denied' });
         }
 
@@ -292,26 +278,10 @@ export default async function metricsController(fastify: FastifyInstance) {
         GET /metrics/range?startDate=2024-01-01&endDate=2024-12-31&tables=users,notifications,signature
      */
 
-    fastify.get<{ Querystring: DateRangeQuery }>('/metrics/range', async (request, reply) => {
-
-
-        const nonce = request.headers['nonce']; // Headers are case-insensitive
-
-        // Check if `nonce` is missing or empty
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
-
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce }
-        });
-
-        if (!session) {  
-            return reply.code(403).send({ success: false, message: "Nounce  is invalid "+nonce  });
-        }
+    fastify.get<{ Querystring: DateRangeQuery }>('/metrics/range', { preHandler: authenticate }, async (request, reply) => {
 
         const allowedWallets = (process.env.DASHBOARD_WALLETS || "").split(",").map(w => w.trim().toLowerCase());
-        if (!session.address || !allowedWallets.includes(session.address.toLowerCase())) {
+        if (!(request as AuthenticatedRequest).user?.address || !allowedWallets.includes((request as AuthenticatedRequest).user!.address.toLowerCase())) {
              return reply.code(403).send({ error: 'Unauthorized: Access denied' });
         }
 
