@@ -473,7 +473,6 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
       }
 
       if (isUserSignatureIncluded) {
-            console.log("annotations in doc: ", signatures)
             return (
                   <div>
                         <PDFDisplayWithJustSimpleOverlay pdfUrl={pdfURLObject!} annotationsInDocument={signatures} signatures={signatures} latestRevisionHash={getLatestVH(selectedFileInfo.aquaTree!)} />
