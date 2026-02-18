@@ -278,6 +278,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   imageAlt: sig.name,
                   name: sig.name,
                   walletAddress: sig.walletAddress,
+                  scale: sig.scale ?? 1,
             }))
 
             const newSigs = signaturePositions.map((sig: SignatureData) => ({
@@ -293,6 +294,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   imageAlt: sig.name,
                   name: sig.name,
                   walletAddress: sig.walletAddress,
+                  scale: sig.scale ?? 1,
             }))
 
             const allAnnotations = [...existingSigs, ...newSigs]

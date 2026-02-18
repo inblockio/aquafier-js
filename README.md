@@ -160,3 +160,4 @@ To build locally use `NODE_OPTIONS="--max-old-space-size=4096" npm run build ` i
 ## Contribution
 
 Please check the [CONTRIBUTION.md](CONTRIBUTION.md) file for more information on how to contribute to the project.
+   

@@ -213,11 +213,12 @@ export const downloadPdfWithAnnotations = async ({
                 }
             } else if (anno.type === 'profile' || anno.type === 'signature') {
                 const profileAnno = anno as unknown as ProfileAnnotation;
+                const sigScale = (anno as any).scale ?? 1;
                 let currentYOffsetFromTopPercent = profileAnno.y;
                 const profileRotation = degrees(profileAnno.rotation || 0);
 
-                // 1. Draw Image - use fixed width of 150px to match browser rendering
-                const fixedImgWidth = 150; // Match browser's fixed width of 150px
+                // 1. Draw Image - use fixed width of 150px to match browser rendering, then apply scale
+                const fixedImgWidth = 150 * sigScale; // Match browser's fixed width of 150px, scaled
                 let imgWidthPoints = fixedImgWidth;
                 let imgHeightPoints = fixedImgWidth * 0.6; // Default aspect ratio
 
@@ -267,13 +268,13 @@ export const downloadPdfWithAnnotations = async ({
                     console.error(`Failed to embed profile image for annotation ${profileAnno.id}:`, error);
                 }
 
-                // Use fixed spacing (4px gap) to match browser rendering
-                const gapPoints = 4;
+                // Use fixed spacing (4px gap) to match browser rendering, scaled
+                const gapPoints = 4 * sigScale;
                 currentYOffsetFromTopPercent += (imgHeightPoints / pageHeight * 100) + (gapPoints / pageHeight * 100);
 
                 // 2. Draw Name (match browser: fontSize 12pt, color #333333, bold)
                 if (profileAnno.name) {
-                    const nameFontSize = parseFontSizeToPoints(profileAnno.nameFontSize || "12pt", 12);
+                    const nameFontSize = parseFontSizeToPoints(profileAnno.nameFontSize || "12pt", 12) * sigScale;
                     const nameColorStr = profileAnno.nameColor || '#333333';
                     // Fix: Handle case where color string might be short or invalid
                     const safeColor = nameColorStr.length >= 7 ? nameColorStr : '#333333';
@@ -296,7 +297,7 @@ export const downloadPdfWithAnnotations = async ({
 
                 // 3. Draw Wallet Address (match browser: fontSize 10pt, color #555555)
                 if (profileAnno.walletAddress) {
-                    const walletFontSize = parseFontSizeToPoints(profileAnno.walletAddressFontSize || "10pt", 10);
+                    const walletFontSize = parseFontSizeToPoints(profileAnno.walletAddressFontSize || "10pt", 10) * sigScale;
                     const walletColorStr = profileAnno.walletAddressColor || '#555555';
                     const safeColor = walletColorStr.length >= 7 ? walletColorStr : '#555555';
                     const walletR = parseInt(safeColor.substring(1, 3), 16) / 255;

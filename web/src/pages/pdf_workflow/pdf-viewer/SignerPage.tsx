@@ -48,6 +48,7 @@ interface PdfRendererProps {
       onAnnotationSelect: (id: string | null) => void
       onAnnotationRotate: (direction: 'cw' | 'ccw') => void
       onDownload?: () => void
+      readOnly?: boolean
 }
 
 export function PdfRendererComponent({
@@ -61,6 +62,7 @@ export function PdfRendererComponent({
       selectedAnnotationId,
       onAnnotationSelect,
       onDownload,
+      readOnly,
 }: PdfRendererProps) {
 
       const [currentPage, setCurrentPage] = useState(1)
@@ -131,6 +133,7 @@ export function PdfRendererComponent({
                               setScale={setScale}
                               selectedAnnotationId={selectedAnnotationId}
                               onAnnotationSelect={onAnnotationSelect}
+                              readOnly={readOnly}
                         />
                         {/* </ScrollArea> */}
                   </div>
@@ -213,6 +216,7 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, l
                   imageAlt: sig.name,
                   name: sig.name,
                   walletAddress: sig.walletAddress,
+                  scale: sig.scale ?? 1,
             }));
 
             await downloadPdfWithAnnotations({
@@ -237,6 +241,7 @@ export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument, l
                   onAnnotationSelect={(_annotatedid: string | null) => { }}
                   onAnnotationRotate={(_direction: 'cw' | 'ccw') => { }}
                   onDownload={handleDownload}
+                  readOnly={true}
             />
       )
 }

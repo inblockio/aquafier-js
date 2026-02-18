@@ -267,6 +267,7 @@ export interface SignatureData {
       dataUrl: string
       rotation: number
       isDragging?: boolean
+      scale?: number
       signatureId?: string
       walletAddressFontSize?: string
       nameColor?: string
