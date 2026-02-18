@@ -155,6 +155,8 @@ Local has no proxy/letsencrypt container and has exposed ports (for debugging re
 
 We use Github-Actions to build our images. You can find the Workflow-Definition under `./github/workflows/build-docker.yml`. This image uses the dockerfile under `actionfiles/aquafier-ts/dockerfile/Dockerfile` to create an image and push this image to the github-registry. You can find this images under https://github.com/inblockio/aquafier-js/pkgs/container/aquafier-js. The Tag depends on the build-base and contains the commit sha. 
 
+To build locally use `NODE_OPTIONS="--max-old-space-size=4096" npm run build ` in web and api folder, this will generate dist files for you.
+
 ## Contribution
 
 Please check the [CONTRIBUTION.md](CONTRIBUTION.md) file for more information on how to contribute to the project.

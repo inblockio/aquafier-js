@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Copy, Check, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { fetchFiles } from '@/utils/functions';
-import { WalletAutosuggest } from '@/components/wallet_auto_suggest';
+import { WalletAutosuggest } from '@/components/wallet_connect/wallet_auto_suggest';
 import { useStore } from 'zustand'
 import appStore from '@/store'
 

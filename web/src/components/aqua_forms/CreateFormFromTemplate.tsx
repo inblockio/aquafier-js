@@ -1,4 +1,4 @@
-import React, { JSX, useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { FormField, FormTemplate } from './types'
 import { useStore } from 'zustand'
 import appStore from '@/store'
@@ -8,13 +8,10 @@ import {
       ensureDomainUrlHasSSL,
       estimateFileSize,
       fetchSystemFiles,
-      formatDate,
       generateDNSClaim,
       getAquaTreeFileObject,
       getGenesisHash,
       getLastRevisionVerificationHash,
-      getRandomNumber,
-      isValidEthereumAddress,
       isWorkFlowData,
       reorderRevisionsInAquaTree,
 } from '@/utils/functions'
@@ -31,157 +28,41 @@ import apiClient from '@/api/axiosInstance'
 import { generateNonce } from 'siwe'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog'
-// Shadcn UI components
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-// import { useNavigate } from 'react-router-dom'
 import {
       AlertCircle,
-      BookCheck,
       FileText,
-      GripVertical,
-      Image,
-      Link,
       Loader2,
-      Pen,
-      Plus,
-      RotateCcw,
-      Send,
-      Trash2,
-      Type,
-      Upload,
-      User,
-      Wallet,
       X
 } from 'lucide-react'
 import { Separator } from '../ui/separator'
 import { ScrollArea } from '../ui/scroll-area'
-import FilePreview from '../file_preview'
-import { WalletAutosuggest } from '../wallet_auto_suggest'
+import FilePreview from '../file_preview/file_preview'
 import { ApiFileInfo } from '@/models/FileInfo'
 import SignatureCanvas from 'react-signature-canvas'
-import { Session } from '@/types'
 import { ApiInfoData } from '@/types/types'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
-// Drag and drop
-import {
-      DndContext,
-      closestCenter,
-      KeyboardSensor,
-      PointerSensor,
-      useSensor,
-      useSensors,
-      DragEndEvent
-} from '@dnd-kit/core'
-import {
-      arrayMove,
-      SortableContext,
-      sortableKeyboardCoordinates,
-      useSortable,
-      verticalListSortingStrategy
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import { useNavigate } from 'react-router-dom'
 import { API_ENDPOINTS } from '@/utils/constants'
-import { fetchSubscriptionPlans } from '@/api/subscriptionApi'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { useAquaSystemNames } from '@/hooks/useAquaSystemNames'
-
-/** Props for the SortableSignerItem component */
-interface SortableSignerItemProps {
-      id: string
-      index: number
-      address: string
-      field: FormField
-      multipleAddresses: string[]
-      setMultipleAddresses: React.Dispatch<React.SetStateAction<string[]>>
-      // walletAddresses: { address: string; name?: string }[]
-      onRemove: (index: number) => void
-      canRemove: boolean
-}
-
-type CustomInputType = string | File | number | File[]
-
-/** Sortable signer item component for drag-and-drop reordering */
-const SortableSignerItem = ({
-      id,
-      index,
-      address,
-      field,
-      multipleAddresses,
-      setMultipleAddresses,
-      // walletAddresses,
-      onRemove,
-      canRemove
-}: SortableSignerItemProps) => {
-      const {
-            attributes,
-            listeners,
-            setNodeRef,
-            transform,
-            transition,
-            isDragging
-      } = useSortable({ id })
-
-      const style = {
-            transform: CSS.Transform.toString(transform),
-            transition,
-            opacity: isDragging ? 0.5 : 1,
-            zIndex: isDragging ? 1000 : 'auto'
-      }
-
-      return (
-            <div
-                  ref={setNodeRef}
-                  style={style}
-                  className={`flex items-center space-x-2 sm:space-x-3 p-2 sm:p-4 bg-gray-50 rounded-lg border ${isDragging ? 'shadow-lg border-blue-300 bg-blue-50' : ''}`}
-            >
-                  {/* Drag handle */}
-                  <div
-                        {...attributes}
-                        {...listeners}
-                        className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded touch-none"
-                        title="Drag to reorder"
-                  >
-                        <GripVertical className="h-4 w-4 text-gray-400" />
-                  </div>
-
-                  {/* Index badge */}
-                  <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full text-blue-600 font-medium text-sm">
-                        {index + 1}
-                  </div>
-
-                  {/* Wallet input */}
-                  <div className="flex-1">
-                        <WalletAutosuggest
-                              // walletAddresses={walletAddresses}
-                              field={field}
-                              index={index}
-                              address={address}
-                              multipleAddresses={multipleAddresses}
-                              setMultipleAddresses={setMultipleAddresses}
-                              // placeholder="Enter signer wallet address"
-                              className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                        />
-                  </div>
-
-                  {/* Remove button */}
-                  {canRemove && (
-                        <Button
-                              variant="outline"
-                              size="sm"
-                              type="button"
-                              className="rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 hover:border-red-300"
-                              onClick={() => onRemove(index)}
-                        >
-                              <Trash2 className="h-4 w-4" />
-                        </Button>
-                  )}
-            </div>
-      )
-}
+// Extracted sub-components and helpers
+import SortableSignerItem from './SortableSignerItem'
+import {
+      FormErrorRenderer,
+      SingleFieldRenderer,
+      AquaSignFormRenderer,
+      type CustomInputType,
+} from './FormFieldRenderer'
+import {
+      generateSignatureFromText as generateSigFromText,
+      getUserNameForSignature as getUserNameForSig,
+      clearSignature as clearSig,
+      generateFileName,
+      reorderInputFields,
+} from './signatureHelpers'
+import { validateFields } from '@/utils/formValidation'
 
 // const CreateFormF romTemplate  = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
@@ -313,15 +194,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   return currentState ?? session?.address ?? ''
             }
             return ''
-      }
-
-      const reorderInputFields = (fields: FormField[]) => {
-            const sortedFields = fields.sort((a, b) => {
-                  return a.name.localeCompare(b.name)
-            })
-
-            // Return a new array with fields ordered by name
-            return sortedFields
       }
 
       const addAddress = () => {
@@ -516,119 +388,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             return completeFormData
       }
 
-      // Validation function for required fields
-      const validateRequiredFields = (completeFormData: Record<string, CustomInputType>, selectedTemplate: FormTemplate) => {
-            for (const fieldItem of selectedTemplate.fields) {
-                  const valueInput = completeFormData[fieldItem.name]
-                  if (fieldItem.required && valueInput == undefined) {
-                        throw new Error(`${fieldItem.name} is mandatory`)
-                  }
-            }
-      }
-
-      // Wallet address validation function
-      const validateWalletAddress = (valueInput: CustomInputType, fieldItem: FormField) => {
-            console.log(valueInput, fieldItem)
-            if(!fieldItem.required){
-                  return
-            }
-            if (typeof valueInput !== 'string') {
-                  throw new Error(`${valueInput} provided at ${fieldItem.name} is not a string`)
-            }
-
-            if (valueInput.includes(',')) {
-                  const walletAddresses = valueInput.split(',')
-                  const seenWalletAddresses = new Set<string>()
-
-                  for (const walletAddress of walletAddresses) {
-                        const trimmedAddress = walletAddress.trim()
-                        const isValidWalletAddress = isValidEthereumAddress(trimmedAddress)
-
-                        if (!isValidWalletAddress) {
-                              throw new Error(`>${trimmedAddress}< is not a valid wallet address`)
-                        }
-
-                        if (seenWalletAddresses.has(trimmedAddress)) {
-                              throw new Error(`>${trimmedAddress}< is a duplicate wallet address`)
-                        }
-
-                        seenWalletAddresses.add(trimmedAddress)
-                  }
-            } else {
-                  const isValidWalletAddress = isValidEthereumAddress(valueInput.trim())
-                  if (!isValidWalletAddress) {
-                        throw new Error(`>${valueInput}< is not a valid wallet address`)
-                  }
-            }
-      }
-
-      // Domain validation function
-      const validateDomain = (valueInput: CustomInputType, fieldItem: FormField) => {
-            if (typeof valueInput !== 'string') {
-                  throw new Error(`${valueInput} provided at ${fieldItem.name} is not a string`)
-            }
-
-            const trimmedInput = valueInput.trim()
-
-            // Check for protocol prefixes
-            if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(trimmedInput)) {
-                  throw new Error(`${valueInput} - contains protocol (http://, https://, etc.). Please provide domain only (e.g., example.com)`)
-            }
-
-            // Check for www subdomain
-            if (/^www\./.test(trimmedInput)) {
-                  throw new Error(`${valueInput} - www subdomain not allowed. Please provide domain without www (e.g., example.com instead of www.example.com)`)
-            }
-
-            // Domain regex validation - allowing underscores in subdomains for DNS TXT records
-            const domainWithSubdomainRegex = /^(?!www\.)((?!-)[A-Za-z0-9_-]{1,63}(?<!-)\.)*(?!-)[A-Za-z0-9-]{1,63}(?<!-)\.[A-Za-z]{2,6}$/
-
-            if (!domainWithSubdomainRegex.test(trimmedInput)) {
-                  throw new Error(`${valueInput} - is not a valid domain. Expected format: example.com, api.example.com, or name._prefix.example.com`)
-            }
-
-            // Ensure it's not just a TLD
-            const parts = trimmedInput.split('.')
-            if (parts.length < 2 || parts[0].length === 0) {
-                  throw new Error(`${valueInput} - must include both domain name and TLD (e.g., example.com)`)
-            }
-      }
-
-      // Field validation function
-      const validateFields = async (completeFormData: Record<string, CustomInputType>, selectedTemplate: FormTemplate) => {
-
-            validateRequiredFields(completeFormData, selectedTemplate)
-
-            for (const fieldItem of selectedTemplate.fields) {
-                  const valueInput = completeFormData[fieldItem.name]
-
-                  if (fieldItem.type === 'wallet_address') {
-                        validateWalletAddress(valueInput, fieldItem)
-                  }
-
-                  if (fieldItem.name === 'package_id' && selectedTemplate.name.includes("aquafier_licence")) {
-                        const plans = await fetchSubscriptionPlans()
-                        const validPlanIds = plans.map(plan => plan.id)
-                        if (!validPlanIds.includes(valueInput as string)) {
-                              throw new Error(`"${valueInput}" is not a valid package ID. Valid plans: ${plans.map(p => `${p.display_name} (${p.id})`).join(', ')}`)
-                        }
-                  }
-
-                  if (fieldItem.type === 'domain') {
-                        validateDomain(valueInput, fieldItem)
-                  }
-
-
-                  // ensure there is code input for all verifiable data
-                  if (fieldItem.is_verifiable) {
-                        let verificationCodeData = formData[`${fieldItem.name}_verification`]
-                        if (!verificationCodeData) {
-                              throw new Error(`${fieldItem.label} has no verification code provided.`)
-                        }
-                  }
-            }
-      }
-
       // Function to get system files
       const getSystemFiles = async (systemFileInfo: ApiFileInfo[], backend_url: string, sessionAddress: string) => {
             let allSystemFiles = systemFileInfo
@@ -663,24 +422,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             }
 
             return templateApiFileInfo
-      }
-
-      // Function to generate filename
-      const generateFileName = (selectedTemplate: FormTemplate, completeFormData: Record<string, CustomInputType>) => {
-            const randomNumber = getRandomNumber(100, 1000)
-            let fileName = `${selectedTemplate?.name ?? 'template'}-${randomNumber}.json`
-
-            if (selectedTemplate?.name === 'aqua_sign') {
-                  const theFile = completeFormData['document'] as File
-                  const fileNameWithoutExt = theFile.name.substring(0, theFile.name.lastIndexOf('.'))
-                  fileName = fileNameWithoutExt + '-' + formatDate(new Date()) + '-' + randomNumber + '.json'
-            }
-
-            if (selectedTemplate?.name === 'identity_attestation') {
-                  fileName = `identity_attestation-${randomNumber}.json`
-            }
-
-            return fileName
       }
 
       // Function to handle identity attestation specific logic
@@ -1238,62 +979,18 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             }
       }
 
-      // Clear signature canvas
-      const clearSignature = () => {
-            if (signatureRef.current) {
-                  signatureRef.current.clear()
-            }
-      }
+      // Signature helpers - delegate to extracted functions
+      const clearSignature = () => clearSig(signatureRef.current)
 
-      // Generate signature from text (name or initials)
-      const generateSignatureFromText = useCallback((text: string, isInitials: boolean = false) => {
-            if (!signatureRef.current || !text.trim()) return
+      const generateSignatureFromText = useCallback(
+            (text: string, isInitials: boolean = false) => generateSigFromText(signatureRef.current, text, isInitials),
+            []
+      )
 
-            const canvas = signatureRef.current.getCanvas()
-            const ctx = canvas.getContext('2d')
-            if (!ctx) return
-
-            // Clear the canvas first
-            signatureRef.current.clear()
-
-            // Configure text style - use larger font to fill the signature box
-            const displayText = isInitials ? text.split(' ').map(n => n.charAt(0).toUpperCase()).join('') : text
-
-            // Calculate font size based on canvas dimensions and text length
-            // Start with height-based sizing, then adjust for width if neededz
-            let fontSize = isInitials ? canvas.height * 0.7 : canvas.height * 0.6
-
-            // Set font to measure text width
-            ctx.font = `italic ${fontSize}px "Brush Script MT", "Segoe Script", "Bradley Hand", cursive`
-            let textWidth = ctx.measureText(displayText).width
-
-            // If text is too wide, scale down to fit within 90% of canvas width
-            const maxWidth = canvas.width * 0.9
-            if (textWidth > maxWidth) {
-                  fontSize = fontSize * (maxWidth / textWidth)
-                  ctx.font = `italic ${fontSize}px "Brush Script MT", "Segoe Script", "Bradley Hand", cursive`
-            }
-
-            ctx.fillStyle = '#000000'
-            ctx.textAlign = 'center'
-            ctx.textBaseline = 'middle'
-
-            // Draw the text centered
-            ctx.fillText(displayText, canvas.width / 2, canvas.height / 2)
-      }, [])
-
-      // Get user's name from session or form data for signature generation
-      const getUserNameForSignature = useCallback((): string => {
-            // Try to get name from form data first
-            const nameField = formData['name'] || formData['full_name'] || formData['signer_name']
-            if (nameField && typeof nameField === 'string') return nameField
-
-            // Fallback to session address (shortened)
-            if (session?.address) {
-                  return `${session.address.slice(0, 6)}...${session.address.slice(-4)}`
-            }
-            return 'User'
-      }, [formData, session?.address])
+      const getUserNameForSignature = useCallback(
+            (): string => getUserNameForSig(formData, session?.address),
+            [formData, session?.address]
+      )
 
       // Main refactored function
       const createWorkflowFromTemplate = async (e: React.FormEvent) => {
@@ -1314,7 +1011,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   setFormData(completeFormData)
 
                   // Step 2: Validate fields
-                  await validateFields(completeFormData, selectedTemplate)
+                  await validateFields(completeFormData, selectedTemplate, formData)
 
 
 
@@ -1490,565 +1187,35 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             }
       }
 
-      const getFieldIcon = (type: string) => {
-            switch (type) {
-                  case 'string':
-                        return <Pen className="h-4 w-4" />
-                  case 'wallet_address':
-                        return <Wallet className="h-4 w-4" />
-                  case 'domain':
-                        return <Link className="h-4 w-4" />
-                  case 'document':
-                        return <FileText className="h-4 w-4" />
-                  case 'image':
-                        return <Image className="h-4 w-4" />
-                  case 'file':
-                        return <Upload className="h-4 w-4" />
-                  default:
-                        return null
-            }
-      }
-
       const onBack = () => {
-            // navigate('/templates')
             callBack && callBack()
       }
 
-      const getInputType = (fieldType: string): string => {
-            if (fieldType === 'image' || fieldType === 'document') {
-                  return 'file'
-            }
-            if (['text', 'domain', 'wallet_address', 'signature', 'email'].includes(fieldType)) {
-                  return 'text'
-            }
-            return fieldType // or return 'text' as a safe default
-      }
-
-
-      // ============================================
-      // RENDER HELPER FUNCTIONS
-      // ============================================
-
-      /** Renders the form error alert */
-      const renderFormError = () => {
-            if (modalFormErorMessae.length === 0) return null
-            return (
-                  <Alert variant="destructive" className="border-red-200 bg-red-50">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{modalFormErorMessae}</AlertDescription>
-                  </Alert>
-            )
-      }
-
-      // Drag and drop sensors for signer reordering
-      const sensors = useSensors(
-            useSensor(PointerSensor, {
-                  activationConstraint: {
-                        distance: 8, // Require 8px movement before starting drag
-                  },
-            }),
-            useSensor(KeyboardSensor, {
-                  coordinateGetter: sortableKeyboardCoordinates,
-            })
-      )
-
-      // Generate unique IDs for each signer (using index + address hash for stability)
-      const getSignerIds = () => multipleAddresses.map((_, index) => `signer-${index}`)
-
-      /** Handles drag end event for reordering signers */
-      const handleDragEnd = (event: DragEndEvent) => {
-            const { active, over } = event
-
-            if (over && active.id !== over.id) {
-                  const oldIndex = parseInt(String(active.id).split('-')[1])
-                  const newIndex = parseInt(String(over.id).split('-')[1])
-
-                  setMultipleAddresses((items) => arrayMove(items, oldIndex, newIndex))
-            }
-      }
-
-      /** Renders the array field (multiple signers) with drag-and-drop reordering */
-      const renderArrayField = (field: FormField, fieldIndex: number) => {
-            const signerIds = getSignerIds()
-
-            const userInSigners = multipleAddresses.some(addr =>
-                  addr.toLowerCase() === session?.address?.toLowerCase()
-            )
-
-            return (
-                  <div key={`field-${fieldIndex}`} className="space-y-4">
-                        <div className="flex items-center justify-between">
-                              <div>
-                                    <Label className="text-base sm:text-lg font-medium text-gray-900">
-                                          {field.label}
-                                          {field.required && <span className="text-red-500 ml-1">*</span>}
-                                    </Label>
-                                    {field.description && (
-                                          <p className="text-sm text-gray-500 mt-1">{field.description}</p>
-                                    )}
-                                    <p className="text-xs text-gray-400 mt-1">
-                                          <GripVertical className="h-3 w-3 inline-block mr-1" />
-                                          {
-                                                selectedTemplate.name === "aquafier_licence" ? " Drag to reorder receivers" : " Drag to reorder signers"
-                                          }
-                                    </p>
-                              </div>
-                              <div className='flex gap-1'>
-                                    <Button onClick={(e) => {
-                                          e.preventDefault()
-                                          if (session) {
-                                                setMultipleAddresses(curr => [...curr, session?.address])
-                                          }
-                                    }} className={userInSigners ? "hidden" : ""} type='button'>
-                                          Add Yourself
-                                    </Button>
-                                    <Button
-                                          variant="outline"
-                                          // size="sm"
-                                          type="button"
-                                          className="rounded-lg hover:bg-blue-50 hover:border-blue-300"
-                                          onClick={addAddress}
-                                          data-testid={`multiple_values_${field.name}`}
-                                    >
-                                          <Plus className="h-4 w-4 mr-1" />
-                                          {
-                                                selectedTemplate.name === "aquafier_licence" ? "Add Receiver" : "Add Signer"
-                                          }
-                                    </Button>
-                              </div>
-                        </div>
-
-                        <DndContext
-                              sensors={sensors}
-                              collisionDetection={closestCenter}
-                              onDragEnd={handleDragEnd}
-                        >
-                              <SortableContext items={signerIds} strategy={verticalListSortingStrategy}>
-                                    <div className="space-y-3">
-                                          {multipleAddresses.map((address, index) => (
-                                                <SortableSignerItem
-                                                      key={signerIds[index]}
-                                                      id={signerIds[index]}
-                                                      index={index}
-                                                      address={address}
-                                                      field={field}
-                                                      multipleAddresses={multipleAddresses}
-                                                      setMultipleAddresses={setMultipleAddresses}
-                                                      // walletAddresses={walletAddresses}
-                                                      onRemove={removeAddress}
-                                                      canRemove={multipleAddresses.length > 1}
-                                                />
-                                          ))}
-                                    </div>
-                              </SortableContext>
-                        </DndContext>
-                  </div>
-            )
-      }
-
-      /**Render options field if others show the input text */
-
-      const renderOptionsField = (field: FormField, fieldIndex: number) => {
-
-            let otherFieldsExist = selectedTemplate.fields.find((f: FormField) => f.depend_on_field === field.name && f.depend_on_value?.toLocaleLowerCase() === 'other' && f.is_hidden === true)
-            if (!otherFieldsExist) {
-                  console.warn(`No dependent 'Other' field found for options field: ${field.name}`)
-            }
-
-            return <div className="space-y-2" key={`fieldKey_${fieldIndex}`}>
-                  <Select
-                        onValueChange={(value) => {
-                              let fieldName = field.name
-                              setFormData(prev => ({ ...prev, [fieldName]: value }))
-                        }}
-                  >
-                        <SelectTrigger id={`input-options-${field.name}`} data-testid={`input-options-${field.name}`} className="w-full">
-                              <SelectValue placeholder="Select an option" />
-                        </SelectTrigger>
-                        <SelectContent>
-                              {field.options?.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                              ))}
-
-                        </SelectContent>
-                  </Select>
-
-                  {otherFieldsExist && (
-                        <>
-
-                              {((formData[field.name] as string) ?? '')?.toLocaleLowerCase() === 'other' && otherFieldsExist && (
-                                    <Label htmlFor={`input-options-other`} className="text-sm font-medium text-gray-900">
-                                          Please specify
-                                    </Label>
-                              )}
-                              {((formData[field.name] as string) ?? '').toLocaleLowerCase() === 'other' && otherFieldsExist && (
-                                    <Input
-                                          id={`input-options-other`}
-                                          data-testid={`input-options-other`}
-                                          className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
-                                          placeholder="Please specify"
-                                          onChange={(e) => {
-                                                let fieldName = otherFieldsExist!.name
-                                                setFormData(prev => ({ ...prev, [fieldName]: e.target.value }))
-                                          }}
-                                    />
-                              )}
-                        </>
-                  )}
-            </div>
-      }
-      /** Renders the signature/scratchpad field with Reset, Generate from Name, and Initials buttons */
-      const renderScratchpadField = () => (
-            <div className="space-y-3">
-                  <div
-                        ref={containerRef}
-                        className="border border-gray-200 rounded-lg w-full h-50 bg-white relative"
-                  >
-                        <SignatureCanvas
-                              ref={signatureRef}
-                              canvasProps={{
-                                    id: 'signature-canvas-id',
-                                    width: canvasSize.width,
-                                    height: canvasSize.height,
-                                    style: { width: '100%', height: '100%' },
-                                    className: 'signature-canvas cursor-crosshair',
-                              }}
-                              backgroundColor="transparent"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-gray-300 text-sm">
-                              Draw your signature here
-                        </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                        <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={clearSignature}
-                              className="flex items-center gap-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-                        >
-                              <RotateCcw className="h-3.5 w-3.5" />
-                              Reset
-                        </Button>
-
-                        <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => generateSignatureFromText(getUserNameForSignature(), false)}
-                              className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 hover:border-blue-300"
-                        >
-                              <Type className="h-3.5 w-3.5" />
-                              Generate from Name
-                        </Button>
-
-                        <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => generateSignatureFromText(getUserNameForSignature(), true)}
-                              className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 hover:border-indigo-300"
-                        >
-                              <User className="h-3.5 w-3.5" />
-                              Initials
-                        </Button>
-                  </div>
-
-                  <p className="text-xs text-gray-500">
-                        Draw your signature above, or use the buttons to generate one automatically.
-                  </p>
-            </div>
-      )
-
-      /** Renders a single form field - extracted for reuse in aqua_sign steps */
-      const renderSingleField = (field: FormField, fieldIndex: number) => {
-            // if (field.is_hidden) return null
-
-            // Use helper function for array fields (multiple signers)
-            if (field.is_array && field.name !== "document") {
-                  return renderArrayField(field, fieldIndex)
-            }
-
-            if (field.is_hidden || !field.is_editable) {
-                  return null
-            }
-
-            return (
-                  <div key={`field-${fieldIndex}`} className="space-y-2 sm:space-y-3">
-                        <div className="flex items-center gap-2">
-                              {getFieldIcon(field.type)}
-                              <Label htmlFor={`input-${field.name}`} className="text-base font-medium text-gray-900">
-                                    {field.label}
-                                    {field.required && <span className="text-red-500">*</span>}
-                              </Label>
-                        </div>
-
-                        {/* Text, Number, Date, Domain, Email fields */}
-                        {['text', 'number', 'date', 'domain', 'email'].includes(field.type) && (
-                              <>
-                                    <Input
-                                          id={`input-${field.name}`}
-                                          data-testid={`input-${field.name}`}
-                                          className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
-                                          placeholder={getFieldPlaceholder(field)}
-                                          // disabled={field.is_editable === false}
-                                          defaultValue={(() => {
-                                                const val = getFieldDefaultValue(field, formData[field.name] as any)
-                                                return val instanceof File || Array.isArray(val) ? undefined : val
-                                          })()}
-                                          maxLength={500}
-                                          onChange={(e) => handleTextInputChange(e, field)}
-                                    />
-
-                                    {field.support_text && (
-                                          <p className="text-xs text-gray-500">{field.support_text}</p>
-                                    )}
-                                    {/* Verification code section for verifiable fields */}
-                                    {field.is_verifiable && (
-                                          <>
-                                                <Button
-                                                      type="button"
-                                                      data-testid={`send-verification-code-${field.name}`}
-                                                      disabled={!verfyingFormFieldEnabled || !verfyingFormFieldEnabled?.isTwilioEnabled}
-                                                      onClick={() => handleSendVerificationCode(field)}
-                                                      className={`w-full flex items-center justify-center space-x-1 bg-blue-100 text-blue-700 px-3 py-2 rounded transition-colors text-xs ${verifyingFormField === `field-${field.name}` ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-200'
-                                                            }`}
-                                                >
-                                                      {verifyingFormField === `field-${field.name}` ? (
-                                                            <>
-                                                                  <Loader2 className="animate-spin h-3 w-3 mr-1" />
-                                                                  <span>Sending code...</span>
-                                                            </>
-                                                      ) : (
-                                                            <>
-                                                                  <Send className="w-4 h-4" />
-                                                                  <span>Send Code</span>
-                                                            </>
-                                                      )}
-                                                </Button>
-
-                                                <div className="flex items-center gap-2">
-                                                      <BookCheck className="h-4 w-4" />
-                                                      <Label
-                                                            htmlFor={`input-verification-${field.name}`}
-                                                            className="text-base font-medium text-gray-900"
-                                                      >
-                                                            Verification code for {field.label}
-                                                            <span className="text-red-500">*</span>
-                                                      </Label>
-                                                </div>
-
-                                                <Input
-                                                      id={`input-verification-${field.name}`}
-                                                      data-testid={`input-verification-${field.name}`}
-                                                      className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
-                                                      placeholder="Type code here..."
-                                                      onChange={(e) => handleVerificationCodeChange(e, field.name)}
-                                                />
-                                          </>
-                                    )}
-                              </>
-                        )}
-
-                        {/* Signature/Scratchpad field with Reset, Generate from Name, Initials */}
-                        {field.type === 'scratchpad' && renderScratchpadField()}
-
-
-                        {/* option field with Reset, Generate from Name, Initials */}
-                        {field.type === 'options' && renderOptionsField(field, fieldIndex)}
-
-
-
-
-                        {/* Wallet address field */}
-                        {/* {field.type === 'wallet_address' && (
-                              field.is_editable === false ? (
-                                    <Input
-                                          id={`input-${field.name}`}
-                                          data-testid={`input-${field.name}`}
-                                          className={cn(
-                                                "rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10",
-                                          )}
-                                          disabled
-                                          defaultValue={(() => {
-                                                const val = getFieldDefaultValue(field, formData[field.name] as any)
-                                                return val instanceof File || Array.isArray(val) ? undefined : val
-                                          })()}
-                                    />
-                              ) : (
-                                    <WalletAutosuggest
-                                          field={field}
-                                          index={1}
-                                          address={formData[field.name] ? (formData[field.name] as string) : ''}
-                                          multipleAddresses={[]}
-                                          setMultipleAddresses={(data) => handleWalletAddressSelect(data, field.name)}
-                                          // placeholder="Enter signer wallet address"
-                                          className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                              )
-                        )} */}
-
-                        {field.type === 'wallet_address' && (
-                              <WalletAutosuggest
-                                    field={field}
-                                    index={0}
-                                    address={formData[field.name] ? (formData[field.name] as string) : ''}
-                                    multipleAddresses={[formData[field.name] as string || '']}
-                                    setMultipleAddresses={(data) => handleWalletAddressSelect(data, field.name)}
-                                    // placeholder="Enter signer wallet address"
-                                    className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                              />
-                        )}
-
-                        {/* Document, Image, File upload fields */}
-                        {['document', 'image', 'file'].includes(field.type) && (
-                              <div className="relative">
-                                    <Input
-                                          id={`input-${field.name}`}
-                                          data-testid={`input-${field.name}`}
-                                          className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
-                                          type={getInputType(field.type)}
-                                          required={field.required}
-                                          // disabled={field.is_editable === false}
-                                          accept={field.type === 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
-                                          multiple={field.is_array}
-                                          placeholder={getFieldPlaceholder(field)}
-                                          onChange={(e) => handleFileInputChange(e, field)}
-                                    />
-
-                                    {field.support_text && (
-                                          <p className="text-xs text-gray-500">{field.support_text}</p>
-                                    )}
-
-                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                          <Upload className="h-4 w-4 text-gray-400" />
-                                    </div>
-                              </div>
-                        )}
-
-                        {field.name === 'sender' && (!field.is_hidden || !field.is_editable) && (
-                              <p className="text-xs text-gray-500">
-                                    {field.support_text
-                                          ? field.support_text
-                                          : 'The sender is the person who initiates the document signing process. This field is auto-filled with your wallet address.'}
-                              </p>
-                        )}
-                  </div>
-            )
-      }
-
-      /** Renders the aqua_sign form with multi-step UI */
-      const renderAquaSignForm = () => {
-            const fields = reorderInputFields(selectedTemplate!.fields)
-            const documentField = fields.find(f => f.type === 'document')
-            const otherFields = fields.filter(f => f.type !== 'document')
-
-            // Check if user has added themselves to signers
-            // const userInSigners = multipleAddresses.some(addr =>
-            //       addr.toLowerCase() === session?.address?.toLowerCase()
-            // )
-
-            return (
-                  <>
-                        {/* Step indicator */}
-                        <div className="flex items-center justify-center mb-6">
-                              <div className="flex items-center gap-2">
-                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${aquaSignStep === 1
-                                          ? 'bg-blue-600 text-white'
-                                          : 'bg-green-500 text-white'
-                                          }`}>
-                                          {aquaSignStep === 1 ? '1' : '✓'}
-                                    </div>
-                                    <span className={`text-sm ${aquaSignStep === 1 ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
-                                          Select Document
-                                    </span>
-                                    <div className="w-12 h-0.5 bg-gray-300 mx-2" />
-                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${aquaSignStep === 2
-                                          ? 'bg-blue-600 text-white'
-                                          : 'bg-gray-300 text-gray-600'
-                                          }`}>
-                                          2
-                                    </div>
-                                    <span className={`text-sm ${aquaSignStep === 2 ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
-                                          Add Signers
-                                    </span>
-                              </div>
-                        </div>
-
-                        {/* Step 1: Document Selection */}
-                        {aquaSignStep === 1 && documentField && (
-                              <div className="space-y-4">
-                                    <div className="text-center mb-4">
-                                          <h3 className="text-lg font-medium text-gray-900">Select the PDF document to be signed</h3>
-                                          <p className="text-sm text-gray-500 mt-1">Upload the document that requires signatures</p>
-                                    </div>
-                                    {renderSingleField(documentField, 0)}
-
-                                    <div className="flex justify-end pt-4">
-                                          <Button
-                                                type="button"
-                                                onClick={() => {
-                                                      // Validate document is selected before proceeding
-                                                      if (!formData['document']) {
-                                                            toast.error('Please select a document first')
-                                                            return
-                                                      }
-                                                      setAquaSignStep(2)
-                                                }}
-                                                className="bg-blue-600 hover:bg-blue-700 text-white px-6"
-                                                disabled={!formData['document']}
-                                          >
-                                                Go to add signers
-                                          </Button>
-                                    </div>
-                              </div>
-                        )}
-
-                        {/* Step 2: Sender and Signers */}
-                        {aquaSignStep === 2 && (
-                              <div className="space-y-4">
-                                    <div className="text-center mb-4">
-                                          <h3 className="text-lg font-medium text-gray-900">Specify who needs to sign this document</h3>
-                                    </div>
-
-                                    {otherFields.map((field, idx) => renderSingleField(field, idx))}
-
-                                    {/* {!userInSigners && (
-                                          <Alert className="border-amber-200 bg-amber-50">
-                                                <AlertCircle className="h-4 w-4 text-amber-600" />
-                                                <AlertDescription className="text-amber-800">
-
-                                                      You haven't added yourself as a signer.
-                                                      <Button onClick={() => {
-                                                            if (session) {
-                                                                  setMultipleAddresses(curr => [...curr, session?.address])
-                                                            }
-                                                      }}>
-                                                            Add Yourself
-                                                      </Button>
-                                                </AlertDescription>
-                                          </Alert>
-                                    )} */}
-                                    {/* Warning if user hasn't added themselves */}
-
-                                    <div className="flex justify-between pt-4">
-                                          <Button
-                                                type="button"
-                                                variant="outline"
-                                                onClick={() => {
-                                                      setAquaSignStep(1)
-                                                      setModalFormErorMessae("")
-                                                }}
-                                                className="px-6"
-                                          >
-                                                Back
-                                          </Button>
-                                    </div>
-                              </div>
-                        )}
-                  </>
-            )
+      // Shared props for SingleFieldRenderer and AquaSignFormRenderer
+      const fieldRendererProps = {
+            formData,
+            setFormData,
+            selectedTemplate,
+            session,
+            multipleAddresses,
+            setMultipleAddresses,
+            addAddress,
+            removeAddress,
+            signatureRef,
+            containerRef,
+            canvasSize,
+            clearSignature,
+            generateSignatureFromText,
+            getUserNameForSignature,
+            getFieldDefaultValue,
+            verfyingFormFieldEnabled,
+            verifyingFormField,
+            handleTextInputChange,
+            handleFileInputChange,
+            handleSendVerificationCode,
+            handleVerificationCodeChange,
+            handleWalletAddressSelect,
+            SortableSignerItemComponent: SortableSignerItem,
       }
 
       /** Handles text input change with validation */
@@ -2149,14 +1316,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                         [field.name]: value,
                   })
             }
-      }
-
-      /** Gets the placeholder text for a field */
-      const getFieldPlaceholder = (field: FormField): string => {
-            if (field.type === 'domain') return 'Fill in the Domain Name (FQDN)'
-            if (field.type === 'date') return 'Select a date'
-            if (field.type === 'document') return 'Upload PDF document'
-            return `Enter ${field.label.toLowerCase()}`
       }
 
       /** Handles sending verification code for verifiable fields (email/phone) */
@@ -2274,15 +1433,26 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                               </div>
                               <div className="pt-2">
                                     <form onSubmit={createWorkflowFromTemplate} id="create-aqua-tree-form" className="space-y-8">
-                                          {renderFormError()}
+                                          <FormErrorRenderer errorMessage={modalFormErorMessae} />
 
                                           <div className="space-y-4 sm:space-y-6">
                                                 {/* Use multi-step form for aqua_sign, default rendering for others */}
                                                 {isAquaSignTemplate
-                                                      ? renderAquaSignForm()
+                                                      ? <AquaSignFormRenderer
+                                                            {...fieldRendererProps}
+                                                            aquaSignStep={aquaSignStep}
+                                                            setAquaSignStep={setAquaSignStep}
+                                                            setModalFormErrorMessage={setModalFormErorMessae}
+                                                            reorderInputFields={reorderInputFields}
+                                                      />
                                                       : selectedTemplate
                                                             ? reorderInputFields(selectedTemplate.fields).map((field, fieldIndex) =>
-                                                                  renderSingleField(field, fieldIndex)
+                                                                  <SingleFieldRenderer
+                                                                        key={`field-${fieldIndex}`}
+                                                                        field={field}
+                                                                        fieldIndex={fieldIndex}
+                                                                        {...fieldRendererProps}
+                                                                  />
                                                             )
                                                             : null
                                                 }

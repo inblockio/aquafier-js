@@ -31,7 +31,7 @@ import {
       TooltipTrigger,
 } from '@/components/ui/tooltip'
 
-import FileDropZone from '@/components/dropzone_file_actions'
+import FileDropZone from '@/components/layout/dropzone_file_actions'
 import { LuTrash2, LuUpload } from 'react-icons/lu'
 import { toast } from 'sonner'
 import { ImportAquaTree } from '@/components/dropzone_file_actions/import_aqua_tree'
@@ -40,7 +40,7 @@ import { ImportAquaTreeFromPdf } from '@/components/dropzone_file_actions/import
 import { FormRevisionFile } from '@/components/dropzone_file_actions/form_revision'
 
 import { extractEmbeddedAquaData } from '@/utils/pdf-digital-signature'
-import ClaimTypesDropdownButton from '@/components/button_claim_dropdown'
+import ClaimTypesDropdownButton from '@/components/claims/button_claim_dropdown'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 import { useUserStats } from '@/hooks/useUserStats'
 

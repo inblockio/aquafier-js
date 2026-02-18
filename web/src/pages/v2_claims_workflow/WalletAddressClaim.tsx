@@ -3,7 +3,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { generateAvatar, getWalletClaims } from '@/utils/functions'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
-import CopyButton from '@/components/CopyButton'
+import CopyButton from '@/components/shared/CopyButton'
 import appStore from '@/store'
 import { useStore } from 'zustand'
 import { IIdentityClaimDetails } from '@/types/types'

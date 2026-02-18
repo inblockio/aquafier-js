@@ -1,7 +1,7 @@
 import React from 'react'
 import { HiShieldCheck } from 'react-icons/hi'
 import { Mail, Phone } from 'lucide-react'
-import CopyButton from '@/components/CopyButton'
+import CopyButton from '@/components/shared/CopyButton'
 
 interface ISimpleClaim {
       claimInfo: Record<string, string>

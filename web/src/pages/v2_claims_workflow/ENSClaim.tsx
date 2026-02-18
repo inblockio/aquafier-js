@@ -1,5 +1,5 @@
 import React from 'react'
-import CopyButton from '@/components/CopyButton'
+import CopyButton from '@/components/shared/CopyButton'
 import { FaEthereum } from 'react-icons/fa6'
 
 interface ISimpleClaim {
