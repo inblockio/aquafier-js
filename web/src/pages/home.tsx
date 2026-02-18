@@ -545,7 +545,7 @@ const ContactSection = () => {
             const formData = new FormData(e.currentTarget);
 
             // Add Web3Forms access key
-            formData.append('access_key', 'YOUR_WEB3FORMS_ACCESS_KEY'); // Get free key from https://web3forms.com
+            formData.append('access_key', 'e8f7420f-eeb3-486e-b2ab-42669f9f65aa');
 
             try {
                   const response = await fetch('https://api.web3forms.com/submit', {
