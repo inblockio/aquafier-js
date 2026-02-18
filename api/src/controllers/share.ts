@@ -10,21 +10,17 @@ import { createAquaTreeFromRevisions } from '../utils/revisions_operations_utils
 import Logger from "../utils/logger";
 import { sendNotificationReloadToWallet, sendMessageToWallet, sendToUserWebsockerAMessage } from './websocketController2';
 import { ethers } from 'ethers';
+import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
 
 export default async function shareController(fastify: FastifyInstance) {
 
-    fastify.get('/share_data/:hash', async (request, reply) => {
+    fastify.get('/share_data/:hash', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
 
         // Extract the hash parameter from the URL
         const { hash } = request.params as { hash: string };
         if (hash == null || hash == undefined || hash == "") {
             return reply.code(406).send({ success: false, message: "hash not found in url" });
 
-        }
-        const nonce = request.headers['nonce'];
-
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
         }
 
         try {
@@ -40,31 +36,18 @@ export default async function shareController(fastify: FastifyInstance) {
 
             }
 
-            console.log(contractData.sender, SYSTEM_WALLET_ADDRESS)
+            Logger.debug(`sender: ${contractData.sender}, system: ${SYSTEM_WALLET_ADDRESS}`)
 
             if (contractData?.sender !== SYSTEM_WALLET_ADDRESS) {
-                const session = await prisma.siweSession.findUnique({
-                    where: { nonce }
-                });
-
-                if (!session) {
-                    return reply.code(401).send({ success: false, message: "Session not found" });
-                }
-
-                // Check if session is expired
-                if (new Date(session.expirationTime!!) < new Date()) {
-                    return reply.code(401).send({ success: false, message: "Session expired" });
-                }
-
                 let allRecipients = contractData?.recipients?.map(addr => addr.trim().toLowerCase()) || []
 
                 // if the user is not in the recipient list and is not the sender, reject access
-                if (!allRecipients.includes(session.address.trim().toLowerCase()) && contractData.sender?.trim().toLowerCase() != session.address.trim().toLowerCase()) {
+                if (!allRecipients.includes(request.user!.address.trim().toLowerCase()) && contractData.sender?.trim().toLowerCase() != request.user!.address.trim().toLowerCase()) {
                     if (allRecipients.includes(SYSTEM_WALLET_ADDRESS)) {
                         // allow access if the system wallet is a recipient
                         // console.log(`System wallet is a recipient, allowing access`);
                     } else {
-                        return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you " + allRecipients.toString() + " == " + session.address });
+                        return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you " + allRecipients.toString() + " == " + request.user!.address });
                     }
                 }
 
@@ -131,26 +114,10 @@ export default async function shareController(fastify: FastifyInstance) {
         }
     });
 
-    fastify.post('/share_data', async (request, reply) => {
+    fastify.post('/share_data', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
 
 
         const { hash, recipients, latest, option, genesis_hash, file_name } = request.body as ShareRequest;
-
-        // Read `nonce` from headers
-        const nonce = request.headers['nonce']; // Headers are case-insensitive
-
-        // Check if `nonce` is missing or empty
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
-
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce: nonce }
-        });
-
-        if (session == null) {
-            return reply.code(403).send({ success: false, message: "Nonce  is invalid" });
-        }
 
         if (recipients == null || recipients.length === 0) {
             return reply.code(403).send({ success: false, message: "Recipient(s) need to specified" });
@@ -159,7 +126,7 @@ export default async function shareController(fastify: FastifyInstance) {
 
         let findRevision = await prisma.revision.findFirst({
             where: {
-                pubkey_hash: `${session.address}_${latest}`
+                pubkey_hash: `${request.user!.address}_${latest}`
             }
         })
         if (findRevision == null) {
@@ -167,8 +134,8 @@ export default async function shareController(fastify: FastifyInstance) {
         }
 
         //validation to check owner is the one sharings
-        if (findRevision.pubkey_hash.split("_")[0] != session.address) {
-            return reply.code(406).send({ success: false, message: `latest ${latest}  does not belong ${session.address} ` });
+        if (findRevision.pubkey_hash.split("_")[0] != request.user!.address) {
+            return reply.code(406).send({ success: false, message: `latest ${latest}  does not belong ${request.user!.address} ` });
         }
 
         //insert into contract
@@ -177,7 +144,7 @@ export default async function shareController(fastify: FastifyInstance) {
                 hash: hash, //identifier
                 genesis_hash: genesis_hash,
                 recipients: recipients.map(addr => addr.trim().toLowerCase()),
-                sender: session.address,
+                sender: request.user!.address,
                 latest: latest,
                 option: option,
                 reference_count: 1,
@@ -189,9 +156,9 @@ export default async function shareController(fastify: FastifyInstance) {
         for (let i = 0; i < recipients.length; i++) {
             await prisma.notifications.create({
                 data: {
-                    sender: session.address,
+                    sender: request.user!.address,
                     receiver: recipients[i],
-                    content: `A new document has been shared with you by ${session.address}`,
+                    content: `A new document has been shared with you by ${request.user!.address}`,
                     navigate_to: `/app/shared-contracts/${hash}`,
                     is_read: false,
                     created_on: new Date()
@@ -214,28 +181,15 @@ export default async function shareController(fastify: FastifyInstance) {
 
 
 
-    fastify.put('/contracts/:hash', async (request, reply) => {
+    fastify.put('/contracts/:hash', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
         // Extract the hash parameter from the URL
         const { hash } = request.params as { hash: string };
         const { recipients, latest, option } = request.body as ShareRequest;
         if (hash == null || hash == undefined || hash == "") {
             return reply.code(406).send({ success: false, message: "hash not found in url" });
         }
-        const nonce = request.headers['nonce'];
-
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
 
         try {
-            const session = await prisma.siweSession.findUnique({
-                where: { nonce: nonce }
-            });
-
-            if (session == null) {
-                return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
-            }
-
             // Check if `hash` is missing or empty
             if (hash == null || hash == "") {
                 return reply.code(403).send({ success: false, message: "Hash need to specified" });
@@ -257,9 +211,9 @@ export default async function shareController(fastify: FastifyInstance) {
             for (let i = 0; i < recipients.length; i++) {
                 await prisma.notifications.create({
                     data: {
-                        sender: session.address,
+                        sender: request.user!.address,
                         receiver: recipients[i],
-                        content: `A shared document contract has been updated by ${session.address}`,
+                        content: `A shared document contract has been updated by ${request.user!.address}`,
                         navigate_to: `/app/shared-contracts/${hash}`,
                         is_read: false,
                         created_on: new Date()
@@ -279,25 +233,14 @@ export default async function shareController(fastify: FastifyInstance) {
         }
     }); 
 
-    fastify.get('/contracts/:genesis_hash', async (request, reply) => {
+    fastify.get('/contracts/:genesis_hash', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
         const { genesis_hash } = request.params as { genesis_hash: string };
-        // Add authorization
-        const nonce = request.headers['nonce'];
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce: nonce }
-        });
-        if (session == null) {
-            return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
-        }
         // Get all contracts with the specified genesis hash
         const contracts = await prisma.contract.findMany({
             where: {
                 genesis_hash: genesis_hash,
                 sender: {
-                    equals: session?.address,
+                    equals: request.user!.address,
                     mode: 'insensitive'
                 }
             }
@@ -307,27 +250,14 @@ export default async function shareController(fastify: FastifyInstance) {
 
  
 
-    fastify.delete('/contracts/:hash', async (request, reply) => {
+    fastify.delete('/contracts/:hash', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
         // Extract the hash parameter from the URL
         const { hash } = request.params as { hash: string };
         if (hash == null || hash == undefined || hash == "") {
             return reply.code(406).send({ success: false, message: "hash not found in url" });
         }
-        const nonce = request.headers['nonce'];
-
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
 
         try {
-            const session = await prisma.siweSession.findUnique({
-                where: { nonce: nonce }
-            });
-
-            if (session == null) {
-                return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-            }
-
             // Check if `hash` is missing or empty
             if (hash == null || hash == "") {
                 return reply.code(403).send({ success: false, message: "Hash need to specified" });
@@ -345,7 +275,7 @@ export default async function shareController(fastify: FastifyInstance) {
             }
 
             // If the user is the sender (owner), they can hard delete the contract
-            if (contract.sender === session.address) {
+            if (contract.sender === request.user!.address) {
                 await prisma.contract.delete({
                     where: {
                         hash: hash
@@ -355,14 +285,14 @@ export default async function shareController(fastify: FastifyInstance) {
             }
 
             // If the user is a recipient, add their address to receiver_has_deleted array (soft delete)
-            if (contract.recipients?.includes(session.address.trim().toLocaleLowerCase())) {
+            if (contract.recipients?.includes(request.user!.address.trim().toLocaleLowerCase())) {
                 // Check if the user's address is already in the receiver_has_deleted array
-                if (!contract.receiver_has_deleted?.includes(session.address.trim().toLocaleLowerCase())) {
+                if (!contract.receiver_has_deleted?.includes(request.user!.address.trim().toLocaleLowerCase())) {
                     await prisma.contract.update({
                         where: { hash: hash },
                         data: {
                             receiver_has_deleted: {
-                                push: session.address.trim().toLocaleLowerCase()
+                                push: request.user!.address.trim().toLocaleLowerCase()
                             }
                         }
                     });
@@ -381,7 +311,7 @@ export default async function shareController(fastify: FastifyInstance) {
 
 
     // Create an endpoint for filtering contracts, ie filter by sender, receiver, hash, etc
-    fastify.get('/contracts', async (request, reply) => {
+    fastify.get('/contracts', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
         const { sender, receiver, hash, genesis_hash, ...otherParams } = request.query as {
             sender?: string,
             receiver?: string,
@@ -393,20 +323,6 @@ export default async function shareController(fastify: FastifyInstance) {
         // Check if at least one search parameter is provided
         if (!sender && !receiver && !hash && !genesis_hash && Object.keys(otherParams).length === 0) {
             return reply.code(400).send({ success: false, message: "Missing required parameters" });
-        }
-
-        const nonce = request.headers['nonce'];
-
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
-
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce: nonce }
-        });
-
-        if (session == null) {
-            return reply.code(403).send({ success: false, message: "Nonce is invalid" });
         }
 
         // Build dynamic where clause based on provided parameters

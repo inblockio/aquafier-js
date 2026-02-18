@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
 import { AdvancedMetricsResponse, DateRangeQuery, MetricsResponse } from '../models/types';
+import Logger from "../utils/logger";
 
 export default async function metricsController(fastify: FastifyInstance) {
     fastify.get('/metrics', async (request, reply) => {
@@ -265,7 +266,7 @@ export default async function metricsController(fastify: FastifyInstance) {
             return reply.code(200).send({ data: metrics })
             // res.json(metrics);
         } catch (error) {
-            console.error('Error fetching metrics:', error);
+            Logger.error('Error fetching metrics:', error);
             reply.code(500).send({
                 error: 'Failed to fetch metrics',
                 message: error instanceof Error ? error.message : 'Unknown error',
@@ -423,7 +424,7 @@ export default async function metricsController(fastify: FastifyInstance) {
 
             return reply.code(200).send({ data: response });
         } catch (error) {
-            console.error('Error fetching advanced metrics:', error);
+            Logger.error('Error fetching advanced metrics:', error);
             return reply.code(500).send({
                 error: 'Failed to fetch metrics',
                 message: error instanceof Error ? error.message : 'Unknown error',

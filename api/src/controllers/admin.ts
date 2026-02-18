@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
 import { isUserAdmin } from '../utils/api_utils';
+import Logger from "../utils/logger";
 
 export default async function adminController(fastify: FastifyInstance) {
 
@@ -154,7 +155,7 @@ export default async function adminController(fastify: FastifyInstance) {
             });
 
         } catch (error) {
-            console.error(`Error fetching admin data for ${type}:`, error);
+            Logger.error(`Error fetching admin data for ${type}:`, error);
             return reply.code(500).send({ error: 'Internal Server Error' });
         }
     });
@@ -202,7 +203,7 @@ export default async function adminController(fastify: FastifyInstance) {
                 isSuperAdmin: superAdmins.includes(targetAddress.toLowerCase()),
             });
         } catch (error) {
-            console.error('Error toggling admin status:', error);
+            Logger.error('Error toggling admin status:', error);
             return reply.code(500).send({ error: 'Internal Server Error' });
         }
     });

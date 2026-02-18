@@ -103,7 +103,7 @@ export default async function contactController(fastify: FastifyInstance) {
             Logger.info(`Contact form submission from ${email}`);
 
             // For now, just log it (replace with actual email sending above)
-            console.log('Contact form submission:', { name, email, subject, message });
+            Logger.debug('Contact form submission:', { name, email, subject, message });
 
             return reply.code(200).send({
                 success: true,

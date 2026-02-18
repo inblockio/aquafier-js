@@ -82,7 +82,7 @@ export function sendToUserWebsockerAMessage(userId: string, action: string) {
     }
 
     if (client.socket.readyState === WSWebSocket.OPEN) {
-        console.log(`Sending message to user ${userId}: ${action}`);
+        Logger.debug(`Sending message to user ${userId}: ${action}`);
         let message = {
             "action": action
         }
@@ -91,7 +91,7 @@ export function sendToUserWebsockerAMessage(userId: string, action: string) {
         client.socket.send(messageString);
         return { success: true };
     } else {
-        console.log(`Removing disconnected client: ${userId}`);
+        Logger.debug(`Removing disconnected client: ${userId}`);
         connectedClients.delete(userId);
         return { success: false, error: 'User connection is closed' };
     }
@@ -470,10 +470,10 @@ export default async function enhancedWebSocketController(fastify: FastifyInstan
      // REST endpoint to trigger notification reload for specific wallet
     fastify.post('/api/notifications/aqua_sign/:wallet_address', async (request, reply) => {
         const { wallet_address } = request.params as { wallet_address: string };
-        console.log("Request body: ", request.body)
+        Logger.debug("Request body: ", request.body)
         const data = request.body as {receiver: string, content: any}
 
-        console.log(cliYellowfy(`Notification data: ${JSON.stringify(data, null, 4)}`))
+        Logger.debug(cliYellowfy(`Notification data: ${JSON.stringify(data, null, 4)}`))
 
         const result = sendNotificationReloadToAquaSign(wallet_address, data.content);
         

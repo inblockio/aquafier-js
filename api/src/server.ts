@@ -5,6 +5,7 @@ import * as dotenv from 'dotenv';
 // Install first: npm install @fastify/multipart
 import fastifyMultipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
+import fastifyCompress from '@fastify/compress';
 import * as fs from "fs"
 
 // Import controllers
@@ -66,9 +67,9 @@ async function buildServer() {
             nodeProfilingIntegration(),
         ],
         // Tracing
-        tracesSampleRate: 1.0, //  Capture 100% of the transactions
+        tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
         // Set sampling rate for profiling - this is evaluated only once per SDK.init call
-        profileSessionSampleRate: 1.0,
+        profileSessionSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
         // Trace lifecycle automatically enables profiling during active traces
         profileLifecycle: 'trace',
 
@@ -128,6 +129,9 @@ async function buildServer() {
     corsAllowedOrigins = [...new Set(corsAllowedOrigins.flat())];
 
     // Logger.info("Without duplicates Allowed CORS origins: ", JSON.stringify(corsAllowedOrigins, null, 2));
+
+    // Register compression
+    fastify.register(fastifyCompress, { global: true, threshold: 1024 });
 
     // Register the CORS plugin
     fastify.register(cors, {

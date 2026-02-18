@@ -128,19 +128,14 @@ export default async function authController(fastify: FastifyInstance) {
 
       // Insert session into the database
       // Debug: log the expiration time from the SIWE message
-      console.log('[AUTH DEBUG] siweData.expirationTime:', siweData.expirationTime);
-      console.log('[AUTH DEBUG] siweData.expirationTime type:', typeof siweData.expirationTime);
-
       let expirationTime: Date;
       // If no expiration time from SIWE message, set a default of 7 days
       let expirationTimeSiwe = siweData.expirationTime;
       if (!expirationTimeSiwe) {
         expirationTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7-day expiry
-        console.log('[AUTH DEBUG] No expiration time in SIWE message, using default 7 days:', expirationTime);
       } else {
         // Ensure it's a Date object
         expirationTime = new Date(expirationTimeSiwe);
-        console.log('[AUTH DEBUG] Using expiration time from SIWE message:', expirationTime);
       }
 
       const session = await prisma.siweSession.upsert({

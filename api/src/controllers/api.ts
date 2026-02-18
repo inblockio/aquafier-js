@@ -165,7 +165,7 @@ if (hasProtocol && !isAllowed) {
     try {
       data = await scraper.scrape();
     } catch (error) {
-      console.error("Error during scraping:", error);
+      Logger.error("Error during scraping:", error);
       return reply
         .code(500)
         .send({ success: false, message: "Error occurred while scraping the domain." });

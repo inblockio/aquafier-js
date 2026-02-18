@@ -42,7 +42,7 @@ import { ScrollArea } from '../ui/scroll-area'
 import FilePreview from '../file_preview/file_preview'
 import { ApiFileInfo } from '@/models/FileInfo'
 import SignatureCanvas from 'react-signature-canvas'
-import { ApiInfoData } from '@/types/types'
+import { ApiInfoData, Session } from '@/types/types'
 import { RELOAD_KEYS, triggerWorkflowReload } from '@/utils/reloadDatabase'
 import { useNavigate } from 'react-router-dom'
 import { API_ENDPOINTS } from '@/utils/constants'
@@ -88,7 +88,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
       const [isDialogOpen, setDialogOpen] = useState(false)
       const [dialogData, setDialogData] = useState<null | {
-            content: JSX.Element
+            content: React.ReactElement
             title: string
       }>(null)
 
