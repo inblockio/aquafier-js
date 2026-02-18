@@ -34,7 +34,7 @@ import { FileObject } from 'aqua-js-sdk'
 import { DownloadAquaChain } from '../../components/aqua_chain_actions/download_aqua_chain'
 import { DeleteAquaChain, DeleteAquaChainDialog } from '../../components/aqua_chain_actions/delete_aqua_chain'
 import { IAquaCertWorkflowDrawer, ICertificateAttestor, IWorkflowItem } from '@/types/types'
-import WalletAdrressClaim from '../v2_claims_workflow/WalletAdrressClaim'
+import WalletAddressClaim from '../v2_claims_workflow/WalletAddressClaim'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { toast } from 'sonner'
 import apiClient from '@/api/axiosInstance'
@@ -203,7 +203,7 @@ const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer
                                     <div>
                                           {
                                                 creator ? (
-                                                      <WalletAdrressClaim walletAddress={creator} />
+                                                      <WalletAddressClaim walletAddress={creator} />
                                                 ) : null
                                           }
                                     </div>
@@ -228,7 +228,7 @@ const CertificateTableItem = ({ workflowName, apiFileInfo, index = 0, openDrawer
                                     }}>
                                           <div className="flex -space-x-2">
                                                 {attesters?.slice(0, 3).map((attester, index: number) => (
-                                                      <WalletAdrressClaim key={index} avatarOnly={true} walletAddress={attester.walletAddress} />
+                                                      <WalletAddressClaim key={index} avatarOnly={true} walletAddress={attester.walletAddress} />
                                                 ))}
                                                 {attesters?.length > 3 && (
                                                       <Avatar className="h-8 w-8 border-2 border-background" onClick={e => {

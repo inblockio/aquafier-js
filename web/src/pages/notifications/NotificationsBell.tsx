@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Bell } from 'lucide-react'
 
-import NotificationsHolder from './NotificaitonsHolder'
+import NotificationsHolder from './NotificationsHolder'
 import apiClient from '@/api/axiosInstance'
 import { INotification } from '../../types/index'
 import appStore from '../../store'

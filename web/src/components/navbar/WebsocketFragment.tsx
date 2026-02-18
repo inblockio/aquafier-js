@@ -18,8 +18,6 @@ const RECONNECT_MAX_DELAY = 30000 // 30 seconds maximum delay
 
 const WebsocketFragment = () => {
       const { backend_url, session, selectedFileInfo, setContracts } = useStore(appStore)
-      const [localSession, setLocalSession] = useState(session)
-
       const [ws, setWs] = useState<WebSocket | null>(null)
       const [isConnected, setIsConnected] = useState(false)
       const [websocketReconnectAttempts, setWebsocketReconnectAttempts] = useState(0)
@@ -288,14 +286,9 @@ const WebsocketFragment = () => {
       }, [])
 
       useEffect(() => {
-            if (!localSession) {
+            if (!session) {
                   disconnectWebSocket()
             }
-            // Cleanup function
-      }, [localSession])
-
-      useEffect(() => {
-            setLocalSession(session)
       }, [session])
 
       return <></>

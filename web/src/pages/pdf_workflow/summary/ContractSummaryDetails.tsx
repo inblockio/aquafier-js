@@ -4,7 +4,11 @@ import { IContractWorkFlowFirstPage } from '../../../types/contract_workflow'
 import { Badge } from '../../../components/ui/badge'
 import { Card, CardContent } from '../../../components/ui/card'
 import { cn } from '../../../lib/utils'
-import WalletAdrressClaim from '@/pages/v2_claims_workflow/WalletAdrressClaim'
+import WalletAddressClaim from '@/pages/v2_claims_workflow/WalletAddressClaim'
+
+const CustomDivider = ({ mb, mt }: { mb: string | number; mt: string | number }) => {
+      return <div className="w-full h-px bg-gray-200 dark:bg-gray-800" style={{ marginTop: mt, marginBottom: mb }} />
+}
 
 const ContractSummaryDetails = ({ data, isValidTree }: IContractWorkFlowFirstPage) => {
       const mockContractData = data
@@ -43,10 +47,6 @@ const ContractSummaryDetails = ({ data, isValidTree }: IContractWorkFlowFirstPag
             }
       }
 
-      const CustomDivider = ({ mb, mt }: { mb: string | number; mt: string | number }) => {
-            return <div className="w-full h-px bg-gray-200 dark:bg-gray-800" style={{ marginTop: mt, marginBottom: mb }} />
-      }
-
       const getBgColorBasedOnVerificationStatus = () => {
             if (isValidTree === 'pending') {
                   return 'bg-gray-50'
@@ -82,7 +82,7 @@ const ContractSummaryDetails = ({ data, isValidTree }: IContractWorkFlowFirstPag
 
                   <div className="flex items-center px-2 md:px-8">
                         <p className="text-gray-600 dark:text-gray-300 text-sm break-words transition-all duration-500">
-                              Wallet address: <WalletAdrressClaim walletAddress={mockContractData.creatorAddress} />
+                              Wallet address: <WalletAddressClaim walletAddress={mockContractData.creatorAddress} />
                         </p>
                   </div>
 
@@ -103,7 +103,7 @@ const ContractSummaryDetails = ({ data, isValidTree }: IContractWorkFlowFirstPag
                                                 <div className="flex items-center">
                                                       {signer.status === 'pending' ? <FiAlertCircle className="text-yellow-500 mr-2" /> : <FiCheckCircle className="text-green-500 mr-2" />}
                                                       <p className="text-black/90 font-mono text-sm break-all">
-                                                            <WalletAdrressClaim walletAddress={signer.address} />
+                                                            <WalletAddressClaim walletAddress={signer.address} />
                                                       </p>
                                                 </div>
                                                 <p className={cn('text-xs font-medium', signer.status === 'pending' ? 'text-yellow-600' : 'text-green-600')}>
@@ -150,7 +150,7 @@ const ContractSummaryDetails = ({ data, isValidTree }: IContractWorkFlowFirstPag
                                                                   <p className="opacity-80 text-sm break-all">
                                                                         User with address{' '}
                                                                         <span className="font-semibold font-mono">
-                                                                              <WalletAdrressClaim walletAddress={activity.address ?? ''} />
+                                                                              <WalletAddressClaim walletAddress={activity.address ?? ''} />
                                                                         </span>{' '}
                                                                         signed the document at <span className="font-semibold">{formatDateTime(activity.timestamp)}</span>
                                                                   </p>
@@ -162,7 +162,7 @@ const ContractSummaryDetails = ({ data, isValidTree }: IContractWorkFlowFirstPag
                                                                               <p className="opacity-90 text-sm text-black/90 break-all">
                                                                                     User with address{' '}
                                                                                     <span className="font-semibold font-mono">
-                                                                                          <WalletAdrressClaim walletAddress={activity.address ?? ''} />
+                                                                                          <WalletAddressClaim walletAddress={activity.address ?? ''} />
                                                                                     </span>{' '}
                                                                                     Created the contract workflow at <span className="font-semibold">{formatDateTime(activity.timestamp)}</span>
                                                                               </p>

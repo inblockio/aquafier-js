@@ -58,10 +58,10 @@ const PhoneNumberClaim = ({ claim }: { claim: ICompleteClaimInformation }) => {
 
 
     return (
-        <div className={`bg-white rounded-lg shadow-sm border-1 border-${isVerified ? "green" : "gray"}-400 p-6 flex flex-col gap-4`}>
+        <div className={`bg-white rounded-lg shadow-sm border-1 ${isVerified ? "border-green-400" : "border-gray-400"} p-6 flex flex-col gap-4`}>
             <div className="flex items-center gap-3 mb-4 justify-between">
                 <div className="flex items-center gap-2">
-                    <div className={`bg-${isVerified ? "green" : "gray"}-50 p-2 rounded-lg`}>
+                    <div className={`${isVerified ? "bg-green-50" : "bg-gray-50"} p-2 rounded-lg`}>
                         <Phone className={isVerified ? "text-green-500 w-6 h-6" : "text-gray-500 w-6 h-6"} />
                     </div>
                     <div>
@@ -71,12 +71,12 @@ const PhoneNumberClaim = ({ claim }: { claim: ICompleteClaimInformation }) => {
                 </div>
                 {
                     isVerified ? (
-                        <div className='flex items-center gap-2'>
+                        <div className='flex items-center gap-2' role="status">
                             <Check size={16} color="green" />
                             <p className="text-sm text-gray-700">Verified</p>
                         </div>
                     ) : (
-                        <div className='flex items-center gap-2'>
+                        <div className='flex items-center gap-2' role="status">
                             <X size={16} color="gray" />
                             <p className="text-sm text-gray-700">Not Verified</p>
                         </div>
@@ -84,7 +84,7 @@ const PhoneNumberClaim = ({ claim }: { claim: ICompleteClaimInformation }) => {
                 }
             </div>
 
-            <div className={`border-t border-${isVerified ? "green" : "gray"}-400 pt-4 mb-4`}>
+            <div className={`border-t ${isVerified ? "border-green-400" : "border-gray-400"} pt-4 mb-4`}>
                 <p className={`text-sm text-gray-700`}>Claim verified to "{verifiedTo}"</p>
                 <p className="text-xs text-gray-500">{date}</p>
             </div>

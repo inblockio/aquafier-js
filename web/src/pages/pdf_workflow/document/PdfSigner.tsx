@@ -1,41 +1,29 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 
-import { Button } from '../../../components/ui/button'
-import { PDFDocument } from 'pdf-lib'
-import { FaPlus } from 'react-icons/fa'
-import appStore from '../../../store'
 import { useStore } from 'zustand'
+import appStore from '../../../store'
 import apiClient from '@/api/axiosInstance'
 import { ApiFileInfo } from '../../../models/FileInfo'
 import {
-      dummyCredential,
       ensureDomainUrlHasSSL,
-      estimateFileSize,
-      fetchImage,
       formatAddressForFilename,
-      getGenesisHash,
       getLastRevisionVerificationHash,
       getRandomNumber,
       isWorkFlowData,
-      reorderRevisionsInAquaTree,
-      timeStampToDateObject,
 } from '../../../utils/functions'
 import { API_ENDPOINTS } from '../../../utils/constants'
-import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk/web'
 import { SignatureData } from '../../../types/types'
-import { LuInfo, LuTrash } from 'react-icons/lu'
 import { Annotation } from '../pdf-viewer/types'
 import { PdfRendererComponent } from '../pdf-viewer/SignerPage'
 import { downloadPdfWithAnnotations } from '@/utils/pdf-downloader'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
-import WalletAddressClaim from '../../v2_claims_workflow/WalletAdrressClaim'
-import { signMessageWithAppKit } from '@/utils/appkit-wallet-utils'
 import { useNotificationWebSocketContext } from '@/contexts/NotificationWebSocketContext'
-import { useLiveQuery } from 'dexie-react-hooks'
-import { reloadDB, RELOAD_KEYS } from '../../../utils/reloadDatabase'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
 import { extractEmbeddedAquaData } from '@/utils/pdf-digital-signature'
+import { useSignatureManagement } from '@/hooks/useSignatureManagement'
+import { usePdfDragDrop } from '@/hooks/usePdfDragDrop'
+import { useSignatureSubmission } from '@/hooks/useSignatureSubmission'
+import { SignatureSidebar } from './SignatureSidebar'
 
 interface PdfSignerProps {
       fileData: File | null
@@ -46,27 +34,19 @@ interface PdfSignerProps {
 }
 
 const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, selectedFileInfo, setActiveStep, onSidebarReady }) => {
-      const { setSelectedFileInfo, setOpenDialog, openDialog } = useStore(appStore)
-      // State for PDF document
-      const [pdfFile, setPdfFile] = useState<File | null>(null)
-      const [_pdfUrl, setPdfUrl] = useState<string | null>(null)
-      const [_pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null)
-      const [signers, setSigners] = useState<string[]>([])
-      const [allSignersBeforeMe, setAllSignersBeforeMe] = useState<string[]>([])
+      const { openDialog } = useStore(appStore)
 
-      const [mySignaturesAquaTree, setMySignaturesAquaTree] = useState<Array<ApiFileInfo>>([])
-      const [mySignatureData, setMySignatureData] = useState<Array<SignatureData>>([])
-      const [selectedSignatureId, setSelectedSignatureId] = useState<string | null>(null)
+      // Local UI state
       const [signaturePositions, setSignaturePositions] = useState<SignatureData[]>([])
       const [canPlaceSignature, setCanPlaceSignature] = useState(false)
       const [selectedTool, setSelectedTool] = useState<'text' | 'image' | 'profile' | 'signature' | null>(null)
       const [submittingSignatureData, setSubmittingSignatureData] = useState(false)
       const [signingComplete, setSigningComplete] = useState(false)
 
-      const { subscribe, triggerWebsockets } = useNotificationWebSocketContext();
+      const { subscribe, triggerWebsockets } = useNotificationWebSocketContext()
 
       // Get wallet address from store
-      const { session, backend_url, webConfig } = useStore(appStore)
+      const { session, backend_url } = useStore(appStore)
 
       // Ref to always call the latest updateSelectedFileInfo from the subscription callback
       const updateSelectedFileInfoRef = useRef<() => void>(() => { })
@@ -74,1277 +54,87 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
       // PDF viewer container ref
       const pdfMainContainerRef = useRef<HTMLDivElement>(null)
 
-      // Lift sidebar content to parent via callback
-      useEffect(() => {
-            if (onSidebarReady) {
-                  onSidebarReady(signingComplete ? null : signatureSideBar())
-            }
-      }, [signers, mySignaturesAquaTree, selectedSignatureId, canPlaceSignature, signaturePositions, submittingSignatureData, documentSignatures, allSignersBeforeMe, mySignatureData, openDialog, signingComplete])
-
-      // Old individual revision saving - kept for reference
-      // const saveRevisionsToServerForUser = async (aquaTrees: AquaTree[], address: string) => {
-      //       for (let index = 0; index < aquaTrees.length; index++) {
-      //             const aquaTree = aquaTrees[index]
-
-      //             try {
-      //                   // Use reorderRevisionsInAquaTree to get properly ordered hashes
-      //                   const orderedHashes = reorderRevisionsInAquaTree(aquaTree)
-      //                   const lastHash = orderedHashes[orderedHashes.length - 1]
-      //                   const lastRevision = aquaTree.revisions[lastHash]
-
-      //                   const url = `${backend_url}/tree/user`
-      //                   const actualUrlToFetch = ensureDomainUrlHasSSL(url)
-
-      //                   const response = await apiClient.post(
-      //                         actualUrlToFetch,
-      //                         {
-      //                               revision: lastRevision,
-      //                               revisionHash: lastHash,
-      //                               address: address,
-      //                               originAddress: session?.address,
-      //                               isWorkflow: true,
-      //                               templateId: null,
-      //                         },
-      //                         {
-      //                               headers: {
-      //                                     nonce: session?.nonce,
-      //                               },
-      //                         }
-      //                   )
-
-      //                   if (response.status === 200 || response.status === 201) {
-      //                         // todo a method to notify the other user should go here
-      //                   }
-      //             } catch (error) {
-      //                   console.error(`Error saving revision ${index + 1}:`, error)
-      //                   throw new Error(`Error saving revision ${index + 1} to server`)
-      //             }
-      //       }
-      // }
-
-      // New bulk revision saving for other users using /tree/user/all endpoint
-      const saveAllRevisionsToServerForUser = async (aquaTrees: AquaTree[], address: string) => {
-            try {
-                  // Collect all revisions from all aqua trees with their processing order
-                  const revisions: { revision: any, revisionHash: string, index: number }[] = []
-
-                  for (let i = 0; i < aquaTrees.length; i++) {
-                        const aquaTree = aquaTrees[i]
-                        const orderedHashes = reorderRevisionsInAquaTree(aquaTree)
-                        const lastHash = orderedHashes[orderedHashes.length - 1]
-                        const lastRevision = aquaTree.revisions[lastHash]
-
-                        revisions.push({
-                              revision: lastRevision,
-                              revisionHash: lastHash,
-                              index: i  // Preserve the order from the input array
-                        })
-                  }
-
-                  const url = `${backend_url}/tree/user/all`
-                  const actualUrlToFetch = ensureDomainUrlHasSSL(url)
-
-                  await apiClient.post(
-                        actualUrlToFetch,
-                        {
-                              revisions: revisions,
-                              address: address,
-                              originAddress: session?.address,
-                              isWorkflow: true
-                        },
-                        {
-                              headers: {
-                                    nonce: session?.nonce,
-                              },
-                              reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files, RELOAD_KEYS.aqua_sign],
-                        }
-                  )
-
-
-            } catch (error) {
-                  console.error(`Error saving all revisions for user ${address}:`, error)
-                  // Don't throw error to avoid breaking the flow if one user fails, just log it
-
-            }
-      }
-
-      // Helper function to show error messages
-      const showError = (message: string) => {
-            toast.error(message)
-      }
-
-      // Helper function to create signature form data
-      const createSignatureFormData = (signaturePosition: SignatureData[]) => {
-            const signForm: { [key: string]: string | number } = {}
-
-            signaturePosition.forEach((signaturePositionItem, index) => {
-                  const pageIndex = signaturePositionItem.page
-                  signForm[`x_${index}`] = Number(signaturePositionItem.x.toFixed(14))
-                  signForm[`y_${index}`] = Number(signaturePositionItem.y.toFixed(14))
-                  signForm[`page_${index}`] = pageIndex.toString()
-                  signForm[`width_${index}`] = signaturePositionItem.width.toString()
-                  signForm[`height_${index}`] = signaturePositionItem.height.toString()
-                  signForm[`scale_${index}`] = (signaturePositionItem.scale ?? 1).toString()
-            })
-
-            return signForm
-      }
-
-      // Helper function to create user signature aqua tree
-      const createUserSignatureAquaTree = async (aquafier: Aquafier, signForm: any) => {
-            const jsonString = JSON.stringify(signForm, null, 2)
-            const estimateSize = estimateFileSize(jsonString)
-
-            const randomNumber = getRandomNumber(100, 1000)
-            const lastFourChar = session?.address.substring(session?.address.length - 4)
-            const fileObjectUserSignature: FileObject = {
-                  fileContent: jsonString,
-                  fileName: `user_signature_data_${lastFourChar}_${randomNumber}.json`,
-                  path: './',
-                  fileSize: estimateSize,
-            }
-
-            const userSignatureDataAquaTree = await aquafier.createGenesisRevision(fileObjectUserSignature, true, false, false)
-
-            if (userSignatureDataAquaTree.isErr()) {
-                  showError('Signature data creation failed')
-                  return null
-            }
-            // console.log("--User signature aqua tree: ", JSON.stringify(userSignatureDataAquaTree.data.aquaTree, null, 4))
-            // console.log("User signature file object: ", JSON.stringify(fileObjectUserSignature, null, 4))
-
-            // Save to server
-            await saveAquaTree(userSignatureDataAquaTree.data.aquaTree!, fileObjectUserSignature, true, '')
-
-            return {
-                  aquaTree: userSignatureDataAquaTree.data.aquaTree!,
-                  fileObject: fileObjectUserSignature,
-            }
-      }
-
-      // Helper function to link main document with signature data
-      const linkMainDocumentWithSignatureData = async (aquafier: Aquafier, userSignatureData: any) => {
-            const sigFileObject = getAquaTreeFileObject(selectedFileInfo!) ?? selectedFileInfo?.fileObject[0]
-
-            const aquaTreeWrapper: AquaTreeWrapper = {
-                  aquaTree: selectedFileInfo!.aquaTree!,
-                  revision: '',
-                  fileObject: sigFileObject,
-            }
-
-            const userSignatureDataAquaTreeWrapper: AquaTreeWrapper = {
-                  aquaTree: userSignatureData.aquaTree,
-                  revision: '',
-                  fileObject: userSignatureData.fileObject,
-            }
-
-            const resLinkedAquaTreeWithUserSignatureData = await aquafier.linkAquaTree(aquaTreeWrapper, userSignatureDataAquaTreeWrapper)
-
-            if (resLinkedAquaTreeWithUserSignatureData.isErr()) {
-                  showError('Signature data not appended to main tree successfully')
-                  return null
-            }
-
-            return resLinkedAquaTreeWithUserSignatureData.data.aquaTree!
-      }
-
-      // Helper function to link signature tree to document
-      const linkSignatureTreeToDocument = async (aquafier: Aquafier, linkedAquaTree: any) => {
-            const linkedAquaTreeWrapper: AquaTreeWrapper = {
-                  aquaTree: linkedAquaTree,
-                  revision: '',
-                  fileObject: getAquaTreeFileObject(selectedFileInfo!) ?? selectedFileInfo?.fileObject[0],
-            }
-
-            if (selectedSignatureId == null) {
-                  throw Error(`selected signature id is null `)
-            }
-            // const signatureFileObject = getAquaTreeFileObject(signatureInfo) ?? signatureInfo.fileObject[0];
-            let sigData: ApiFileInfo | undefined = undefined
-
-            for (const e of mySignaturesAquaTree) {
-                  const allHashes = Object.keys(e.aquaTree?.revisions ?? {})
-                  if (allHashes.includes(selectedSignatureId)) {
-                        sigData = e
-                        break
-                  }
-            }
-
-            if (sigData == undefined) {
-                  throw Error(`signature api data not found `)
-            }
-
-            // let genHa
-            const signatureAquaTreeWrapper: AquaTreeWrapper = {
-                  aquaTree: sigData.aquaTree!,
-                  revision: '',
-                  fileObject: getAquaTreeFileObject(sigData),
-            }
-
-            const resLinkedAquaTree = await aquafier.linkAquaTree(linkedAquaTreeWrapper, signatureAquaTreeWrapper)
-
-            if (resLinkedAquaTree.isErr()) {
-                  showError('Signature tree not appended to main tree successfully')
-                  return null
-            }
-
-            return resLinkedAquaTree.data.aquaTree!
-      }
-
-      // Helper function to sign with MetaMask
-      const signWithMetaMask = async (aquafier: Aquafier, aquaTree: AquaTree) => {
-
-            if (webConfig.AUTH_PROVIDER == "metamask") {
-                  const signatureFileObject = getAquaTreeFileObject(selectedFileInfo!) ?? selectedFileInfo?.fileObject[0]
-                  //getAquaTreeFileObject(aquaTree) ?? signAquaTree[0].fileObject[0];
-
-                  const aquaTreeWrapper: AquaTreeWrapper = {
-                        aquaTree: aquaTree,
-                        revision: '',
-                        fileObject: signatureFileObject,
-                  }
-
-                  const resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
-
-                  if (resLinkedMetaMaskSignedAquaTree.isErr()) {
-                        showError('MetaMask signature not appended to main tree successfully')
-                        return null
-                  }
-
-                  return resLinkedMetaMaskSignedAquaTree.data.aquaTree!
-            } else {
-
-                  const signatureFileObject = getAquaTreeFileObject(selectedFileInfo!) ?? selectedFileInfo?.fileObject[0]
-                  //getAquaTreeFileObject(aquaTree) ?? signAquaTree[0].fileObject[0];
-
-                  const aquaTreeWrapper: AquaTreeWrapper = {
-                        aquaTree: aquaTree,
-                        revision: '',
-                        fileObject: signatureFileObject,
-                  }
-
-                  // const resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
-
-                  const targetRevisionHash = getLastRevisionVerificationHash(aquaTree)
-                  const messageToSign = `I sign this revision: [${targetRevisionHash}]`
-                  const { signature, signerAddress } = await signMessageWithAppKit(messageToSign, session?.address!)
-
-                  const resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrapper, 'inline', dummyCredential(), true, undefined, {
-                        signature,
-                        walletAddress: signerAddress,
-                  })
-
-                  if (resLinkedMetaMaskSignedAquaTree.isErr()) {
-                        showError('MetaMask signature not appended to main tree successfully')
-                        return null
-                  }
-
-                  return resLinkedMetaMaskSignedAquaTree.data.aquaTree!
-            }
-
-      }
-
-      const shareRevisionsToOwnerAnOtherSignersOfDocument = async (aquaTrees: AquaTree[]) => {
-            //get genesis hash
-            const genesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
-
-            if (genesisHash) {
-                  const revision = selectedFileInfo!.aquaTree!.revisions[genesisHash]
-                  const sender: string | undefined = revision['forms_sender']
-                  const signers: string | undefined = revision['forms_signers']
-
-                  console.log(`Sharing revisions to other signers       ... sender ${sender}  signers ${signers} `)
-                  if (sender == undefined) {
-                        showError('Workflow sender not found')
-                        return
-                  }
-
-                  if (signers == undefined) {
-                        showError('Workflow signers not found')
-                        return
-                  }
-
-                  if (sender == signers) {
-                        console.log("Only sender involved, no need to share revisions")
-                        return
-                  }
-
-                  if (signers.includes(',')) {
-                        const allSigners: string[] = signers.split(',')
-
-                        for (const aSigner of allSigners) {
-                              // dont resend the revision to the user as this was handled before this function call
-                              if (aSigner != sender) {
-                                    await saveAllRevisionsToServerForUser(aquaTrees, aSigner)
-
-                                    triggerWebsockets(aSigner, {
-                                          target: "aqua_sign_workflow",
-                                          genesisHash: genesisHash,
-                                    })
-
-                              }
-                        }
-                  } else {
-                        // single signer case
-                        // if sigle signer is not the session user, remeber the session user has already been handled in /tree/all call
-                        if (signers != session?.address) {
-                              // only one signer
-                              await saveAllRevisionsToServerForUser(aquaTrees, signers)
-
-                              triggerWebsockets(signers, {
-                                    target: "aqua_sign_workflow",
-                                    genesisHash: genesisHash,
-                              })
-                        }
-                  }
-
-
-
-                  // sender could be another user too
-                  //  if (sender is not the session user, remember the session user has already been handled in /tree/all call)
-
-                  //send the signatures to workflow creator
-                  await saveAllRevisionsToServerForUser(aquaTrees, sender)
-
-                  // send notification to workflow creator
-                  //refetch the workflow
-                  triggerWebsockets(sender, {
-                        target: "aqua_sign_workflow",
-                        genesisHash: genesisHash,
-                  })
-            }
-      }
-
-      // Function to create a notification for contract signing
-      const createSigningNotification = async (senderAddress: string, receiverAddress: string, genesisHash: string) => {
-            try {
-                  // Don't create notification if sender and receiver are the same
-                  if (senderAddress === receiverAddress) {
-                        return
-                  }
-
-                  const url = `${backend_url}${API_ENDPOINTS.NOTIFICATIONS}`
-                  const actualUrlToFetch = ensureDomainUrlHasSSL(url)
-
-                  await apiClient.post(
-                        actualUrlToFetch,
-                        {
-                              receiver: receiverAddress,
-                              content: `Has signed the shared contract`,
-                        },
-                        {
-                              headers: {
-                                    'Content-Type': 'application/json',
-                                    nonce: session?.nonce,
-                              },
-                        }
-                  )
-
-                  const url2 = `${backend_url}${API_ENDPOINTS.NOTIFICATIONS_AQUA_SIGN}/${receiverAddress}`
-                  const actualUrlToFetch2 = ensureDomainUrlHasSSL(url2)
-
-                  await apiClient.post(
-                        actualUrlToFetch2,
-                        {
-                              receiver: receiverAddress,
-                              // content: `refetch aqua sign workflow with genesis hash ${getGenesisHash(selectedFileInfo!.aquaTree!)}`,
-                              content: {
-                                    target: "reload_aqua_sign",
-                                    genesisHash: genesisHash
-                              },
-                        },
-                        {
-                              headers: {
-                                    'Content-Type': 'application/json',
-                                    nonce: session?.nonce,
-                              },
-                        }
-                  )
-
-            } catch (error) {
-                  console.error('Error creating signing notification:', error)
-                  // Don't show error to user as this is not critical functionality
-            }
-      }
-
-      // Old individual revision saving - kept for reference
-      // const saveRevisionsToServer = async (aquaTrees: AquaTree[]) => {
-      //       let newApiFileInfo: ApiFileInfo = structuredClone(selectedFileInfo)
-      //       for (let index = 0; index < aquaTrees.length; index++) {
-      //             const aquaTree = aquaTrees[index]
-      //             try {
-      //                   const orderedHashes = reorderRevisionsInAquaTree(aquaTree)
-      //                   const lastHash = orderedHashes[orderedHashes.length - 1]
-      //                   const lastRevision = aquaTree.revisions[lastHash]
-
-      //                   const url = `${backend_url}/tree`
-      //                   const actualUrlToFetch = ensureDomainUrlHasSSL(url)
-
-      //                   let apiResponse = await apiClient.post(
-      //                         actualUrlToFetch,
-      //                         {
-      //                               revision: lastRevision,
-      //                               revisionHash: lastHash,
-      //                               originAddress: session?.address,
-      //                         },
-      //                         {
-      //                               headers: {
-      //                                     nonce: session?.nonce,
-      //                               },
-      //                         }
-      //                   )
-
-      //                   let hasUpdate = false
-      //                   if (index == aquaTrees.length - 1) {
-      //                         if (apiResponse.data.data) {
-      //                               let genHashOfApiFileInf = getGenesisHash(selectedFileInfo!.aquaTree!)
-      //                               let userAquaTrees: ApiFileInfo[] = apiResponse.data.data.data
-      //                               for (const userAquaTree of userAquaTrees) {
-      //                                     let currentGenHash = getGenesisHash(userAquaTree.aquaTree!)
-      //                                     if (currentGenHash == genHashOfApiFileInf) {
-      //                                           newApiFileInfo.aquaTree = userAquaTree.aquaTree
-      //                                           newApiFileInfo.fileObject = userAquaTree.fileObject
-      //                                           hasUpdate = true
-      //                                           break
-      //                                     }
-      //                               }
-      //                         }
-      //                   }
-
-      //                   if (hasUpdate) {
-      //                         setSelectedFileInfo(newApiFileInfo)
-      //                         setActiveStep(1)
-      //                         toast.success("Document signed successfully")
-      //                   }
-      //             } catch (error) {
-      //                   console.error(`Error saving revision ${index + 1}:`, error)
-      //                   throw new Error(`Error saving revision ${index + 1} to server`)
-      //             }
-      //       }
-      // }
-
-      // New bulk revision saving using /tree/all endpoint
-      const saveAllRevisionsToServer = async (aquaTrees: AquaTree[]) => {
-            try {
-                  // Collect all revisions from all aqua trees with their processing order
-                  const revisions: { revision: any, revisionHash: string, index: number }[] = []
-
-                  for (let i = 0; i < aquaTrees.length; i++) {
-                        const aquaTree = aquaTrees[i]
-                        const orderedHashes = reorderRevisionsInAquaTree(aquaTree)
-                        const lastHash = orderedHashes[orderedHashes.length - 1]
-                        const lastRevision = aquaTree.revisions[lastHash]
-
-                        revisions.push({
-                              revision: lastRevision,
-                              revisionHash: lastHash,
-                              index: i  // Preserve the order from the input array
-                        })
-                  }
-
-                  const url = `${backend_url}/tree/all`
-                  const actualUrlToFetch = ensureDomainUrlHasSSL(url)
-
-                  await apiClient.post(
-                        actualUrlToFetch,
-                        {
-                              revisions: revisions,
-                              originAddress: session?.address,
-                              isWorkflow: true
-                        },
-                        {
-                              headers: {
-                                    nonce: session?.nonce,
-                              },
-                              reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files, RELOAD_KEYS.aqua_sign],
-                        }
-                  )
-
-
-                  // if (apiResponse.data.data) {
-                  //       const genHashOfApiFileInf = getGenesisHash(selectedFileInfo!.aquaTree!)
-                  //       console.log("genHashOfApiFileInf", genHashOfApiFileInf)
-                  //       console.log("selectedFileInfo ", JSON.stringify(selectedFileInfo, null,2))
-                  //       const userAquaTrees: ApiFileInfo[] = apiResponse.data.data.data
-                  //       console.log("apiResponse.data.data.data", JSON.stringify(apiResponse.data.data.data, null,2))
-
-                  //       let hasBeenFound = false;
-                  //       for (const userAquaTree of userAquaTrees) {
-                  //             const currentGenHash = getGenesisHash(userAquaTree.aquaTree!)
-                  //             console.log("currentGenHash", currentGenHash)
-                  //             console.log("userAquaTree ", JSON.stringify(userAquaTree, null,2))
-                  //             if (currentGenHash == genHashOfApiFileInf) {
-                  // const newApiFileInfo: ApiFileInfo = structuredClone(selectedFileInfo)
-                  // newApiFileInfo.aquaTree = userAquaTree.aquaTree
-                  // newApiFileInfo.fileObject = userAquaTree.fileObject
-                  // setSelectedFileInfo(newApiFileInfo)
-                  // setActiveStep(1)
-                  // toast.success("Document signed successfully")
-                  //                   hasBeenFound = true;
-                  //                   break
-                  //             }
-                  //       }
-                  //       if (!hasBeenFound) {    
-                  //             console.error('Signed document not found in server response..')
-                  //             toast.error("Error saving signed document, please reload..")
-                  //       }
-                  // }else{
-                  //       console.error('No data returned from saveAllRevisionsToServer API')
-                  //       toast.error("Error saving signed document, please reload")
-                  // }
-
-            } catch (error) {
-                  console.error('Error saving all revisions:', error)
-                  throw new Error('Error saving all revisions to server')
-            }
-      }
-
-      const updateSelectedFileInfo = async () => {
-            try {
-                  // Get ordered revision hashes from genesis to latest
-                  const orderedRevisionHashes = reorderRevisionsInAquaTree(selectedFileInfo!.aquaTree!)
-
-                  const url = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`)
-                  const res = await apiClient.post(url, {
-                        revisionHashes: orderedRevisionHashes
-                  }, {
-                        headers: {
-                              'Content-Type': 'application/json',
-                              nonce: session?.nonce,
-                        },
-                  })
-                  if (res.status === 200) {
-                        // setExistingChainFile(res.data.data)
-                        // setHasFetchedanyExistingChain(true)
-                        const incomingAquaTree = res.data.data
-                        const incomingGenesisHash = getGenesisHash(incomingAquaTree.aquaTree)
-                        const selectedFileGenesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
-
-                        if (incomingGenesisHash === selectedFileGenesisHash) {
-                              // console.log("TODO: Document signed successfully")
-                              // console.log("TODO: incomingAquaTree", JSON.stringify(incomingAquaTree, null,2))
-                              setSelectedFileInfo(incomingAquaTree)
-                              setActiveStep(1)
-                              // toast.success("Document signed successfully")
-                        }
-
-
-                  }
-            } catch (error) {
-                  console.error('Failed to load existing chain file:', error)
-                  // setHasFetchedanyExistingChain(true)
-            } finally {
-                  // setUploading(false)
-            }
-      }
+      // --- Extracted hooks ---
+
+      const {
+            signers,
+            allSignersBeforeMe,
+            mySignaturesAquaTree,
+            mySignatureData,
+            selectedSignatureId,
+            setSelectedSignatureId,
+            pdfFile,
+      } = useSignatureManagement({
+            selectedFileInfo,
+            fileData,
+      })
+
+      usePdfDragDrop({
+            pdfMainContainerRef,
+            setSignaturePositions,
+      })
+
+      const {
+            handleSignatureSubmission,
+            updateSelectedFileInfo,
+      } = useSignatureSubmission({
+            selectedFileInfo,
+            selectedSignatureId,
+            mySignaturesAquaTree,
+            setActiveStep,
+            setSubmittingSignatureData,
+            setSigningComplete,
+            triggerWebsockets,
+      })
 
       // Keep the ref in sync so the subscription callback always calls the latest version
       updateSelectedFileInfoRef.current = updateSelectedFileInfo
 
-      // Helper function to update UI after success
-      const updateUIAfterSuccess = async () => {
-            try {
-
-                  updateSelectedFileInfo()
-
-
-            } catch (error) {
-                  toast.error(`An error occurred, refresh this tab to see the updated document.`)
-                  console.error("Error updating selected file info after signing: ", error)
-
-                  // setTimeout(() => {
-                  //       window.location.reload()
-                  // }, 150)
-                  // navigate('/')
-            }
-      }
-
-      const submitSignatureData = async (signaturePosition: SignatureData[]) => {
-            setSubmittingSignatureData(true)
-            // console.log("Submitting signature data with positions: ", JSON.stringify(signaturePosition, null, 4))
-            // throw Error("Test error in submitSignatureData")
-            try {
-                  const aquafier = new Aquafier()
-
-                  // Step 1: Create signature form data
-                  const signForm = createSignatureFormData(signaturePosition)
-
-                  // Step 2: Create user signature data aqua tree
-                  const userSignatureDataAquaTree = await createUserSignatureAquaTree(aquafier, signForm)
-                  if (!userSignatureDataAquaTree) return
-
-                  // Step 3: Link main document with user signature data
-                  const linkedAquaTreeWithUserSignatureData = await linkMainDocumentWithSignatureData(aquafier, userSignatureDataAquaTree)
-                  if (!linkedAquaTreeWithUserSignatureData) return
-
-                  // Step 4: Link signature tree with the document
-                  const linkedAquaTreeWithSignature = await linkSignatureTreeToDocument(aquafier, linkedAquaTreeWithUserSignatureData)
-                  if (!linkedAquaTreeWithSignature) return
-
-                  // Step 5: Sign with MetaMask
-                  const metaMaskSignedAquaTree = await signWithMetaMask(aquafier, structuredClone(linkedAquaTreeWithSignature))
-                  if (!metaMaskSignedAquaTree) return
-
-                  // Step 6: Save all revisions to server in a single request (bulk save)
-                  await saveAllRevisionsToServer([linkedAquaTreeWithUserSignatureData, linkedAquaTreeWithSignature, metaMaskSignedAquaTree])
-
-                  // Step 7: Share revisions to owner and other signers (uses bulk endpoint)
-                  await shareRevisionsToOwnerAnOtherSignersOfDocument([linkedAquaTreeWithUserSignatureData, linkedAquaTreeWithSignature, metaMaskSignedAquaTree])
-
-
-                  // Step 8: Create notification for the contract sender
-                  // setTimeout(async () => {
-
-                  // Get the genesis hash to find the contract sender
-                  const genesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
-                  if (genesisHash) {
-                        const revision = selectedFileInfo!.aquaTree!.revisions[genesisHash]
-                        const sender = revision['forms_sender']
-
-                        // Notify the document sender that the current user has signed
-                        if (sender && session?.address && sender !== session.address) {
-                              await createSigningNotification(session.address, sender, genesisHash)
-                        }
-
-                        let signersString = revision['forms_signers']
-                        let signers: string[] = [];
-                        if (signersString.includes(',')) {
-                              signers = signersString.split(',')
-                        } else {
-                              signers.push(signersString)
-                        }
-
-                        for (const wallet of signers) {
-
-                              if (wallet.toLowerCase() !== sender.toLowerCase() && wallet.toLowerCase() !== session?.address.toLowerCase()) {
-                                    await createSigningNotification(session!.address, wallet, genesisHash)
-                              }
-                        }
-
-                  }
-
-                  // }, 3000)
-
-                  // Step 9: Update UI and refresh files
-                  await updateUIAfterSuccess()
-
-                  // Step 10: Hide signing sidebar
-                  setSigningComplete(true)
-
-            } catch (error) {
-                  console.error('Error in submitSignatureData:', error)
-                  showError('An unexpected error occurred during signature submission')
-            } finally {
-                  setSubmittingSignatureData(false)
-            }
-      }
-
-      const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isWorkflow: boolean = false, template_id: string): Promise<boolean> => {
-            try {
-                  // Create a FormData object to send multipart data
-                  const formData = new FormData()
-
-                  // Add the aquaTree as a JSON file
-                  const aquaTreeBlob = new Blob([JSON.stringify(aquaTree)], {
-                        type: 'application/json',
-                  })
-                  formData.append('file', aquaTreeBlob, fileObject.fileName)
-
-                  // Add the account from the session
-                  formData.append('account', session?.address || '')
-                  formData.append('is_workflow', `${isWorkflow}`)
-
-                  //workflow specifi
-
-                  formData.append('template_id', template_id)
-
-                  // Check if we have an actual file to upload as an asset
-                  if (fileObject.fileContent) {
-                        // Set has_asset to true
-                        formData.append('has_asset', 'true')
-
-                        // FIXED: Properly handle the file content as binary data
-                        // If fileContent is already a Blob or File object, use it directly
-                        if (fileObject.fileContent instanceof Blob || fileObject.fileContent instanceof File) {
-                              formData.append('asset', fileObject.fileContent, fileObject.fileName)
-                        }
-                        // If it's an ArrayBuffer or similar binary data
-                        else if (fileObject.fileContent instanceof ArrayBuffer || fileObject.fileContent instanceof Uint8Array) {
-                              const fileBlob = new Blob([fileObject.fileContent as any], {
-                                    type: 'application/octet-stream',
-                              })
-                              formData.append('asset', fileBlob, fileObject.fileName)
-                        }
-                        // If it's a base64 string (common for image data)
-                        else if (typeof fileObject.fileContent === 'string' && fileObject.fileContent.startsWith('data:')) {
-                              // Convert base64 to blob
-                              const response = await fetch(fileObject.fileContent)
-                              const blob = await response.blob()
-                              formData.append('asset', blob, fileObject.fileName)
-                        }
-                        // Fallback for other string formats (not recommended for binary files)
-                        else if (typeof fileObject.fileContent === 'string') {
-                              const fileBlob = new Blob([fileObject.fileContent], {
-                                    type: 'text/plain',
-                              })
-                              formData.append('asset', fileBlob, fileObject.fileName)
-                        }
-                        // If it's something else (like an object), stringify it (not recommended for files)
-                        else {
-                              console.warn('Warning: fileContent is not in an optimal format for file upload')
-                              const fileBlob = new Blob([JSON.stringify(fileObject.fileContent)], {
-                                    type: 'application/json',
-                              })
-                              formData.append('asset', fileBlob, fileObject.fileName)
-                        }
-                  } else {
-                        formData.append('has_asset', 'false')
-                  }
-
-                  const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_aqua_file_upload`)
-                  await apiClient.post(url, formData, {
-                        headers: {
-                              nonce: session?.nonce,
-                              // Don't set Content-Type header - axios will set it automatically with the correct boundary
-                        },
-                        reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files, RELOAD_KEYS.aqua_sign],
-                  })
-
-
-                  return true
-            } catch (error) {
-                  toast.error('Error uploading aqua tree', {
-                        description: error instanceof Error ? error.message : 'Unknown error',
-                        duration: 5000,
-                  })
-
-                  return false
-            }
-      }
-
-      // Handle signature dragging
-      const [activeDragId, setActiveDragId] = useState<string | null>(null)
-      const [isDragging, setIsDragging] = useState(false)
-
-      // Helper function to get position from either mouse or touch event
-      const getEventPosition = (e: MouseEvent | TouchEvent) => {
-            // Touch event
-            if ('touches' in e && e.touches.length > 0) {
-                  return {
-                        clientX: e.touches[0].clientX,
-                        clientY: e.touches[0].clientY,
-                  }
-            }
-            // Mouse event
-            return {
-                  clientX: (e as MouseEvent).clientX,
-                  clientY: (e as MouseEvent).clientY,
-            }
-      }
-
-      const handleDragMove = (e: MouseEvent | TouchEvent) => {
-            if (!isDragging || !activeDragId || !pdfMainContainerRef.current) return
-
-            e.preventDefault()
-
-            // Get the PDF container dimensions
-            const rect = pdfMainContainerRef.current.getBoundingClientRect()
-
-            // Find the actual PDF element within the container
-            const pdfElement = pdfMainContainerRef.current.querySelector('.react-pdf__Page')
-            const pdfRect = pdfElement ? pdfElement.getBoundingClientRect() : rect
-
-            // Get position from either mouse or touch event
-            const { clientX, clientY } = getEventPosition(e)
-
-            // Calculate position relative to the PDF element, not the container
-            const x = clientX - pdfRect.left
-            const y = clientY - pdfRect.top
-
-            // Calculate relative position (0-1) for PDF coordinates
-            const relativeX = x / pdfRect.width
-            const relativeY = 1 - y / pdfRect.height // Invert Y for PDF coordinates
-
-            setSignaturePositions(prev =>
-                  prev.map(pos => {
-                        if (pos.id === activeDragId) {
-                              return {
-                                    ...pos,
-                                    x: relativeX,
-                                    y: relativeY,
-                                    isDragging: true,
-                              }
-                        }
-                        return pos
-                  })
-            )
-      }
-
-      const handleDragEnd = () => {
-            if (!isDragging) return
-
-            setSignaturePositions(prev =>
-                  prev.map(pos => ({
-                        ...pos,
-                        isDragging: false,
-                  }))
-            )
-
-            setActiveDragId(null)
-            setIsDragging(false)
-
-            toast.success('Signature position updated', {
-                  duration: 2000,
+      // Subscribe to websocket notifications
+      useEffect(() => {
+            subscribe((message) => {
+                  console.log("Notification received: ", message)
+                  updateSelectedFileInfoRef.current()
             })
-      }
+            // #FIX: disabled cleanup function since it was causing chaos
+            // return unsubscribe;
+      }, [subscribe])
 
-      // Component for signature display on PDF
-      // const handlePageChange = (pageNumber: number, _totalPages: number) => {
-      //     setCurrentPage(pageNumber);
-      // };
-
-      const loadUserSignatures = async (selectSignature: boolean = false) => {
-            if (backend_url == 'http://0.0.0.0:0' || backend_url == 'https://0.0.0.0:0') {
-                  return
-            }
-            if (session?.address == undefined || session?.address == '') {
-                  return
+      // Resize handler to force re-render of signature positions
+      useEffect(() => {
+            const handleResize = () => {
+                  setSignaturePositions(prev => [...prev])
             }
 
-            // proceed as url and session is set
-            // const url = `${backend_url}/tree/user_signatures`
-            const url = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`)
-            try {
-                  const params = {
-                        page: 1,
-                        limit: 200,
-                        claim_types: JSON.stringify(["user_signature"]),
-                        wallet_address: session?.address,
-                  };
-                  const signaturesQuery = await apiClient.get(url, {
-                        headers: {
-                              nonce: session?.nonce,
-                        },
-                        params
-                  })
+            window.addEventListener('resize', handleResize)
+            return () => window.removeEventListener('resize', handleResize)
+      }, [])
 
-                  const response = signaturesQuery.data;
-                  const signatureAquaTrees = response.aquaTrees;
-
-                  const userSignaturesApiInfo: Array<ApiFileInfo> = signatureAquaTrees//response.data.data
-                  // Make the logic here work with the current Signature Interface
-
-                  setMySignaturesAquaTree(userSignaturesApiInfo)
-
-                  const apiSigntures: SignatureData[] = []
-                  // first revision should be a form
-                  // second revision is a link to signature aqua tree template
-                  // third revision should  be link to sinature image
-                  // fourth revision is a signature
-                  for (const userSignature of userSignaturesApiInfo) {
-                        // all hashes
-                        const allHashes = Object.keys(userSignature.aquaTree!.revisions!)
-
-                        const firstRevision = userSignature.aquaTree?.revisions[allHashes[0]]
-                        if (!firstRevision) {
-                              continue
-                        }
-                        if (!firstRevision.forms_wallet_address) {
-                              continue
-                        }
-                        if (!firstRevision.forms_name) {
-                              continue
-                        }
-                        const sinatureAquaTreeName = userSignature.aquaTree?.file_index[allHashes[0]]
-                        if (!sinatureAquaTreeName) {
-                              continue
-                        }
-                        const thirdRevision = userSignature.aquaTree?.revisions[allHashes[2]]
-                        if (!thirdRevision) {
-                              continue
-                        }
-                        if (!thirdRevision.link_verification_hashes) {
-                              continue
-                        }
-                        const signatureHash = thirdRevision.link_verification_hashes[0]
-                        const signatureImageName = userSignature.aquaTree?.file_index[signatureHash]
-                        if (!signatureImageName) {
-                              continue
-                        }
-
-                        const signatureImageObject = userSignature.fileObject.find(e => e.fileName == signatureImageName)
-                        if (!signatureImageObject) {
-                              continue
-                        }
-
-                        const forthRevision = userSignature.aquaTree?.revisions[allHashes[4]]
-                        if (!thirdRevision) {
-                              continue
-                        }
-
-                        // Check ownership: for smart account wallets (social login), signature_wallet_address
-                        // is the EOA signer, not the smart account. Fall back to forms_wallet_address.
-                        const isOwner = forthRevision?.signature_wallet_address === session.address
-                              || firstRevision.forms_wallet_address === session.address
-                        if (!isOwner) {
-                              continue
-                        }
-
-                        const fileContentUrl = signatureImageObject.fileContent
-
-                        if (typeof fileContentUrl === 'string' && fileContentUrl.startsWith('http')) {
-                              let url = ensureDomainUrlHasSSL(fileContentUrl)
-                              let dataUrl = await fetchImage(url, `${session?.nonce}`)
-
-                              if (!dataUrl) {
-                                    dataUrl = `${window.location.origin}/images/placeholder-img.png`
-                              }
-                              // Add to signature
-                              const sign: SignatureData = {
-                                    type: 'signature',
-                                    id: crypto.randomUUID(),
-                                    hash: getGenesisHash(userSignature.aquaTree!) ?? 'err2',
-                                    name: firstRevision.forms_name,
-                                    walletAddress: firstRevision.forms_wallet_address,
-                                    dataUrl: dataUrl,
-                                    createdAt: timeStampToDateObject(firstRevision.local_timestamp) ?? new Date(),
-                                    page: 0, // Default to 0, will be updated when placed
-                                    x: 0, // Default to 0, will be updated when placeholder
-                                    y: 0, // Default to 0, will be updated when placeholder
-                                    width: 100, // Default width, will be updated when placed
-                                    height: 120, // Default height, will be updated when placed
-                                    isDragging: false, // Default to false, will be updated when dragging
-                                    signatureId: signatureHash, // Use the signature hash as the ID
-                                    rotation: 0,
-                                    imageWidth: 100,
-                                    imageHeight: 150,
-                                    imageAlt: 'No image found',
-                              }
-                              apiSigntures.push(sign)
-                        }
-                  }
-                  // Update mySignatureData with the fetched signatures
-                  setMySignatureData(apiSigntures)
-
-                  if (selectSignature) {
-                        let latestObject: SignatureData | null = null
-                        let latestTimestamp: Date | null = null
-                        if (apiSigntures.length > 0) {
-                              for (const obj of apiSigntures) {
-                                    if (latestTimestamp == null) {
-                                          latestTimestamp = obj.createdAt
-                                          latestObject = obj
-                                    } else {
-                                          if (obj.createdAt > latestTimestamp) {
-                                                latestTimestamp = obj.createdAt
-                                                latestObject = obj
-                                          }
-                                    }
-                              }
-                        }
-
-                        if (latestObject != null) {
-                              setSelectedSignatureId(latestObject.hash)
-                        }
-                  }
-            } catch (e) {
+      // Lift sidebar content to parent via callback
+      useEffect(() => {
+            if (onSidebarReady) {
+                  onSidebarReady(signingComplete ? null : (
+                        <SignatureSidebar
+                              signers={signers}
+                              allSignersBeforeMe={allSignersBeforeMe}
+                              mySignaturesAquaTree={mySignaturesAquaTree}
+                              mySignatureData={mySignatureData}
+                              selectedSignatureId={selectedSignatureId}
+                              canPlaceSignature={canPlaceSignature}
+                              signaturePositions={signaturePositions}
+                              submittingSignatureData={submittingSignatureData}
+                              setSelectedTool={setSelectedTool}
+                              setCanPlaceSignature={setCanPlaceSignature}
+                              setSignaturePositions={setSignaturePositions}
+                              handleSignatureSubmission={async () => {
+                                    await handleSignatureSubmission(signaturePositions)
+                              }}
+                        />
+                  ))
             }
-      }
+      }, [signers, mySignaturesAquaTree, selectedSignatureId, canPlaceSignature, signaturePositions, submittingSignatureData, documentSignatures, allSignersBeforeMe, mySignatureData, openDialog, signingComplete])
 
-      // const renderProfileAnnotationEditor = (_anno: SignatureData) => {
-      const renderProfileAnnotationEditor = () => {
-            {
-                  /* Signatures placed on document */
-            }
-            return (
-                  <>
-                        {signaturePositions.length > 0 && (
-                              <>
-                                    {/* Signatures on Document section */}
-                                    <div className="max-h-[150px] overflow-y-auto border border-gray-200 rounded-md">
-                                          <div className="flex flex-col">
-                                                {signaturePositions.map(position => {
-                                                      // const signature = signaturesInDocument.find(sig => sig.id === position.signatureId);
-                                                      // if (!signature) return null;
-
-                                                      return (
-                                                            <div key={position.id} className="p-2 flex justify-between items-center">
-                                                                  <div className="flex items-center space-x-2">
-                                                                        <div
-                                                                              className="w-[40px] h-[30px] bg-contain bg-no-repeat bg-center border border-gray-200 rounded-sm"
-                                                                              style={{
-                                                                                    backgroundImage: `url(${position.dataUrl})`,
-                                                                              }}
-                                                                        />
-                                                                        <p className="text-xs">
-                                                                              {position.name} (Page {position.page})
-                                                                        </p>
-
-                                                                        <Button
-                                                                              variant="outline"
-                                                                              size="icon"
-                                                                              className="h-6 w-6 p-0"
-                                                                              onClick={e => {
-                                                                                    e.preventDefault()
-
-                                                                                    const newData: SignatureData[] = []
-                                                                                    for (const item of signaturePositions) {
-                                                                                          if (item.id != position.id) {
-                                                                                                newData.push(item)
-                                                                                          }
-                                                                                    }
-                                                                                    setSignaturePositions(newData)
-                                                                              }}
-                                                                        >
-                                                                              <LuTrash className="h-3 w-3 text-red-500" />
-                                                                        </Button>
-                                                                  </div>
-                                                            </div>
-                                                      )
-                                                })}
-                                          </div>
-                                    </div>
-                              </>
-                        )}
-                  </>
-            )
-      }
-
-      const annotationSidebar = () => {
-            return (
-                  <div className="w-full bg-card border-l rounded-xl p-4 h-full flex flex-col">
-                        <div className="space-y-2">
-                              <div className="flex items-center justify-between pb-2">
-                                    <h3 className="text-base font-medium">Signatures in Document.</h3>
-                              </div>
-                              <div>{signaturePositions.length > 0 ? <>{renderProfileAnnotationEditor()}</> : <p className="text-muted-foreground text-sm text-center py-4">No signatures yet.</p>}</div>
-                        </div>
-                  </div>
-            )
-      }
-
-      const signatureSideBar = () => {
-            const isInSinatures = signers.find(e => {
-                  const res = e.toLowerCase().trim() == session!.address.toLowerCase().trim()
-                  return res
-            })
-
-            if (signers.length == 0) {
-                  return <p className="text-sm">Signers for document workflow not found</p>
-            }
-
-            if (isInSinatures == undefined) {
-                  return (
-                        <div className="flex flex-col space-y-3">
-                              <h4 className="text-md font-medium">Signers</h4>
-                              <div className="space-y-2">
-                                    {signers.map((e) => {
-                                          return (
-                                                <div key={`address_${e}`} className="bg-background shadow-sm p-2 rounded-sm">
-                                                      <WalletAddressClaim walletAddress={e} />
-                                                </div>
-                                          )
-                                    })}
-                              </div>
-                        </div>
-                  )
-            }
-
-            if (allSignersBeforeMe.length > 0) {
-                  return (
-                        <div className="flex flex-col gap-2 p-0 border border-gray-100 dark:border-gray-800 rounded-md">
-                              <p className="text-md">The following wallet address need to sign before you can.</p>
-
-                              <div className="p-2 space-y-2">
-                                    {allSignersBeforeMe.map((e, index) => {
-                                          return (
-                                                <div key={e} className="bg-background shadow-sm p-2 rounded-sm">
-                                                      <div className="flex items-center space-x-1">
-                                                            <span className="text-xs">{index + 1}.</span>
-                                                            {/* <span className="text-xs"> {e}</span> */}
-                                                            <WalletAddressClaim walletAddress={e} />
-                                                      </div>
-                                                </div>
-                                          )
-                                    })}
-                              </div>
-                        </div>
-                  )
-            }
-
-            return (
-                  <div className="col-span-12 md:col-span-1  overflow-hidden md:overflow-auto">
-                        <div className="flex flex-col gap-4 p-4 border border-gray-100 dark:border-gray-800 rounded-md">
-                              {mySignaturesAquaTree.length === 0 && (
-                                    <Button data-testid="action-create-signature-button" className="flex items-center gap-2" onClick={() => {
-                                          // setIsOpen(true)
-                                          setOpenDialog({ dialogType: 'user_signature', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
-                                    }}>
-                                          <FaPlus className="h-4 w-4" />
-                                          Create Signature
-                                    </Button>
-                              )}
-
-                              {/* Signature List */}
-                              {mySignaturesAquaTree.length > 0 && (
-                                    <>
-                                          <div className="space-y-2">
-                                                <h4 className="font-bold mt-2">Your Signatures: </h4>
-                                                <div className="max-h-[200px] overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md">
-                                                      <div className="flex flex-col">
-                                                            {(() => {
-                                                                  // const signature = signatures.find((signature) => signature.walletAddress === session?.address);
-                                                                  const signature = mySignatureData.find(sig => sig.hash === selectedSignatureId || sig.id === selectedSignatureId)
-                                                                  if (!signature) {
-                                                                        return (
-                                                                              <div
-                                                                                    style={{
-                                                                                          whiteSpace: 'pre-wrap',
-                                                                                    }}
-                                                                              >
-                                                                                    Signature not found{' '}
-                                                                              </div>
-                                                                        )
-                                                                  }
-
-                                                                  return signature ? (
-                                                                        <div key={signature.hash} className="p-2 cursor-pointer bg-blue-50 hover:bg-gray-50">
-                                                                              <div className="flex items-center space-x-3">
-
-                                                                                    <div data-Id={signature.dataUrl}
-                                                                                          className="w-[80px] min-w-[80px] h-[40px] min-h-[40px] bg-contain bg-no-repeat bg-center border border-gray-200 rounded-sm"
-                                                                                          style={{
-                                                                                                backgroundImage: `url(${ensureDomainUrlHasSSL(signature.dataUrl)})`,
-                                                                                          }}
-                                                                                    />
-                                                                                    <div className="flex flex-col flex-1 overflow-hidden space-y-0">
-                                                                                          <p className="text-sm font-medium">{signature.name}</p>
-                                                                                          {/* <p className="text-xs text-gray-600 break-words">{signature.walletAddress ?? 'NO WALLET ADDRESS'}</p> */}
-                                                                                          <WalletAddressClaim walletAddress={signature.walletAddress} />
-                                                                                    </div>
-                                                                              </div>
-                                                                        </div>
-                                                                  ) : null
-                                                            })()}
-                                                      </div>
-                                                </div>
-                                          </div>
-                                          {/* <div className="flex flex-col">
-                                                <h4 className="font-bold mt-2">Other Signatures:</h4>
-                                                <div className="max-h-[200px] overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md">
-                                                      <div className="flex flex-col">
-                                                            {documentSignatures ? (
-                                                                  documentSignatures.map(signature => (
-                                                                        <div
-                                                                              key={signature.id}
-                                                                              className={`p-2 cursor-pointer ${selectedSignatureId === signature.id ? 'bg-blue-50' : 'bg-transparent'} hover:bg-gray-50`}
-                                                                        >
-                                                                              <div className="flex items-center space-x-3">
-                                                                                    <div
-                                                                                          className="w-[60px] h-[40px] bg-contain bg-no-repeat bg-center border border-gray-200 rounded-sm"
-                                                                                          style={{
-                                                                                                backgroundImage: `url(${signature.dataUrl})`,
-                                                                                          }}
-                                                                                    />
-                                                                                    <div className="flex flex-col space-y-0">
-                                                                                          <p className="text-sm font-medium">{signature.name}</p>
-                                                                                          
-                                                                                          <WalletAddressClaim walletAddress={signature.walletAddress} />
-                                                                                    </div>
-                                                                              </div>
-                                                                        </div>
-                                                                  ))
-                                                            ) : (
-                                                                  <></>
-                                                            )}
-                                                      </div>
-                                                </div>
-                                          </div> */}
-                                    </>
-                              )}
-
-                              <Button
-                                    data-testid="action-signature-to-document-button"
-                                    onClick={() => {
-                                          setSelectedTool('signature')
-                                          //   setSelectedSignatureHash(selectedSignatureHash as any)
-                                          setCanPlaceSignature(true)
-                                    }}
-                              >
-                                    {/* Add Signature to document */}
-                                    Place Signature
-                              </Button>
-
-                              {canPlaceSignature ? (
-                                    // <Alert className='bg-blue-500 text-blue-600'>
-                                    <Alert className="" variant={"destructive"}>
-                                          <LuInfo />
-                                          <AlertDescription>Click on the document to place your signature.</AlertDescription>
-                                    </Alert>
-                              ) : null}
-
-
-                              {annotationSidebar()}
-
-                              <Button
-                                    data-testid="action-sign-document-button"
-                                    disabled={signaturePositions.length === 0 || submittingSignatureData}
-                                    onClick={handleSignatureSubmission}
-                                    className={signaturePositions.length === 0 || submittingSignatureData ? '' : 'bg-green-600 hover:bg-green-700 text-white'}
-                              >
-                                    Sign document..
-                              </Button>
-
-
-                              {/* <div className="flex flex-col">
-                                    <h4 className="font-bold mt-2">Other Signatures:</h4>
-                                    <div className="max-h-[200px] overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md">
-                                          <div className="flex flex-col">
-                                                {documentSignatures ? (
-                                                      documentSignatures.map(signature => (
-                                                            <div
-                                                                  key={signature.id}
-                                                                  className={`p-2 cursor-pointer ${selectedSignatureId === signature.id ? 'bg-blue-50' : 'bg-transparent'} hover:bg-gray-50`}
-                                                            >
-                                                                  <div className="flex items-center space-x-3">
-                                                                        <div
-                                                                              className="w-[60px] h-[40px] bg-contain bg-no-repeat bg-center border border-gray-200 rounded-sm"
-                                                                              style={{
-                                                                                    backgroundImage: `url(${signature.dataUrl})`,
-                                                                              }}
-                                                                        />
-                                                                        <div className="flex flex-col space-y-0">
-                                                                              <p className="text-sm font-medium">{signature.name}</p>
-                                                                              <WalletAddressClaim walletAddress={signature.walletAddress} />
-                                                                        </div>
-                                                                  </div>
-                                                            </div>
-                                                      ))
-                                                ) : (
-                                                      <></>
-                                                )}
-                                          </div>
-                                    </div>
-                              </div> */}
-                        </div>
-                  </div>
-            )
-      }
-
-      /**
-       * Handles the submission of signature data.
-       *
-       * Checks if there are any signatures present in the document.
-       * If no signatures are detected, displays an error message.
-       * If signatures are detected, submits the signature data for processing.
-       */
-      const handleSignatureSubmission = async () => {
-            if (signaturePositions.length == 0) {
-                  toast.error('No signature detected in document')
-                  return
-            }
-            await submitSignatureData(signaturePositions)
-      }
+      // --- Annotation handlers (kept in orchestrator) ---
 
       const addAnnotation = useCallback(
             (newAnnotationData: Annotation) => {
@@ -1361,8 +151,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                         walletAddress: selectedSignatureInfo.walletAddress,
                         dataUrl: selectedSignatureInfo.dataUrl,
                   }
-
-                  // };
 
                   const data = signaturePositions.find((anno: SignatureData) => anno.id === newAnnotation.id)
 
@@ -1396,145 +184,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
             [selectedSignatureId]
       )
 
-      useEffect(() => {
-            subscribe((message) => {
-                  console.log("Notification received: ", message)
-                  updateSelectedFileInfoRef.current()
-            });
-            // #FIX: disabled cleanup function since it was causing chaos
-            // return unsubscribe;
-      }, [subscribe]);
-
-      // Add event listeners for drag operations
-      useEffect(() => {
-            if (isDragging) {
-                  // Mouse events
-                  document.addEventListener('mousemove', handleDragMove as any)
-                  document.addEventListener('mouseup', handleDragEnd)
-
-                  // Touch events for mobile
-                  document.addEventListener('touchmove', handleDragMove as any, {
-                        passive: false,
-                  })
-                  document.addEventListener('touchend', handleDragEnd)
-                  document.addEventListener('touchcancel', handleDragEnd)
-            }
-
-            return () => {
-                  // Clean up all event listeners
-                  document.removeEventListener('mousemove', handleDragMove as any)
-                  document.removeEventListener('mouseup', handleDragEnd)
-                  document.removeEventListener('touchmove', handleDragMove as any)
-                  document.removeEventListener('touchend', handleDragEnd)
-                  document.removeEventListener('touchcancel', handleDragEnd)
-            }
-      }, [isDragging, activeDragId])
-
-      // Effect to update signature positions when window is resized
-      useEffect(() => {
-            let signers: string[] = []
-            const allHashes = Object.keys(selectedFileInfo!.aquaTree!.revisions!)
-            const firstRevision = selectedFileInfo!.aquaTree?.revisions[allHashes[0]]
-
-            if (firstRevision?.forms_signers) {
-                  if (firstRevision.forms_signers.includes(',')) {
-                        signers = firstRevision.forms_signers.split(',').map((e: string) => e.trim().replace('"', ''))
-                  } else {
-                        signers.push(firstRevision?.forms_signers.replace('"', ''))
-                  }
-            }
-
-            setSigners(signers)
-
-            const fourthItmeHashOnwards = allHashes.slice(5)
-            let allSignersData = [...signers]
-
-            try {
-                  if (signers.includes(session!.address)) {
-                        //get all previous signature
-                        let index = 0
-                        for (let i = 0; i < fourthItmeHashOnwards.length; i += 3) {
-                              const batch = fourthItmeHashOnwards.slice(i, i + 3)
-                              // let hashSigPosition = batch[0] ?? ""
-                              // let hashSigRev = batch[1] ?? ""
-                              const hashSigMetamask = batch[2] ?? ''
-
-                              const revision = selectedFileInfo!.aquaTree!.revisions![hashSigMetamask]
-
-                              allSignersData = allSignersData.filter(item => item !== revision.signature_wallet_address) //pop()
-
-                              index += 1
-                        }
-
-                        const indexOfMyWalletAddressAfter = allSignersData.indexOf(session!.address)
-                        // (` index ${index} index of my wallet b4 ${indexOfMyWalletAddress} after ${indexOfMyWalletAddressAfter}`)
-
-                        const allSignersBeforeMe = allSignersData.slice(0, indexOfMyWalletAddressAfter)
-                        // if (indexOfMyWalletAddress != index) {
-                        setAllSignersBeforeMe(allSignersBeforeMe)
-                  }
-            } catch (e) {
-                  console.log(`Error PDF Signer --  ${e}`)
-                  toast.error(`Error Loading pdf`)
-            }
-
-            // (`file data ${fileData} .....`)
-            if (fileData) {
-                  ; (async () => {
-                        (`Fetch pdf file....`)
-                        setPdfFile(fileData)
-
-                        // Create object URL for display
-                        const fileUrl = URL.createObjectURL(fileData)
-                        setPdfUrl(fileUrl)
-
-                        // Load PDF document using pdf-lib
-                        const arrayBuffer = await fileData.arrayBuffer()
-                        const pdfDoc = await PDFDocument.load(arrayBuffer)
-                        setPdfDoc(pdfDoc)
-                  })()
-            }
-
-            ; (async () => {
-                  await loadUserSignatures(true)
-            })()
-
-            const handleResize = () => {
-                  // Force re-render to update signature positions
-                  setSignaturePositions(prev => [...prev])
-            }
-
-            window.addEventListener('resize', handleResize)
-            return () => window.removeEventListener('resize', handleResize)
-      }, [selectedFileInfo])
-
-
-      useEffect(() => {
-
-            if (openDialog == null) {
-                  //fetch user signatures 
-
-                  (async () => {
-                        await loadUserSignatures(true)
-                  })()
-
-            }
-
-      }, [openDialog, selectedFileInfo])
-
-
-      const userSignatureReload = useLiveQuery(
-            () => reloadDB.reloadConfigs.where('key').equals(RELOAD_KEYS.user_signature).first(),
-            []
-      );
-
-      useEffect(() => {
-            if (userSignatureReload?.value) {
-                  (async () => {
-                        await loadUserSignatures(true)
-                  })()
-            }
-      }, [userSignatureReload?.timestamp])
+      // --- PDF-workflow-specific functions ---
 
       const createFileBackupOnServer = async (): Promise<string | null> => {
             const hash = selectedFileInfo?.aquaTree ? getLastRevisionVerificationHash(selectedFileInfo.aquaTree) : null
@@ -1550,7 +200,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   }, {
                         headers: {
                               nonce: session?.nonce,
-                              // metamaskAddress: session?.address
                         }
                   })
                   const resData = res.data
@@ -1565,14 +214,13 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
       const handleDownload = async () => {
             if (!pdfFile) {
-                  toast.error("No PDF - Please upload or load a PDF file first.");
-                  return;
+                  toast.error("No PDF - Please upload or load a PDF file first.")
+                  return
             }
-
 
             let fileName = `${pdfFile.name.replace('.pdf', '')}_signed.pdf`
             // If the file is not an aqua sign workflow, just download the PDF directly
-            let isAquaSignWorkflow = false;
+            let isAquaSignWorkflow = false
             if (selectedFileInfo?.aquaTree) {
                   const workflows = await AquaSystemNamesService.getInstance().getSystemNames()
                   const workFlow = isWorkFlowData(selectedFileInfo.aquaTree, workflows)
@@ -1584,36 +232,35 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
             if (!isAquaSignWorkflow) {
                   console.log('handleDownload - not an aqua_sign workflow, downloading plain PDF')
-                  const blob = new Blob([pdfFile], { type: 'application/pdf' });
-                  const link = document.createElement('a');
-                  link.href = URL.createObjectURL(blob);
-                  const addressSuffix = formatAddressForFilename(appStore.getState().session?.address);
-                  let downloadName = fileName || (pdfFile.name ? `${pdfFile.name.replace('.pdf', '')}_raw.pdf` : `${getRandomNumber(99, 999)}_document.pdf`);
+                  const blob = new Blob([pdfFile], { type: 'application/pdf' })
+                  const link = document.createElement('a')
+                  link.href = URL.createObjectURL(blob)
+                  const addressSuffix = formatAddressForFilename(appStore.getState().session?.address)
+                  let downloadName = fileName || (pdfFile.name ? `${pdfFile.name.replace('.pdf', '')}_raw.pdf` : `${getRandomNumber(99, 999)}_document.pdf`)
                   if (downloadName.toLowerCase().endsWith('.pdf')) {
-                        downloadName = downloadName.slice(0, -4) + addressSuffix + '.pdf';
+                        downloadName = downloadName.slice(0, -4) + addressSuffix + '.pdf'
                   } else {
-                        downloadName = downloadName + addressSuffix;
+                        downloadName = downloadName + addressSuffix
                   }
-                  link.download = downloadName;
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                  toast.success("Download Started - PDF downloaded.");
-                  return;
+                  link.download = downloadName
+                  document.body.appendChild(link)
+                  link.click()
+                  document.body.removeChild(link)
+                  toast.success("Download Started - PDF downloaded.")
+                  return
             }
-
 
             // Check if the PDF already has signatures baked in (from a previous signing).
             // If so, skip documentSignatures to avoid drawing them twice.
-            let pdfAlreadyHasEmbeddedSignatures = false;
+            let pdfAlreadyHasEmbeddedSignatures = false
             try {
-                  const pdfBytes = await pdfFile.arrayBuffer();
-                  const embeddedData = await extractEmbeddedAquaData(new Uint8Array(pdfBytes));
+                  const pdfBytes = await pdfFile.arrayBuffer()
+                  const embeddedData = await extractEmbeddedAquaData(new Uint8Array(pdfBytes))
                   if (embeddedData.aquaJson) {
-                        pdfAlreadyHasEmbeddedSignatures = true;
+                        pdfAlreadyHasEmbeddedSignatures = true
                   }
             } catch (error) {
-                  console.error('Error checking PDF for embedded signatures:', error);
+                  console.error('Error checking PDF for embedded signatures:', error)
             }
 
             // Combine existing document signatures + new user-placed signatures
@@ -1632,7 +279,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   name: sig.name,
                   walletAddress: sig.walletAddress,
                   scale: sig.scale ?? 1,
-            }));
+            }))
 
             const newSigs = signaturePositions.map((sig: SignatureData) => ({
                   type: 'profile' as const,
@@ -1648,17 +295,15 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   name: sig.name,
                   walletAddress: sig.walletAddress,
                   scale: sig.scale ?? 1,
-            }));
+            }))
 
-            const allAnnotations = [...existingSigs, ...newSigs];
+            const allAnnotations = [...existingSigs, ...newSigs]
 
             console.log('PdfSigner handleDownload - selectedFileInfo:', {
                   exists: !!selectedFileInfo,
                   hasAquaTree: !!selectedFileInfo?.aquaTree,
                   fileObjectLength: selectedFileInfo?.fileObject?.length,
-            });
-
-
+            })
 
             await downloadPdfWithAnnotations({
                   pdfFile,
@@ -1666,8 +311,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
                   fileName: fileName,
                   backupFn: createFileBackupOnServer,
                   fileInfo: selectedFileInfo
-            });
-      };
+            })
+      }
 
       return (
             <div className="h-[calc(100vh-70px)] overflow-y-scroll md:overflow-hidden">
@@ -1723,7 +368,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, documentSignatures, sel
 
                                     <p className="text-sm text-gray-700">
                                           Wallet Address: {session?.address ? `${session?.address.substring(0, 6)}...${session?.address.substring(session?.address.length - 4)}` : 'Not connected'}
-                                    </p> 
+                                    </p>
 
                                     <div className="border border-gray-200 w-full h-[200px] bg-white">
                                           <SignatureCanvas

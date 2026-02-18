@@ -1,6 +1,7 @@
+import React from 'react'
 import { HiShieldCheck } from 'react-icons/hi'
 import { Mail, Phone } from 'lucide-react'
-import CopyButton from '@/components/CopyButton'
+import CopyButton from '@/components/shared/CopyButton'
 
 interface ISimpleClaim {
       claimInfo: Record<string, string>
@@ -8,7 +9,6 @@ interface ISimpleClaim {
 
 const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
       // Extract relevant information from claimInfo
-      console.log("claimInfo: ", claimInfo)
 
       function getClaimTitle(claimType: string) {
             if (claimType === 'simple_claim') {
@@ -141,4 +141,4 @@ const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
       )
 }
 
-export default SimpleClaim
+export default React.memo(SimpleClaim)

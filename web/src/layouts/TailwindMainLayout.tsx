@@ -37,7 +37,7 @@ const Header = () => {
                         <nav className="hidden flex-1 md:flex items-center space-x-4 lg:space-x-6 justify-between">
                               <Link to="/" className="flex items-center space-x-2 group">
                                     <div className="relative overflow-hidden p-1 ">
-                                          <img className="h-[40px]" src="/images/logo.png" />
+                                          <img className="h-[40px]" src="/images/logo.png" alt="Aquafier logo" />
                                     </div>
                               </Link>
                               <div className="flex items-center space-x-6 lg:space-x-8">
@@ -82,7 +82,7 @@ const Header = () => {
                         <nav className="flex items-center space-x-2 group md:hidden">
                               <Link to="/" className="flex items-center space-x-2 group">
                                     <div className="relative overflow-hidden">
-                                          <img className="h-[34px]" src="/images/logo.png" />
+                                          <img className="h-[34px]" src="/images/logo.png" alt="Aquafier logo" />
                                     </div>
                               </Link>
                         </nav>

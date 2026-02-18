@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Copy, Check, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { fetchFiles } from '@/utils/functions';
-import { WalletAutosuggest } from '@/components/wallet_auto_suggest';
+import { WalletAutosuggest } from '@/components/wallet_connect/wallet_auto_suggest';
 import { useStore } from 'zustand'
 import appStore from '@/store'
 
@@ -72,6 +72,7 @@ export const AddressView: React.FC<AddressViewProps> = ({
               className="w-full text-gray-600 font-mono text-sm sm:text-base bg-transparent border-none outline-none focus:ring-0 p-0"
               placeholder="Enter wallet address..."
             /> */}
+            <label className="sr-only" htmlFor="wallet-address-input">Wallet address</label>
             <WalletAutosuggest
               // walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, workflows)}
               field={{
@@ -94,6 +95,7 @@ export const AddressView: React.FC<AddressViewProps> = ({
             onClick={handleCopy}
             className="shrink-0 cursor-pointer p-2 text-gray-400 hover:text-blue-600 hover:bg-white rounded-lg transition-all duration-200 hover:shadow-md"
             title="Copy address"
+            aria-label="Copy address to clipboard"
           >
             {copied ? (
               <Check className="w-5 h-5 text-green-600" />
@@ -105,6 +107,7 @@ export const AddressView: React.FC<AddressViewProps> = ({
             onClick={handleNavigate}
             className="shrink-0 cursor-pointer p-2 text-gray-400 hover:text-green-600 hover:bg-white rounded-lg transition-all duration-200 hover:shadow-md"
             title="Navigate to profile"
+            aria-label="Navigate to wallet profile"
           >
             <ArrowRight className="w-5 h-5" />
           </button>

@@ -11,11 +11,11 @@ import { ClipLoader } from 'react-spinners'
 import { generateNonce } from 'siwe'
 import { toast } from 'sonner'
 import { useStore } from 'zustand'
-import CopyButton from '../CopyButton'
-import { WalletAutosuggest } from '../wallet_auto_suggest'
+import CopyButton from '../shared/CopyButton'
+import { WalletAutosuggest } from '../wallet_connect/wallet_auto_suggest'
 import { Button } from '@/components/ui/button'
 import { Badge } from '../ui/badge'
-import WalletAdrressClaim from '@/pages/v2_claims_workflow/WalletAdrressClaim'
+import WalletAddressClaim from '@/pages/v2_claims_workflow/WalletAddressClaim'
 // import { Input } from '@/components/ui/input'
 // import { Label } from '@/components/ui/label'
 
@@ -533,7 +533,7 @@ const ShareComponent = () => {
                                                                                                                         e.toLowerCase() === SYSTEM_WALLET_ADDRESS ? <Badge className="text-xs">Everyone</Badge> : null
                                                                                                                   }
                                                                                                                   {
-                                                                                                                        e.toLowerCase() !== SYSTEM_WALLET_ADDRESS ? <WalletAdrressClaim walletAddress={e} /> : null
+                                                                                                                        e.toLowerCase() !== SYSTEM_WALLET_ADDRESS ? <WalletAddressClaim walletAddress={e} /> : null
                                                                                                                   }
                                                                                                             </div>
                                                                                                       ))}

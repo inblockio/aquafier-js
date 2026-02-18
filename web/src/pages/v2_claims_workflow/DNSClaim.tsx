@@ -1,3 +1,4 @@
+import React from 'react'
 import {ensureDomainUrlHasSSL, formatCryptoAddress, getGenesisHash} from '@/utils/functions'
 import {useEffect, useState} from 'react'
 import {TbWorldWww} from 'react-icons/tb'
@@ -8,7 +9,7 @@ import {useStore} from 'zustand'
 import appStore from '@/store'
 import apiClient from '@/api/axiosInstance'
 import ImprovedDNSLogs from './ImprovedDNSLogs'
-import { useLocation } from 'react-router-dom'
+
 import { Button } from '@/components/ui/button'
 import { LuRefreshCw } from 'react-icons/lu'
 
@@ -74,8 +75,6 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
       const [verificationMessage, setVerificationMessage] = useState<string>('Checking DNS verification...')
       // const [dnsRecords, setDnsRecords] = useState<string[]>([])
       const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null)
-
-      const urlHash = useLocation().hash
 
       const { backend_url } = useStore(appStore)
       const genesisRevisionHash = getGenesisHash(apiFileInfo.aquaTree!)
@@ -214,14 +213,7 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
       }, [domain, walletAddress, genesisRevisionHash])
 
       return (
-            <div className="grid lg:grid-cols-12 gap-4 relative" id={`${genesisRevisionHash}`}>
-                  {
-                                    urlHash?.replace("#", "") === genesisRevisionHash ? (
-                                          <div className='absolute top-0 right-0 z-10 bg-green-500 w-fit px-2 py-1 text-white rounded-md'>
-                                                Selected
-                                          </div>
-                                    ) : null
-                              }
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 relative" id={`${genesisRevisionHash}`}>
                   <div className='col-span-7 bg-gray-50 p-2'>
                         <div className="flex flex-col gap-2">
                               <div className={`rounded-lg shadow-sm border p-6 ${getCardBackgroundColor()}`}>
@@ -411,4 +403,4 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
       )
 }
 
-export default DNSClaim
+export default React.memo(DNSClaim)
