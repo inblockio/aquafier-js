@@ -39,7 +39,7 @@
     "@react-pdf/renderer": "^4.3.1",
     "@reown/appkit": "1.8.16",
     "@reown/appkit-adapter-wagmi": "1.8.16",
-    "@reown/appkit-siwe": "1.8.16",
+    "@reown/appkit-siwe": "1.8.18",
     "@sentry/browser": "^10.27.0",
     "@sentry/react": "^10.25.0",
     "@sentry/types": "^10.25.0",
