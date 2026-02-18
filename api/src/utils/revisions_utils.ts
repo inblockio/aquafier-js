@@ -2004,59 +2004,60 @@ async function processRevisionByType(
     revisionData: AquaTreeRevision,
     pubKeyHash: string,
     userAddress: string,
-    aquaTree: AquaTree
+    aquaTree: AquaTree,
+    tx: any = prisma
 ) {
     const { revision_type } = revisionData;
 
     switch (revision_type) {
         case "form":
-            await processFormRevision(revisionData, pubKeyHash);
+            await processFormRevision(revisionData, pubKeyHash, tx);
             break;
 
         case "signature":
-            await processSignatureRevision(revisionData, pubKeyHash);
+            await processSignatureRevision(revisionData, pubKeyHash, tx);
             break;
 
         case "witness":
-            await processWitnessRevision(revisionData, pubKeyHash);
+            await processWitnessRevision(revisionData, pubKeyHash, tx);
             break;
 
         case "file":
-            await processFileRevision(revisionData, pubKeyHash, userAddress);
+            await processFileRevision(revisionData, pubKeyHash, userAddress, tx);
             break;
 
         case "link":
-            await processLinkRevision(revisionData, pubKeyHash);
+            await processLinkRevision(revisionData, pubKeyHash, tx);
             break;
     }
 
     // Handle genesis revision file setup
     if (!revisionData.previous_verification_hash) {
-        await processGenesisRevision(revisionData, userAddress, aquaTree);
+        await processGenesisRevision(revisionData, userAddress, aquaTree, tx);
     }
 }
 
-async function processFormRevision(revisionData: any, pubKeyHash: string) {
+async function processFormRevision(revisionData: any, pubKeyHash: string, tx: any = prisma) {
     const formKeys = Object.keys(revisionData).filter(key => key.startsWith("forms_"));
+    if (formKeys.length === 0) return;
 
-    for (const formKey of formKeys) {
-        await prisma.aquaForms.create({
-            data: {
-                hash: pubKeyHash,
-                key: formKey,
-                value: revisionData[formKey],
-                type: typeof revisionData[formKey]
-            }
-        });
-    }
+    await tx.aquaForms.createMany({
+        data: formKeys.map(formKey => ({
+            hash: pubKeyHash,
+            key: formKey,
+            value: revisionData[formKey],
+            type: typeof revisionData[formKey]
+        })),
+        skipDuplicates: true
+    });
 }
 
-async function processSignatureRevision(revisionData: AquaTreeRevision, pubKeyHash: string) {
+async function processSignatureRevision(revisionData: AquaTreeRevision, pubKeyHash: string, tx: any = prisma) {
     const signature = typeof revisionData.signature === "string"
         ? revisionData.signature
         : JSON.stringify(revisionData.signature);
 
-    await prisma.signature.upsert({
+    await tx.signature.upsert({
         where: { hash: pubKeyHash },
         update: { reference_count: { increment: 1 } },
         create: {
@@ -2070,10 +2071,10 @@ async function processSignatureRevision(revisionData: AquaTreeRevision, pubKeyHa
     });
 }
 
-async function processWitnessRevision(revisionData: AquaTreeRevision, pubKeyHash: string) {
+async function processWitnessRevision(revisionData: AquaTreeRevision, pubKeyHash: string, tx: any = prisma) {
 
     // First, create or update the WitnessEvent (the referenced table)
-    await prisma.witnessEvent.upsert({
+    await tx.witnessEvent.upsert({
         where: { Witness_merkle_root: revisionData.witness_merkle_root },
         update: {
             Witness_timestamp: revisionData.witness_timestamp?.toString(),
@@ -2093,7 +2094,7 @@ async function processWitnessRevision(revisionData: AquaTreeRevision, pubKeyHash
     });
 
     // Then, create or update the Witness record
-    await prisma.witness.upsert({
+    await tx.witness.upsert({
         where: { hash: pubKeyHash },
         update: { reference_count: { increment: 1 } },
         create: {
@@ -2133,12 +2134,12 @@ async function processWitnessRevision(revisionData: AquaTreeRevision, pubKeyHash
     // });
 }
 
-async function processFileRevision(revisionData: AquaTreeRevision, pubKeyHash: string, userAddress: string) {
+async function processFileRevision(revisionData: AquaTreeRevision, pubKeyHash: string, userAddress: string, tx: any = prisma) {
     if (!revisionData.file_hash) {
         throw new Error(`AquaTreeRevision is detected to be a file but file_hash is missing`);
     }
 
-    let fileResult = await prisma.file.findFirst({
+    let fileResult = await tx.file.findFirst({
         where: {
             file_hash: { contains: revisionData.file_hash, mode: 'insensitive' }
         }
@@ -2148,10 +2149,8 @@ async function processFileRevision(revisionData: AquaTreeRevision, pubKeyHash: s
         throw new Error(`File data should be in database but is not found. [file hash ${revisionData.file_hash}]`);
     }
 
-
-
     // Update file index
-    const existingFileIndex = await prisma.fileIndex.findFirst({
+    const existingFileIndex = await tx.fileIndex.findFirst({
         where: { file_hash: fileResult.file_hash }
     });
 
@@ -2160,12 +2159,12 @@ async function processFileRevision(revisionData: AquaTreeRevision, pubKeyHash: s
             existingFileIndex.pubkey_hash.push(pubKeyHash);
         }
 
-        await prisma.fileIndex.update({
+        await tx.fileIndex.update({
             data: { pubkey_hash: existingFileIndex.pubkey_hash },
             where: { file_hash: existingFileIndex.file_hash }
         });
 
-        // Increment usage
+        // Increment usage (uses own prisma instance, not part of transaction)
         await usageService.incrementFiles(userAddress, 1);
         if (fileResult.file_size) {
             await usageService.incrementStorage(userAddress, fileResult.file_size);
@@ -2173,12 +2172,10 @@ async function processFileRevision(revisionData: AquaTreeRevision, pubKeyHash: s
     } else {
         throw new Error(`File index data should be in database but is not found.`);
     }
-
-
 }
 
-async function processLinkRevision(revisionData: any, pubKeyHash: string) {
-    await prisma.link.upsert({
+async function processLinkRevision(revisionData: any, pubKeyHash: string, tx: any = prisma) {
+    await tx.link.upsert({
         where: { hash: pubKeyHash },
         update: {
             // hash: pubKeyHash,
@@ -2197,31 +2194,15 @@ async function processLinkRevision(revisionData: any, pubKeyHash: string) {
             reference_count: 0
         }
     });
-
-    // Process linked hashes
-    //not sure about the following code
-    if (revisionData.link_verification_hashes?.length > 0) {
-        for (const linkedHash of revisionData.link_verification_hashes) {
-            const linkedRevision = await prisma.revision.findFirst({
-                where: {
-                    pubkey_hash: linkedHash
-                }
-            });
-
-            if (linkedRevision) {
-                Logger.info(`Found linked revision chain with hash ${linkedHash}`);
-            }
-        }
-    }
 }
 
-async function processGenesisRevision(revisionData: any, userAddress: string, aquaTree: AquaTree) {
+async function processGenesisRevision(revisionData: any, userAddress: string, aquaTree: AquaTree, tx: any = prisma) {
     const fileHash = revisionData.file_hash;
     if (!fileHash) {
         throw new Error(`Genesis revision detected but file hash is null.`);
     }
 
-    const existingFileIndex = await prisma.fileIndex.findFirst({
+    const existingFileIndex = await tx.fileIndex.findFirst({
         where: { file_hash: fileHash }
     });
 
@@ -2237,7 +2218,7 @@ async function processGenesisRevision(revisionData: any, userAddress: string, aq
             existingFileIndex.pubkey_hash.push(pubKeyHash);
         }
 
-        await prisma.fileIndex.update({
+        await tx.fileIndex.update({
             data: { pubkey_hash: existingFileIndex.pubkey_hash },
             where: { file_hash: existingFileIndex.file_hash }
         });
@@ -2467,76 +2448,78 @@ export async function saveAquaTree(
     const latestHash = allHash[allHash.length - 1];
     const lastPubKeyHash = `${userAddress}_${latestHash}`;
 
-    // Only register the latest hash for the user
-    let insertRes = await prisma.latest.upsert({
-        where: { hash: lastPubKeyHash },
-        create: {
-            hash: lastPubKeyHash,
-            user: userAddress,
-            template_id: templateId,
-            is_workflow: isWorkFlow
-        },
-        update: {
-            hash: lastPubKeyHash,
-            user: userAddress,
-            template_id: templateId,
-            //is_workflow: isWorkFlow // todo confirm
-        }
-    });
-
-    // Process each revision
-    // for (const revisionHash of allHash) {
-    for (let i = 0; i < allHash.length; i++) {
-        const revisionHash = allHash[i];
-        const revisionData = aquaTreeWithOrderdRevision.revisions[revisionHash];
-        const pubKeyHash = `${userAddress}_${revisionHash}`;
-        const pubKeyPrevious = revisionData.previous_verification_hash.length > 0
-            ? `${userAddress}_${revisionData.previous_verification_hash}`
-            : "";
-
-        const revisionChildren = []
-
-        for (let a = i + 1; a < allHash.length; a++) {
-            const childHash = allHash[a];
-            const childData = aquaTreeWithOrderdRevision.revisions[childHash];
-            if (childData.previous_verification_hash.includes(revisionHash)) {
-                const childPubKeyHash = `${userAddress}_${childHash}`;
-                revisionChildren.push(childPubKeyHash);
-            }
-        }
-
-        // Insert/update revision in the database
-        await prisma.revision.upsert({
-            where: { pubkey_hash: pubKeyHash },
+    // All DB writes in one transaction
+    await prisma.$transaction(async (tx) => {
+        // Register the latest hash for the user
+        await tx.latest.upsert({
+            where: { hash: lastPubKeyHash },
             create: {
-                pubkey_hash: pubKeyHash,
-                file_hash: revisionData.file_hash,
-                nonce: revisionData.file_nonce ?? "",
-                shared: [],
-                previous: pubKeyPrevious,
-                children: revisionChildren,
-                local_timestamp: revisionData.local_timestamp,
-                revision_type: revisionData.revision_type,
-                verification_leaves: revisionData.leaves ?? [],
+                hash: lastPubKeyHash,
+                user: userAddress,
+                template_id: templateId,
+                is_workflow: isWorkFlow
             },
             update: {
-                pubkey_hash: pubKeyHash,
-                file_hash: revisionData.file_hash,
-                nonce: revisionData.file_nonce ?? "",
-                shared: [],
-                previous: pubKeyPrevious,
-                children: {
-                    push: revisionChildren
-                },
-                local_timestamp: revisionData.local_timestamp,
-                revision_type: revisionData.revision_type,
-                verification_leaves: revisionData.leaves ?? [],
-            },
+                hash: lastPubKeyHash,
+                user: userAddress,
+                template_id: templateId,
+                //is_workflow: isWorkFlow // todo confirm
+            }
         });
 
-        // Process revision based on type
-        await processRevisionByType(revisionData, pubKeyHash, userAddress, aquaTreeWithOrderdRevision);
-    }
+        // Process each revision
+        for (let i = 0; i < allHash.length; i++) {
+            const revisionHash = allHash[i];
+            const revisionData = aquaTreeWithOrderdRevision.revisions[revisionHash];
+            const pubKeyHash = `${userAddress}_${revisionHash}`;
+            const pubKeyPrevious = revisionData.previous_verification_hash.length > 0
+                ? `${userAddress}_${revisionData.previous_verification_hash}`
+                : "";
+
+            const revisionChildren = []
+
+            for (let a = i + 1; a < allHash.length; a++) {
+                const childHash = allHash[a];
+                const childData = aquaTreeWithOrderdRevision.revisions[childHash];
+                if (childData.previous_verification_hash.includes(revisionHash)) {
+                    const childPubKeyHash = `${userAddress}_${childHash}`;
+                    revisionChildren.push(childPubKeyHash);
+                }
+            }
+
+            // Insert/update revision in the database
+            await tx.revision.upsert({
+                where: { pubkey_hash: pubKeyHash },
+                create: {
+                    pubkey_hash: pubKeyHash,
+                    file_hash: revisionData.file_hash,
+                    nonce: revisionData.file_nonce ?? "",
+                    shared: [],
+                    previous: pubKeyPrevious,
+                    children: revisionChildren,
+                    local_timestamp: revisionData.local_timestamp,
+                    revision_type: revisionData.revision_type,
+                    verification_leaves: revisionData.leaves ?? [],
+                },
+                update: {
+                    pubkey_hash: pubKeyHash,
+                    file_hash: revisionData.file_hash,
+                    nonce: revisionData.file_nonce ?? "",
+                    shared: [],
+                    previous: pubKeyPrevious,
+                    children: {
+                        push: revisionChildren
+                    },
+                    local_timestamp: revisionData.local_timestamp,
+                    revision_type: revisionData.revision_type,
+                    verification_leaves: revisionData.leaves ?? [],
+                },
+            });
+
+            // Process revision based on type
+            await processRevisionByType(revisionData, pubKeyHash, userAddress, aquaTreeWithOrderdRevision, tx);
+        }
+    });
 }
 
 
@@ -2984,36 +2967,29 @@ export async function fetchAquaTreeWithForwardRevisions(latestRevisionHash: stri
 
 
 export async function findAquaTreeRevision(revisionHash: string): Promise<Array<DBRevision>> {
-    let revisions: Array<DBRevision> = [];
+    const revisions: Array<DBRevision> = [];
+    let currentHash: string | null = revisionHash;
 
-    // fetch latest revision 
-    let latestRevionData = await prisma.revision.findFirst({
-        where: {
-            pubkey_hash: revisionHash
+    while (currentHash) {
+        const revision: DBRevision | null = await prisma.revision.findFirst({
+            where: { pubkey_hash: currentHash }
+        });
+
+        if (!revision) {
+            throw new Error(`Unable to get revision with hash ${currentHash}`);
         }
-    });
 
+        revisions.push(revision);
 
-
-    if (latestRevionData == null) {
-        throw new Error(`Unable to get revision with hash ${revisionHash}`);
-
-    }
-
-    revisions.push(latestRevionData);
-
-    if (latestRevionData?.previous) {
-
-        let pubKey = revisionHash.split("_")[0];
-        let previousWithPubKey = latestRevionData?.previous!!;
-
-        if (!latestRevionData?.previous!!.includes("_")) {
-            previousWithPubKey = `${pubKey}_${latestRevionData?.previous!!}`
+        if (revision.previous) {
+            const pubKey: string = currentHash.split("_")[0];
+            currentHash = revision.previous.includes("_")
+                ? revision.previous
+                : `${pubKey}_${revision.previous}`;
+        } else {
+            currentHash = null;
         }
-        let aquaTreerevision = await findAquaTreeRevision(previousWithPubKey);
-        revisions.push(...aquaTreerevision)
     }
-
 
     return revisions;
 }

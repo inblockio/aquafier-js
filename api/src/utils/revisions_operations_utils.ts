@@ -101,14 +101,13 @@ export async function createAquaTreeFromRevisions(
         // Logger.info("File indexe----: ", JSON.stringify(fileObjects, null, 4))
 
         // Step 4: Process each revision (OPTIMIZED VERSION)
-        // Option 1: Batch fetch all revision info
-        // const revisionInfoMap = await FetchRevisionInfoBatch(revisionData);
-        
-        // Option 2: Process revisions in parallel
+        // Batch fetch all revision info upfront
+        const revisionInfoMap = await FetchRevisionInfoBatch(revisionData);
+
+        // Process revisions in parallel
         const processResults = await Promise.all(
-            revisionData.map(revision => 
-                // processRevisionOptimized(revision, revisionInfoMap, aquaTreeFileData, url)
-                processRevision(revision, aquaTree, fileObjects,  aquaTreeFileData, url)
+            revisionData.map(revision =>
+                processRevision(revision, aquaTree, fileObjects,  aquaTreeFileData, url, revisionInfoMap)
             )
         );
 
@@ -174,30 +173,28 @@ async function getRevisionChain(latestRevisionHash: string): Promise<Revision[]>
 
 // Your existing helper functions
 export async function findAquaTreeRevision(revisionHash: string): Promise<Array<Revision>> {
-    let revisions: Array<Revision> = [];
+    const revisions: Array<Revision> = [];
+    let currentHash: string | null = revisionHash;
 
-    // fetch latest revision 
-    let latestRevionData = await prisma.revision.findFirst({
-        where: {
-            pubkey_hash: revisionHash
+    while (currentHash) {
+        const revision: Revision | null = await prisma.revision.findFirst({
+            where: { pubkey_hash: currentHash }
+        });
+
+        if (!revision) {
+            throw new Error(`Unable to get revision with hash ${currentHash}`);
         }
-    });
 
-    if (latestRevionData == null) {
-        throw new Error(`Unable to get revision with hash ${revisionHash}`);
-    }
+        revisions.push(revision);
 
-    revisions.push(latestRevionData);
-
-    if (latestRevionData?.previous) {
-        let pubKey = revisionHash.split("_")[0];
-        let previousWithPubKey = latestRevionData?.previous!!;
-
-        if (!latestRevionData?.previous!!.includes("_")) {
-            previousWithPubKey = `${pubKey}_${latestRevionData?.previous!!}`
+        if (revision.previous) {
+            const pubKey: string = currentHash.split("_")[0];
+            currentHash = revision.previous.includes("_")
+                ? revision.previous
+                : `${pubKey}_${revision.previous}`;
+        } else {
+            currentHash = null;
         }
-        let aquaTreerevision = await findAquaTreeRevision(previousWithPubKey);
-        revisions.push(...aquaTreerevision)
     }
 
     return revisions;
@@ -537,54 +534,86 @@ function estimateStringFileSize(str: string): number {
 
 
 async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFileData[]> {
-    let allData: AquaTreeFileData[] = [];
+    if (pubKeyHashes.length === 0) return [];
+
+    // Collect all hashOnly values
+    const hashOnlyValues = pubKeyHashes.map(h => extractHashOnly(h));
+
+    // Batch query 1: FileIndex (pubkey_hash is String[] — use hasSome)
+    const allFileIndexes = await prisma.fileIndex.findMany({
+        where: {
+            OR: [
+                { pubkey_hash: { hasSome: pubKeyHashes } },
+                { pubkey_hash: { hasSome: hashOnlyValues } }
+            ]
+        }
+    });
+
+    // Batch query 2: FileName (pubkey_hash is String scalar — use in for exact matches)
+    const allFileNames = await prisma.fileName.findMany({
+        where: {
+            OR: [
+                { pubkey_hash: { in: pubKeyHashes } },
+                { pubkey_hash: { in: hashOnlyValues } }
+            ]
+        }
+    });
+
+    // Batch query 3: File (by unique file_hashes from fileIndex results)
+    const uniqueFileHashes = [...new Set(allFileIndexes.map(fi => fi.file_hash))];
+    const allFiles = uniqueFileHashes.length > 0
+        ? await prisma.file.findMany({ where: { file_hash: { in: uniqueFileHashes } } })
+        : [];
+
+    // Build lookup maps
+    const fileMap = new Map(allFiles.map(f => [f.file_hash, f]));
+    const fileNameMap = new Map(allFileNames.map(fn => [fn.pubkey_hash, fn]));
+
+    const allData: AquaTreeFileData[] = [];
 
     for (const pubKeyHash of pubKeyHashes) {
-
         const hashOnly = extractHashOnly(pubKeyHash);
-        const fileIndex = await prisma.fileIndex.findFirst({
-            where: {
-                OR: [
-                    { pubkey_hash: { has: pubKeyHash } },
-                    { pubkey_hash: { has: hashOnly } }
-                ]
-            }
-        });
-        if (fileIndex) {
 
-            let hashOnly = pubKeyHash.split("_")[1]
-            const fileNameData = await prisma.fileName.findFirst({
-                where: {
-                    OR: [
-                        { pubkey_hash: pubKeyHash },
-                        {
+        // Find matching fileIndex (check if any pubkey_hash entry matches)
+        const fileIndex = allFileIndexes.find(fi =>
+            fi.pubkey_hash.includes(pubKeyHash) || fi.pubkey_hash.includes(hashOnly)
+        );
+
+        if (fileIndex) {
+            // Look up fileName: try exact match first, then hashOnly match
+            let fileNameData = fileNameMap.get(pubKeyHash) ?? fileNameMap.get(hashOnly);
+
+            // Fallback: case-insensitive contains match for hashOnly
+            if (!fileNameData) {
+                const hashOnlyLower = hashOnly.toLowerCase();
+                fileNameData = allFileNames.find(fn =>
+                    fn.pubkey_hash.toLowerCase().includes(hashOnlyLower)
+                );
+
+                // Last resort: individual query with case-insensitive DB match
+                if (!fileNameData) {
+                    fileNameData = await prisma.fileName.findFirst({
+                        where: {
                             pubkey_hash: {
                                 contains: hashOnly,
-                                mode: 'insensitive' // Makes the search case-insensitive
+                                mode: 'insensitive'
                             }
                         }
-                    ]
+                    }) ?? undefined;
                 }
-            });
-            const fileData = await prisma.file.findFirst({
-                where: {
-                    file_hash: fileIndex.file_hash
-                },
-            });
+            }
 
+            const fileData = fileMap.get(fileIndex.file_hash);
 
-            let data: AquaTreeFileData = {
+            allData.push({
                 name: fileNameData?.file_name ?? "File name not found",
                 fileHash: fileIndex.file_hash,
                 referenceCount: fileIndex.pubkey_hash.length,
                 fileLocation: fileData?.file_location ?? "File location not found",
                 pubKeyHash: pubKeyHash
-
-            }
-
-            allData.push(data);
+            });
         } else {
-            Logger.error(`💣💣💣 File index not found ..pubKeyHash ${pubKeyHash} --  ${hashOnly}`)   
+            Logger.error(`File index not found ..pubKeyHash ${pubKeyHash} --  ${hashOnly}`);
         }
     }
 
@@ -620,7 +649,8 @@ async function processRevision(
     aquaTree: AquaTree,
     fileObjects: FileObject[],
     aquaTreeFileData: AquaTreeFileData[],
-    url: string
+    url: string,
+    revisionInfoMap?: Map<string, RevisionInfo>
 ): Promise<ProcessRevisionResult> {
     const hashOnly = extractHashOnly(revision.pubkey_hash);
     const previousHashOnly = extractHashOnly(revision.previous || "");
@@ -640,7 +670,7 @@ async function processRevision(
     }
 
     // Process based on revision type
-    const processResult = await processRevisionByType(revision, revisionData, aquaTree, fileObjects, url);
+    const processResult = await processRevisionByType(revision, revisionData, aquaTree, fileObjects, url, revisionInfoMap);
     revisionData = processResult.revisionData;
     let updatedAquaTree = processResult.aquaTree;
     let updatedFileObjects = processResult.fileObjects;
@@ -692,10 +722,12 @@ async function processRevisionByType(
     revisionData: AquaRevision,
     aquaTree: AquaTree,
     fileObjects: FileObject[],
-    url: string
+    url: string,
+    revisionInfoMap?: Map<string, RevisionInfo>
 ): Promise<ProcessRevisionByTypeResult> {
-    const revisionInfo = await FetchRevisionInfo(revision.pubkey_hash, revision);
-    // Logger.info(`revisionInfo = ${JSON.stringify(revisionInfo)}`)
+    // Use pre-fetched data if available, fall back to individual query
+    const revisionInfo = revisionInfoMap?.get(revision.pubkey_hash)
+        ?? await FetchRevisionInfo(revision.pubkey_hash, revision);
     if (!revisionInfo && revision.revision_type !== "file") {
         Logger.warn(`Revision info not found for ${revision.pubkey_hash}`);
         return { revisionData, aquaTree, fileObjects };
