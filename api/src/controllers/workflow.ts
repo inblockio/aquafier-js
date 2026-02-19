@@ -7,6 +7,7 @@ import {
 import { getHost, getPort } from '../utils/api_utils';
 import Logger from "../utils/logger";
 import { systemTemplateHashes } from '../models/constants';
+import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
 
 
 /**
@@ -35,27 +36,11 @@ export default async function workflowsController(fastify: FastifyInstance) {
 
 
     // get file using file hash with pagination
-    fastify.get('/workflows', async (request, reply) => {
+    fastify.get('/workflows', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
         // file content from db
         // return as a blob
 
         try {
-
-            // Read `nonce` from headers
-            const nonce = request.headers['nonce']; // Headers are case-insensitive
-
-            // Check if `nonce` is missing or empty
-            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-            }
-
-            const session = await prisma.siweSession.findUnique({
-                where: { nonce }
-            });
-
-            if (!session) {
-                return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-            }
 
             // Get the host from the request headers
             const host = request.headers.host || `${getHost()}:${getPort()}`;
@@ -66,7 +51,7 @@ export default async function workflowsController(fastify: FastifyInstance) {
             // Construct the full URL
             const url = `${protocol}://${host}`;
 
-            const paginatedData = await getUserApiWorkflowFileInfo(url, session.address)
+            const paginatedData = await getUserApiWorkflowFileInfo(url, request.user!.address)
             const data: Array<{
                 aquaTree: AquaTree,
                 fileObject: FileObject[]

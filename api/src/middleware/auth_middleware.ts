@@ -25,7 +25,12 @@ export async function authenticate(
     if (session == null) {
       throw reply.code(401).send({ success: false, message: "Nonce is invalid" });
     }
-    
+
+    // Check if session is expired
+    if (session.expirationTime && new Date(session.expirationTime) < new Date()) {
+      throw reply.code(401).send({ success: false, message: "Session expired" });
+    }
+
     // Attach the user info to the request for later use
     request.user = {
       address: session.address

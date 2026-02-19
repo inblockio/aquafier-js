@@ -19,6 +19,7 @@
   "dependencies": {
     "@elastic/ecs-winston-format": "^1.5.3",
     "@elastic/opentelemetry-node": "^1.6.0",
+    "@fastify/compress": "^8.3.1",
     "@fastify/cors": "^11.1.0",
     "@fastify/formbody": "^8.0.2",
     "@fastify/multipart": "^9.3.0",
@@ -38,9 +39,9 @@
     "get-stream": "^9.0.1",
     "i": "^0.3.7",
     "jszip": "^3.10.1",
+    "minio": "^8.0.6",
     "pako": "^2.1.0",
     "pdf-lib": "^1.17.1",
-    "minio": "^8.0.6",
     "prisma": "^6.4.1",
     "puppeteer": "^24.34.0",
     "siwe": "^3.0.0",

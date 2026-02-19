@@ -8,6 +8,7 @@ import * as fs from "fs"
 import path from 'path';
 import { getAquaAssetDirectory } from "../utils/file_utils";
 import { checkFolderExists } from "../utils/api_utils";
+import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
 
 // Rate-limiting configuration
 const RATE_LIMIT_CONFIG = {
@@ -61,26 +62,7 @@ async function checkRateLimit(
 
 export default async function ApiController(fastify: FastifyInstance) {
 
-  fastify.post("/scrape_data", async (request, reply) => {
-    const nonce = request.headers["nonce"];
-
-    // Check if `nonce` is missing or empty
-    if (!nonce || typeof nonce !== "string" || nonce.trim() === "") {
-      return reply
-        .code(401)
-        .send({ error: "Unauthorized: Missing or empty nonce header" });
-    }
-
-    const session = await prisma.siweSession.findUnique({
-      where: { nonce },
-    });
-
-    if (!session) {
-      return reply
-        .code(403)
-        .send({ success: false, message: "Nonce is invalid" });
-    }
-
+  fastify.post("/scrape_data", { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
     const requestData = request.body as {
 
       domain: string;
@@ -165,7 +147,7 @@ if (hasProtocol && !isAllowed) {
     try {
       data = await scraper.scrape();
     } catch (error) {
-      console.error("Error during scraping:", error);
+      Logger.error("Error during scraping:", error);
       return reply
         .code(500)
         .send({ success: false, message: "Error occurred while scraping the domain." });
@@ -176,25 +158,8 @@ if (hasProtocol && !isAllowed) {
 
   });
 
-  fastify.post("/verify_code", async (request, reply) => {
-    const nonce = request.headers["nonce"];
-
-    // Check if `nonce` is missing or empty
-    if (!nonce || typeof nonce !== "string" || nonce.trim() === "") {
-      return reply
-        .code(401)
-        .send({ error: "Unauthorized: Missing or empty nonce header" });
-    }
-
-    const session = await prisma.siweSession.findUnique({
-      where: { nonce },
-    });
-
-    if (!session) {
-      return reply
-        .code(403)
-        .send({ success: false, message: "Nonce is invalid" });
-    }
+  fastify.post("/verify_code", { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
+    const nonce = request.headers["nonce"] as string;
 
     const revisionDataPar = request.body as {
       email_or_phone_number: string;
@@ -293,25 +258,8 @@ if (hasProtocol && !isAllowed) {
       .send({ success: true, message: "Verification code validated" });
   });
 
-  fastify.post("/send_code", async (request, reply) => {
-    const nonce = request.headers["nonce"];
-
-    // Check if `nonce` is missing or empty
-    if (!nonce || typeof nonce !== "string" || nonce.trim() === "") {
-      return reply
-        .code(401)
-        .send({ error: "Unauthorized: Missing or empty nonce header" });
-    }
-
-    const session = await prisma.siweSession.findUnique({
-      where: { nonce },
-    });
-
-    if (!session) {
-      return reply
-        .code(403)
-        .send({ success: false, message: "Nonce is invalid" });
-    }
+  fastify.post("/send_code", { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
+    const nonce = request.headers["nonce"] as string;
 
     const revisionDataPar = request.body as {
       email_or_phone_number: string;
@@ -417,26 +365,7 @@ if (hasProtocol && !isAllowed) {
   });
 
 
-   fastify.post("/fetch_template_aqua_tree", async (request, reply) => {
-    const nonce = request.headers["nonce"];
-
-    // Check if `nonce` is missing or empty
-    if (!nonce || typeof nonce !== "string" || nonce.trim() === "") {
-      return reply
-        .code(401)
-        .send({ error: "Unauthorized: Missing or empty nonce header" });
-    } 
-
-    const session = await prisma.siweSession.findUnique({
-      where: { nonce },
-    });
-
-    if (!session) {
-      return reply
-        .code(403)
-        .send({ success: false, message: "Nonce is invalid" });
-    }
-
+   fastify.post("/fetch_template_aqua_tree", { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
     const revisionDataPar = request.body as {
       template_name: string;
       

@@ -278,7 +278,7 @@ export default async function systemController(fastify: FastifyInstance) {
                 }
             ]
 
-        console.log(JSON.stringify(latest, null, 4))
+        Logger.debug(JSON.stringify(latest, null, 4))
         const entireChain = await fetchAquatreeFoUser(url, latest)//(latestRevisionHash, userAddress, url);
 
         if (entireChain.length === 0) {

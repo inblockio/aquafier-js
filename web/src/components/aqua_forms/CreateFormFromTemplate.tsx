@@ -88,7 +88,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
       const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
       const [isDialogOpen, setDialogOpen] = useState(false)
       const [dialogData, setDialogData] = useState<null | {
-            content: React.ReactNode
+            content: React.ReactElement
             title: string
       }>(null)
 

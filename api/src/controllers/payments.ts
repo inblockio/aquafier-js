@@ -381,10 +381,10 @@ export default async function paymentsController(fastify: FastifyInstance) {
           payment_id: payment.payment_id,
         });
 
-        // console.log("==================")
-        // console.log("Crypto Payment:")
-        // console.log(cliRedify(JSON.stringify(payment, null, 4)))
-        // console.log("==================")
+        // Logger.debug("==================")
+        // Logger.debug("Crypto Payment:")
+        // Logger.debug(cliRedify(JSON.stringify(payment, null, 4)))
+        // Logger.debug("==================")
 
         return reply.send({
           success: true,
@@ -549,13 +549,13 @@ export default async function paymentsController(fastify: FastifyInstance) {
         data: { processed: true, processed_at: new Date() },
       });
 
-      console.log(cliYellowfy(`Status: ${newStatus}`))
+      Logger.debug(cliYellowfy(`Status: ${newStatus}`))
       if (newStatus === "SUCCEEDED") {
         // Generate invoice and save it to the user context
         let paymentsCount = await prisma.payment.count();
         let invoiceNumber = `INV-${paymentsCount + 1}`;
-        // console.log("Payment:  ", payment)
-        // console.log(cliYellowfy(JSON.stringify(payment.Subscription, null, 4)))
+        // Logger.debug("Payment:  ", payment)
+        // Logger.debug(cliYellowfy(JSON.stringify(payment.Subscription, null, 4)))
         let userAddress = payment.Subscription.user_address
         let userDetails = await prisma.users.findUnique({ where: { address: userAddress } })
         let subscriptionPlan = await prisma.subscriptionPlan.findUnique({ where: { id: payment.Subscription.plan_id } })
@@ -588,7 +588,7 @@ export default async function paymentsController(fastify: FastifyInstance) {
         };
 
         try {
-          // console.log('Generating and Saving PDF Invoice...');
+          // Logger.debug('Generating and Saving PDF Invoice...');
 
           const host = request.headers.host || `${getHost()}:${getPort()}`;
           const protocol = request.protocol || 'https';
@@ -602,7 +602,7 @@ export default async function paymentsController(fastify: FastifyInstance) {
             true
           );
 
-          // console.log('PDF Generated and Saved!', JSON.stringify(result.fileObject, null, 2));
+          // Logger.debug('PDF Generated and Saved!', JSON.stringify(result.fileObject, null, 2));
         } catch (error: any) {
           Logger.error("Error generating invoice: ", error);
         }

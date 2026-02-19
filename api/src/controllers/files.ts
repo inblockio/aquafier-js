@@ -54,8 +54,8 @@ export default async function filesController(fastify: FastifyInstance) {
         }
 
 
-        // check ownership of the file 
-        let revision = prisma.revision.findFirst({
+        // check ownership of the file
+        let revision = await prisma.revision.findFirst({
             where: {
                 OR: [
                     { pubkey_hash: file.file_hash }, // Check if the file's pubkey_hash matches the session's pubkey_hash

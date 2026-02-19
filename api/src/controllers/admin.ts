@@ -1,36 +1,27 @@
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
 import { isUserAdmin } from '../utils/api_utils';
+import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
+import Logger from "../utils/logger";
 
 export default async function adminController(fastify: FastifyInstance) {
 
     // Authorization Middleware
     fastify.addHook('preHandler', async (request, reply) => {
-        // Skip auth for this hook if it's not an admin route (safety check, though we register this controller under a prefix usually, or we just check path)
         if (!request.url.includes('/admin/')) return;
 
-        const nonce = request.headers['nonce'];
+        await authenticate(request as AuthenticatedRequest, reply);
 
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
+        const address = (request as AuthenticatedRequest).user?.address;
+        if (!address) return;
 
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce }
-        });
-
-        if (!session || !session.address) {
-            return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-        }
-
-        const { isAdmin, isSuperAdmin } = await isUserAdmin(session.address);
+        const { isAdmin, isSuperAdmin } = await isUserAdmin(address);
         if (!isAdmin) {
             return reply.code(403).send({ error: 'Unauthorized: Access denied' });
         }
 
-        // Attach admin info to request for downstream use
         (request as any).adminSource = isSuperAdmin ? 'env' : 'db';
-        (request as any).walletAddress = session.address;
+        (request as any).walletAddress = address;
     });
 
     fastify.get('/admin/check', async (request, reply) => {
@@ -154,7 +145,7 @@ export default async function adminController(fastify: FastifyInstance) {
             });
 
         } catch (error) {
-            console.error(`Error fetching admin data for ${type}:`, error);
+            Logger.error(`Error fetching admin data for ${type}:`, error);
             return reply.code(500).send({ error: 'Internal Server Error' });
         }
     });
@@ -202,7 +193,7 @@ export default async function adminController(fastify: FastifyInstance) {
                 isSuperAdmin: superAdmins.includes(targetAddress.toLowerCase()),
             });
         } catch (error) {
-            console.error('Error toggling admin status:', error);
+            Logger.error('Error toggling admin status:', error);
             return reply.code(500).send({ error: 'Internal Server Error' });
         }
     });

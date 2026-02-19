@@ -1277,44 +1277,6 @@ function orderRevisionsInChain(chainData: any): string[] {
 }
 
 /**
- * Updates the latest hash entry for a user
- */
-// async function updateLatestHash(userAddress: string, oldHash: string, newHash: string): Promise<void> {
-//     try {
-//         // First check if old hash is in the latest table
-//         const existingLatest = await prisma.latest.findFirst({
-//             where: {
-//                 hash: oldHash,
-//                 user: userAddress
-//             }
-//         });
-
-//         if (existingLatest) {
-//             // Update existing entry to point to new hash
-//             await prisma.latest.update({
-//                 where: {
-//                     hash: oldHash
-//                 },
-//                 data: {
-//                     hash: newHash
-//                 }
-//             });
-//         } else {
-//             // Create new latest entry
-//             await prisma.latest.create({
-//                 data: {
-//                     hash: newHash,
-//                     user: userAddress
-//                 }
-//             });
-//         }
-//     } catch (error: any) {
-//         Logger.error("Error updating latest hash:", error);
-//         throw error;
-//     }
-// }
-
-/**
  * Updates the latest hash entry for a user using upsert to avoid race conditions
  */
 async function updateLatestHash(
