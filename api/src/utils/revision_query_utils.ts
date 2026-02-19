@@ -186,11 +186,16 @@ export async function getUserApiFileInfo(
 
     const displayData = await fetchAquatreeFoUser(url, latest)
 
+    // Filter out entries with empty file_index (orphan trees without proper file metadata)
+    const filteredDisplayData = displayData.filter(item =>
+        item.aquaTree.file_index && Object.keys(item.aquaTree.file_index).length > 0
+    );
+
     const startIndex = skip + 1;
     const endIndex = Math.min(skip + limit, totalItems);
 
     return {
-        data: deleteChildrenFieldFromAquaTrees(displayData),
+        data: deleteChildrenFieldFromAquaTrees(filteredDisplayData),
         pagination: {
             currentPage: page,
             totalPages: totalPages,

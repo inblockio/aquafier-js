@@ -82,16 +82,11 @@ export async function transferRevisionChainData(
                 }
 
                 // hide system templates from user view
+                // Only set to true for system templates; never override to false
+                // when the parent is already a workflow (child trees of workflows
+                // should remain hidden even if their genesis hash isn't a system template)
                 let genhash = getGenesisHash(aquaTree);
-                if (genhash) {
-                    shouldAquaTreeBeSavedAsPartOfWorkflow = systemTemplateHashes.includes(genhash.trim())
-                }
-
-                // this will hide pdf aqua tree , as it not part  system aqua tree unlike signatures
-                if (workFlowData.isWorkFlow && workFlowData.workFlow.includes("aqua_sign")) {
-                    shouldAquaTreeBeSavedAsPartOfWorkflow = true
-                }
-                if (workFlowData.isWorkFlow && workFlowData.workFlow.includes("user_signature")) {
+                if (genhash && systemTemplateHashes.includes(genhash.trim())) {
                     shouldAquaTreeBeSavedAsPartOfWorkflow = true
                 }
 

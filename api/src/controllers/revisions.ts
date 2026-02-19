@@ -1442,11 +1442,13 @@ export default async function revisionsController(fastify: FastifyInstance) {
                     revisionHashes = latestRecords.map(r => r.hash);
 
                 } else {
-                    // For 'all' fileType, use the original approach
+                    // For 'all' fileType, still exclude workflow/system trees
+                    // to prevent ghost entries (linked child trees with empty file_index)
                     const whereClause: any = {
                         AND: {
                             user: userAddress,
-                            template_id: null
+                            template_id: null,
+                            is_workflow: false
                         }
                     };
 
@@ -1490,6 +1492,11 @@ export default async function revisionsController(fastify: FastifyInstance) {
             });
 
             displayData = await Promise.all(displayDataPromises);
+
+            // Filter out entries with empty file_index (orphan trees without proper file metadata)
+            displayData = displayData.filter(dataItem =>
+                dataItem.aquaTree.file_index && Object.keys(dataItem.aquaTree.file_index).length > 0
+            );
 
             if (fileType === 'user_files') {
                 // Filter out any workflow files that might have slipped through
