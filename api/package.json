@@ -59,7 +59,7 @@
   "pnpm": {
     "overrides": {
       "ws@>=8.0.0 <8.17.1": ">=8.17.1",
-      "systeminformation@<5.27.14": ">=5.27.14",
+      "systeminformation@<5.27.14": ">=5.31.0",
       "@isaacs/brace-expansion@5.0.0": ">=5.0.1"
     }
   },
