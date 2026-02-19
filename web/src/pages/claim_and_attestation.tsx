@@ -108,8 +108,17 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
             // claims name
             let allHashes = Object.keys(apiFileInfo.aquaTree?.revisions || {})
             const firstRevsion = apiFileInfo.aquaTree?.revisions[allHashes[0]]
+
+            const claimNameField: Record<string, string> = {
+                  "aqua_certificate": "forms_content",
+                  "user_signature": "forms_name",
+                  "email_claim": "forms_email",
+                  "simple_claim": "forms_name",
+                  "phone_number_claim": "forms_phone_number"
+            }
             if (firstRevsion) {
-                  let formName = firstRevsion[`forms_name`] || firstRevsion[`forms_email`]
+                  const firstRevisionFormsType = firstRevsion['forms_type']
+                  let formName = firstRevsion[claimNameField[firstRevisionFormsType]] || firstRevsion[`forms_email`] || firstRevsion['forms_txt_name'] ||  firstRevsion[`forms_content`] || firstRevsion[`forms_context`] || firstRevsion['forms_claim_content']
                   if (formName) {
                         setClaimName(formName)
                   }
@@ -152,15 +161,18 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
             if (item) {
                   const genesisHash = getGenesisHash(item.aquaTree!)
 
+                  
                   if (genesisHash) {
                         const genesisRevision = item.aquaTree?.revisions[genesisHash!]
-                        let walletAddress = genesisRevision?.forms_wallet_address
+                       
+                        let walletAddress = genesisRevision?.forms_wallet_address || genesisRevision?.forms_creator
                         if (genesisHash) {
                               navigate(`/app/claims/workflow/${walletAddress}#${genesisHash}`)
                         }
                   }
             }
       }
+
       return (
             <TableRow key={`${workflowName}-${index}`} className="hover:bg-muted/50">
                   <TableCell

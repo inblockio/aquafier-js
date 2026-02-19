@@ -181,7 +181,7 @@ export function useSignatureManagement({
 
             setSigners(signersList)
 
-            const fourthItmeHashOnwards = allHashes.slice(4)
+            const fourthItmeHashOnwards = allHashes.slice(5)
             let allSignersData = [...signersList]
 
             try {
@@ -203,6 +203,7 @@ export function useSignatureManagement({
                         setAllSignersBeforeMe(allSignersBeforeMeList)
                   }
             } catch (e) {
+                  console.log("Error 1: ", e)
                   toast.error(`Error Loading pdf`)
             }
 
