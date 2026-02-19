@@ -1,0 +1,519 @@
+import { useEffect, useState, useRef } from 'react'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Progress } from '@/components/ui/progress'
+import {
+      DropdownMenu,
+      DropdownMenuContent,
+      DropdownMenuItem,
+      DropdownMenuLabel,
+      DropdownMenuSeparator,
+      DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
+import {
+      AlertCircle,
+      CheckCircle,
+      Clock,
+      Download,
+      Eye,
+      FileText,
+      MoreHorizontal,
+      Plus,
+      Trash2,
+      Users
+} from 'lucide-react'
+import appStore from '@/store'
+import { useStore } from 'zustand'
+import {
+      displayTime,
+      ensureDomainUrlHasSSL,
+      getAquaTreeFileName,
+      getAquaTreeFileObject,
+      getGenesisHash,
+      processContractInformation
+} from '@/utils/functions'
+import { FileObject } from 'aqua-js-sdk'
+import { IContractInformation } from '@/types/contract_workflow'
+import { DownloadAquaChain } from '../../components/aqua_chain_actions/download_aqua_chain'
+import { OpenAquaSignWorkFlowButton } from '../../components/aqua_chain_actions/open_aqua_sign_workflow'
+import { DeleteAquaChain, DeleteAquaChainDialog } from '../../components/aqua_chain_actions/delete_aqua_chain'
+import { IWorkflowItem } from '@/types/types'
+import WalletAddressClaim from '../v2_claims_workflow/WalletAddressClaim'
+import { ApiFileInfo } from '@/models/FileInfo'
+import { toast } from 'sonner'
+import apiClient from '@/api/axiosInstance'
+import { API_ENDPOINTS } from '@/utils/constants'
+import { GlobalPagination } from '@/types'
+import CustomPagination from '@/components/common/CustomPagination'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useReloadWatcher } from '@/hooks/useReloadWatcher'
+import { OpenSelectedFileDetailsButton } from '@/components/aqua_chain_actions/details_button'
+import { RELOAD_KEYS } from '@/utils/reloadDatabase'
+
+const getStatusIcon = (status: string) => {
+      switch (status) {
+            case 'completed':
+                  return <CheckCircle className="h-4 w-4" />
+            case 'pending':
+                  return <Clock className="h-4 w-4" />
+            case 'overdue':
+                  return <AlertCircle className="h-4 w-4" />
+            case 'draft':
+                  return <FileText className="h-4 w-4" />
+            default:
+                  return <Clock className="h-4 w-4" />
+      }
+}
+
+const getStatusColor = (status: string) => {
+      switch (status) {
+            case 'completed':
+                  return 'bg-green-100 text-green-800 border-green-200'
+            case 'pending':
+                  return 'bg-blue-100 text-blue-800 border-blue-200'
+            case 'overdue':
+                  return 'bg-red-100 text-red-800 border-red-200'
+            case 'draft':
+                  return 'bg-gray-100 text-gray-800 border-gray-200'
+            default:
+                  return 'bg-gray-100 text-gray-800 border-gray-200'
+      }
+}
+
+const getProgressPercentage = (total: number, remaining: number) => {
+      if (total === 0) return 0 // Avoid division by zero
+      return ((total - remaining) / total) * 100
+}
+
+const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowItem) => {
+      const { setSelectedFileInfo } = useStore(appStore)
+      const navigate = useNavigate()
+      const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined)
+      const [contractInformation, setContractInformation] = useState<IContractInformation | undefined>(undefined)
+      const { session, backend_url } = useStore(appStore)
+      const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+      const [isDeleting, setIsDeleting] = useState(false)
+      const dropdownTriggerRef = useRef<HTMLButtonElement>(null)
+
+      const getCurrentFileObject = () => {
+            const fileObject = getAquaTreeFileObject(apiFileInfo)
+            setCurrentFileObject(fileObject)
+      }
+
+      const getTimeInfo = () => {
+            const genRevision = getGenesisHash(apiFileInfo.aquaTree!)
+            if (genRevision) {
+                  const timestamp = apiFileInfo.aquaTree?.revisions?.[genRevision]?.local_timestamp
+                  if (timestamp) {
+                        return displayTime(timestamp)
+                  }
+            } else {
+                  return 'Not available'
+            }
+      }
+
+      const getSigners = () => {
+            const genRevision = getGenesisHash(apiFileInfo.aquaTree!)
+            if (genRevision) {
+                  const signers = apiFileInfo.aquaTree?.revisions?.[genRevision]?.forms_signers
+                  if (signers) {
+                        return signers.split(',')
+                  }
+            } else {
+                  return 'Not available'
+            }
+      }
+
+      const getSignersStatus = () => {
+            let signersStatus: Array<{ address: string; status: string }> = []
+            if (contractInformation) {
+                  signersStatus = contractInformation.firstRevisionData?.forms_signers.split(',').map((signer: string) => {
+                        const item = contractInformation.signatureRevisionHashes.find(e => e.walletAddress.toLowerCase().trim() == signer.toLowerCase().trim())
+
+                        if (item) {
+                              return {
+                                    address: signer,
+                                    status: 'signed',
+                              }
+                        } else {
+                              // if isWorkFlowComplete is empty show green check mark
+                              // this experiemntal,
+                              if (contractInformation.isWorkFlowComplete.length === 0) {
+                                    return {
+                                          address: signer,
+                                          status: 'signed',
+                                    }
+                              }
+                              return {
+                                    address: signer,
+                                    status: 'pending',
+                              }
+                        }
+                  })
+            }
+            return signersStatus
+      }
+
+      const signers = getSigners()
+      const signersStatus = getSignersStatus()
+
+      const handleDeleteFile = async () => {
+            setIsDeleting(true)
+            try {
+                  const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!)
+                  const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_delete_file`)
+                  const response = await apiClient.post(
+                        url,
+                        { revisionHash: lastRevisionHash },
+                        { headers: { nonce: session?.nonce }, reloadKeys: [RELOAD_KEYS.user_files, RELOAD_KEYS.all_files, RELOAD_KEYS.aqua_sign] }
+                  )
+
+                  if (response.status === 200) {
+                        setDeleteDialogOpen(false)
+                        toast.success('File deleted successfully')
+                  }
+            } catch (e) {
+                  toast.error('File deletion error')
+                  setDeleteDialogOpen(false)
+            }
+            setIsDeleting(false)
+      }
+
+      useEffect(() => {
+            getCurrentFileObject()
+            const contractInformation = processContractInformation(apiFileInfo)
+            setContractInformation(contractInformation)
+      }, [apiFileInfo])
+
+      return (
+            <>
+                  <TableRow key={`${workflowName}-${index}`} className="hover:bg-muted/50 h-fit cursor-pointer" onClick={e => {
+                        e.preventDefault()
+                        setSelectedFileInfo(apiFileInfo);
+                        let genesisHash = getGenesisHash(apiFileInfo.aquaTree!)
+                              if (!genesisHash) {
+                                    toast.error('Could not determine genesis hash for this workflow.')
+                                    return
+                              }
+                              let gensesiRevision = apiFileInfo.aquaTree?.revisions[genesisHash]
+                              let signers = gensesiRevision?.forms_signers
+
+                              // check if am in the signer only then navigate to 2
+                              if (signers) {
+
+                                    let signersArray = signers.split(",").map((item: string) => item.trim().toLocaleLowerCase())
+                                    let activeUserAddress = session?.address?.toLocaleLowerCase()
+                                    let isUserSigner = signersArray.find((signer: string) => signer === activeUserAddress)
+                                    if (isUserSigner) {
+
+                                          navigate('/app/pdf/workflow/2/' + genesisHash)
+                                          return
+                                    }
+                              }else{
+
+                                    navigate('/app/pdf/workflow/1/' + genesisHash)
+                                    return
+                              }
+                  }}>
+                        <TableCell className="font-medium w-75 max-w-75 min-w-75">
+                              <div className="w-full flex items-center gap-3">
+                                    <div className="shrink-0">
+                                          <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                                                <FileText className="h-5 w-5 text-blue-600" />
+                                          </div>
+                                    </div>
+                                    <div className="grow min-w-0">
+                                          <div className="font-medium text-sm wrap-break-word whitespace-normal">{currentFileObject?.fileName}</div>
+                                          <div className="text-xs text-muted-foreground">Created at {getTimeInfo()}</div>
+                                    </div>
+                              </div>
+                        </TableCell>
+                        <TableCell className="w-50">
+                              <div className="flex items-center gap-2 w-fit" onClick={e => {
+                                    e.stopPropagation()
+                              }}>
+                                    <div className="flex -space-x-2">
+                                          {signers?.slice(0, 3).map((signer: string, index: number) => (
+                                                <WalletAddressClaim key={index} avatarOnly={true} walletAddress={signer} />
+                                          ))}
+                                          {signers?.length > 3 && (
+                                                <Avatar className="h-8 w-8 border-2 border-background" onClick={e => {
+                                                      e.preventDefault()
+                                                }}>
+                                                      <AvatarFallback className="text-xs">+{signers?.length - 3}</AvatarFallback>
+                                                </Avatar>
+                                          )}
+                                    </div>
+                                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                          <Users className="h-3 w-3" />
+                                          {signers?.length}
+                                    </div>
+                              </div>
+                        </TableCell>
+                        <TableCell className="w-37.5">
+                              <div className="space-y-1">
+                                    <div className="flex items-center justify-between text-sm">
+                                          <span>
+                                                {signersStatus.filter(e => e.status == 'signed').length}/{signers?.length}
+                                          </span>
+                                          <span className="text-muted-foreground">
+                                                {Math.round(getProgressPercentage(signersStatus.length, signersStatus.filter(e => e.status == 'pending').length))}%
+                                          </span>
+                                    </div>
+                                    <Progress
+                                          value={getProgressPercentage(signersStatus.length, signersStatus.filter(e => e.status == 'pending').length)}
+                                          className="h-2"
+                                    />
+                                    {signersStatus.filter(e => e.status == 'pending').length > 0 && (
+                                          <div className="text-xs text-muted-foreground">{signersStatus.filter(e => e.status == 'pending').length} remaining</div>
+                                    )}
+                              </div>
+                        </TableCell>
+                        <TableCell className="w-25">
+                              <Badge variant="outline" className={`${getStatusColor(signersStatus.filter(e => e.status == 'pending').length > 0 ? 'pending' : 'completed')} capitalize`}>
+                                    {getStatusIcon(signersStatus.filter(e => e.status == 'pending').length > 0 ? 'pending' : 'completed')}
+                                    <span className="ml-1">{signersStatus.filter(e => e.status == 'pending').length > 0 ? 'pending' : 'completed'}</span>
+                              </Badge>
+                        </TableCell>
+                        <TableCell className="text-right w-25">
+                              <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                          <Button
+                                                ref={dropdownTriggerRef}
+                                                variant="outline"
+                                                className="h-8 w-8 p-0 cursor-pointer"
+                                          >
+                                                <MoreHorizontal className="h-4 w-4" />
+                                          </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                          <DropdownMenuSeparator />
+                                          <OpenAquaSignWorkFlowButton item={apiFileInfo} nonce={session?.nonce ?? ''}>
+                                                <DropdownMenuItem className='cursor-pointer'>
+                                                      <FileText className="mr-2 h-4 w-4" />
+                                                      View 
+                                                </DropdownMenuItem>
+                                          </OpenAquaSignWorkFlowButton>
+                                          {/* <DropdownMenuItem disabled>
+                                          <Send className="mr-2 h-4 w-4" />
+                                          Send Reminder
+                                    </DropdownMenuItem> */}
+                                          <OpenSelectedFileDetailsButton file={apiFileInfo} index={index}>
+                                                <DropdownMenuItem className='cursor-pointer'>
+                                                      <Eye className="mr-2 h-4 w-4" />
+                                                      Details
+                                                </DropdownMenuItem>
+                                          </OpenSelectedFileDetailsButton>
+                                          <DownloadAquaChain file={apiFileInfo} index={index}>
+                                                <DropdownMenuItem className='cursor-pointer'>
+                                                      <Download className="mr-2 h-4 w-4" />
+                                                      Download
+                                                </DropdownMenuItem>
+                                          </DownloadAquaChain>
+                                          <DropdownMenuSeparator />
+                                          <DeleteAquaChain
+                                                apiFileInfo={apiFileInfo}
+                                                backendUrl={backend_url}
+                                                nonce={session?.nonce ?? ''}
+                                                revision=""
+                                                index={index}
+                                                onDeleteClick={() => {
+                                                      // Remove focus from dropdown button before opening dialog
+                                                      dropdownTriggerRef.current?.blur()
+                                                      // Small delay to ensure focus is properly removed before dialog opens
+                                                      setTimeout(() => setDeleteDialogOpen(true), 10)
+                                                }}
+                                          >
+                                                <DropdownMenuItem variant='destructive' className="cursor-pointer">
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            Delete
+                                                </DropdownMenuItem>
+                                          </DeleteAquaChain>
+                                    </DropdownMenuContent>
+                              </DropdownMenu>
+                        </TableCell>
+                  </TableRow>
+
+                  {/* Delete Dialog - Outside the dropdown to prevent DOM detachment */}
+                  <DeleteAquaChainDialog
+                        open={deleteDialogOpen}
+                        onOpenChange={setDeleteDialogOpen}
+                        onConfirm={handleDeleteFile}
+                        isLoading={isDeleting}
+                  />
+            </>
+      )
+}
+
+export default function WorkflowsTablePage() {
+       const { workflowType } = useParams<{ workflowType: string }>();
+      const { session, backend_url, setOpenDialog } = useStore(appStore)
+      const [pagination, setPagination] = useState<GlobalPagination | null>(null)
+
+      const [workflowsUi, setWorkflowsUi] = useState<IWorkflowItem[]>([])
+      const [isLoading, setIsLoading] = useState<boolean>(false)
+      const [currentPage, setCurrentPage] = useState(1)
+
+      const processFilesToWorkflowUi = (_files: ApiFileInfo[]) => {
+            const newData: IWorkflowItem[] = []
+            _files.forEach(file => {
+                  const nameItem: string = getAquaTreeFileName(file.aquaTree!)
+                  newData.push({ workflowName: nameItem, apiFileInfo: file })
+            })
+            setWorkflowsUi(newData)
+      }
+
+      // Extract data loading logic into a separate function
+      const loadWorkflowsData = async (page: number = currentPage) => {
+            if (!session || !backend_url) return;
+
+            setIsLoading(true);
+            try {
+                  const params = {
+                        page,
+                        limit: 10,
+                        claim_types: workflowType ? JSON.stringify([workflowType]) : JSON.stringify(['aqua_sign']) //default to aqua_sign if no type provided
+                  }
+                  const filesDataQuery = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
+                        headers: {
+                              'Content-Type': 'application/json',
+                              'nonce': `${session!.nonce}`
+                        },
+                        params
+                  })
+                  const response = filesDataQuery.data
+                  const aquaTrees = response.aquaTrees
+                  setPagination(response.pagination)
+                  processFilesToWorkflowUi(aquaTrees)
+            } catch (error) {
+                  toast.error('Error fetching workflows')
+                  console.log(error)
+            } finally {
+                  setIsLoading(false);
+            }
+      }
+
+      // Watch for reload triggers
+      useReloadWatcher({
+            key: RELOAD_KEYS.aqua_sign,
+            onReload: () => {
+                  loadWorkflowsData();
+            }
+      });
+
+      useEffect(() => {
+            loadWorkflowsData(currentPage);
+      }, [currentPage])
+
+
+      return (
+            <>
+                  {/* Action Bar */}
+                  <div className="bg-white border-b border-gray-200 px-6 py-4 hidden">
+                        <div className="flex items-center justify-between">
+                              <div /> {/* Empty div to push the button right */}
+                              <div className="flex items-center space-x-4">
+                                    <button
+                                          className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
+                                          style={{ backgroundColor: '#394150' }}
+                                          onClick={() => {
+                                                // setOpenCreateAquaSignPopUp(true)
+                                                setOpenDialog({
+                                                      dialogType: 'aqua_sign',
+                                                      isOpen: true,
+                                                      onClose: () => setOpenDialog(null),
+                                                      onConfirm: () => {
+                                                            // Handle confirmation logic here
+                                                      }
+                                                })
+                                          }}
+                                    >
+                                          <Plus className="w-4 h-4" />
+                                          <span>Create Document Signature </span>
+                                    </button>
+                              </div>
+                        </div>
+                  </div>
+
+                  <div className="space-y-6 mt-5">
+                        <Card className="py-6">
+                              <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 justify-between">
+                                          <div className="flex items-center gap-2">
+                                                <FileText className="h-5 w-5" />
+                                                <span>AquaSign - PDF Signature</span>
+                                          </div>
+                                          <button
+                                                className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
+                                                style={{ backgroundColor: '#394150' }}
+                                                onClick={() => {
+                                                      // setOpenCreateAquaSignPopUp(true)
+                                                      setOpenDialog({
+                                                            dialogType: 'aqua_sign',
+                                                            isOpen: true,
+                                                            onClose: () => setOpenDialog(null),
+                                                            onConfirm: () => {
+                                                                  // Handle confirmation logic here
+                                                            }
+                                                      })
+                                                }}
+                                          >
+                                                <Plus className="w-4 h-4" />
+                                                <span>New</span>
+                                          </button>
+                                    </CardTitle>
+                              </CardHeader>
+                              <CardContent className="px-1">
+                                    {/* <div className="rounded-md border"> */}
+                                    <div className="overflow-x-auto md:h-[calc(100vh-300px)] overflow-y-auto">
+                                          <Table>
+                                                <TableHeader>
+                                                      <TableRow>
+                                                            <TableHead className="w-75 max-w-75 min-w-75 wrap-break-word overflow-hidden">Document</TableHead>
+                                                            {/* <TableHead>Workflow Type</TableHead> */}
+                                                            <TableHead>Signers</TableHead>
+                                                            <TableHead>Progress</TableHead>
+                                                            <TableHead>Status</TableHead>
+                                                            <TableHead className="text-right">Actions</TableHead>
+                                                      </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                      {isLoading ? (
+                                                            <TableRow>
+                                                                  <TableCell colSpan={6} className="h-100 text-center">
+                                                                        <div className="flex items-center justify-center gap-2">
+                                                                              <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                                                                              <span>Loading AquaSign - PDF Signature...</span>
+                                                                        </div>
+                                                                  </TableCell>
+                                                            </TableRow>
+                                                      ) : workflowsUi.length === 0 ? (
+                                                            <TableRow>
+                                                                  <TableCell colSpan={6} className="h-100 text-center">
+                                                                        No workflows found
+                                                                  </TableCell>
+                                                            </TableRow>
+                                                      ) : (
+                                                            workflowsUi.map((workflow, index: number) => (
+                                                                  <WorkflowTableItem key={`${index}-workflow`} workflowName={workflow.workflowName} apiFileInfo={workflow.apiFileInfo} index={index} />
+                                                            ))
+                                                      )}
+                                                </TableBody>
+                                          </Table>
+                                    </div>
+                                    <CustomPagination
+                                          currentPage={currentPage}
+                                          totalPages={pagination?.totalPages ?? 1}
+                                          onPageChange={setCurrentPage}
+                                    />
+                              </CardContent>
+                        </Card>
+                  </div>
+            </>
+      )
+}

@@ -24,6 +24,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Link } from 'react-router-dom'
+import { useState } from 'react'
 
 
 const HeroSection = () => (
@@ -532,52 +533,98 @@ const PricingSection = () => (
       </section>
 )
 
-const ContactSection = () => (
-      <section id="contact" className="py-20 md:py-28 bg-background relative overflow-hidden">
-            {/* Decorative elements */}
-            <div className="absolute top-40 left-0 w-72 h-72 bg-orange-500/5 rounded-full filter blur-3xl"></div>
-            <div className="absolute bottom-20 right-0 w-80 h-80 bg-orange-400/5 rounded-full filter blur-3xl"></div>
+const ContactSection = () => {
+      const [isSubmitting, setIsSubmitting] = useState(false);
+      const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
-            <div className="container mx-auto px-4 relative z-10">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                        <div className="flex flex-col">
-                              <h2 className="text-3xl font-bold font-headline sm:text-4xl md:text-5xl">
-                                    Ready to build with <span className="bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent">Aqua</span>?
-                              </h2>
-                              <div className="h-1 w-20 bg-gradient-to-r from-orange-600 to-orange-400 my-6"></div>
-                              <p className="mt-4 text-lg text-muted-foreground">
-                                    Have a question or want a demo? Reach out to us via email or fill out the form and our team will get back to you shortly.
-                              </p>
-                              <div className="mt-8 space-y-4">
-                                    <a href="mailto:demo@inblock.io" className="flex items-center text-lg text-orange-500 hover:text-orange-600 transition-colors group">
-                                          <div className="p-2 rounded-full bg-orange-500/10 mr-3 group-hover:bg-orange-500/20 transition-colors">
-                                                <Mail className="h-5 w-5" />
-                                          </div>
-                                          demo@inblock.io
-                                    </a>
-                              </div>
-                        </div>
-                        <Card className="p-8 bg-white/80 dark:bg-black/50 shadow-lg border border-orange-200/50 dark:border-orange-800/30 backdrop-blur-sm">
-                              <form className="space-y-6">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                          <Input placeholder="Your Name" />
-                                          <Input type="email" placeholder="Your Email" />
+      const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+            e.preventDefault();
+            setIsSubmitting(true);
+            setSubmitStatus('idle');
+
+            const formData = new FormData(e.currentTarget);
+
+            // Add Web3Forms access key
+            formData.append('access_key', 'e8f7420f-eeb3-486e-b2ab-42669f9f65aa');
+
+            try {
+                  const response = await fetch('https://api.web3forms.com/submit', {
+                        method: 'POST',
+                        body: formData
+                  });
+
+                  const data = await response.json();
+
+                  if (data.success) {
+                        setSubmitStatus('success');
+                        (e.target as HTMLFormElement).reset();
+                  } else {
+                        setSubmitStatus('error');
+                  }
+            } catch (error) {
+                  console.error('Form submission error:', error);
+                  setSubmitStatus('error');
+            } finally {
+                  setIsSubmitting(false);
+            }
+      };
+
+      return (
+            <section id="contact" className="py-20 md:py-28 bg-background relative overflow-hidden">
+                  {/* Decorative elements */}
+                  <div className="absolute top-40 left-0 w-72 h-72 bg-orange-500/5 rounded-full filter blur-3xl"></div>
+                  <div className="absolute bottom-20 right-0 w-80 h-80 bg-orange-400/5 rounded-full filter blur-3xl"></div>
+
+                  <div className="container mx-auto px-4 relative z-10">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                              <div className="flex flex-col">
+                                    <h2 className="text-3xl font-bold font-headline sm:text-4xl md:text-5xl">
+                                          Ready to build with <span className="bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent">Aqua</span>?
+                                    </h2>
+                                    <div className="h-1 w-20 bg-gradient-to-r from-orange-600 to-orange-400 my-6"></div>
+                                    <p className="mt-4 text-lg text-muted-foreground">
+                                          Have a question or want a demo? Reach out to us via email or fill out the form and our team will get back to you shortly.
+                                    </p>
+                                    <div className="mt-8 space-y-4">
+                                          <a href="mailto:demo@inblock.io" className="flex items-center text-lg text-orange-500 hover:text-orange-600 transition-colors group">
+                                                <div className="p-2 rounded-full bg-orange-500/10 mr-3 group-hover:bg-orange-500/20 transition-colors">
+                                                      <Mail className="h-5 w-5" />
+                                                </div>
+                                                demo@inblock.io
+                                          </a>
                                     </div>
-                                    <Input placeholder="Subject" />
-                                    <Textarea placeholder="Your Message" rows={5} />
-                                    <Button
-                                          type="submit"
-                                          size="lg"
-                                          className="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white transition-all duration-300 shadow-md hover:shadow-lg"
-                                    >
-                                          Send Message
-                                    </Button>
-                              </form>
-                        </Card>
+                              </div>
+                              <Card className="p-8 bg-white/80 dark:bg-black/50 shadow-lg border border-orange-200/50 dark:border-orange-800/30 backdrop-blur-sm">
+                                    <form className="space-y-6" onSubmit={handleSubmit}>
+                                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                                <Input name="name" placeholder="Your Name" required />
+                                                <Input name="email" type="email" placeholder="Your Email" required />
+                                          </div>
+                                          <Input name="subject" placeholder="Subject" required />
+                                          <Textarea name="message" placeholder="Your Message" rows={5} required />
+
+                                          {submitStatus === 'success' && (
+                                                <p className="text-green-600 dark:text-green-400 text-sm">Message sent successfully!</p>
+                                          )}
+                                          {submitStatus === 'error' && (
+                                                <p className="text-red-600 dark:text-red-400 text-sm">Failed to send message. Please try again.</p>
+                                          )}
+
+                                          <Button
+                                                type="submit"
+                                                size="lg"
+                                                disabled={isSubmitting}
+                                                className="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50"
+                                          >
+                                                {isSubmitting ? 'Sending...' : 'Send Message'}
+                                          </Button>
+                                    </form>
+                              </Card>
+                        </div>
                   </div>
-            </div>
-      </section>
-)
+            </section>
+      );
+}
 
 export default function HomeV2() {
 

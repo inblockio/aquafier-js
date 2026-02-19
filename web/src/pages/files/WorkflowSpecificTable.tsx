@@ -4,7 +4,7 @@ import { GlobalPagination } from "@/types"
 import { API_ENDPOINTS } from "@/utils/constants"
 import { ensureDomainUrlHasSSL } from "@/utils/functions"
 import apiClient from '@/api/axiosInstance'
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useStore } from "zustand"
 import { RenderFilesList, RenderFilesListCard } from "./commons"
 import { FilesListProps } from "@/types/types"
@@ -37,7 +37,7 @@ const WorkflowSpecificTable = ({ showFileActions, workflowName, view, filesListP
 
     const loadFiles = async () => {
         if (!session?.address || !backend_url || !workflowName) return;
-        setFiles([])
+
         try {
             setLoading(true)
 
@@ -55,7 +55,10 @@ const WorkflowSpecificTable = ({ showFileActions, workflowName, view, filesListP
                 params.claim_types = JSON.stringify([workflowName])
             } else {
                 // For 'all' and 'user_files', use the new sorted endpoint
-                params.fileType = workflowName
+                // Only add fileType param if not 'all' (when 'all', backend returns all files)
+                if (workflowName !== 'all') {
+                    params.fileType = workflowName
+                }
             }
 
             const filesDataQuery = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${endpoint}`), {
@@ -66,7 +69,7 @@ const WorkflowSpecificTable = ({ showFileActions, workflowName, view, filesListP
                 params
             })
             const response = filesDataQuery.data
-            const aquaTrees = response.aquaTrees
+            const aquaTrees = response.aquaTrees || []
             setPagination(response.pagination)
             setFiles(aquaTrees)
             setLoading(false)
@@ -77,13 +80,22 @@ const WorkflowSpecificTable = ({ showFileActions, workflowName, view, filesListP
         }
     }
 
+    // Keep a ref to the latest loadFiles so subscribe handlers never use a stale closure
+    const loadFilesRef = useRef(loadFiles)
+    loadFilesRef.current = loadFiles
+
     useEffect(() => {
+        // Clear files and reset to page 1 when workflow changes
+        setFiles([])
         setCurrentPage(1)
     }, [workflowName])
 
     useEffect(() => {
-        loadFiles()
-    }, [backend_url, JSON.stringify(session), `${currentPage}-${workflowName}`, sortBy]);
+        // Only load if we have the necessary data
+        if (session?.address && session?.nonce && backend_url) {
+            loadFiles()
+        }
+    }, [backend_url, session?.address, session?.nonce, currentPage, workflowName, sortBy]);
 
     // Determine the appropriate reload key based on workflow type
     const getReloadKey = (workflowName: string): string => {
@@ -116,7 +128,7 @@ const WorkflowSpecificTable = ({ showFileActions, workflowName, view, filesListP
     useEffect(() => {
         const unsubscribe = subscribe((message) => {
             if (message.type === 'notification_reload' && message.data && message.data.target === "workflows") {
-                loadFiles()
+                loadFilesRef.current()
                 triggerWorkflowReload(RELOAD_KEYS.contacts);
             }
         });

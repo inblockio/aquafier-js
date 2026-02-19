@@ -212,4 +212,4 @@ const ImprovedDNSLogs: React.FC<ImprovedDNSLogsProps> = ({
   );
 };
 
-export default ImprovedDNSLogs;
+export default React.memo(ImprovedDNSLogs);

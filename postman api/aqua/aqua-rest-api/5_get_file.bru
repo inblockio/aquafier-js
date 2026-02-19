@@ -1,0 +1,32 @@
+meta {
+  name: 5_get_file
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://localhost:3600/aqua-api/get_file/{{revision_hash}}
+  body: none
+  auth: none
+}
+
+headers {
+  nonce: {{nonce}}
+}
+
+docs {
+  # GET /aqua-api/get_file/:revision_hash
+
+  Downloads the file associated with a revision.
+
+  ## Path Parameters:
+  - `revision_hash` — the revision hash whose file to download
+
+  ## Query Parameters:
+  - `range` (optional) — byte range for partial content, e.g., `bytes=0-1024`
+
+  ## Response:
+  - 200: Full file with Content-Type and Content-Disposition headers
+  - 206: Partial content with Content-Range header (when range requested)
+  - 416: Invalid range
+}

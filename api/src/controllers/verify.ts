@@ -3,6 +3,7 @@ import Aquafier, { AquaTree, FileObject, Revision } from "aqua-js-sdk";
 import { FastifyInstance } from "fastify";
 import { ApiResponse, coerceIntoApiResponse, IClaimData, verifyProofApi } from "../utils/verify_dns_claim";
 import { prisma } from "../database/db";
+import Logger from "../utils/logger";
 
 export default async function verifyController(fastify: FastifyInstance) {
 

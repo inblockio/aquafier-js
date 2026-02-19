@@ -3,7 +3,7 @@
 // import {ClientConnection} from "../models/types";
 // import {FastifyInstance} from 'fastify';
 // import {WebSocket as WSWebSocket} from 'ws';
-// import Logger from "../utils/logger";
+import Logger from "../utils/logger";
 
 // // Define SocketStream manually
 // export interface SocketStream {
@@ -50,7 +50,7 @@
 //     }
 
 //     if (client.socket.readyState === WSWebSocket.OPEN) {
-//         console.log(`Sending message to user ${userId}: ${action}`);
+//         Logger.debug(`Sending message to user ${userId}: ${action}`);
 //         let message = {
 //             "action": action
 //         }
@@ -59,7 +59,7 @@
 //         client.socket.send(messageString);
 //         return { success: true };
 //     } else {
-//         console.log(`Removing disconnected client: ${userId}`);
+//         Logger.debug(`Removing disconnected client: ${userId}`);
 //         connectedClients.delete(userId);
 //         return { success: false, error: 'User connection is closed' };
 //     }

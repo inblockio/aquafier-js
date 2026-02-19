@@ -125,3 +125,40 @@ export interface AquaJsonInZip {
   genesis: string,
   name_with_hash: Array<AquaNameWithHash>
 }
+
+// Aqua REST API types
+export interface AquaRestListQuery {
+  include_metadata?: string; // "true" or "false" as query param
+  type?: string; // filter by revision_type
+}
+
+export interface AquaRestUpdatesQuery {
+  start_time: string; // UNIX seconds
+  end_time?: string;
+  type?: string;
+  include_metadata?: string;
+  page?: string;
+  limit?: string;
+}
+
+export interface AquaRestImportMetadata {
+  revision: Revision;
+  revisionHash: string;
+  originAddress: string;
+}
+
+export interface CatalogItem {
+  hash: string;
+  title?: string;
+  type?: string;
+  has_signature?: boolean;
+  has_witness?: boolean;
+}
+
+export interface ChangeEntry {
+  hash: string;
+  action: string;
+  timestamp: number;
+  type?: string;
+  title?: string;
+}

@@ -6,19 +6,18 @@ import apiClient from '@/api/axiosInstance'
 import { ApiFileInfo } from '../models/FileInfo'
 // import { ClipLoader } from "react-spinners";
 import { IDrawerStatus } from '../models/AquaTreeDetails'
-import { ImportAquaChainFromChain } from '../components/dropzone_file_actions/import_aqua_tree_from_aqua_tree'
 import { toast } from 'sonner'
 import { extractEmbeddedAquaData } from '@/utils/pdf-digital-signature'
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert'
 import { PdfDropzone } from '@/components/ui/pdf-dropzone'
-import { CompleteChainView } from '../components/files_chain_details'
+import { CompleteChainView } from '../components/revision_details/files_chain_details'
 import { ensureDomainUrlHasSSL } from '@/utils/functions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { EasyPDFRenderer } from '@/pages/aqua_sign_wokflow/ContractDocument/signer/SignerPage'
+import { EasyPDFRenderer } from '@/pages/pdf_workflow/pdf-viewer/SignerPage'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle, FileText, User, Calendar, Link, Hash, ShieldCheck, AlertCircle, Loader2, X, ShieldCheckIcon, Wallet2, Copy, InfoIcon, ShieldUser, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import WalletAdrressClaim from './v2_claims_workflow/WalletAdrressClaim'
+import WalletAddressClaim from './v2_claims_workflow/WalletAddressClaim'
 
 
 interface IMetadata {
@@ -139,7 +138,7 @@ const CustomPDFMetada = ({ metadata, drawerStatus }: { metadata: IMetadata | nul
                                     {
                                           metadata?.signerWallet?.split(",").map(item => item.trim()).map((_address, idx) => (
                                                 <div key={`wallet_${_address}_${idx}`} className="flex items-center gap-2">
-                                                      <WalletAdrressClaim walletAddress={_address} />
+                                                      <WalletAddressClaim walletAddress={_address} />
                                                 </div>
                                           ))
                                     }
@@ -196,7 +195,7 @@ const CustomPDFMetada = ({ metadata, drawerStatus }: { metadata: IMetadata | nul
                               </div>
                         </div>
                         {/* Document Hash */}
-                        <div className="space-y-1.5">
+                        {/* <div className="space-y-1.5">
                               <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400">
                                     <Hash
                                           className="h-3.5 w-3.5"
@@ -224,7 +223,7 @@ const CustomPDFMetada = ({ metadata, drawerStatus }: { metadata: IMetadata | nul
                                           Copy
                                     </button>
                               </div>
-                        </div>
+                        </div> */}
                         {/* Platform */}
                         <div className="flex items-center gap-2 pt-1 text-neutral-500 dark:text-neutral-400">
                               <Link
@@ -279,9 +278,9 @@ const CustomPDFMetada = ({ metadata, drawerStatus }: { metadata: IMetadata | nul
 } 
  
 const VerifyDocument = () => {
-      const { backend_url, metamaskAddress, session } = useStore(appStore)
+      const { backend_url, session } = useStore(appStore)
       const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
-      const [contractData, setContractData] = useState<any | null>(null)
+      // const [_contractData, setContractData] = useState<any | null>(null)
       const [loading, setLoading] = useState(false)
       const [hasError, setHasError] = useState<string | null>(null)
       const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
@@ -310,7 +309,7 @@ const VerifyDocument = () => {
 
                         if (response.status === 200) {
                               setFileInfo(response.data.data.displayData[0])
-                              setContractData(response.data.data.contractData)
+                              // setContractData(response.data.data.contractData)
                         }
                         setLoading(false)
                   } catch (error: any) {
@@ -661,14 +660,14 @@ const VerifyDocument = () => {
                                                 )}
 
                                                 {/* Import to Account Card */}
-                                                {fileInfo && metamaskAddress && drawerStatus && (
+                                                {/* {fileInfo && metamaskAddress && drawerStatus && (
                                                       <ImportAquaChainFromChain
                                                             showButtonOnly={false}
                                                             fileInfo={fileInfo}
                                                             contractData={contractData}
                                                             isVerificationSuccessful={drawerStatus?.isVerificationSuccessful ?? false}
                                                       />
-                                                )}
+                                                )} */}
                                           </div>
                                     </div>
                               </div>

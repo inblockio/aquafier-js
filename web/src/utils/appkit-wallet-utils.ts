@@ -176,12 +176,30 @@ export async function signMessageWithAppKit(
   const provider = await getAppKitProvider()
   if (!provider) throw new Error('No wallet provider available')
 
+  // Resolve the address the provider actually manages via eth_accounts.
+  // The passed accountAddress (from session) may be undefined, stale, or in
+  // a format the provider doesn't recognize (e.g., W3mFrameProvider for
+  // social login wallets requires the exact managed address).
+  let signingAddress = accountAddress
+  try {
+    const accounts: string[] = await provider.request({ method: 'eth_accounts' })
+    if (accounts && accounts.length > 0) {
+      signingAddress = accounts[0]
+    }
+  } catch {
+    // Fall back to the passed address if eth_accounts fails
+  }
+
+  if (!signingAddress) {
+    throw new Error('No wallet address available for signing')
+  }
+
   // Hex-encode the message as required by W3mFrameProvider
   const messageHex = ethers.hexlify(ethers.toUtf8Bytes(message))
 
   const rawSignature: string = await provider.request({
     method: 'personal_sign',
-    params: [messageHex, accountAddress],
+    params: [messageHex, signingAddress],
   })
 
   // Unwrap ERC-6492 signature from smart account wallets (e.g., Reown social login)

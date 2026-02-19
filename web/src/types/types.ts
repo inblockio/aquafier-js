@@ -169,6 +169,7 @@ export interface FileItemWrapper {
       isZip: boolean
       isJsonForm: boolean
       isJsonAquaTreeData: boolean
+      isPdfWithAquaData: boolean
 }
 
 export interface WebSocketMessage {
@@ -266,6 +267,7 @@ export interface SignatureData {
       dataUrl: string
       rotation: number
       isDragging?: boolean
+      scale?: number
       signatureId?: string
       walletAddressFontSize?: string
       nameColor?: string

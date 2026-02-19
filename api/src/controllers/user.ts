@@ -22,21 +22,9 @@ import { usageService } from '../services/usageService';
 
 export default async function userController(fastify: FastifyInstance) {
 
-    fastify.put('/user_ens/:address', async (request, reply) => {
+    fastify.put('/user_ens/:address', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
 
         const { address } = request.params as { address: string };
-
-        // Add authorization
-        const nonce = request.headers['nonce'];
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce: nonce }
-        });
-        if (session == null) {
-            return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
-        }
 
         const addr = request.body as { name: string };
 
@@ -55,21 +43,9 @@ export default async function userController(fastify: FastifyInstance) {
     });
 
     // Unified ENS/Address resolver - handles both ENS->Address and Address->ENS
-    fastify.get('/resolve/:identifier', async (request, reply) => {
+    fastify.get('/resolve/:identifier', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
         const { identifier } = request.params as { identifier: string };
         const { useEns } = request.query as { useEns?: string };
-
-        // Add authorization
-        const nonce = request.headers['nonce'];
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce: nonce }
-        });
-        if (session == null) {
-            return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-        }
 
         try {
             // Determine if identifier is an ENS name or address
@@ -126,7 +102,7 @@ export default async function userController(fastify: FastifyInstance) {
         }
 
         const ensName = await fetchEnsName(address, alchemyProjectKey);
-        console.log(cliRedify(`Found ENS NAME: ${ensName}`))
+        Logger.debug(cliRedify(`Found ENS NAME: ${ensName}`))
         if (ensName) {
             // Save to database
             await saveEnsToDatabase(address, ensName, useEns);
@@ -240,7 +216,11 @@ export default async function userController(fastify: FastifyInstance) {
         // const { address } = request.query as { address: string };
 
         try {
-            let data = await prisma.eNSName.findMany()
+            const { limit, offset } = request.query as { limit?: string; offset?: string };
+            const take = Math.min(parseInt(limit || '50', 10) || 50, 100);
+            const skip = parseInt(offset || '0', 10) || 0;
+
+            let data = await prisma.eNSName.findMany({ take, skip })
             return reply.code(200).send({ success: true, message: "ok", data });
 
         } catch (e: any) {
@@ -255,7 +235,7 @@ export default async function userController(fastify: FastifyInstance) {
 
         const userAddress = user?.address
 
-        console.log("User address: ", userAddress)
+        Logger.debug("User address: ", userAddress)
 
         if (!userAddress) {
             return reply.code(400).send({ error: "You are not logged in!" })
@@ -299,7 +279,7 @@ export default async function userController(fastify: FastifyInstance) {
             }
 
         } catch (e: any) {
-            return reply.code(500).send({ success: true, message: `error : ${e}`, });
+            return reply.code(500).send({ success: false, message: `error : ${e}`, });
 
         }
 
@@ -312,7 +292,7 @@ export default async function userController(fastify: FastifyInstance) {
         const user = request.user;
 
         try {
-            let data = prisma.userAttestationAddresses.findMany({
+            let data = await prisma.userAttestationAddresses.findMany({
                 where: {
                     owner: user?.address!!
                 }
@@ -320,7 +300,7 @@ export default async function userController(fastify: FastifyInstance) {
             return reply.code(200).send({ success: true, message: "ok", data });
 
         } catch (e: any) {
-            return reply.code(500).send({ success: true, message: `error : ${e}`, });
+            return reply.code(500).send({ success: false, message: `error : ${e}`, });
 
         }
 
@@ -356,7 +336,7 @@ export default async function userController(fastify: FastifyInstance) {
         }
         try {
 
-            prisma.userAttestationAddresses.create({
+            await prisma.userAttestationAddresses.create({
                 data: {
                     address: userAttestationAddressesRequest.address,
                     trust_level: userAttestationAddressesRequest.trust_level,
@@ -364,8 +344,9 @@ export default async function userController(fastify: FastifyInstance) {
                     id: undefined
                 }
             })
+            return reply.code(201).send({ success: true, message: "Attestation address created" });
         } catch (e: any) {
-            return reply.code(500).send({ success: true, message: `error : ${e}`, });
+            return reply.code(500).send({ success: false, message: `error : ${e}`, });
 
         }
 
@@ -380,7 +361,7 @@ export default async function userController(fastify: FastifyInstance) {
 
         try {
 
-            prisma.userAttestationAddresses.update({
+            await prisma.userAttestationAddresses.update({
                 where: {
                     id: userAttestationAddresses.id
                 },
@@ -389,8 +370,9 @@ export default async function userController(fastify: FastifyInstance) {
                     trust_level: userAttestationAddresses.trust_level,
                 }
             })
+            return reply.code(200).send({ success: true, message: "Attestation address updated" });
         } catch (e: any) {
-            return reply.code(500).send({ success: true, message: `error : ${e}`, });
+            return reply.code(500).send({ success: false, message: `error : ${e}`, });
 
         }
 
@@ -404,13 +386,14 @@ export default async function userController(fastify: FastifyInstance) {
 
         try {
 
-            prisma.userAttestationAddresses.delete({
+            await prisma.userAttestationAddresses.delete({
                 where: {
                     id: userAttestationAddresses.id
                 },
             })
+            return reply.code(200).send({ success: true, message: "Attestation address deleted" });
         } catch (e: any) {
-            return reply.code(500).send({ success: true, message: `error : ${e}`, });
+            return reply.code(500).send({ success: false, message: `error : ${e}`, });
 
         }
 
@@ -419,32 +402,13 @@ export default async function userController(fastify: FastifyInstance) {
     })
 
     // get current session
-    fastify.get('/explorer_fetch_user_settings', async (request, reply) => {
-        const nonce = request.headers['nonce'];
-
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
+    fastify.get('/explorer_fetch_user_settings', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
 
         try {
 
-
-            const session = await prisma.siweSession.findUnique({
-                where: { nonce }
-            });
-
-            if (!session) {
-                return reply.code(404).send({ success: false, message: "Session not found" });
-            }
-
-            // Check if session is expired
-            if (new Date(session.expirationTime!!) < new Date()) {
-                return reply.code(401).send({ success: false, message: "Session expired" });
-            }
-
             let settingsData = await prisma.settings.findFirst({
                 where: {
-                    user_pub_key: session.address
+                    user_pub_key: request.user!.address
                 }
             })
 
@@ -452,7 +416,7 @@ export default async function userController(fastify: FastifyInstance) {
 
             if (settingsData == null) {
                 let defaultData = {
-                    user_pub_key: session.address,
+                    user_pub_key: request.user!.address,
                     ens_name: "",
                     cli_pub_key: "",
                     cli_priv_key: "",
@@ -471,10 +435,10 @@ export default async function userController(fastify: FastifyInstance) {
 
             } else {
                 let ensName = ""
-                // get ens from user 
+                // get ens from user
                 const userData = await prisma.users.findFirst({
                     where: {
-                        address: session.address,
+                        address: request.user!.address,
                     }
                 })
                 if (userData) {
@@ -495,46 +459,27 @@ export default async function userController(fastify: FastifyInstance) {
 
     });
 
-    fastify.post('/explorer_update_user_settings', async (request, reply) => {
-
-        const nonce = request.headers['nonce'];
-
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
+    fastify.post('/explorer_update_user_settings', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
 
         try {
             const settingsPar = request.body as SettingsRequest;
 
             const { ens_name, ...settings } = settingsPar;
 
-            const session = await prisma.siweSession.findUnique({
-                where: { nonce }
-            });
-
-            if (!session) {
-                return reply.code(404).send({ success: false, message: "Session not found" });
-            }
-
-            // Check if session is expired
-            if (new Date(session.expirationTime!!) < new Date()) {
-                return reply.code(401).send({ success: false, message: "Session expired" });
-            }
-
             await prisma.settings.update({
                 where: {
-                    user_pub_key: session.address
+                    user_pub_key: request.user!.address
                 },
                 data: {
                     ...settings,
-                    user_pub_key: session.address
+                    user_pub_key: request.user!.address
                 }
             })
 
-            // update ens 
+            // update ens
             await prisma.users.update({
                 where: {
-                    address: session.address
+                    address: request.user!.address
                 },
                 data: {
                     ens_name: ens_name
@@ -549,29 +494,11 @@ export default async function userController(fastify: FastifyInstance) {
 
 
     // Clear all user data
-    fastify.delete('/user_data', async (request, reply) => {
-        const nonce = request.headers['nonce'];
-
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ success: false, message: 'Unauthorized: Missing or empty nonce header' });
-        }
+    fastify.delete('/user_data', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
+        const nonce = request.headers['nonce'] as string;
 
         try {
-            // Verify session exists and is valid
-            const session = await prisma.siweSession.findUnique({
-                where: { nonce }
-            });
-
-            if (!session) {
-                return reply.code(404).send({ success: false, message: 'Session not found' });
-            }
-
-            // Check if session is expired
-            if (new Date(session.expirationTime!!) < new Date()) {
-                return reply.code(401).send({ success: false, message: 'Session expired' });
-            }
-
-            const userAddress = session.address;
+            const userAddress = request.user!.address;
 
             // Start a transaction to ensure all operations succeed or fail together
             await prisma.$transaction(async (tx) => {
@@ -596,7 +523,7 @@ export default async function userController(fastify: FastifyInstance) {
                 //         },
                 //     }
                 // });
-                // console.log(`Deleted ${deletedContracts.count} contracts records`);
+                // Logger.debug(`Deleted ${deletedContracts.count} contracts records`);
 
 
 
@@ -614,14 +541,14 @@ export default async function userController(fastify: FastifyInstance) {
                     }
                 });
 
-                // console.log(`Found ${contractsToSoftDelete.length} contracts where user is a recipient`);
+                // Logger.debug(`Found ${contractsToSoftDelete.length} contracts where user is a recipient`);
 
                 // Filter out contracts where the user has already soft-deleted (to avoid duplicates)
                 const contractsNeedingSoftDelete = contractsToSoftDelete.filter(contract =>
                     !contract.receiver_has_deleted?.includes(userAddress)
                 );
 
-                // console.log(`${contractsNeedingSoftDelete.length} contracts need soft delete for user ${userAddress}`);
+                // Logger.debug(`${contractsNeedingSoftDelete.length} contracts need soft delete for user ${userAddress}`);
 
                 // Add the user's address to the receiver_has_deleted array for each contract
                 let updatedContractsCount = 0;
@@ -640,7 +567,7 @@ export default async function userController(fastify: FastifyInstance) {
                     updatedContractsCount++;
                 }
 
-                // console.log(`Soft deleted ${updatedContractsCount} contracts for user ${userAddress}`);
+                // Logger.debug(`Soft deleted ${updatedContractsCount} contracts for user ${userAddress}`);
 
 
                 // also delete contracts where user is the sender
@@ -988,7 +915,7 @@ export default async function userController(fastify: FastifyInstance) {
                 });
                 if (fileResult) {
                     try {
-                        const stats = fs.statSync(fileResult.file_location!!);
+                        const stats = await fs.promises.stat(fileResult.file_location!!);
                         allFilesSizes += stats.size;
                     } catch (err) {
                         Logger.error(`Error getting file size for ${fileResult.file_location}: ${err}`);
@@ -1001,7 +928,7 @@ export default async function userController(fastify: FastifyInstance) {
             }
         }
         // const queryEnd = performance.now()
-        // console.log(cliGreenify(`Genesis revisions query took ${(queryEnd - queryStart).toFixed(2)}ms`))
+        // Logger.debug(cliGreenify(`Genesis revisions query took ${(queryEnd - queryStart).toFixed(2)}ms`))
 
         // Filter out revisions that contain aqua_sign fields (forms_signers)
         const filteredUserRevisions = allUserRevisions.filter(revision => {
@@ -1034,7 +961,7 @@ export default async function userController(fastify: FastifyInstance) {
             }
         })
         // const linkQueryEnd = performance.now()
-        // console.log(cliGreenify(`Link revisions query took ${(linkQueryEnd - linkQueryStart).toFixed(2)}ms`))
+        // Logger.debug(cliGreenify(`Link revisions query took ${(linkQueryEnd - linkQueryStart).toFixed(2)}ms`))
 
         // const linkRevisionHashes = linkRevisions.map(revision => revision.pubkey_hash)
         // const aquaFilesRevisionHashes = filteredUserRevisions.filter(revision => !linkRevisionHashes.includes(revision.pubkey_hash))

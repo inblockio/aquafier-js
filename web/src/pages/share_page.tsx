@@ -10,7 +10,7 @@ import { ImportAquaChainFromChain } from '../components/dropzone_file_actions/im
 import { toast } from 'sonner'
 
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert'
-import { CompleteChainView } from '../components/files_chain_details'
+import { CompleteChainView } from '../components/revision_details/files_chain_details'
 import { ensureDomainUrlHasSSL } from '@/utils/functions'
 
 const SharePage = () => {  

@@ -19,6 +19,7 @@ model Users {
   ens_name_type EnsNameType @default(ENS_NAME) 
   email         String?
   auth_provider String?                    @default("wallet") // "wallet", "google", "facebook", or "hybrid"
+  is_admin      Boolean                    @default(false) @map("is_admin")
   createdAt     DateTime                   @default(now()) @map("created_at")
   updatedAt     DateTime                   @updatedAt @map("updated_at")
   Latest        Latest[]
@@ -169,6 +170,7 @@ model Contract {
   createdAt            DateTime @default(now()) @map("created_at_ts")
   updatedAt            DateTime @updatedAt @map("updated_at")
 
+  @@index([sender, created_at])
   @@map("contract")
 }
 
@@ -181,6 +183,7 @@ model Latest {
   updatedAt   DateTime @updatedAt @map("updated_at")
   User        Users    @relation(fields: [user], references: [address])
 
+  @@index([user, createdAt])
   @@map("latest")
 }
 
@@ -203,6 +206,8 @@ model Revision {
   Link                Link[]
   AquaForms           AquaForms[]
 
+  @@index([createdAt])
+  @@index([previous])
   @@map("revision")
 }
 
@@ -341,6 +346,7 @@ model Notifications {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  @@index([receiver, created_on])
   @@map("notifications")
 }
 

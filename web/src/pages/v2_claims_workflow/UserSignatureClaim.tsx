@@ -1,3 +1,4 @@
+import React from 'react'
 import appStore from "@/store"
 import { ICompleteClaimInformation } from "@/types/types"
 import {loadSignatureImage } from "@/utils/functions"
@@ -52,15 +53,15 @@ const UserSignatureClaim = ({ claim }: { claim: ICompleteClaimInformation }) => 
                     {
                         signatureImage ? (
                             typeof signatureImage === 'string' ? (
-                                <img src={signatureImage} alt={claimName} />
+                                <img src={signatureImage} alt={`Signature of ${claimName}`} />
                             ) : (
                                 <img
                                     src={`data:image/png;base64,${btoa(String.fromCharCode(...signatureImage))}`}
-                                    alt={claimName}
+                                    alt={`Signature of ${claimName}`}
                                 />
                             )
                         ) : (
-                            <img src={`${window.location.origin}/images/placeholder-img.png`} alt={claimName} />
+                            <img src={`${window.location.origin}/images/placeholder-img.png`} alt={`Signature of ${claimName}`} />
                         )
                     }
                 </div>
@@ -73,4 +74,4 @@ const UserSignatureClaim = ({ claim }: { claim: ICompleteClaimInformation }) => 
     )
 }
 
-export default UserSignatureClaim
+export default React.memo(UserSignatureClaim)

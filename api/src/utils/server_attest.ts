@@ -4,10 +4,11 @@ import { getAquaAssetDirectory, getFileUploadDirectory } from "./file_utils";
 import { getGenesisHash } from "./aqua_tree_utils";
 import fs from "fs";
 import { dummyCredential, getRandomNumber, getServerWalletInformation } from "./server_utils";
-import { getAquaTreeFileName } from "./api_utils";
+import { getAquaTreeFileName, getPort } from "./api_utils";
 import Logger from "./logger";
 import { prisma } from "../database/db";
-import { saveAquaTree } from "./revisions_utils";
+import { saveAquaTree, transferRevisionChainData } from "./revisions_utils";
+import { createAquaTreeFromRevisions } from "./revisions_operations_utils";
 import { getAddress } from "ethers";
 
 interface TemplateInformation {
@@ -57,6 +58,39 @@ export async function serverAttestation(identityClaimId: string, walletAddress: 
         return null;
     }
 
+    // Step 1: Query for server identity claim (simple_claim)
+    const serverWalletAddr = getAddress(serverWalletInformation.walletAddress)
+    const url = `http://localhost:${getPort()}`
+
+    const serverLatestEntries = await prisma.latest.findMany({
+        where: { user: serverWalletAddr }
+    })
+
+    let serverIdentityAquaTree: AquaTree | null = null
+    let serverIdentityFileObjects: FileObject[] = []
+
+    for (const entry of serverLatestEntries) {
+        try {
+            const [aquaTree, fileObjects] = await createAquaTreeFromRevisions(entry.hash, url)
+            const genHash = getGenesisHash(aquaTree)
+            if (genHash) {
+                const genRevision = aquaTree.revisions[genHash]
+                if (genRevision && genRevision["forms_type"] === "simple_claim") {
+                    serverIdentityAquaTree = aquaTree
+                    serverIdentityFileObjects = fileObjects
+                    break
+                }
+            }
+        } catch (error) {
+            Logger.error(`Error reconstructing aqua tree for latest entry ${entry.hash}: ${error}`)
+        }
+    }
+
+    if (!serverIdentityAquaTree) {
+        Logger.info("Server identity claim not found, proceeding without identity link")
+    }
+
+    // Step 2: Create server attestation
     let context = ""
     if (workflowName === "email_claim") {
         context = "The Aqua Server hereby attests that a one-time password (OTP) challenge for the specified email address was successfully sent and verified using the Twilio Verify API. This confirms possession of the email address at the time of verification."
@@ -116,17 +150,75 @@ export async function serverAttestation(identityClaimId: string, walletAddress: 
 
     const linkedAquaTreeResult = await aquafier.linkAquaTree(aquatreeWrapperToWrapTo, wrapThis, false)
 
-    Logger.info(`linkedAquaTreeResult: isErr=${linkedAquaTreeResult.isErr()}`)
+    // Logger.info(`linkedAquaTreeResult: isErr=${linkedAquaTreeResult.isErr()}`)
 
     if (linkedAquaTreeResult.isErr()) {
         Logger.error(`Error linking aqua tree ${linkedAquaTreeResult.data}`)
         return null;
     }
+
+    let currentAquaTree = linkedAquaTreeResult.data.aquaTree!
+
+    // Step 3: Link server identity into the attestation
+    if (serverIdentityAquaTree) {
+        let identityName = getAquaTreeFileName(serverIdentityAquaTree);
+        if (identityName.length === 0) {
+            identityName = "identity_claim.json"
+        }
+
+        const serverIdentityFileObject: FileObject = {
+            fileName: identityName,
+            fileContent: JSON.stringify(serverIdentityAquaTree),
+            path: ""
+        }
+
+        const serverIdentityWrapper: AquaTreeWrapper = {
+            aquaTree: serverIdentityAquaTree,
+            fileObject: serverIdentityFileObject,
+            revision: ""
+        }
+
+        const attestationWrapperForIdentityLink: AquaTreeWrapper = {
+            aquaTree: currentAquaTree,
+            fileObject: fileObject,
+            revision: ""
+        }
+
+        const identityLinkedResult = await aquafier.linkAquaTree(attestationWrapperForIdentityLink, serverIdentityWrapper, false)
+
+        if (identityLinkedResult.isErr()) {
+            Logger.error(`Error linking server identity: ${identityLinkedResult.data}`)
+        } else {
+            currentAquaTree = identityLinkedResult.data.aquaTree!
+            Logger.info("Server identity linked into attestation successfully")
+        }
+
+        // Step 4: Transfer server identity to user context
+        await prisma.users.upsert({
+            where: { address: walletAddress },
+            create: { address: walletAddress },
+            update: {}
+        });
+
+        const transferResult = await transferRevisionChainData(
+            walletAddress,
+            { aquaTree: serverIdentityAquaTree, fileObject: serverIdentityFileObjects },
+            null,
+            true
+        )
+
+        if (!transferResult.success) {
+            Logger.error(`Error transferring server identity to user: ${transferResult.message}`)
+        } else {
+            Logger.info(`Server identity transferred to user ${walletAddress}`)
+        }
+    }
+
+    // Step 5: Sign the attestation
     const creds = dummyCredential()
     creds.mnemonic = serverWalletInformation.mnemonic
-    const linkedAquaTree = linkedAquaTreeResult.data.aquaTree
     const aquaTreeWrapper: AquaTreeWrapper = {
-        aquaTree: linkedAquaTree!,
+        aquaTree: currentAquaTree,
         fileObject: fileObject,
         revision: ""
     }
@@ -202,8 +294,8 @@ export async function createServerIdentity() {
     }
 
     const identityClaimForm = {
-        "name": "Aquafire Server",
-        "claim_context": "Aquafire server identity claim",
+        "name": "AquaFire Server",
+        "claim_context": "Self issued server identity",
         "type": "simple_claim",
         "wallet_address": walletAddress,
     }
@@ -374,7 +466,7 @@ export async function createServerIdentity() {
         update: {}
     });
 
-    await saveAquaTree(signedIdentityClaimAquaTree!, walletAddress, null, false)
+    await saveAquaTree(signedIdentityClaimAquaTree!, walletAddress, null, true)
 
     // return {
     //     aquaTree: signedAttestation!!,

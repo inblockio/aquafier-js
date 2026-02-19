@@ -18,8 +18,6 @@ const RECONNECT_MAX_DELAY = 30000 // 30 seconds maximum delay
 
 const WebsocketFragment = () => {
       const { backend_url, session, selectedFileInfo, setContracts } = useStore(appStore)
-      const [localSession, setLocalSession] = useState(session)
-
       const [ws, setWs] = useState<WebSocket | null>(null)
       const [isConnected, setIsConnected] = useState(false)
       const [websocketReconnectAttempts, setWebsocketReconnectAttempts] = useState(0)
@@ -130,14 +128,6 @@ const WebsocketFragment = () => {
                               if (message.action === WebSocketActions.REFETCH_FILES) {
                                     ; (async () => {
                                           if (walletAddressRef.current && nounceRef.current) {
-                                                // const url = `${backend_url}/explorer_files`
-                                                // const actualUrlToFetch = ensureDomainUrlHasSSL(url)
-                                                // // const files = await fetchFiles(walletAddressRef.current, actualUrlToFetch, nounceRef.current)
-                                                // // setFiles({ fileData: files, status: 'loaded' })
-
-
-                                                // const filesApi = await fetchFiles(session!.address, actualUrlToFetch, session!.nonce)
-                                                // setFiles({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
 
                                                 // const currentSelectedFile = selectedFileRef.current
@@ -296,14 +286,9 @@ const WebsocketFragment = () => {
       }, [])
 
       useEffect(() => {
-            if (!localSession) {
+            if (!session) {
                   disconnectWebSocket()
             }
-            // Cleanup function
-      }, [localSession])
-
-      useEffect(() => {
-            setLocalSession(session)
       }, [session])
 
       return <></>

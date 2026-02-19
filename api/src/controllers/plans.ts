@@ -1,29 +1,21 @@
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
 import Logger from '../utils/logger';
+import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
 
 export default async function plansController(fastify: FastifyInstance) {
 
-    // Admin authorization hook (same pattern as admin.ts)
+    // Admin authorization hook
     fastify.addHook('preHandler', async (request, reply) => {
         if (!request.url.includes('/admin/plans')) return;
 
-        const nonce = request.headers['nonce'];
+        await authenticate(request as AuthenticatedRequest, reply);
 
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
-
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce }
-        });
-
-        if (!session) {
-            return reply.code(403).send({ success: false, message: 'Nonce is invalid' });
-        }
+        const address = (request as AuthenticatedRequest).user?.address;
+        if (!address) return;
 
         const allowedWallets = (process.env.DASHBOARD_WALLETS || '').split(',').map(w => w.trim().toLowerCase());
-        if (!session.address || !allowedWallets.includes(session.address.toLowerCase())) {
+        if (!allowedWallets.includes(address.toLowerCase())) {
             return reply.code(403).send({ error: 'Unauthorized: Access denied' });
         }
     });

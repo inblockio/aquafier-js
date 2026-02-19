@@ -80,24 +80,10 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
   
     // save revision for the user in the session
-    fastify.post('/tree', async (request, reply) => {
+    fastify.post('/tree', {
+        preHandler: authenticate
+    }, async (request: AuthenticatedRequest, reply) => {
         try {
-            // Read `nonce` from headers
-            const nonce = request.headers['nonce']; // Headers are case-insensitive
-
-            // Check if `nonce` is missing or empty
-            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-            }
-
-            const session = await prisma.siweSession.findUnique({
-                where: { nonce }
-            });
-
-            if (!session) {
-                return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
-            }
-
             const revisionData = request.body as SaveRevisionForUser
 
             if (!revisionData.revision) {
@@ -133,14 +119,14 @@ export default async function revisionsController(fastify: FastifyInstance) {
             // Construct the full URL
             const url = `${protocol}://${host}`;
 
-            const [httpCode, message] = await saveMyRevisionInAquaTree(revisionData, session.address, url);
+            const [httpCode, message] = await saveMyRevisionInAquaTree(revisionData, request.user!.address, url);
 
             if (httpCode != 200) {
                 return reply.code(httpCode).send({ success: false, message: message });
             }
 
             return reply.code(200).send({
-                success: true,  
+                success: true,
             });
 
         } catch (error: any) {
@@ -150,23 +136,10 @@ export default async function revisionsController(fastify: FastifyInstance) {
     });
 
     // Save all revisions for the current user in a single request
-    fastify.post('/tree/all', async (request, reply) => {
+    fastify.post('/tree/all', {
+        preHandler: authenticate
+    }, async (request: AuthenticatedRequest, reply) => {
         try {
-            // Read `nonce` from headers
-            const nonce = request.headers['nonce'];
-
-            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-            }
-
-            const session = await prisma.siweSession.findUnique({
-                where: { nonce }
-            });
-
-            if (!session) {
-                return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-            }
-
             const requestData = request.body as SaveAllRevisionsRequest;
 
             if (!requestData.revisions || !Array.isArray(requestData.revisions) || requestData.revisions.length === 0) {
@@ -218,13 +191,13 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 const revisionData: SaveRevisionForUser = {
                     revision: revisionItem.revision,
                     revisionHash: revisionItem.revisionHash,
-                    address: session.address,
+                    address: request.user!.address,
                     originAddress: requestData.originAddress,
                     templateId: '',
                     isWorkflow: requestData.isWorkflow ?? false
                 };
 
-                const [httpCode, message] = await saveMyRevisionInAquaTree(revisionData, session.address, url);
+                const [httpCode, message] = await saveMyRevisionInAquaTree(revisionData, request.user!.address, url);
 
                 if (httpCode != 200) {
                     return reply.code(httpCode).send({
@@ -248,25 +221,11 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
 
 
-      //save revision for other user 
-    fastify.post('/tree/user', async (request, reply) => {
+      //save revision for other user
+    fastify.post('/tree/user', {
+        preHandler: authenticate
+    }, async (request: AuthenticatedRequest, reply) => {
         try {
-            // Read `nonce` from headers
-            const nonce = request.headers['nonce']; // Headers are case-insensitive
-
-            // Check if `nonce` is missing or empty
-            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-            }
-
-            const session = await prisma.siweSession.findUnique({
-                where: { nonce }
-            });
-
-            if (!session) {
-                return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
-            }
-
             const revisionData = request.body as SaveRevisionForUser
 
             if (!revisionData.revision) {
@@ -288,7 +247,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 return reply.code(400).send({ success: false, message: "previous revision hash  is required" });
             }
 
-            if (revisionData.address === session.address) {
+            if (revisionData.address === request.user!.address) {
                 return reply.code(202).send({ success: false, message: "use /tree to save revision for a specific user /tree/user is for different address" });
             }
 
@@ -336,23 +295,10 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
 
     // Save all revisions for another user in a single request
-    fastify.post('/tree/user/all', async (request, reply) => {
+    fastify.post('/tree/user/all', {
+        preHandler: authenticate
+    }, async (request: AuthenticatedRequest, reply) => {
         try {
-            // Read `nonce` from headers
-            const nonce = request.headers['nonce'];
-
-            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-            }
-
-            const session = await prisma.siweSession.findUnique({
-                where: { nonce }
-            });
-
-            if (!session) {
-                return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-            }
-
             const requestData = request.body as SaveAllRevisionsForUserRequest;
 
             if (!requestData.revisions || !Array.isArray(requestData.revisions) || requestData.revisions.length === 0) {
@@ -367,10 +313,10 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 return reply.code(400).send({ success: false, message: "originAddress is required" });
             }
 
-            if (requestData.address === session.address) {
+            if (requestData.address === request.user!.address) {
                 return reply.code(202).send({
                     success: false,
-                    message: `Use /tree/all to save revisions for yourself. /tree/user/all is for different addresses ${session.address}`
+                    message: `Use /tree/all to save revisions for yourself. /tree/user/all is for different addresses ${request.user!.address}`
                 });
             }
 
@@ -434,7 +380,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
 
             // Trigger the other party to refetch explorer files
-            // console.log("🫠🫠🫠🫠 Sending websocket message to ", requestData.address , " session "+ session?.address);
+            // Logger.debug("Sending websocket message to ", requestData.address);
             // sendToUserWebsockerAMessage(requestData.address, WebSocketActions.REFETCH_FILES);
 
             return reply.code(200).send({
@@ -448,23 +394,9 @@ export default async function revisionsController(fastify: FastifyInstance) {
         }
     });
 
-    fastify.delete('/tree', async (request, reply) => {
-        // Read `nonce` from headers
-        const nonce = request.headers['nonce']; // Headers are case-insensitive
-
-        // Check if `nonce` is missing or empty
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
-
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce }
-        });
-
-        if (!session) {
-            return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-        }
-
+    fastify.delete('/tree', {
+        preHandler: authenticate
+    }, async (request: AuthenticatedRequest, reply) => {
         const revisionDataPar = request.body as DeleteRevision;
 
         if (!revisionDataPar.revisionHash) {
@@ -486,7 +418,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
         for (let i = 0; i < revisionHashestoDelete.length; i++) {
 
             let currentHash = revisionHashestoDelete[i]
-            let [code, reason] = await deleteAquaTree(currentHash, session.address, url)
+            let [code, reason] = await deleteAquaTree(currentHash, request.user!.address, url)
             if (code != 200) {
 
                 return reply.code(code).send({ message: reason });
@@ -497,28 +429,14 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
     });
 
-    fastify.delete('/tree/revisions/:hash', async (request, reply) => {
+    fastify.delete('/tree/revisions/:hash', {
+        preHandler: authenticate
+    }, async (request: AuthenticatedRequest, reply) => {
         try {
-            const nonce = request.headers['nonce']; // Headers are case-insensitive
             const { hash } = request.params as { hash: string };
 
-            // Check if `nonce` is missing or empty
-            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-            }
-
-            // Retrieve session from nonce
-            const session = await prisma.siweSession.findUnique({
-                where: { nonce }
-            });
-
-            if (!session) {
-                return reply.code(401).send({ error: 'Unauthorized: Invalid session' });
-            }
-
-
             // Check if the user is allowed to delete this revision
-            const canDelete = await canDeleteRevision(hash, session.address);
+            const canDelete = await canDeleteRevision(hash, request.user!.address);
             if (!canDelete) {
                 return reply.code(403).send({
                     success: false,
@@ -527,7 +445,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
 
             // Perform the deletion
-            const result = await deleteRevisionAndChildren(hash, session.address);
+            const result = await deleteRevisionAndChildren(hash, request.user!.address);
 
             if (result.success) {
                 return reply.code(200).send({
@@ -556,26 +474,11 @@ export default async function revisionsController(fastify: FastifyInstance) {
     });
 
 
-    fastify.get('/tree/user_signatures', async (request, reply) => {
+    fastify.get('/tree/user_signatures', {
+        preHandler: authenticate
+    }, async (request: AuthenticatedRequest, reply) => {
 
         try {
-
-            const nonce = request.headers['nonce']; // Headers are case-insensitive
-
-            // Check if `nonce` is missing or empty
-            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-            }
-
-            const session = await prisma.siweSession.findUnique({
-                where: { nonce }
-            });
-
-            if (!session) {
-                return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
-            }
-
-            ;
 
             // Get the host from the request headers
             const host = request.headers.host || `${getHost()}:${getPort()}`;
@@ -591,7 +494,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             let signatureAquaTrees: Array<{
                 aquaTree: AquaTree,
                 fileObject: FileObject[]
-            }> = await getSignatureAquaTrees(session.address, url)
+            }> = await getSignatureAquaTrees(request.user!.address, url)
 
             // Remove children field from all revisions in each aquaTree
             const cleanedSignatureAquaTrees = deleteChildrenFieldFromAquaTrees(signatureAquaTrees);
@@ -869,7 +772,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
         // const queryEnd = performance.now()
         // const queryDuration = (queryEnd - queryStart) / 1000
         // Logger.info(`Query duration: ${queryDuration} seconds`)
-        // console.log(cliGreenify(`Query duration: ${queryDuration} seconds`))
+        // Logger.debug(cliGreenify(`Query duration: ${queryDuration} seconds`))
 
         const totalPages = Math.ceil(totalCount / limitNum);
         const hasNextPage = pageNum < totalPages;
@@ -1049,7 +952,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
         const queryEnd = performance.now()
         const queryDuration = (queryEnd - queryStart) / 1000
         // Logger.info(`Query duration: ${queryDuration} seconds`)
-        // console.log(cliGreenify(`Query duration: ${queryDuration} seconds`))
+        // Logger.debug(cliGreenify(`Query duration: ${queryDuration} seconds`))
 
         const totalPages = Math.ceil(totalCount / limitNum);
         const hasNextPage = pageNum < totalPages;
@@ -1539,11 +1442,13 @@ export default async function revisionsController(fastify: FastifyInstance) {
                     revisionHashes = latestRecords.map(r => r.hash);
 
                 } else {
-                    // For 'all' fileType, use the original approach
+                    // For 'all' fileType, still exclude workflow/system trees
+                    // to prevent ghost entries (linked child trees with empty file_index)
                     const whereClause: any = {
                         AND: {
                             user: userAddress,
-                            template_id: null
+                            template_id: null,
+                            is_workflow: false
                         }
                     };
 
@@ -1587,6 +1492,11 @@ export default async function revisionsController(fastify: FastifyInstance) {
             });
 
             displayData = await Promise.all(displayDataPromises);
+
+            // Filter out entries with empty file_index (orphan trees without proper file metadata)
+            displayData = displayData.filter(dataItem =>
+                dataItem.aquaTree.file_index && Object.keys(dataItem.aquaTree.file_index).length > 0
+            );
 
             if (fileType === 'user_files') {
                 // Filter out any workflow files that might have slipped through

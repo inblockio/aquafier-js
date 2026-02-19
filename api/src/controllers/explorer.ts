@@ -12,23 +12,27 @@ import {
     getAquaFiles,
     getUserApiFileInfo,
     isWorkFlowData,
-    processAllAquaFiles,
+    processAllAquaFiles, 
     processAquaFiles,
     processAquaMetadata,
     processRegularFiles,
     saveAquaTree,
     transferRevisionChainData
 } from '../utils/revisions_utils';
-import { getHost, getPort } from '../utils/api_utils';
+import { getAquaTreeFileName, getHost, getPort } from '../utils/api_utils';
+import { extractAquaDataFromPdf } from '../utils/pdf_utils';
 import { DeleteRevision } from '../models/request_models';
 import { usageService } from '../services/usageService';
 import { getGenesisHash, removeFilePathFromFileIndex, saveFileAndCreateOrUpdateFileIndex, validateAquaTree } from '../utils/aqua_tree_utils';
 // import { systemTemplateHashes } from '../models/constants';
 import { dummyCredential, getServerWalletInformation, saveAttestationFileAndAquaTree } from '../utils/server_utils';
 import Logger from "../utils/logger";
+import { createAquaTreeFromRevisions } from '../utils/revisions_operations_utils';
+import { getAddress } from 'ethers';
 import { sendNotificationReloadToWallet } from './websocketController2';
 import { createNotificationAndSendWebSocketNotification } from '../utils/notification_utils';
 import { systemTemplateHashes } from '../models/constants';
+import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
 // import { saveAquaFile } from '../utils/server_utils';
 // import getStream from 'get-stream';
 // Promisify pipeline
@@ -56,18 +60,9 @@ import { systemTemplateHashes } from '../models/constants';
  */
 export default async function explorerController(fastify: FastifyInstance) {
 
-    fastify.post('/explorer_aqua_zip', async (request: any, reply: any) => {
+    fastify.post('/explorer_aqua_zip', { preHandler: authenticate }, async (request: any, reply: any) => {
         try {
-            // Authentication
-            const nonce = request.headers['nonce'];
-            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-            }
-
-            const session = await prisma.siweSession.findUnique({ where: { nonce } });
-            if (!session) {
-                return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-            }
+            const userAddress = (request as AuthenticatedRequest).user!.address;
 
             // Validate multipart request
             if (!request.isMultipart()) {
@@ -119,7 +114,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
    
             // Process aqua.json metadata first
-            await processAquaMetadata(zipData, session.address);
+            await processAquaMetadata(zipData, userAddress);
 
             const isTemplateId = request.headers['is_template_id'];
             let templateId = null
@@ -129,13 +124,13 @@ export default async function explorerController(fastify: FastifyInstance) {
 
 
             // Process individual .aqua.json files
-            await processAquaFiles(zipData, session.address, templateId);
+            await processAquaFiles(zipData, userAddress, templateId);
 
             // Return response with file info
             const host = request.headers.host || `${getHost()}:${getPort()}`;
             const protocol = request.protocol || 'https';
             const url = `${protocol}://${host}`;
-            const displayData = await getUserApiFileInfo(url, session.address);
+            const displayData = await getUserApiFileInfo(url, userAddress);
 
             return reply.code(200).send({
                 success: true,
@@ -152,24 +147,9 @@ export default async function explorerController(fastify: FastifyInstance) {
     });
 
 
-    fastify.post('/explorer_aqua_file_upload', async (request, reply) => {
+    fastify.post('/explorer_aqua_file_upload', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
 
-        // Read `nonce` from headers
-        const nonce = request.headers['nonce']; // Headers are case-insensitive
-
-        // Check if `nonce` is missing or empty
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
-
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce }
-        });
-
-        if (!session) {
-            return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
-        }
-
+        const userAddress = request.user!.address;
 
         // Check if the request is multipart
         const isMultipart = request.isMultipart();
@@ -189,7 +169,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             let isWorkFlow = false
             let templateId = ""
             let templateName = ""
-            let walletAddress = session.address;
+            let walletAddress = userAddress;
             // Process each part of the multipart form
             for await (const part of parts) {
                 if (part.type === 'file') {
@@ -214,8 +194,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                         if (!account || typeof account !== 'string' || account.trim() === '') {
                             return reply.code(400).send({ error: 'Account is required' });
                         }
-                        // Verify account matches session address
-                        if (account !== session.address) {
+                        // Verify account matches authenticated user address
+                        if (account !== userAddress) {
                             walletAddress = account;
                             // return reply.code(403).send({ error: 'Account mismatch with authenticated session' });
                         }
@@ -301,7 +281,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     //     where: { file_hash: fileHash },
                     // });
 
-                    console.log(cliRedify("This was called"))
+                    Logger.debug(cliRedify("This was called"))
                     let fileName = assetFilename;
                     await saveFileAndCreateOrUpdateFileIndex(
                         walletAddress,
@@ -406,6 +386,90 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                 }
 
+                // Link server identity claim before signing
+                const serverWalletAddr = getAddress(serverWalletInformation.walletAddress)
+                const serverUrl = `http://localhost:${getPort()}`
+
+                const serverLatestEntries = await prisma.latest.findMany({
+                    where: { user: serverWalletAddr }
+                })
+
+                let serverIdentityAquaTree: AquaTree | null = null
+                let serverIdentityFileObjects: FileObject[] = []
+
+                for (const entry of serverLatestEntries) {
+                    try {
+                        const [entryAquaTree, entryFileObjects] = await createAquaTreeFromRevisions(entry.hash, serverUrl)
+                        const entryGenHash = getGenesisHash(entryAquaTree)
+                        if (entryGenHash) {
+                            const genRevision = entryAquaTree.revisions[entryGenHash]
+                            if (genRevision && genRevision["forms_type"] === "simple_claim") {
+                                serverIdentityAquaTree = entryAquaTree
+                                serverIdentityFileObjects = entryFileObjects
+                                break
+                            }
+                        }
+                    } catch (error) {
+                        Logger.error(`Error reconstructing aqua tree for latest entry ${entry.hash}: ${error}`)
+                    }
+                }
+
+                if (serverIdentityAquaTree) {
+                    let identityName = getAquaTreeFileName(serverIdentityAquaTree);
+                    if (identityName.length === 0) {
+                        identityName = "identity_claim.json"
+                    }
+
+                    const serverIdentityFileObject: FileObject = {
+                        fileName: identityName,
+                        fileContent: JSON.stringify(serverIdentityAquaTree),
+                        path: ""
+                    }
+
+                    const serverIdentityWrapper: AquaTreeWrapper = {
+                        aquaTree: serverIdentityAquaTree,
+                        fileObject: serverIdentityFileObject,
+                        revision: ""
+                    }
+
+                    const attestationWrapperForIdentityLink: AquaTreeWrapper = {
+                        aquaTree: aquaTree,
+                        fileObject: undefined,
+                        revision: ""
+                    }
+
+                    const identityLinkedResult = await aquafier.linkAquaTree(attestationWrapperForIdentityLink, serverIdentityWrapper, false)
+
+                    if (identityLinkedResult.isErr()) {
+                        Logger.error(`Error linking server identity: ${identityLinkedResult.data}`)
+                    } else {
+                        aquaTree = identityLinkedResult.data.aquaTree!
+                        Logger.info("Server identity linked into attestation successfully")
+                    }
+
+                    // Transfer server identity to user context
+                    await prisma.users.upsert({
+                        where: { address: walletAddress },
+                        create: { address: walletAddress },
+                        update: {}
+                    });
+
+                    const transferResult = await transferRevisionChainData(
+                        walletAddress,
+                        { aquaTree: serverIdentityAquaTree, fileObject: serverIdentityFileObjects },
+                        null,
+                        true
+                    )
+
+                    if (!transferResult.success) {
+                        Logger.error(`Error transferring server identity to user: ${transferResult.message}`)
+                    } else {
+                        Logger.info(`Server identity transferred to user ${walletAddress}`)
+                    }
+                } else {
+                    Logger.info("Server identity claim not found, proceeding without identity link")
+                }
+
                 const creds = dummyCredential()
                 creds.mnemonic = serverWalletInformation.mnemonic
                 const linkedAquaTree = aquaTree
@@ -444,7 +508,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             // DO NOT FETCH  API FILE INFO ASS THE WALLET ADDRES COULD BE OF ANOTHER USER 
             // REMEMBER CLAIM ATTESTATION SAVE FOR OTHER USERS 
             // THE FRON END  SHOULD USE FETCH API FILE INF0
-            if (walletAddress !== session.address) {
+            if (walletAddress !== userAddress) {
                 try {
                     let sortedAquaTree = OrderRevisionInAquaTree(aquaTree)
                     const revisionHashes = Object.keys(sortedAquaTree.revisions)
@@ -456,13 +520,13 @@ export default async function explorerController(fastify: FastifyInstance) {
                         sendNotificationReloadToWallet(walletAddress, {
                             target: "workflows"
                         })
-                        sendNotificationReloadToWallet(session.address, {
+                        sendNotificationReloadToWallet(userAddress, {
                             target: "workflows"
                         })
                         sendNotificationReloadToWallet(claimerWalletAddress, {
                             target: "workflows"
                         })
-                        await createNotificationAndSendWebSocketNotification(session.address, claimerWalletAddress, "You have a new attestation!")
+                        await createNotificationAndSendWebSocketNotification(userAddress, claimerWalletAddress, "You have a new attestation!")
                     }
                 } catch (e) {
                     Logger.error(`Attestation Error ${e}`);
@@ -485,25 +549,11 @@ export default async function explorerController(fastify: FastifyInstance) {
     });
 
     // get file using file hash with pagination
-    fastify.get('/explorer_files', async (request, reply) => {
+    fastify.get('/explorer_files', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
         // file content from db
         // return as a blob
 
-        // Read `nonce` from headers
-        const nonce = request.headers['nonce']; // Headers are case-insensitive
-
-        // Check if `nonce` is missing or empty
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
-
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce }
-        });
-
-        if (!session) {
-            return reply.code(403).send({ success: false, message: "Nounce is invalid" });
-        }
+        const userAddress = request.user!.address;
 
         // Get the host from the request headers
         const host = request.headers.host || `${getHost()}:${getPort()}`;
@@ -520,7 +570,7 @@ export default async function explorerController(fastify: FastifyInstance) {
         const page = parseInt(query.page ?? '1', 10) || 1;
         const limit = parseInt(query.limit ?? '10', 10) || 10;
 
-        const paginatedData = await getUserApiFileInfo(url, session.address, page, limit)
+        const paginatedData = await getUserApiFileInfo(url, userAddress, page, limit)
         // console.log(JSON.stringify(paginatedData, null, 4))
         // throw new Error("test")
         return reply.code(200).send({
@@ -532,22 +582,8 @@ export default async function explorerController(fastify: FastifyInstance) {
     });
 
 
-    fastify.get('/explorer_workspace_download', async (request, reply) => {
-        // Read `nonce` from headers
-        const nonce = request.headers['nonce']; // Headers are case-insensitive
-
-        // Check if `nonce` is missing or empty
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
-
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce }
-        });
-
-        if (!session) {
-            return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-        }
+    fastify.get('/explorer_workspace_download', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
+        const userAddress = request.user!.address;
 
         // Get the host from the request headers
         const host = request.headers.host || `${getHost()}:${getPort()}`;
@@ -564,7 +600,7 @@ export default async function explorerController(fastify: FastifyInstance) {
         const page = 1; //parseInt(query.page ?? Number, 10) || 1;
         const limit = Number.MAX_SAFE_INTEGER; //parseInt(query.limit ?? '10', 10) || 10;
 
-        const paginatedData = await getUserApiFileInfo(url, session.address, page, limit)
+        const paginatedData = await getUserApiFileInfo(url, userAddress, page, limit)
         // console.log(JSON.stringify(paginatedData, null, 4))
         // throw new Error("test")
         return reply.code(200).send({
@@ -575,18 +611,10 @@ export default async function explorerController(fastify: FastifyInstance) {
 
     });
 
-    fastify.post('/explorer_workspace_upload', async (request, reply) => {
+    fastify.post('/explorer_workspace_upload', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
         // Reuse logic from /explorer_aqua_zip
         try {
-            const nonce = request.headers['nonce'];
-            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-            }
-
-            const session = await prisma.siweSession.findUnique({ where: { nonce } });
-            if (!session) {
-                return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-            }
+            const userAddress = request.user!.address;
 
             if (!request.isMultipart()) {
                 return reply.code(400).send({ error: 'Expected multipart form data' });
@@ -629,10 +657,8 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
             // Process aqua.json metadata first
-            await processAquaMetadata(zipData, session.address);
+            await processAquaMetadata(zipData, userAddress);
 
-
-            let userAddress = session.address;
             try {
 
 
@@ -657,23 +683,9 @@ export default async function explorerController(fastify: FastifyInstance) {
         }
     });
 
-    fastify.post('/explorer_files', async (request, reply) => {
+    fastify.post('/explorer_files', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
 
-        // Read `nonce` from headers
-        const nonce = request.headers['nonce']; // Headers are case-insensitive
-
-        // Check if `nonce` is missing or empty
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
-
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce }
-        });
-
-        if (!session) {
-            return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
-        }
+        const userAddress = request.user!.address;
 
         let aquafier = new Aquafier();
 
@@ -806,12 +818,12 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             try {
 
-                let filepubkeyhash = `${session.address}_${genesisHash}`
+                let filepubkeyhash = `${userAddress}_${genesisHash}`
 
                 await prisma.latest.create({
                     data: {
                         hash: filepubkeyhash,
-                        user: session.address,
+                        user: userAddress,
                     }
                 });
 
@@ -856,7 +868,7 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                 if (existingFileIndex) {
                     // existingFileIndex.reference_count = existingFileIndex.reference_count! + 1;
-                    existingFileIndex.pubkey_hash = [...existingFileIndex.pubkey_hash, `${session.address}_${genesisHash}`]
+                    existingFileIndex.pubkey_hash = [...existingFileIndex.pubkey_hash, `${userAddress}_${genesisHash}`]
                     await prisma.fileIndex.update({
                         data: existingFileIndex,
                         where: {
@@ -925,7 +937,7 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             }
 
-            usageService.recalculateUserUsage(session.address).catch(err =>
+            usageService.recalculateUserUsage(userAddress).catch(err =>
                 Logger.error('Failed to recalculate usage after file upload:', err)
             );
 
@@ -942,22 +954,8 @@ export default async function explorerController(fastify: FastifyInstance) {
 
     });
 
-    fastify.post('/explorer_delete_file', async (request, reply) => {
-        // Read `nonce` from headers
-        const nonce = request.headers['nonce']; // Headers are case-insensitive
-
-        // Check if `nonce` is missing or empty
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
-
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce }
-        });
-
-        if (!session) {
-            return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-        }
+    fastify.post('/explorer_delete_file', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
+        const userAddress = request.user!.address;
 
         const revisionDataPar = request.body as DeleteRevision;
 
@@ -965,10 +963,10 @@ export default async function explorerController(fastify: FastifyInstance) {
             return reply.code(400).send({ success: false, message: "revision hash is required" });
         }
 
-        let response = await deleteAquaTreeFromSystem(session.address, revisionDataPar.revisionHash)
+        let response = await deleteAquaTreeFromSystem(userAddress, revisionDataPar.revisionHash)
 
         if (response[0] === 200) {
-            usageService.recalculateUserUsage(session.address).catch(err =>
+            usageService.recalculateUserUsage(userAddress).catch(err =>
                 Logger.error('Failed to recalculate usage after file deletion:', err)
             );
         }
@@ -976,29 +974,14 @@ export default async function explorerController(fastify: FastifyInstance) {
         return reply.code(response[0]).send({ success: response[0] == 200 ? true : false, message: response[1] });
     });
 
-    fastify.post('/transfer_chain', async (request, reply) => {
+    fastify.post('/transfer_chain', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
 
         try {
+            const authenticatedAddress = request.user!.address;
             const { latestRevisionHash, userAddress } = request.body as {
                 latestRevisionHash: string,
                 userAddress: string
             };
-
-            // Read `nonce` from headers
-            const nonce = request.headers['nonce']; // Headers are case-insensitive
-
-            // Check if `nonce` is missing or empty
-            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-            }
-
-            const session = await prisma.siweSession.findUnique({
-                where: { nonce }
-            });
-
-            if (!session) {
-                return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
-            }
 
             const host = request.headers.host || 'localhost:3000'; // Provide a default host
             const protocol = request.protocol || 'http';
@@ -1020,12 +1003,12 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             // Check if the user exists (create if not)
             const targetUser = await prisma.users.findUnique({
-                where: { address: session.address }
+                where: { address: authenticatedAddress }
             });
 
             if (!targetUser) {
                 await prisma.users.create({
-                    data: { address: session.address }
+                    data: { address: authenticatedAddress }
                 });
             }
 
@@ -1040,10 +1023,10 @@ export default async function explorerController(fastify: FastifyInstance) {
                 });
             }
 
-            // Transfer the chain to the target user (session.address)
+            // Transfer the chain to the target user (authenticatedAddress)
             const transferResult = await transferRevisionChainData(
-                session.address,
-                entireChain[0],null, false    
+                authenticatedAddress,
+                entireChain[0],null, false
             );
 
             if (!transferResult.success) {
@@ -1069,8 +1052,9 @@ export default async function explorerController(fastify: FastifyInstance) {
         }
     })
 
-    fastify.post('/merge_chain', async (request, reply) => {
+    fastify.post('/merge_chain', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
         try {
+            const authenticatedAddress = request.user!.address;
             const { latestRevisionHash, userAddress, mergeStrategy, currentUserLatestRevisionHash, lastLocalRevisionHash } = request.body as {
                 currentUserLatestRevisionHash: string,
                 latestRevisionHash: string,
@@ -1079,37 +1063,21 @@ export default async function explorerController(fastify: FastifyInstance) {
                 lastLocalRevisionHash: string
             };
 
-            // Read `nonce` from headers
-            const nonce = request.headers['nonce']; // Headers are case-insensitive
-
-            // Check if `nonce` is missing or empty
-            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-            }
-
-            const session = await prisma.siweSession.findUnique({
-                where: { nonce }
-            });
-
-            if (!session) {
-                return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-            }
-
             const host = request.headers.host || 'localhost:3000'; // Provide a default host
             const protocol = request.protocol || 'http';
             const url = `${protocol}://${host}`;
 
             // Fetch the entire chain from the source user
             // const entireChain = await fetchCompleteRevisionChain(latestRevisionHash, userAddress, url);
-            // const existingChain = await fetchCompleteRevisionChain("0x11616437260e1dfd8da7cec1ff253034f704f9d55a1aff1f2800f4797c041617", session.address, url)
+            // const existingChain = await fetchCompleteRevisionChain("0x11616437260e1dfd8da7cec1ff253034f704f9d55a1aff1f2800f4797c041617", authenticatedAddress, url)
             // fs.writeFileSync("existing.json", JSON.stringify(existingChain))
             // fs.writeFileSync("newchain.json", JSON.stringify(entireChain))
 
 
-            // Merge the chain to the target user (session.address)
+            // Merge the chain to the target user (authenticatedAddress)
             // const mergeResult = await mergeRevisionChain(
             //     entireChain,
-            //     session.address,
+            //     authenticatedAddress,
             //     userAddress,
             //     url,
             //     mergeStrategy || "replace", // Use the provided strategy or default to "replace",
@@ -1123,8 +1091,8 @@ export default async function explorerController(fastify: FastifyInstance) {
             //     });
             // }
 
-            // let deletionResult = await deleteAquaTree(lastLocalRevisionHash, session.address, url)
-            let response = await deleteAquaTreeFromSystem(session.address, lastLocalRevisionHash)
+            // let deletionResult = await deleteAquaTree(lastLocalRevisionHash, authenticatedAddress, url)
+            let response = await deleteAquaTreeFromSystem(authenticatedAddress, lastLocalRevisionHash)
 
             let latest: Array<{
                 hash: string;
@@ -1140,12 +1108,12 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             // Check if the user exists (create if not)
             const targetUser = await prisma.users.findUnique({
-                where: { address: session.address }
+                where: { address: authenticatedAddress }
             });
 
             if (!targetUser) {
                 await prisma.users.create({
-                    data: { address: session.address }
+                    data: { address: authenticatedAddress }
                 });
             }
 
@@ -1160,9 +1128,9 @@ export default async function explorerController(fastify: FastifyInstance) {
                 });
             }
 
-            // Transfer the chain to the target user (session.address)
+            // Transfer the chain to the target user (authenticatedAddress)
             const transferResult = await transferRevisionChainData(
-                session.address,
+                authenticatedAddress,
                 entireChain[0],
             );
 
@@ -1189,6 +1157,110 @@ export default async function explorerController(fastify: FastifyInstance) {
             });
         }
     })
+
+    fastify.post('/explorer_aqua_pdf', { preHandler: authenticate }, async (request: any, reply: any) => {
+        try {
+            const userAddress = (request as AuthenticatedRequest).user!.address;
+
+            // Validate multipart request
+            if (!request.isMultipart()) {
+                return reply.code(400).send({ error: 'Expected multipart form data' });
+            }
+
+            // Process file upload
+            const data = await request.file();
+            if (!data?.file) {
+                return reply.code(400).send({ error: 'No file uploaded' });
+            }
+
+            // Verify file size (200MB limit)
+            const maxFileSize = 200 * 1024 * 1024;
+            if (data.file.bytesRead > maxFileSize) {
+                return reply.code(413).send({ error: 'File too large. Maximum file size is 200MB' });
+            }
+
+            // Read PDF buffer
+            const pdfBuffer = await streamToBuffer(data.file);
+
+            // Extract embedded aqua data from PDF
+            const extractedData = await extractAquaDataFromPdf(pdfBuffer);
+
+            if (!extractedData.aquaJson) {
+                return reply.code(400).send({ error: 'No embedded aqua data found in PDF' });
+            }
+
+            const aquaJson = extractedData.aquaJson;
+            if (!aquaJson.type) {
+                aquaJson.type = "aqua_file_backup";
+            }
+
+            if (aquaJson.type !== "aqua_workspace_backup" && aquaJson.type !== "aqua_file_backup") {
+                return reply.code(400).send({ error: 'Invalid aqua.json type' });
+            }
+
+            if (aquaJson.type !== "aqua_file_backup") {
+                return reply.code(400).send({ error: 'Invalid aqua.json type for workspace upload' });
+            }
+
+            // Build a JSZip from extracted files so we can reuse existing processing
+            const zip = new JSZip();
+            zip.file('aqua.json', JSON.stringify(aquaJson));
+
+            // Collect asset filenames for quick lookup
+            const assetFileNames = new Set(extractedData.assetFiles.map(f => f.filename));
+
+            for (const chainFile of extractedData.aquaChainFiles) {
+                zip.file(chainFile.filename, chainFile.content);
+
+                // During PDF signing, asset files whose content is an aqua tree get
+                // embedded only under the .aqua.json name. We need to also add the
+                // content under the original asset name so processAquaMetadata can find it.
+                const assetName = chainFile.filename.replace(/\.aqua\.json$/, '');
+                if (assetName !== chainFile.filename && !assetFileNames.has(assetName)) {
+                    zip.file(assetName, chainFile.content);
+                    assetFileNames.add(assetName);
+                }
+            }
+
+            for (const assetFile of extractedData.assetFiles) {
+                if (Buffer.isBuffer(assetFile.content)) {
+                    zip.file(assetFile.filename, assetFile.content);
+                } else {
+                    zip.file(assetFile.filename, assetFile.content as string);
+                }
+            }
+
+            // Process aqua.json metadata first
+            await processAquaMetadata(zip, userAddress);
+
+            const isTemplateId = request.headers['is_template_id'];
+            let templateId = null;
+            if (isTemplateId != undefined || isTemplateId != null || isTemplateId != "") {
+                templateId = isTemplateId;
+            }
+
+            // Process individual .aqua.json files
+            await processAquaFiles(zip, userAddress, templateId);
+
+            // Return response with file info
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
+            const protocol = request.protocol || 'https';
+            const url = `${protocol}://${host}`;
+            const displayData = await getUserApiFileInfo(url, userAddress);
+
+            return reply.code(200).send({
+                success: true,
+                message: 'Aqua tree imported from PDF successfully',
+                data: displayData
+            });
+
+        } catch (error: any) {
+            request.log.error(error);
+            return reply.code(500).send({
+                error: error instanceof Error ? error.message : 'PDF import failed'
+            });
+        }
+    });
 
 }
 

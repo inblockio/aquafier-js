@@ -2,12 +2,11 @@
 
 import { FastifyInstance, FastifyRequest } from "fastify";
 import { authenticate, AuthenticatedRequest } from "../middleware/auth_middleware";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from '../database/db';
 import { sendNotificationReloadToWallet } from "./websocketController2";
 import { createNotificationAndSendWebSocketNotification } from "../utils/notification_utils";
 import { cliRedify } from "aqua-js-sdk";
-
-const prisma = new PrismaClient();
+import Logger from "../utils/logger";
 
 export default async function notificationsController(fastify: FastifyInstance) {
     // Get all notifications for the authenticated user
@@ -21,17 +20,23 @@ export default async function notificationsController(fastify: FastifyInstance) 
                 return reply.code(401).send({ error: 'User not authenticated' });
             }
             
+            const { limit, offset } = request.query as { limit?: string; offset?: string };
+            const take = Math.min(parseInt(limit || '50', 10) || 50, 100);
+            const skip = parseInt(offset || '0', 10) || 0;
+
             const notifications = await prisma.notifications.findMany({
                 where: {
                     receiver: {
                         equals: userAddress,
                         mode: 'insensitive'
                     },
-                    
+
                 },
                 orderBy: {
                     created_on: 'desc'
-                }
+                },
+                take,
+                skip
             });
             
             return reply.code(200).send(notifications);
@@ -92,7 +97,7 @@ export default async function notificationsController(fastify: FastifyInstance) 
         }
         // const sender = request.user?.address;
 
-        console.log(cliRedify(`Target user: ${receiver}\n${JSON.stringify(content, null, 4)}`))
+        Logger.debug(cliRedify(`Target user: ${receiver}\n${JSON.stringify(content, null, 4)}`))
         sendNotificationReloadToWallet(receiver, content);
         return reply.code(200).send({ message: 'Notification reload triggered' });
     })

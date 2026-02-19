@@ -1,5 +1,5 @@
-import { ConnectWallet } from '../components/connect_wallet_button'
-import { ConnectWalletPage } from '../components/connect_wallet_page' 
+import { ConnectWallet } from '../components/wallet_connect/connect_wallet_button'
+import { ConnectWalletPage } from '../components/wallet_connect/connect_wallet_page'
 import { Separator } from '../components/ui/separator'
 import NotificationsBell from '../pages/notifications/NotificationsBell'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar'
@@ -12,17 +12,17 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Button } from '../components/ui/button'
 import CreateFormFromTemplate from '../components/aqua_forms/CreateFormFromTemplate'
 import FormTemplateEditorShadcn from '../components/aqua_forms/FormTemplateEditorShadcn'
-import { AppSidebar } from '../components/app_sidebar'
+import { AppSidebar } from '../components/layout/app_sidebar'
 import WebsocketFragment from '@/components/navbar/WebsocketFragment'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import ShareComponent from '@/components/aqua_chain_actions/Share_component'
-import { CompleteChainView } from '@/components/files_chain_details'
+import { CompleteChainView } from '@/components/revision_details/files_chain_details'
 import { getAquaTreeFileName } from '@/utils/functions'
 import { IDrawerStatus } from '@/models/AquaTreeDetails'
 import { useState } from 'react'
 import { RELOAD_KEYS, triggerWorkflowReload } from '../utils/reloadDatabase';
 import WorkspaceDialogUI from '@/components/workspace/workspace_download_dialog_ui'
-import IdentityCardDialogUi from '@/components/identity_card_dialog_ui'
+import IdentityCardDialogUi from '@/components/claims/identity_card_dialog_ui'
  
 export default function NewShadcnLayoutWithSidebar() {
  

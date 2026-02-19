@@ -6,13 +6,13 @@ import {
     DrawerTitle,
 } from "@/components/ui/drawer"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { IAquaCertWorkflowDrawer } from "@/types/types"
-import { ensureDomainUrlHasSSL, getAquaTreeFileObject, getFileName } from "@/utils/functions"
-import WalletAdrressClaim from "../v2_claims_workflow/WalletAdrressClaim"
+import { IAquaCertWorkflowDrawer, ICertificateAttestor } from "@/types/types"
+import { ensureDomainUrlHasSSL, getAquaTreeFileObject, getFileName, getGenesisHash } from "@/utils/functions"
+import WalletAddressClaim from "../v2_claims_workflow/WalletAddressClaim"
 import { Button } from "@/components/ui/button"
 import { LuX } from "react-icons/lu"
 import { Suspense, useEffect, useState } from "react"
-import FilePreview from "@/components/file_preview"
+import FilePreview from "@/components/file_preview/file_preview"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import NoAttestationsAlert from "./NoAttestationsAlert"
 import { getLinkedFiles } from "@/lib/utils"
@@ -26,6 +26,8 @@ import { getLatestVH } from "aqua-js-sdk"
 import { AttestAquaClaim } from "@/components/aqua_chain_actions/attest_aqua_claim"
 import { Album } from "lucide-react"
 import { Alert } from "@/components/ui/alert"
+import { useReloadWatcher } from "@/hooks/useReloadWatcher"
+import { RELOAD_KEYS } from "@/utils/reloadDatabase"
 
 export default function AquaCertWorkflowDrawer({ open, onClose, attestors, fileInfo }: IAquaCertWorkflowDrawer) {
     const { backend_url, session } = useStore(appStore)
@@ -34,7 +36,56 @@ export default function AquaCertWorkflowDrawer({ open, onClose, attestors, fileI
 
     const [linkedFileInfos, setLinkedFileInfos] = useState<ApiFileInfo[]>([])
     const [linkedFileNames, setLinkedFileNames] = useState<{ filename: string, index: number }[]>([])
+    const [localAttestors, setLocalAttestors] = useState<ICertificateAttestor[]>(attestors)
 
+    // Sync local attestors when props change (e.g. drawer reopened with new data)
+    useEffect(() => {
+        setLocalAttestors(attestors)
+    }, [attestors])
+
+    const loadAttestors = async () => {
+        if (!fileInfo || !session?.nonce || !backend_url) return
+        try {
+            const certGenRevisionHash = getGenesisHash(fileInfo.aquaTree!)
+            const params = {
+                page: 1,
+                limit: 200,
+                claim_types: JSON.stringify(['identity_attestation']),
+            }
+            const filesDataQuery = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_PER_TYPE}`), {
+                headers: {
+                    'Content-Type': 'application/json',
+                    nonce: `${session.nonce}`,
+                },
+                params,
+            })
+            const apiFileInfos: ApiFileInfo[] = filesDataQuery.data.aquaTrees
+            const foundAttestors: ICertificateAttestor[] = []
+            for (const item of apiFileInfos) {
+                const genesisHash = getGenesisHash(item.aquaTree!)
+                const genesisRevision = item.aquaTree!.revisions[genesisHash!]
+                if (genesisRevision?.forms_identity_claim_id === certGenRevisionHash) {
+                    foundAttestors.push({
+                        walletAddress: genesisRevision.forms_wallet_address,
+                        context: genesisRevision.forms_context,
+                    })
+                }
+            }
+            setLocalAttestors(foundAttestors)
+        } catch (e) {
+            console.error('Error loading attestors in drawer:', e)
+        }
+    }
+
+    // Refresh attestors when an attestation is completed
+    useReloadWatcher({
+        key: RELOAD_KEYS.identity_attestation,
+        onReload: () => {
+            if (open) {
+                loadAttestors()
+            }
+        },
+    })
 
     const generateFileFetchPromis = (targetHash: string) => {
         const url = ensureDomainUrlHasSSL(`${backend_url}/${API_ENDPOINTS.GET_AQUA_TREE}`)
@@ -129,7 +180,7 @@ export default function AquaCertWorkflowDrawer({ open, onClose, attestors, fileI
                                         </div>
                                     </Alert>
                                     {
-                                        attestors.length > 0 ? (
+                                        localAttestors.length > 0 ? (
                                             <Table className="table-fixed w-full">
                                                 <TableHeader>
                                                     <TableRow>
@@ -139,10 +190,10 @@ export default function AquaCertWorkflowDrawer({ open, onClose, attestors, fileI
                                                 </TableHeader>
                                                 <TableBody>
                                                     {
-                                                        attestors.map((attester, index) => (
+                                                        localAttestors.map((attester, index) => (
                                                             <TableRow key={`attestation_${index}`}>
                                                                 <TableCell className="truncate max-w-0">
-                                                                    <WalletAdrressClaim walletAddress={attester.walletAddress} />
+                                                                    <WalletAddressClaim walletAddress={attester.walletAddress} />
                                                                 </TableCell>
                                                                 <TableCell className="wrap-break-word" style={{
                                                                     whiteSpace: "wrap"

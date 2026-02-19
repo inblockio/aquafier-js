@@ -89,7 +89,7 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
       };
 
       // Fetch user's own identity claims and server wallet address in parallel
-      const [filesDataQuery, serverInfoResponse] = await Promise.all([
+      const [filesDataQuery] = await Promise.all([
         apiClient.get(ensureDomainUrlHasSSL(`${localBackendUrl}/${API_ENDPOINTS.GET_PER_TYPE}`), {
           headers: {
             'Content-Type': 'application/json',
@@ -97,45 +97,46 @@ const ContactsLoader: React.FC<ContactsLoaderProps> = ({
           },
           params
         }),
-        apiClient.get(ensureDomainUrlHasSSL(`${localBackendUrl}/${API_ENDPOINTS.GET_SYSTEM_INFO}`))
+        // apiClient.get(ensureDomainUrlHasSSL(`${localBackendUrl}/${API_ENDPOINTS.GET_SYSTEM_INFO}`))
       ]);
 
       const response = filesDataQuery.data;
       const aquaTrees: ApiFileInfo[] = response.aquaTrees ?? [];
 
       // Fetch server's identity claim using the server wallet address
-      const serverWalletAddress = serverInfoResponse.data?.data?.walletAddress;
+      // Dalmas: Disabled fetching server identity separately since it will be moved by the server attestation
+      // const serverWalletAddress = serverInfoResponse.data?.data?.walletAddress;
       
-      if (serverWalletAddress) {
-        try {
-          const serverFilesQuery = await apiClient.get(ensureDomainUrlHasSSL(`${localBackendUrl}/${API_ENDPOINTS.GET_PER_TYPE}`), {
-            headers: {
-              'Content-Type': 'application/json',
-              'nonce': `${localSession!.nonce}`
-            },
-            params: {
-              ...params,
-              wallet_address: serverWalletAddress,
-              use_wallet: serverWalletAddress
-            }
-          });
+      // if (serverWalletAddress) {
+      //   try {
+      //     const serverFilesQuery = await apiClient.get(ensureDomainUrlHasSSL(`${localBackendUrl}/${API_ENDPOINTS.GET_PER_TYPE}`), {
+      //       headers: {
+      //         'Content-Type': 'application/json',
+      //         'nonce': `${localSession!.nonce}`
+      //       },
+      //       params: {
+      //         ...params,
+      //         wallet_address: serverWalletAddress,
+      //         use_wallet: serverWalletAddress
+      //       }
+      //     });
 
-          const serverAquaTrees: ApiFileInfo[] = serverFilesQuery.data?.aquaTrees ?? [];
-          if (serverAquaTrees.length > 0) {
-            // Merge, avoiding duplicates by genesis hash
-            const existingHashes = new Set(aquaTrees.map(t => getGenesisHash(t.aquaTree!)));
-            for (const tree of serverAquaTrees) {
-              const genHash = getGenesisHash(tree.aquaTree!);
-              if (!existingHashes.has(genHash)) {
-                aquaTrees.push(tree);
-                existingHashes.add(genHash);
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Error loading server identity claims:', error);
-        }
-      }
+      //     const serverAquaTrees: ApiFileInfo[] = serverFilesQuery.data?.aquaTrees ?? [];
+      //     if (serverAquaTrees.length > 0) {
+      //       // Merge, avoiding duplicates by genesis hash
+      //       const existingHashes = new Set(aquaTrees.map(t => getGenesisHash(t.aquaTree!)));
+      //       for (const tree of serverAquaTrees) {
+      //         const genHash = getGenesisHash(tree.aquaTree!);
+      //         if (!existingHashes.has(genHash)) {
+      //           aquaTrees.push(tree);
+      //           existingHashes.add(genHash);
+      //         }
+      //       }
+      //     }
+      //   } catch (error) {
+      //     console.error('Error loading server identity claims:', error);
+      //   }
+      // }
 
       setFiles(aquaTrees);
     } catch (error) {

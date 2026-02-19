@@ -5,6 +5,7 @@ import * as dotenv from 'dotenv';
 // Install first: npm install @fastify/multipart
 import fastifyMultipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
+import fastifyCompress from '@fastify/compress';
 import * as fs from "fs"
 
 // Import controllers
@@ -22,7 +23,7 @@ import revisionsController from './controllers/revisions';
 import shareController from './controllers/share';
 import fetchChainController from './controllers/fetch-chain';
 import templatesController from './controllers/templates';
-import { setupPaymentPlans, setUpSystemTemplates, ensureDefaultFreePlanId } from './utils/api_utils';
+import { setupPaymentPlans, setUpSystemTemplates, ensureDefaultFreePlanId, seedAdminUsers } from './utils/api_utils';
 import systemController from './controllers/system';
 import notificationsController from './controllers/notifications';
 import ApiController from './controllers/api';
@@ -38,6 +39,8 @@ import adminController from './controllers/admin';
 import plansController from './controllers/plans';
 import subscriptionsController from './controllers/subscriptions';
 import paymentsController from './controllers/payments';
+import contactController from './controllers/contact';
+import aquaRestApiController from './controllers/aqua_rest_api';
 import { prisma } from './database/db';
 import logger from './utils/logger';
 import { createServerIdentity } from './utils/server_attest';
@@ -64,9 +67,9 @@ async function buildServer() {
             nodeProfilingIntegration(),
         ],
         // Tracing
-        tracesSampleRate: 1.0, //  Capture 100% of the transactions
+        tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
         // Set sampling rate for profiling - this is evaluated only once per SDK.init call
-        profileSessionSampleRate: 1.0,
+        profileSessionSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
         // Trace lifecycle automatically enables profiling during active traces
         profileLifecycle: 'trace',
 
@@ -96,8 +99,11 @@ async function buildServer() {
     // Ensure DEFAULT_FREE_PLAN_ID is set (resolves from DB if missing from .env)
     await ensureDefaultFreePlanId()
 
+    // Create the server identity here
     await createServerIdentity()
 
+    // Seed admin users from DASHBOARD_WALLETS env
+    await seedAdminUsers()
 
     let corsAllowedOrigins = process.env.ALLOWED_CORS ? [process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()), ...ensureDomainViewForCors(process.env.FRONTEND_URL)] : [
         'http://localhost:5173',
@@ -123,6 +129,9 @@ async function buildServer() {
     corsAllowedOrigins = [...new Set(corsAllowedOrigins.flat())];
 
     // Logger.info("Without duplicates Allowed CORS origins: ", JSON.stringify(corsAllowedOrigins, null, 2));
+
+    // Register compression
+    fastify.register(fastifyCompress, { global: true, threshold: 1024 });
 
     // Register the CORS plugin
     fastify.register(cors, {
@@ -180,6 +189,8 @@ async function buildServer() {
     fastify.register(plansController);
     fastify.register(subscriptionsController);
     fastify.register(paymentsController);
+    fastify.register(contactController);
+    fastify.register(aquaRestApiController);
 
     // Hook to add wallet address to labels when user is authenticated
     fastify.addHook("onRequest", async function (request, reply) {
