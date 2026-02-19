@@ -57,7 +57,8 @@ const ShareComponent = () => {
 
             // if(workflows.fileData.length ===0){
             (async () => {
-                  const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
+                  const urlToCall = ensureDomainUrlHasSSL(`${backend_url}/workflows`)
+                  const filesApi = await fetchFiles(session!.address, urlToCall, session!.nonce)
                   setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
             })()
             // }
@@ -229,7 +230,7 @@ const ShareComponent = () => {
                         <span style={{ fontSize: 24, fontWeight: 500 }}>Loading...</span>
                   </div>
             )
-      } 
+      }
 
       return (
             <div className='h-full w-full'>
@@ -316,12 +317,12 @@ const ShareComponent = () => {
                                                 ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500/20'
                                                 : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                                 }`}
-                                          onClick={() => { 
-                                                setRecipientType('specific'); 
-                                                if(multipleAddresses.length === 0){
+                                          onClick={() => {
+                                                setRecipientType('specific');
+                                                if (multipleAddresses.length === 0) {
                                                       addAddress()
                                                 }
-                                           }}
+                                          }}
                                     >
                                           <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
@@ -339,14 +340,14 @@ const ShareComponent = () => {
                                                 </div>
                                           </div>
                                     </div>
-                              </div> 
+                              </div>
 
                               {/* Wallet Address Input */}
                               {recipientType === 'specific' && (
                                     <div className="space-y-2">
 
                                           <div key={`field-share-1`} className="space-y-4">
-                                               
+
                                                 <div className="space-y-3">
                                                       {multipleAddresses.map((address, index) => (
                                                             <div
@@ -569,7 +570,7 @@ const ShareComponent = () => {
                                     setSelectedFileInfo(null)
                               }}
                               variant={"outline"}
-                              // className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
+                        // className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
                         >
                               Cancel
                         </Button>
@@ -587,9 +588,9 @@ const ShareComponent = () => {
                                           ) : (
                                                 <>
                                                       <Copy className="w-4 h-4" />
-                                                      Copy 
+                                                      Copy
                                                       <span className="hidden md:inline">Link</span>
-                                                   </>
+                                                </>
                                           )}
                                     </Button>
                               ) : null}

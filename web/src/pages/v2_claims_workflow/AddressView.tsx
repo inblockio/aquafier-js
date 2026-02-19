@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Copy, Check, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { fetchFiles } from '@/utils/functions';
+import { ensureDomainUrlHasSSL, fetchFiles } from '@/utils/functions';
 import { WalletAutosuggest } from '@/components/wallet_connect/wallet_auto_suggest';
 import { useStore } from 'zustand'
 import appStore from '@/store'
@@ -44,8 +44,8 @@ export const AddressView: React.FC<AddressViewProps> = ({
   useEffect(() => {
 
     (async () => {
-
-      const filesApi = await fetchFiles(session!.address, `${backend_url}/workflows`, session!.nonce)
+      const urlToCall = ensureDomainUrlHasSSL(`${backend_url}/workflows`)
+      const filesApi = await fetchFiles(session!.address, urlToCall, session!.nonce)
       setWorkflows({ fileData: filesApi.files, pagination: filesApi.pagination, status: 'loaded' })
 
     })()
