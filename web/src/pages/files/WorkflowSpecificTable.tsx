@@ -4,7 +4,7 @@ import { GlobalPagination } from "@/types"
 import { API_ENDPOINTS } from "@/utils/constants"
 import { ensureDomainUrlHasSSL } from "@/utils/functions"
 import apiClient from '@/api/axiosInstance'
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useStore } from "zustand"
 import { RenderFilesList, RenderFilesListCard } from "./commons"
 import { FilesListProps } from "@/types/types"
@@ -80,6 +80,10 @@ const WorkflowSpecificTable = ({ showFileActions, workflowName, view, filesListP
         }
     }
 
+    // Keep a ref to the latest loadFiles so subscribe handlers never use a stale closure
+    const loadFilesRef = useRef(loadFiles)
+    loadFilesRef.current = loadFiles
+
     useEffect(() => {
         // Clear files and reset to page 1 when workflow changes
         setFiles([])
@@ -124,7 +128,7 @@ const WorkflowSpecificTable = ({ showFileActions, workflowName, view, filesListP
     useEffect(() => {
         const unsubscribe = subscribe((message) => {
             if (message.type === 'notification_reload' && message.data && message.data.target === "workflows") {
-                loadFiles()
+                loadFilesRef.current()
                 triggerWorkflowReload(RELOAD_KEYS.contacts);
             }
         });

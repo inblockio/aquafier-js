@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Grid3X3, List, X } from 'lucide-react'
 
 import { useStore } from 'zustand'
@@ -17,6 +17,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [uniqueWorkflows, setUniqueWorkflows] = useState<{ name: string, count: number }[]>([])
       const [selectedWorkflow, setSelectedWorkflow] = useState<string>(filesListProps.hideAllFilesAndUserAquaFiles ? '' : 'user_files')
       const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date')
+      const initialTabSet = useRef(false)
 
       // Use React Query hook for user stats
       const { stats, refetch: refetchStats } = useUserStats()
@@ -27,7 +28,7 @@ export default function FilesList(filesListProps: FilesListProps) {
 
       // Read the tab parameter from URL
       const tabFromUrl = searchParams.get('tab');
-  
+
       // Filter states
       const [showFilterModal, setShowFilterModal] = useState(false)
       const [selectedFilters, setSelectedFilters] = useState<string[]>(['all'])
@@ -81,7 +82,12 @@ export default function FilesList(filesListProps: FilesListProps) {
       }, [stats])
 
       useEffect(() => {
+            if (initialTabSet.current) return
             if (tabFromUrl && stats) {
+                  // Skip placeholder/empty stats — wait for real data
+                  const hasAnyData = stats.filesCount > 0 || Object.values(stats.claimTypeCounts).some(c => c > 0)
+                  if (!hasAnyData) return
+                  initialTabSet.current = true
                   if (stats?.claimTypeCounts?.[tabFromUrl as keyof typeof stats.claimTypeCounts] > 0) {
                         setSelectedWorkflow(tabFromUrl)
                   } else {
@@ -95,7 +101,12 @@ export default function FilesList(filesListProps: FilesListProps) {
       }, [tabFromUrl, stats])
 
       useEffect(() => {
+            if (initialTabSet.current) return
             if (stats && !tabFromUrl) {
+                  // Skip placeholder/empty stats — wait for real data
+                  const hasAnyData = stats.filesCount > 0 || Object.values(stats.claimTypeCounts).some(c => c > 0)
+                  if (!hasAnyData) return
+                  initialTabSet.current = true
                   if (stats?.claimTypeCounts?.user_files > 0) {
                         setSelectedWorkflow('user_files')
                   } else {
@@ -197,9 +208,9 @@ export default function FilesList(filesListProps: FilesListProps) {
       const filteredFiles = getFilteredFiles()
 
       const capitalizeWords = (str: string): string => {
-            if(str === "domain claim"){
+            if (str === "domain claim") {
                   return "DNS Claim"
-            }else if(str === "ens claim"){
+            } else if (str === "ens claim") {
                   return "ENS Claim"
             }
             return str.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -405,7 +416,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                   </div>
             )
       }
- 
+
       const renderFilterModal = () => {
             if (!showFilterModal) return null
 
@@ -531,7 +542,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                         {renderWorkflowTabs()}
 
                         <WorkflowSpecificTable
-                        showFileActions={filesListProps.showFileActions}
+                              showFileActions={filesListProps.showFileActions}
                               workflowName={selectedWorkflow}
                               view={view}
                               filesListProps={filesListProps}
