@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense, useState } from 'react'
+import { useEffect, lazy, Suspense, useState, useRef } from 'react'
 import { useAppKit, useAppKitAccount, useDisconnect } from '@reown/appkit/react'
 import { Button } from '../ui/button'
 import { LuWallet, LuLogOut, LuLoaderCircle } from 'react-icons/lu'
@@ -24,12 +24,14 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [hasHandledSiwe, setHasHandledSiwe] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
+  const wasEverConnected = useRef(false)
 
   // const navigate = useNavigate()
 
   // Handle wallet connection state changes
   useEffect(() => {
     if (isConnected && address) {
+      wasEverConnected.current = true
       const checksumAddress = ethers.getAddress(address)
       setMetamaskAddress(checksumAddress)
       setAvatar(generateAvatar(checksumAddress))
@@ -38,7 +40,10 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
       setAvatar(undefined)
     }
 
-    if (isConnected == false && session != null && webConfig.AUTH_PROVIDER == "wallet_connect") {
+    // Only trigger sign-out if we've previously seen a connected state.
+    // This prevents premature sign-out on initial mount when AppKit hooks
+    // haven't fully initialized yet (e.g., after SIWE success on deep links).
+    if (wasEverConnected.current && isConnected == false && session != null && webConfig.AUTH_PROVIDER == "wallet_connect") {
       handleSignOut()
     }
   }, [isConnected, address, setMetamaskAddress, setAvatar])

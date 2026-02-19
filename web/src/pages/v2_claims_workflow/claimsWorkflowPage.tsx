@@ -345,6 +345,8 @@ export default function ClaimsWorkflowPage() {
                         setFiles(contact.files)
                         // Process claims after setting files
                         await processAllAddressClaims(contact.files)
+                  } else {
+                        setIsProcessingClaims(false)
                   }
 
             } catch (error) {
