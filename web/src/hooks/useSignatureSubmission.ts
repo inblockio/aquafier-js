@@ -65,6 +65,7 @@ export function useSignatureSubmission({
                   signForm[`page_${index}`] = pageIndex.toString()
                   signForm[`width_${index}`] = signaturePositionItem.width.toString()
                   signForm[`height_${index}`] = signaturePositionItem.height.toString()
+                  signForm[`scale_${index}`] = (signaturePositionItem.scale ?? 1).toString()
             })
 
             return signForm

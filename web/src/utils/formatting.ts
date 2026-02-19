@@ -151,7 +151,7 @@ export function displayTime(input: number | string): string {
                         const minute = input.substring(10, 12)
                         const second = input.substring(12, 14)
 
-                        const date = new Date(parseInt(year), month, parseInt(day), parseInt(hour), parseInt(minute), parseInt(second))
+                        const date = new Date(Date.UTC(parseInt(year), month, parseInt(day), parseInt(hour), parseInt(minute), parseInt(second)))
 
                         return date.toLocaleString()
                   }
