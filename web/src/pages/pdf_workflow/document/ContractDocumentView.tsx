@@ -311,17 +311,17 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
 
                         setPdfFile(pdfFile)
                         setLoadingPdfFile(false)
+                  }
 
-                        const shouldLoad = shouldLoadSignatures()
+                  // Always reload signatures when selectedFileInfo changes
+                  const shouldLoad = shouldLoadSignatures()
 
-                        if (shouldLoad) {
-                              setSignaturesLoading(true)
-                              const allSignatures: SignatureData[] = await loadSignatures()
+                  if (shouldLoad) {
+                        setSignaturesLoading(true)
+                        const allSignatures: SignatureData[] = await loadSignatures()
 
-                            
-                              setSignatures(allSignatures)
-                              setSignaturesLoading(false)
-                        }
+                        setSignatures(allSignatures)
+                        setSignaturesLoading(false)
                   }
             } catch (error) {
                   console.error('Error initializing component:', error)

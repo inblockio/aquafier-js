@@ -17,6 +17,8 @@ import { toast } from 'sonner'
 import { ApiFileInfo } from '../../../models/FileInfo'
 import { IDrawerStatus, VerificationHashAndResult } from '../../../models/AquaTreeDetails'
 import ContractSummaryDetails from './ContractSummaryDetails'
+import { triggerReload } from '../../../utils/reloadDatabase'
+import { RELOAD_KEYS } from '../../../utils/reloadDatabase'
 
 export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ selectedFileInfo }) => {
       const [isLoading, setIsLoading] = useState(true)
@@ -361,6 +363,9 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ selec
                   }
 
                   verifyAquaTreeRevisions(selectedFileInfo)
+
+                  // Trigger contacts reload so WalletAddressClaim can resolve wallet addresses
+                  triggerReload(RELOAD_KEYS.contacts)
             }
       }
 

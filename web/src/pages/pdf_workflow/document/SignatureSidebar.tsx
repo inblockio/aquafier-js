@@ -237,7 +237,7 @@ export const SignatureSidebar: React.FC<SignatureSidebarProps> = ({
                               onClick={handleSignatureSubmission}
                               className={signaturePositions.length === 0 || submittingSignatureData ? '' : 'bg-green-600 hover:bg-green-700 text-white'}
                         >
-                              Sign document..
+                              Sign document
                         </Button>
                   </div>
             </div>
