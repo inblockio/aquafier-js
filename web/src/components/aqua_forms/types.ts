@@ -26,6 +26,7 @@ export interface FormField {
       depend_on_field?: string
       depend_on_value?: string
     options?: Array<{ value: string, label: string }> // For 'options' type fields
+    accept?: string // Allowed file types (e.g., ".pdf,.jpg,.png,.mp4") for document/file fields
 }
 
 export interface FormTemplate {
