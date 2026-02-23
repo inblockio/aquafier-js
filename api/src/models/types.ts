@@ -114,6 +114,7 @@ export interface AquaTemplatesFields {
   },
 
   options?: Array<{ value: string, label: string }>
+  accept?: string
 }
 
 
