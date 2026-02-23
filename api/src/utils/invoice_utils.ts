@@ -19,6 +19,94 @@ const COLOR_PENDING_TEXT = rgb(0.52, 0.39, 0.02); // #856404
 export class InvoiceUtils {
 
     /**
+     * Word-wrap text to fit within a maximum pixel width.
+     * Handles long unbreakable strings (like wallet addresses) by splitting mid-word.
+     */
+    private static wrapText(text: string, font: PDFFont, fontSize: number, maxWidth: number): string[] {
+        const lines: string[] = [];
+
+        // First split on explicit newlines
+        for (const paragraph of text.split('\n')) {
+            const words = paragraph.split(/\s+/).filter(w => w.length > 0);
+            if (words.length === 0) {
+                lines.push('');
+                continue;
+            }
+
+            let currentLine = '';
+
+            for (const word of words) {
+                const testLine = currentLine ? `${currentLine} ${word}` : word;
+                const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+
+                if (testWidth <= maxWidth) {
+                    currentLine = testLine;
+                } else if (!currentLine) {
+                    // Single word exceeds maxWidth — force-break it character by character
+                    let partial = '';
+                    for (const char of word) {
+                        const partialTest = partial + char;
+                        if (font.widthOfTextAtSize(partialTest, fontSize) > maxWidth && partial.length > 0) {
+                            lines.push(partial);
+                            partial = char;
+                        } else {
+                            partial = partialTest;
+                        }
+                    }
+                    currentLine = partial;
+                } else {
+                    // Push current line and start a new one with this word
+                    lines.push(currentLine);
+                    // The word itself might be too long, so recurse on it
+                    if (font.widthOfTextAtSize(word, fontSize) > maxWidth) {
+                        let partial = '';
+                        for (const char of word) {
+                            const partialTest = partial + char;
+                            if (font.widthOfTextAtSize(partialTest, fontSize) > maxWidth && partial.length > 0) {
+                                lines.push(partial);
+                                partial = char;
+                            } else {
+                                partial = partialTest;
+                            }
+                        }
+                        currentLine = partial;
+                    } else {
+                        currentLine = word;
+                    }
+                }
+            }
+
+            if (currentLine) {
+                lines.push(currentLine);
+            }
+        }
+
+        return lines;
+    }
+
+    /**
+     * Draw wrapped text lines, returning the new Y position after all lines.
+     */
+    private static drawWrappedText(
+        page: PDFPage,
+        text: string,
+        x: number,
+        y: number,
+        maxWidth: number,
+        lineHeight: number,
+        font: PDFFont,
+        fontSize: number,
+        color: ReturnType<typeof rgb>,
+    ): number {
+        const lines = this.wrapText(text, font, fontSize, maxWidth);
+        for (const line of lines) {
+            page.drawText(line, { x, y, size: fontSize, font, color });
+            y -= lineHeight;
+        }
+        return y;
+    }
+
+    /**
      * Generates a PDF invoice using pdf-lib (no browser required).
      */
     static async generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
@@ -112,70 +200,42 @@ export class InvoiceUtils {
 
             // ── Addresses ───────────────────────────────────────────
             const colWidth = contentWidth / 2 - 10;
+            const addressStartY = y;
 
-            // From
+            // — From column —
+            let leftY = addressStartY;
+
             page.drawText('FROM', {
                 x: margin,
-                y,
+                y: leftY,
                 size: 9,
                 font: fontBold,
                 color: COLOR_LIGHT_MUTED,
             });
-            y -= 4;
+            leftY -= 4;
             page.drawLine({
-                start: { x: margin, y },
-                end: { x: margin + colWidth, y },
+                start: { x: margin, y: leftY },
+                end: { x: margin + colWidth, y: leftY },
                 thickness: 0.5,
                 color: COLOR_LINE_LIGHT,
             });
-            y -= 16;
+            leftY -= 16;
 
-            page.drawText(data.billingFrom.name, {
-                x: margin,
-                y,
-                size: 12,
-                font: fontBold,
-                color: COLOR_TEXT,
-            });
-            y -= 16;
+            leftY = this.drawWrappedText(page, data.billingFrom.name, margin, leftY, colWidth, 14, fontBold, 12, COLOR_TEXT);
+            leftY -= 2;
 
             if (data.billingFrom.address) {
-                for (const line of data.billingFrom.address.split('\n')) {
-                    page.drawText(line, {
-                        x: margin,
-                        y,
-                        size: 10,
-                        font: fontRegular,
-                        color: COLOR_MUTED,
-                    });
-                    y -= 14;
-                }
+                leftY = this.drawWrappedText(page, data.billingFrom.address, margin, leftY, colWidth, 14, fontRegular, 10, COLOR_MUTED);
             }
             if (data.billingFrom.email) {
-                page.drawText(data.billingFrom.email, {
-                    x: margin,
-                    y,
-                    size: 10,
-                    font: fontRegular,
-                    color: COLOR_MUTED,
-                });
-                y -= 14;
+                leftY = this.drawWrappedText(page, data.billingFrom.email, margin, leftY, colWidth, 14, fontRegular, 10, COLOR_MUTED);
             }
             if (data.billingFrom.website) {
-                page.drawText(data.billingFrom.website, {
-                    x: margin,
-                    y,
-                    size: 10,
-                    font: fontRegular,
-                    color: COLOR_MUTED,
-                });
-                y -= 14;
+                leftY = this.drawWrappedText(page, data.billingFrom.website, margin, leftY, colWidth, 14, fontRegular, 10, COLOR_MUTED);
             }
 
-            // Bill To (right column, reset y to same starting point)
-            const billToStartY = y + 14 + (data.billingFrom.email ? 14 : 0) + (data.billingFrom.website ? 14 : 0)
-                + (data.billingFrom.address ? data.billingFrom.address.split('\n').length * 14 : 0) + 16 + 4;
-            let rightY = billToStartY;
+            // — Bill To column —
+            let rightY = addressStartY;
             const rightX = margin + colWidth + 20;
 
             page.drawText('BILL TO', {
@@ -194,50 +254,26 @@ export class InvoiceUtils {
             });
             rightY -= 16;
 
-            // Truncate long wallet addresses for display
-            const billingName = data.billingTo.name.length > 42
-                ? data.billingTo.name.substring(0, 20) + '...' + data.billingTo.name.substring(data.billingTo.name.length - 16)
-                : data.billingTo.name;
-
-            page.drawText(billingName, {
-                x: rightX,
-                y: rightY,
-                size: 12,
-                font: fontBold,
-                color: COLOR_TEXT,
-            });
-            rightY -= 16;
+            // Name / wallet address — wrap within column
+            rightY = this.drawWrappedText(page, data.billingTo.name, rightX, rightY, colWidth, 14, fontBold, 12, COLOR_TEXT);
+            rightY -= 2;
 
             if (data.billingTo.address) {
-                for (const line of data.billingTo.address.split('\n')) {
-                    page.drawText(line, {
-                        x: rightX,
-                        y: rightY,
-                        size: 10,
-                        font: fontRegular,
-                        color: COLOR_MUTED,
-                    });
-                    rightY -= 14;
-                }
+                rightY = this.drawWrappedText(page, data.billingTo.address, rightX, rightY, colWidth, 14, fontRegular, 10, COLOR_MUTED);
             }
             if (data.billingTo.email) {
-                page.drawText(data.billingTo.email, {
-                    x: rightX,
-                    y: rightY,
-                    size: 10,
-                    font: fontRegular,
-                    color: COLOR_MUTED,
-                });
+                rightY = this.drawWrappedText(page, data.billingTo.email, rightX, rightY, colWidth, 14, fontRegular, 10, COLOR_MUTED);
             }
 
-            y = Math.min(y, rightY) - 30;
+            // Advance past whichever column is taller
+            y = Math.min(leftY, rightY) - 30;
 
             // ── Items Table ─────────────────────────────────────────
             const colDesc = margin;
             const colQty = margin + contentWidth * 0.5;
-            const colUnit = margin + contentWidth * 0.67;
             const colAmount = margin + contentWidth * 0.85;
             const tableRight = width - margin;
+            const descMaxWidth = colQty - colDesc - 16; // max width for description text
 
             // Table header background
             page.drawRectangle({
@@ -267,16 +303,27 @@ export class InvoiceUtils {
 
             // Table rows
             for (const item of data.items) {
-                page.drawText(item.description, {
-                    x: colDesc + 8,
-                    y,
-                    size: 10,
-                    font: fontRegular,
-                    color: COLOR_TEXT,
-                });
-                this.drawRightAlignedText(page, String(item.quantity), colQty + 40, y, 10, fontRegular, COLOR_TEXT);
-                this.drawRightAlignedText(page, this.formatCurrency(item.unitPrice, data.currency), colAmount - 10, y, 10, fontRegular, COLOR_TEXT);
-                this.drawRightAlignedText(page, this.formatCurrency(item.amount, data.currency), tableRight - 8, y, 10, fontRegular, COLOR_TEXT);
+                // Wrap description within its column
+                const descLines = this.wrapText(item.description, fontRegular, 10, descMaxWidth);
+                const rowStartY = y;
+
+                for (const line of descLines) {
+                    page.drawText(line, {
+                        x: colDesc + 8,
+                        y,
+                        size: 10,
+                        font: fontRegular,
+                        color: COLOR_TEXT,
+                    });
+                    y -= 14;
+                }
+                // Back up one lineHeight since we overshot
+                y += 14;
+
+                // Draw qty, unit price, amount on the first line of the row
+                this.drawRightAlignedText(page, String(item.quantity), colQty + 40, rowStartY, 10, fontRegular, COLOR_TEXT);
+                this.drawRightAlignedText(page, this.formatCurrency(item.unitPrice, data.currency), colAmount - 10, rowStartY, 10, fontRegular, COLOR_TEXT);
+                this.drawRightAlignedText(page, this.formatCurrency(item.amount, data.currency), tableRight - 8, rowStartY, 10, fontRegular, COLOR_TEXT);
 
                 y -= 6;
                 page.drawLine({
@@ -330,20 +377,26 @@ export class InvoiceUtils {
                 });
 
                 page.drawText('Notes:', { x: margin, y: y - 6, size: 10, font: fontBold, color: COLOR_MUTED });
-                page.drawText(data.notes, { x: margin, y: y - 20, size: 10, font: fontRegular, color: COLOR_MUTED });
-                y -= 40;
+                y -= 20;
+                y = this.drawWrappedText(page, data.notes, margin, y, contentWidth, 14, fontRegular, 10, COLOR_MUTED);
+                y -= 20;
             }
 
             // ── Footer ─────────────────────────────────────────────
             if (data.footer) {
-                const footerWidth = fontRegular.widthOfTextAtSize(data.footer, 9);
-                page.drawText(data.footer, {
-                    x: (width - footerWidth) / 2,
-                    y: margin,
-                    size: 9,
-                    font: fontRegular,
-                    color: COLOR_LIGHT_MUTED,
-                });
+                const footerLines = this.wrapText(data.footer, fontRegular, 9, contentWidth);
+                let footerY = margin;
+                for (const line of footerLines) {
+                    const lineWidth = fontRegular.widthOfTextAtSize(line, 9);
+                    page.drawText(line, {
+                        x: (width - lineWidth) / 2,
+                        y: footerY,
+                        size: 9,
+                        font: fontRegular,
+                        color: COLOR_LIGHT_MUTED,
+                    });
+                    footerY -= 12;
+                }
             }
 
             const pdfBytes = await pdfDoc.save();
