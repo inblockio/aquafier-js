@@ -1,17 +1,12 @@
 import { forwardRef, lazy, Suspense, useEffect, useState } from 'react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { generateAvatar, getWalletClaims } from '@/utils/functions'
+import { generateAvatar } from '@/utils/functions'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import CopyButton from '@/components/shared/CopyButton'
-import appStore from '@/store'
-import { useStore } from 'zustand'
-import { IIdentityClaimDetails } from '@/types/types'
 import { ArrowRightLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ApiFileInfo } from '@/models/FileInfo'
-import { toast } from 'sonner'
-import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
+import { useProfileClaims } from '@/hooks/useProfileClaims'
 const WalletAddressProfile = lazy(() => import('./WalletAddressProfile'))
 
 interface IWalletAddressClaim {
@@ -31,12 +26,14 @@ const getInitials = (name: string) => {
 const WalletAddressClaim = forwardRef<HTMLDivElement, IWalletAddressClaim>(
       ({ walletAddress, avatarOnly }, ref) => {
 
-            const [identityClaimDetails, setIdentityClaimDetails] = useState<IIdentityClaimDetails | null>(null)
+            // const [identityClaimDetails, setIdentityClaimDetails] = useState<IIdentityClaimDetails | null>(null)
             const [showWalletAddress, setShowWalletAddress] = useState(false)
-            const [files, setFiles] = useState<Array<ApiFileInfo>>([])
-            const [isLoading, setIsLoading] = useState(true)
+            // const [files, setFiles] = useState<Array<ApiFileInfo>>([])
+            // const [isLoading, setIsLoading] = useState(true)
+            const [displayName, setDisplayName] = useState<string | null>(null)
 
-            const { setSelectedFileInfo, session } = useStore(appStore)
+            // const { setSelectedFileInfo, session } = useStore(appStore)
+            const { claims, isLoading: claimsLoading } = useProfileClaims({ walletAddress })
 
             const [open, setOpen] = useState(false)
 
@@ -44,47 +41,73 @@ const WalletAddressClaim = forwardRef<HTMLDivElement, IWalletAddressClaim>(
                   setOpen(true)
             }
 
-            const loadSystemAquaFileNames = async () => {
-                  const aquaSystemNamesService = AquaSystemNamesService.getInstance();
-                  const systemNames = await aquaSystemNamesService.getSystemNames();
-                  return systemNames;
-            }
+            // const loadSystemAquaFileNames = async () => {
+            //       const aquaSystemNamesService = AquaSystemNamesService.getInstance();
+            //       const systemNames = await aquaSystemNamesService.getSystemNames();
+            //       return systemNames;
+            // }
 
-            async function loadClaimsFileData() {
-                  setFiles([])
-                  setIsLoading(true);
-                  try {
-                        let aquaTrees: ApiFileInfo[] = [];
-                        const aquaTemplateNames = await loadSystemAquaFileNames();
-
-                        // Check if files are passed as props first, then fallback to ContactsDB
-                        // Load contact profile from IndexedDB
-                        const { ContactsService } = await import('@/storage/databases/contactsDb');
-                        const contactsService = ContactsService.getInstance();
-                        const contactProfile = await contactsService.getContactByAddress(walletAddress);
-
-                        if (contactProfile && contactProfile.files) {
-                              aquaTrees = contactProfile.files;
-                        }
-                        setFiles(aquaTrees)
-                        const identityClaimDetails = getWalletClaims(aquaTemplateNames, aquaTrees, walletAddress, setSelectedFileInfo)
-                        setIdentityClaimDetails(identityClaimDetails)
-                  } catch (error) {
-                        console.error('Error loading claims:', error);
-                        toast.error('Failed to load claims');
-                  } finally {
-                        setIsLoading(false);
+            const loadDisplayNameFromIdentityClaims = () => {
+                  if (claims.length === 0) {
+                        return null
                   }
+
+                  // First try to find identity_claim
+                  let identityClaim = claims.find((claim) => ['identity_claim', 'user_signature', 'email_claim', 'ens_claim'].includes(claim.claimType))
+
+                  // If not found, try user_signature
+                  if (!identityClaim) {
+                        identityClaim = claims.find((claim) => claim.claimType === 'user_signature')
+                  }
+
+                  if (identityClaim && identityClaim.claimName) {
+                        setDisplayName(identityClaim.claimName)
+                  }
+
+
             }
+
+            // async function loadClaimsFileData() {
+            //       setFiles([])
+            //       setIsLoading(true);
+            //       try {
+            //             let aquaTrees: ApiFileInfo[] = [];
+            //             const aquaTemplateNames = await loadSystemAquaFileNames();
+
+            //             // Check if files are passed as props first, then fallback to ContactsDB
+            //             // Load contact profile from IndexedDB
+            //             const { ContactsService } = await import('@/storage/databases/contactsDb');
+            //             const contactsService = ContactsService.getInstance();
+            //             const contactProfile = await contactsService.getContactByAddress(walletAddress);
+
+            //             if (contactProfile && contactProfile.files) {
+            //                   aquaTrees = contactProfile.files;
+            //             }
+            //             setFiles(aquaTrees)
+            //             const identityClaimDetails = getWalletClaims(aquaTemplateNames, aquaTrees, walletAddress, setSelectedFileInfo)
+            //             setIdentityClaimDetails(identityClaimDetails)
+            //       } catch (error) {
+            //             console.error('Error loading claims:', error);
+            //             toast.error('Failed to load claims');
+            //       } finally {
+            //             setIsLoading(false);
+            //       }
+            // }
+
+            // useEffect(() => {
+            //       if (session) {
+            //             loadClaimsFileData()
+            //       } else {
+            //             console.warn('No active session found. Cannot load claims data.');
+            //             setIsLoading(false)
+            //       }
+            // }, [walletAddress, session?.nonce])
 
             useEffect(() => {
-                  if (session) {
-                        loadClaimsFileData()
-                  } else {
-                        console.warn('No active session found. Cannot load claims data.');
-                        setIsLoading(false)
+                  if(claims && claims.length > 0){
+                        loadDisplayNameFromIdentityClaims()
                   }
-            }, [walletAddress, session?.nonce])
+            }, [claimsLoading])
 
             return (
                   <>
@@ -104,9 +127,9 @@ const WalletAddressClaim = forwardRef<HTMLDivElement, IWalletAddressClaim>(
                                                       </TooltipTrigger>
                                                       <TooltipContent>
                                                             <div className="flex gap-0 items-center">
-                                                                  <p className='text-sm'>{showWalletAddress ? walletAddress : identityClaimDetails?.name || walletAddress}</p>
+                                                                  <p className='text-sm'>{showWalletAddress ? walletAddress : displayName || walletAddress}</p>
                                                                   <CopyButton text={`${walletAddress}`} isIcon={true} />
-                                                                  {identityClaimDetails ? (
+                                                                  {displayName ? (
                                                                         <Button size={"icon-sm"} variant={"outline"} className='cursor-pointer' onClick={(e) => {
                                                                               e.stopPropagation()
                                                                               setShowWalletAddress(prev => !prev)
@@ -120,7 +143,7 @@ const WalletAddressClaim = forwardRef<HTMLDivElement, IWalletAddressClaim>(
                                           ) : (
                                                 <div className="p-0 flex gap-2 items-center flex-wrap break-all">
                                                       <CopyButton text={`${walletAddress}`} isIcon={true} />
-                                                      {identityClaimDetails ? (
+                                                      {displayName ? (
                                                             <Button size={"icon-sm"} variant={"outline"} className='cursor-pointer' onClick={(e) => {
                                                                   e.stopPropagation()
                                                                   e.preventDefault()
@@ -142,17 +165,17 @@ const WalletAddressClaim = forwardRef<HTMLDivElement, IWalletAddressClaim>(
                                                                   handleClick()
                                                             }}
                                                       >
-                                                            {isLoading ? "Loading..." : (
-                                                                  <>{showWalletAddress ? walletAddress : identityClaimDetails?.name || walletAddress}</>
+                                                            {claimsLoading ? "Loading..." : (
+                                                                  <>{showWalletAddress ? walletAddress : displayName || walletAddress}</>
                                                             )}
                                                       </p>
                                                 </div>
                                           )}
                                     </div>
                               </HoverCardTrigger>
-                              <HoverCardContent className='w-[350px] p-0 overflow-hidden' align='start'>
+                              <HoverCardContent className='w-87.5 p-0 overflow-hidden' align='start'>
                                     <Suspense fallback={<p className='p-6'>Loading...</p>}>
-                                          <WalletAddressProfile walletAddress={walletAddress} showShadow={false} noBg={true} files={files} />
+                                          <WalletAddressProfile walletAddress={walletAddress} showShadow={false} noBg={true} />
                                     </Suspense>
                               </HoverCardContent>
                         </HoverCard>
