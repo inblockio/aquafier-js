@@ -1,62 +1,361 @@
-import puppeteer from 'puppeteer';
+import { PDFDocument, StandardFonts, rgb, PDFFont, PDFPage } from 'pdf-lib';
 import Logger from './logger';
 import { InvoiceData } from '../models/invoice';
 import { createTreeAndSave, CreateTreeAndSaveParams, CreateTreeAndSaveResult } from './create_tree_and_save';
 
+// Colors
+const COLOR_DARK = rgb(0.17, 0.24, 0.31);      // #2c3e50
+const COLOR_TEXT = rgb(0.2, 0.2, 0.2);          // #333
+const COLOR_MUTED = rgb(0.47, 0.47, 0.47);      // #777
+const COLOR_LIGHT_MUTED = rgb(0.6, 0.6, 0.6);   // #999
+const COLOR_LINE = rgb(0.87, 0.87, 0.87);        // #ddd
+const COLOR_LINE_LIGHT = rgb(0.93, 0.93, 0.93);  // #eee
+const COLOR_TABLE_BG = rgb(0.97, 0.97, 0.98);    // #f8f9fa
+const COLOR_PAID_BG = rgb(0.83, 0.93, 0.85);     // #d4edda
+const COLOR_PAID_TEXT = rgb(0.08, 0.34, 0.14);   // #155724
+const COLOR_PENDING_BG = rgb(1, 0.95, 0.8);      // #fff3cd
+const COLOR_PENDING_TEXT = rgb(0.52, 0.39, 0.02); // #856404
+
 export class InvoiceUtils {
 
     /**
-     * Generates a PDF invoice using Puppeteer.
-     * @param data Invoice data
-     * @returns Buffer containing the PDF data
+     * Generates a PDF invoice using pdf-lib (no browser required).
      */
     static async generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
-        const html = this.generateInvoiceHtml(data);
-        let browser = null;
-
         try {
-            browser = await puppeteer.launch({
-                headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox'] // Required for running in containerized environments
-            });
-            const page = await browser.newPage();
+            const pdfDoc = await PDFDocument.create();
+            const page = pdfDoc.addPage([595.28, 841.89]); // A4
+            const { width, height } = page.getSize();
 
-            // Set content and wait for it to load
-            await page.setContent(html, {
-                waitUntil: 'networkidle0'
+            const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+            const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+            const margin = 50;
+            const contentWidth = width - margin * 2;
+            let y = height - margin;
+
+            // ── Header ──────────────────────────────────────────────
+            // "INVOICE" title
+            page.drawText('INVOICE', {
+                x: margin,
+                y: y - 5,
+                size: 30,
+                font: fontBold,
+                color: COLOR_DARK,
             });
 
-            // Generate PDF
-            const pdfBuffer = await page.pdf({
-                format: 'A4',
-                printBackground: true,
-                margin: {
-                    top: '20px',
-                    right: '20px',
-                    bottom: '20px',
-                    left: '20px'
+            // Status badge
+            const statusColors = this.getStatusColors(data.status);
+            const statusText = data.status;
+            const statusWidth = fontBold.widthOfTextAtSize(statusText, 10) + 16;
+            page.drawRectangle({
+                x: margin,
+                y: y - 30,
+                width: statusWidth,
+                height: 18,
+                color: statusColors.bg,
+                borderColor: statusColors.bg,
+            });
+            page.drawText(statusText, {
+                x: margin + 8,
+                y: y - 26,
+                size: 10,
+                font: fontBold,
+                color: statusColors.text,
+            });
+
+            // Invoice number (right side)
+            const invoiceNumText = `#${data.invoiceNumber}`;
+            const invoiceNumWidth = fontBold.widthOfTextAtSize(invoiceNumText, 14);
+            page.drawText(invoiceNumText, {
+                x: width - margin - invoiceNumWidth,
+                y: y - 5,
+                size: 14,
+                font: fontBold,
+                color: COLOR_TEXT,
+            });
+
+            // Date (right side)
+            const dateText = `Date: ${this.formatDate(data.date)}`;
+            const dateWidth = fontRegular.widthOfTextAtSize(dateText, 10);
+            page.drawText(dateText, {
+                x: width - margin - dateWidth,
+                y: y - 22,
+                size: 10,
+                font: fontRegular,
+                color: COLOR_MUTED,
+            });
+
+            if (data.dueDate) {
+                const dueDateText = `Due Date: ${this.formatDate(data.dueDate)}`;
+                const dueDateWidth = fontRegular.widthOfTextAtSize(dueDateText, 10);
+                page.drawText(dueDateText, {
+                    x: width - margin - dueDateWidth,
+                    y: y - 36,
+                    size: 10,
+                    font: fontRegular,
+                    color: COLOR_MUTED,
+                });
+            }
+
+            y -= 70;
+
+            // ── Divider ─────────────────────────────────────────────
+            page.drawLine({
+                start: { x: margin, y },
+                end: { x: width - margin, y },
+                thickness: 1,
+                color: COLOR_LINE,
+            });
+
+            y -= 30;
+
+            // ── Addresses ───────────────────────────────────────────
+            const colWidth = contentWidth / 2 - 10;
+
+            // From
+            page.drawText('FROM', {
+                x: margin,
+                y,
+                size: 9,
+                font: fontBold,
+                color: COLOR_LIGHT_MUTED,
+            });
+            y -= 4;
+            page.drawLine({
+                start: { x: margin, y },
+                end: { x: margin + colWidth, y },
+                thickness: 0.5,
+                color: COLOR_LINE_LIGHT,
+            });
+            y -= 16;
+
+            page.drawText(data.billingFrom.name, {
+                x: margin,
+                y,
+                size: 12,
+                font: fontBold,
+                color: COLOR_TEXT,
+            });
+            y -= 16;
+
+            if (data.billingFrom.address) {
+                for (const line of data.billingFrom.address.split('\n')) {
+                    page.drawText(line, {
+                        x: margin,
+                        y,
+                        size: 10,
+                        font: fontRegular,
+                        color: COLOR_MUTED,
+                    });
+                    y -= 14;
                 }
+            }
+            if (data.billingFrom.email) {
+                page.drawText(data.billingFrom.email, {
+                    x: margin,
+                    y,
+                    size: 10,
+                    font: fontRegular,
+                    color: COLOR_MUTED,
+                });
+                y -= 14;
+            }
+            if (data.billingFrom.website) {
+                page.drawText(data.billingFrom.website, {
+                    x: margin,
+                    y,
+                    size: 10,
+                    font: fontRegular,
+                    color: COLOR_MUTED,
+                });
+                y -= 14;
+            }
+
+            // Bill To (right column, reset y to same starting point)
+            const billToStartY = y + 14 + (data.billingFrom.email ? 14 : 0) + (data.billingFrom.website ? 14 : 0)
+                + (data.billingFrom.address ? data.billingFrom.address.split('\n').length * 14 : 0) + 16 + 4;
+            let rightY = billToStartY;
+            const rightX = margin + colWidth + 20;
+
+            page.drawText('BILL TO', {
+                x: rightX,
+                y: rightY,
+                size: 9,
+                font: fontBold,
+                color: COLOR_LIGHT_MUTED,
+            });
+            rightY -= 4;
+            page.drawLine({
+                start: { x: rightX, y: rightY },
+                end: { x: rightX + colWidth, y: rightY },
+                thickness: 0.5,
+                color: COLOR_LINE_LIGHT,
+            });
+            rightY -= 16;
+
+            // Truncate long wallet addresses for display
+            const billingName = data.billingTo.name.length > 42
+                ? data.billingTo.name.substring(0, 20) + '...' + data.billingTo.name.substring(data.billingTo.name.length - 16)
+                : data.billingTo.name;
+
+            page.drawText(billingName, {
+                x: rightX,
+                y: rightY,
+                size: 12,
+                font: fontBold,
+                color: COLOR_TEXT,
+            });
+            rightY -= 16;
+
+            if (data.billingTo.address) {
+                for (const line of data.billingTo.address.split('\n')) {
+                    page.drawText(line, {
+                        x: rightX,
+                        y: rightY,
+                        size: 10,
+                        font: fontRegular,
+                        color: COLOR_MUTED,
+                    });
+                    rightY -= 14;
+                }
+            }
+            if (data.billingTo.email) {
+                page.drawText(data.billingTo.email, {
+                    x: rightX,
+                    y: rightY,
+                    size: 10,
+                    font: fontRegular,
+                    color: COLOR_MUTED,
+                });
+            }
+
+            y = Math.min(y, rightY) - 30;
+
+            // ── Items Table ─────────────────────────────────────────
+            const colDesc = margin;
+            const colQty = margin + contentWidth * 0.5;
+            const colUnit = margin + contentWidth * 0.67;
+            const colAmount = margin + contentWidth * 0.85;
+            const tableRight = width - margin;
+
+            // Table header background
+            page.drawRectangle({
+                x: margin,
+                y: y - 4,
+                width: contentWidth,
+                height: 22,
+                color: COLOR_TABLE_BG,
             });
 
-            return Buffer.from(pdfBuffer);
+            // Table header text
+            const headerY = y;
+            page.drawText('DESCRIPTION', { x: colDesc + 8, y: headerY, size: 9, font: fontBold, color: COLOR_MUTED });
+            this.drawRightAlignedText(page, 'QTY', colQty + 40, headerY, 9, fontBold, COLOR_MUTED);
+            this.drawRightAlignedText(page, 'UNIT PRICE', colAmount - 10, headerY, 9, fontBold, COLOR_MUTED);
+            this.drawRightAlignedText(page, 'AMOUNT', tableRight - 8, headerY, 9, fontBold, COLOR_MUTED);
+
+            // Header bottom border
+            page.drawLine({
+                start: { x: margin, y: y - 5 },
+                end: { x: tableRight, y: y - 5 },
+                thickness: 1.5,
+                color: COLOR_LINE,
+            });
+
+            y -= 22;
+
+            // Table rows
+            for (const item of data.items) {
+                page.drawText(item.description, {
+                    x: colDesc + 8,
+                    y,
+                    size: 10,
+                    font: fontRegular,
+                    color: COLOR_TEXT,
+                });
+                this.drawRightAlignedText(page, String(item.quantity), colQty + 40, y, 10, fontRegular, COLOR_TEXT);
+                this.drawRightAlignedText(page, this.formatCurrency(item.unitPrice, data.currency), colAmount - 10, y, 10, fontRegular, COLOR_TEXT);
+                this.drawRightAlignedText(page, this.formatCurrency(item.amount, data.currency), tableRight - 8, y, 10, fontRegular, COLOR_TEXT);
+
+                y -= 6;
+                page.drawLine({
+                    start: { x: margin, y },
+                    end: { x: tableRight, y },
+                    thickness: 0.5,
+                    color: COLOR_LINE_LIGHT,
+                });
+                y -= 18;
+            }
+
+            y -= 10;
+
+            // ── Totals (right-aligned) ──────────────────────────────
+            const totalsX = margin + contentWidth * 0.55;
+
+            // Subtotal
+            page.drawText('Subtotal:', { x: totalsX, y, size: 10, font: fontRegular, color: COLOR_TEXT });
+            this.drawRightAlignedText(page, this.formatCurrency(data.subtotal, data.currency), tableRight - 8, y, 10, fontRegular, COLOR_TEXT);
+            y -= 18;
+
+            // Tax
+            if (data.tax && data.tax > 0) {
+                const taxLabel = data.taxRate ? `Tax (${data.taxRate}%):` : 'Tax:';
+                page.drawText(taxLabel, { x: totalsX, y, size: 10, font: fontRegular, color: COLOR_TEXT });
+                this.drawRightAlignedText(page, this.formatCurrency(data.tax, data.currency), tableRight - 8, y, 10, fontRegular, COLOR_TEXT);
+                y -= 18;
+            }
+
+            // Total divider
+            page.drawLine({
+                start: { x: totalsX, y: y + 8 },
+                end: { x: tableRight, y: y + 8 },
+                thickness: 1.5,
+                color: COLOR_DARK,
+            });
+
+            y -= 4;
+            page.drawText('Total:', { x: totalsX, y, size: 14, font: fontBold, color: COLOR_DARK });
+            this.drawRightAlignedText(page, this.formatCurrency(data.total, data.currency), tableRight - 8, y, 14, fontBold, COLOR_DARK);
+
+            y -= 40;
+
+            // ── Notes ───────────────────────────────────────────────
+            if (data.notes) {
+                page.drawLine({
+                    start: { x: margin, y: y + 10 },
+                    end: { x: width - margin, y: y + 10 },
+                    thickness: 0.5,
+                    color: COLOR_LINE_LIGHT,
+                });
+
+                page.drawText('Notes:', { x: margin, y: y - 6, size: 10, font: fontBold, color: COLOR_MUTED });
+                page.drawText(data.notes, { x: margin, y: y - 20, size: 10, font: fontRegular, color: COLOR_MUTED });
+                y -= 40;
+            }
+
+            // ── Footer ─────────────────────────────────────────────
+            if (data.footer) {
+                const footerWidth = fontRegular.widthOfTextAtSize(data.footer, 9);
+                page.drawText(data.footer, {
+                    x: (width - footerWidth) / 2,
+                    y: margin,
+                    size: 9,
+                    font: fontRegular,
+                    color: COLOR_LIGHT_MUTED,
+                });
+            }
+
+            const pdfBytes = await pdfDoc.save();
+            return Buffer.from(pdfBytes);
         } catch (error: any) {
             Logger.error('Error generating PDF invoice:', error);
             throw new Error(`Failed to generate PDF: ${error.message}`);
-        } finally {
-            if (browser) {
-                await browser.close();
-            }
         }
     }
 
     /**
      * Generates a PDF invoice and saves it as an AquaTree revision.
-     * @param data Invoice data
-     * @param walletAddress Wallet address of the user
-     * @param host Host URL
-     * @param protocol Protocol (http or https)
-     * @param serverAutoSign Whether to auto-sign the AquaTree with server credentials
-     * @returns Result of the createTreeAndSave operation
      */
     static async createAndSaveInvoice(
         data: InvoiceData,
@@ -97,306 +396,37 @@ export class InvoiceUtils {
         });
     }
 
-    private static generateInvoiceHtml(data: InvoiceData): string {
-        const {
-            invoiceNumber,
-            date,
-            dueDate,
-            status,
-            billingTo,
-            billingFrom,
-            items,
-            subtotal,
-            tax,
-            taxRate,
-            total,
-            currency,
-            notes,
-            footer
-        } = data;
+    private static drawRightAlignedText(
+        page: PDFPage,
+        text: string,
+        rightX: number,
+        y: number,
+        size: number,
+        font: PDFFont,
+        color: ReturnType<typeof rgb>
+    ) {
+        const textWidth = font.widthOfTextAtSize(text, size);
+        page.drawText(text, {
+            x: rightX - textWidth,
+            y,
+            size,
+            font,
+            color,
+        });
+    }
 
-        const itemsHtml = items.map(item => `
-      <tr>
-        <td class="item-desc">${item.description}</td>
-        <td class="text-right">${item.quantity}</td>
-        <td class="text-right">${this.formatCurrency(item.unitPrice, currency)}</td>
-        <td class="text-right">${this.formatCurrency(item.amount, currency)}</td>
-      </tr>
-    `).join('');
-
-        const formattedDate = this.formatDate(date);
-        const formattedDueDate = dueDate ? this.formatDate(dueDate) : '';
-
-        return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>Invoice ${invoiceNumber}</title>
-        <style>
-          body {
-            font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
-            color: #333;
-            line-height: 1.5;
-            font-size: 14px;
-            margin: 0;
-            padding: 20px;
-          }
-          
-          .invoice-box {
-            max-width: 100%;
-            margin: auto;
-          }
-          
-          .header {
-            margin-bottom: 40px;
-            overflow: hidden;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-          }
-          
-          .header-left {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-          }
-          
-          .header-right {
-            text-align: right;
-          }
-          
-          h1 {
-            color: #2c3e50;
-            font-size: 36px;
-            margin: 0 0 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            line-height: 1;
-          }
-          
-          .status {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 12px;
-            text-transform: uppercase;
-          }
-          
-          .status.PAID { background: #d4edda; color: #155724; }
-          .status.PENDING { background: #fff3cd; color: #856404; }
-          .status.OVERDUE { background: #f8d7da; color: #721c24; }
-          .status.CANCELED { background: #e2e3e5; color: #383d41; }
-          
-          .meta-info {
-            margin-top: 10px;
-            font-size: 13px;
-            color: #777;
-          }
-
-          .meta-info div {
-            margin-bottom: 4px;
-          }
-
-          .meta-info strong {
-            color: #555;
-            display: inline-block;
-            width: 80px;
-          }
-          
-          .addresses {
-            margin-bottom: 40px;
-            overflow: hidden;
-            display: flex;
-            justify-content: space-between;
-          }
-          
-          .bill-to, .bill-from {
-            width: 45%;
-          }
-          
-          .section-title {
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-            color: #999;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
-          }
-          
-          .address-content p {
-            margin: 2px 0;
-          }
-          
-          .highlight {
-            font-weight: bold;
-            color: #333;
-            font-size: 16px;
-            margin-bottom: 5px;
-            display: block;
-          }
-          
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-          }
-          
-          th {
-            background: #f8f9fa;
-            border-bottom: 2px solid #ddd;
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 12px;
-            color: #555;
-            padding: 12px 8px;
-            text-align: left;
-          }
-          
-          td {
-            padding: 12px 8px;
-            border-bottom: 1px solid #eee;
-          }
-          
-          .item-desc {
-            width: 50%;
-          }
-          
-          .text-right {
-            text-align: right;
-          }
-          
-          .totals-section {
-            float: right;
-            width: 40%;
-            margin-bottom: 40px;
-            margin-left: auto;
-          }
-          
-          .total-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 5px 0;
-            border-bottom: 1px solid transparent;
-          }
-          
-          .total-row.final {
-            font-size: 18px;
-            font-weight: bold;
-            border-top: 2px solid #333;
-            margin-top: 10px;
-            padding-top: 10px;
-          }
-          
-          .notes-section {
-            clear: both;
-            margin-top: 60px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            font-size: 13px;
-            color: #777;
-          }
-          
-          .footer {
-            margin-top: 40px;
-            text-align: center;
-            font-size: 12px;
-            color: #aaa;
-          }
-
-          /* Clearfix for floated elements if any */
-          .clearfix::after {
-            content: "";
-            clear: both;
-            display: table;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="invoice-box clearfix">
-          <div class="header">
-            <div class="header-left">
-              <h1>Invoice</h1>
-              <div class="status ${status}">${status}</div>
-            </div>
-            <div class="header-right">
-              <div class="highlight">#${invoiceNumber}</div>
-              <div class="meta-info">
-                <div><strong>Date:</strong> ${formattedDate}</div>
-                ${dueDate ? `<div><strong>Due Date:</strong> ${formattedDueDate}</div>` : ''}
-              </div>
-            </div>
-          </div>
-          
-          <div class="addresses">
-            <div class="bill-from">
-              <div class="section-title">From</div>
-              <div class="address-content">
-                <span class="highlight">${billingFrom.name}</span>
-                <p style="white-space: pre-line">${billingFrom.address || ''}</p>
-                ${billingFrom.email ? `<p>${billingFrom.email}</p>` : ''}
-                ${billingFrom.website ? `<p>${billingFrom.website}</p>` : ''}
-              </div>
-            </div>
-            
-            <div class="bill-to">
-              <div class="section-title">Bill To</div>
-              <div class="address-content">
-                <span class="highlight">${billingTo.name}</span>
-                <p style="white-space: pre-line">${billingTo.address || ''}</p>
-                ${billingTo.email ? `<p>${billingTo.email}</p>` : ''}
-              </div>
-            </div>
-          </div>
-          
-          <table>
-            <thead>
-              <tr>
-                <th>Description</th>
-                <th class="text-right">Qty</th>
-                <th class="text-right">Unit Price</th>
-                <th class="text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsHtml}
-            </tbody>
-          </table>
-          
-          <div class="totals-section">
-            <div class="total-row">
-              <span>Subtotal:</span>
-              <span>${this.formatCurrency(subtotal, currency)}</span>
-            </div>
-            ${tax && tax > 0 ? `
-              <div class="total-row">
-                <span>Tax ${taxRate ? `(${taxRate}%)` : ''}:</span>
-                <span>${this.formatCurrency(tax, currency)}</span>
-              </div>
-            ` : ''}
-            <div class="total-row final">
-              <span>Total:</span>
-              <span>${this.formatCurrency(total, currency)}</span>
-            </div>
-          </div>
-          
-          ${notes ? `
-            <div class="notes-section">
-              <strong>Notes:</strong><br>
-              ${notes}
-            </div>
-          ` : ''}
-          
-          ${footer ? `
-            <div class="footer">
-              ${footer}
-            </div>
-          ` : ''}
-        </div>
-      </body>
-      </html>
-    `;
+    private static getStatusColors(status: string): { bg: ReturnType<typeof rgb>; text: ReturnType<typeof rgb> } {
+        switch (status) {
+            case 'PAID':
+                return { bg: COLOR_PAID_BG, text: COLOR_PAID_TEXT };
+            case 'PENDING':
+                return { bg: COLOR_PENDING_BG, text: COLOR_PENDING_TEXT };
+            case 'OVERDUE':
+                return { bg: rgb(0.97, 0.84, 0.85), text: rgb(0.45, 0.11, 0.14) };
+            case 'CANCELED':
+                return { bg: rgb(0.89, 0.89, 0.9), text: rgb(0.22, 0.24, 0.25) };
+            default:
+                return { bg: COLOR_TABLE_BG, text: COLOR_TEXT };
+        }
     }
 }

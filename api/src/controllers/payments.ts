@@ -424,7 +424,12 @@ export default async function paymentsController(fastify: FastifyInstance) {
 
       const ipnData = request.body as any;
 
-      Logger.info('NOWPayments IPN received', { payment_id: ipnData.payment_id, status: ipnData.payment_status });
+      Logger.info('NOWPayments IPN received', {
+        payment_id: ipnData.payment_id,
+        order_id: ipnData.order_id,
+        status: ipnData.payment_status,
+        actually_paid: ipnData.actually_paid,
+      });
 
       const uniqueEventId = `${ipnData.payment_id}_${ipnData.payment_status}_${ipnData.updated_at || Date.now()}`;
 
@@ -451,7 +456,9 @@ export default async function paymentsController(fastify: FastifyInstance) {
         });
       }
 
-      // Find payment record using order_id (payment_id may not be set initially)
+      Logger.debug(`[IPN] Webhook event stored, looking up payment by order_id: ${ipnData.order_id}`);
+
+      // Find payment record using order_id (which is our subscription.id)
       const payment = await prisma.payment.findFirst({
         where: { nowpayments_order_id: ipnData.order_id },
         include: { Subscription: true },
@@ -461,6 +468,8 @@ export default async function paymentsController(fastify: FastifyInstance) {
         Logger.warn('Payment not found for IPN', { order_id: ipnData.order_id, payment_id: ipnData.payment_id });
         return reply.send({ success: true });
       }
+
+      Logger.debug(`[IPN] Found payment record: ${payment.id}, current nowpayments_payment_id: ${payment.nowpayments_payment_id}`);
 
       // Update payment status
       const statusMap: Record<string, 'PENDING' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED' | 'CANCELED'> = {
@@ -481,6 +490,8 @@ export default async function paymentsController(fastify: FastifyInstance) {
       const actuallyPaid = ipnData.actually_paid || 0;
       const outcomeAmount = ipnData.outcome_amount || 0;
       const feeInfo = ipnData.fee || {};
+
+      Logger.debug(`[IPN] Updating payment ${payment.id} -> status: ${newStatus}, nowpayments_payment_id: ${ipnData.payment_id}`);
 
       await prisma.payment.update({
         where: { id: payment.id },
@@ -620,7 +631,14 @@ export default async function paymentsController(fastify: FastifyInstance) {
 
       return reply.send({ success: true });
     } catch (error: any) {
-      Logger.error("Error processing NOWPayments IPN: ", error);
+      const ipnData = request.body as any;
+      Logger.error("Error processing NOWPayments IPN: ", {
+        error: error.message,
+        stack: error.stack,
+        ipn_payment_id: ipnData?.payment_id,
+        ipn_order_id: ipnData?.order_id,
+        ipn_status: ipnData?.payment_status,
+      });
       return reply.code(500).send({ success: false, error: error.message });
     }
   });
