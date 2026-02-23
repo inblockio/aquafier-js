@@ -111,13 +111,28 @@ export class NOWPaymentsService {
   }
 
   /**
-   * Verify IPN callback signature
+   * Sort object keys recursively (required by NOWPayments IPN verification)
    */
-  static verifyIPNSignature(receivedSignature: string, payload: string): boolean {
+  private static sortObject(obj: any): any {
+    if (typeof obj !== 'object' || obj === null) return obj;
+    if (Array.isArray(obj)) return obj.map(item => this.sortObject(item));
+    return Object.keys(obj).sort().reduce((result: any, key: string) => {
+      result[key] = this.sortObject(obj[key]);
+      return result;
+    }, {});
+  }
+
+  /**
+   * Verify IPN callback signature
+   * NOWPayments requires payload keys to be sorted alphabetically before hashing
+   */
+  static verifyIPNSignature(receivedSignature: string, payload: any): boolean {
     const ipnSecret = process.env.NOWPAYMENTS_IPN_SECRET || '';
 
+    const sortedPayload = JSON.stringify(this.sortObject(payload));
+
     const hmac = crypto.createHmac('sha512', ipnSecret);
-    hmac.update(payload);
+    hmac.update(sortedPayload);
     const calculatedSignature = hmac.digest('hex');
 
     return receivedSignature === calculatedSignature;
