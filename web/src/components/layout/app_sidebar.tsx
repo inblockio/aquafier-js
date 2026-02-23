@@ -266,7 +266,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                     <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md">
                                           <div className="mb-3 flex items-center justify-between">
                                                 <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Storage</span>
-                                                <span className="text-xs font-medium text-gray-900">{Math.round(currentUsagePercentage)}%</span>
+                                                <span className="text-xs font-medium text-gray-900">{currentUsagePercentage < 1 ? currentUsagePercentage.toFixed(2) : Math.round(currentUsagePercentage)}%</span>
                                           </div>
 
                                           <div className="mb-3 h-2 w-full overflow-hidden rounded-full bg-gray-100">

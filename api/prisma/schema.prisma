@@ -89,6 +89,7 @@ model AquaTemplateFields {
   default_value String?
   depend_on_field String?
   depend_on_value String?
+  accept          String?
 
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")

@@ -97,7 +97,10 @@ export const getInputType = (fieldType: string): string => {
 export const getFieldPlaceholder = (field: FormField): string => {
       if (field.type === 'domain') return 'Fill in the Domain Name (FQDN)'
       if (field.type === 'date') return 'Select a date'
-      if (field.type === 'document') return 'Upload PDF document'
+      if (field.type === 'document') {
+            if (field.accept && field.accept !== '.pdf') return 'Upload certificate file'
+            return 'Upload PDF document'
+      }
       return `Enter ${field.label.toLowerCase()}`
 }
 
@@ -621,7 +624,7 @@ export const SingleFieldRenderer: React.FC<SingleFieldRendererProps> = ({
                                     className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
                                     type={getInputType(field.type)}
                                     required={field.required}
-                                    accept={field.type === 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
+                                    accept={field.accept ?? (field.type === 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined)}
                                     multiple={field.is_array}
                                     placeholder={getFieldPlaceholder(field)}
                                     onChange={(e) => handleFileInputChange(e, field)}

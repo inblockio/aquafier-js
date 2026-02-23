@@ -25,7 +25,7 @@ import WorkspaceDialogUI from '@/components/workspace/workspace_download_dialog_
 import IdentityCardDialogUi from '@/components/claims/identity_card_dialog_ui'
  
 export default function NewShadcnLayoutWithSidebar() {
- 
+  
       const {
             session,
             setSelectedFileInfo,
@@ -249,7 +249,7 @@ export default function NewShadcnLayoutWithSidebar() {
 
                                       
                                       
-
+ 
 
                                     {openDialog?.dialogType === 'aqua_sign' && (
                                           <CreateFormFromTemplate

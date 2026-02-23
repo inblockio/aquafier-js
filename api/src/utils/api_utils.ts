@@ -447,6 +447,7 @@ const setUpSystemTemplates = async () => {
                     depend_on_value: fieldData.dependsOn?.value,
 
                     is_editable: fieldData.isEditable == null ? true : fieldData.isEditable,
+                    accept: fieldData.accept || null,
 
                 },
                 update: {
@@ -466,6 +467,7 @@ const setUpSystemTemplates = async () => {
                     depend_on_value: fieldData.dependsOn?.value,
 
                     is_editable: fieldData.isEditable == null ? true : fieldData.isEditable,
+                    accept: fieldData.accept || null,
                 },
             })
 
