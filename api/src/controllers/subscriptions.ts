@@ -269,12 +269,47 @@ export default async function subscriptionsController(fastify: FastifyInstance) 
           });
         }
 
+        // Determine if the active subscription is the free plan
+        const freePlanId = process.env.DEFAULT_FREE_PLAN_ID || '';
+        const isOnFreePlan = activeSubscription.plan_id === freePlanId;
+
+        // If on the free plan, check for a recently expired non-free subscription
+        // still within the grace period to show the warning banner
+        let recentlyExpiredSub: SubscriptionWithPlan | null = null;
+        if (isOnFreePlan) {
+          const now = new Date();
+          const gracePeriodCutoff = new Date(now.getTime() - GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000);
+          recentlyExpiredSub = await prisma.subscription.findFirst({
+            where: {
+              user_address: userAddress,
+              status: 'EXPIRED',
+              plan_id: { not: freePlanId },
+              current_period_end: { gte: gracePeriodCutoff },
+            },
+            include: { Plan: true },
+            orderBy: { current_period_end: 'desc' },
+          });
+        }
+
+        const gracePeriodEnd = recentlyExpiredSub
+          ? new Date(new Date(recentlyExpiredSub.current_period_end).getTime() + GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000)
+          : null;
+
         return reply.code(200).send({
           success: true,
           data: {
             subscription: activeSubscription,
             plan: activeSubscription.Plan,
-            is_free_tier: false,
+            is_free_tier: isOnFreePlan,
+            ...(recentlyExpiredSub && {
+              expired_subscription: {
+                id: recentlyExpiredSub.id,
+                plan_name: recentlyExpiredSub.Plan.display_name,
+                expired_at: recentlyExpiredSub.current_period_end,
+                grace_period_end: gracePeriodEnd?.toISOString(),
+                grace_period_days: GRACE_PERIOD_DAYS,
+              },
+            }),
           },
         });
       } catch (error) {
