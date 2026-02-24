@@ -2,6 +2,7 @@ import apiClient from './axiosInstance'
 import type {
   SubscriptionPlan,
   Subscription,
+  ExpiredSubscriptionInfo,
   Payment,
   UsageStats,
   UsageLimits,
@@ -48,6 +49,7 @@ export async function fetchCurrentSubscription(): Promise<{
   subscription: Subscription | null;
   plan: SubscriptionPlan;
   is_free_tier: boolean;
+  expired_subscription?: ExpiredSubscriptionInfo;
 }> {
   const backendUrl = getBackendUrl();
   const headers = getHeaders();

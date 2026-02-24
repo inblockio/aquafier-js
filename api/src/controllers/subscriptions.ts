@@ -1,9 +1,46 @@
 import { FastifyInstance, FastifyReply } from 'fastify';
+import { Subscription, SubscriptionPlan } from '@prisma/client';
 import { prisma } from '../database/db';
 import { AuthenticatedRequest, authenticate } from '../middleware/auth_middleware';
 import Logger from '../utils/logger';
 import { calculateStorageUsage } from '../utils/stats';
 import { usageService } from '../services/usageService';
+
+/** Grace period in days before data above free plan limits is deleted */
+const GRACE_PERIOD_DAYS = 30;
+
+type SubscriptionWithPlan = Subscription & { Plan: SubscriptionPlan };
+
+/**
+ * Check if a subscription has expired based on current_period_end.
+ * If expired, updates its status to EXPIRED and returns the expired subscription.
+ * Returns null if the subscription is still valid.
+ */
+async function checkAndExpireSubscription(
+  subscription: SubscriptionWithPlan
+): Promise<SubscriptionWithPlan | null> {
+  const now = new Date();
+  const periodEnd = new Date(subscription.current_period_end);
+
+  if (periodEnd >= now) {
+    return null; // Still valid
+  }
+
+  // Subscription has expired — update status to EXPIRED
+  const expiredSubscription = await prisma.subscription.update({
+    where: { id: subscription.id },
+    data: { status: 'EXPIRED' },
+    include: { Plan: true },
+  });
+
+  Logger.info(`Subscription expired for user ${subscription.user_address}`, {
+    subscription_id: subscription.id,
+    plan_name: subscription.Plan.name,
+    expired_at: periodEnd.toISOString(),
+  });
+
+  return expiredSubscription;
+}
 
 export default async function subscriptionsController(fastify: FastifyInstance) {
 
@@ -125,8 +162,19 @@ export default async function subscriptionsController(fastify: FastifyInstance) 
           },
         });
 
-        if (!subscription) {
-          // User has no subscription, create them a new free plan subscription to close the loop
+        // Check if the subscription has expired by date
+        let expiredSubscription: SubscriptionWithPlan | null = null;
+        let activeSubscription = subscription;
+
+        if (subscription) {
+          expiredSubscription = await checkAndExpireSubscription(subscription);
+          if (expiredSubscription) {
+            activeSubscription = null; // Subscription expired, treat as no active subscription
+          }
+        }
+
+        if (!activeSubscription) {
+          // User has no active subscription — create a free plan subscription
           const freePlanId = process.env.DEFAULT_FREE_PLAN_ID || '';
           const freePlan = await prisma.subscriptionPlan.findUnique({
             where: { id: freePlanId },
@@ -157,17 +205,31 @@ export default async function subscriptionsController(fastify: FastifyInstance) 
               plan_id: freePlan.id,
             });
 
+            // If there was an expired subscription, include grace period info
+            const gracePeriodEnd = expiredSubscription
+              ? new Date(new Date(expiredSubscription.current_period_end).getTime() + GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000)
+              : null;
+
             return reply.code(200).send({
               success: true,
               data: {
                 subscription: newSubscription,
                 plan: newSubscription.Plan,
                 is_free_tier: true,
+                ...(expiredSubscription && {
+                  expired_subscription: {
+                    id: expiredSubscription.id,
+                    plan_name: expiredSubscription.Plan.display_name,
+                    expired_at: expiredSubscription.current_period_end,
+                    grace_period_end: gracePeriodEnd?.toISOString(),
+                    grace_period_days: GRACE_PERIOD_DAYS,
+                  },
+                }),
               },
             });
           }
 
-          // Fallback if free plan not found (return null subscription but keep existing response format)
+          // Fallback if free plan not found
           return reply.code(200).send({
             success: true,
             data: {
@@ -181,8 +243,8 @@ export default async function subscriptionsController(fastify: FastifyInstance) 
         return reply.code(200).send({
           success: true,
           data: {
-            subscription,
-            plan: subscription.Plan,
+            subscription: activeSubscription,
+            plan: activeSubscription.Plan,
             is_free_tier: false,
           },
         });
@@ -473,7 +535,7 @@ export default async function subscriptionsController(fastify: FastifyInstance) 
         }
 
         // Get subscription and plan limits
-        const subscription = await prisma.subscription.findFirst({
+        let subscription = await prisma.subscription.findFirst({
           where: {
             user_address: userAddress,
             status: {
@@ -484,6 +546,14 @@ export default async function subscriptionsController(fastify: FastifyInstance) 
             Plan: true,
           },
         });
+
+        // Check if the subscription has expired by date
+        if (subscription) {
+          const expired = await checkAndExpireSubscription(subscription);
+          if (expired) {
+            subscription = null; // Treat as no active subscription
+          }
+        }
 
         const plan = subscription?.Plan || await prisma.subscriptionPlan.findUnique({
           where: { id: process.env.DEFAULT_FREE_PLAN_ID || '' },
@@ -617,13 +687,21 @@ export default async function subscriptionsController(fastify: FastifyInstance) 
         const stats = await usageService.recalculateUserUsage(userAddress);
 
         // Get subscription/plan info to calculate limits/percentages
-        const subscription = await prisma.subscription.findFirst({
+        let subscription = await prisma.subscription.findFirst({
           where: {
             user_address: userAddress,
             status: { in: ['ACTIVE', 'TRIALING', 'PAST_DUE'] },
           },
           include: { Plan: true },
         });
+
+        // Check if the subscription has expired by date
+        if (subscription) {
+          const expired = await checkAndExpireSubscription(subscription);
+          if (expired) {
+            subscription = null; // Treat as no active subscription
+          }
+        }
 
         const plan = subscription?.Plan || await prisma.subscriptionPlan.findUnique({
           where: { id: process.env.DEFAULT_FREE_PLAN_ID || '' },

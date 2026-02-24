@@ -1,6 +1,35 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
+import { Subscription, SubscriptionPlan } from '@prisma/client';
 import { prisma } from '../database/db';
 import Logger from '../utils/logger';
+
+type SubscriptionWithPlan = Subscription & { Plan: SubscriptionPlan };
+
+/**
+ * Check if a subscription has expired based on current_period_end.
+ * If expired, updates its status to EXPIRED and returns true.
+ */
+async function isSubscriptionExpired(subscription: SubscriptionWithPlan): Promise<boolean> {
+  const now = new Date();
+  const periodEnd = new Date(subscription.current_period_end);
+
+  if (periodEnd >= now) {
+    return false;
+  }
+
+  await prisma.subscription.update({
+    where: { id: subscription.id },
+    data: { status: 'EXPIRED' },
+  });
+
+  Logger.info(`Middleware: subscription expired for user ${subscription.user_address}`, {
+    subscription_id: subscription.id,
+    plan_name: subscription.Plan.name,
+    expired_at: periodEnd.toISOString(),
+  });
+
+  return true;
+}
 
 export interface SubscriptionRequest extends FastifyRequest {
   user?: {
@@ -39,7 +68,7 @@ export async function checkPlanLimits(
       }
 
       // Get user's subscription and plan
-      const subscription = await prisma.subscription.findFirst({
+      let subscription: SubscriptionWithPlan | null = await prisma.subscription.findFirst({
         where: {
           user_address: userAddress,
           status: {
@@ -53,6 +82,11 @@ export async function checkPlanLimits(
           createdAt: 'desc',
         },
       });
+
+      // Check if the subscription has expired by date
+      if (subscription && await isSubscriptionExpired(subscription)) {
+        subscription = null;
+      }
 
       let plan;
 
@@ -171,7 +205,7 @@ export async function checkFeatureAccess(featureName: string) {
       }
 
       // Get user's subscription
-      const subscription = await prisma.subscription.findFirst({
+      let subscription: SubscriptionWithPlan | null = await prisma.subscription.findFirst({
         where: {
           user_address: userAddress,
           status: {
@@ -185,6 +219,11 @@ export async function checkFeatureAccess(featureName: string) {
           createdAt: 'desc',
         },
       });
+
+      // Check if the subscription has expired by date
+      if (subscription && await isSubscriptionExpired(subscription)) {
+        subscription = null;
+      }
 
       let plan;
 
@@ -261,7 +300,7 @@ export async function attachSubscriptionInfo(
       return;
     }
 
-    const subscription = await prisma.subscription.findFirst({
+    let subscription: SubscriptionWithPlan | null = await prisma.subscription.findFirst({
       where: {
         user_address: userAddress,
         status: {
@@ -275,6 +314,11 @@ export async function attachSubscriptionInfo(
         createdAt: 'desc',
       },
     });
+
+    // Check if the subscription has expired by date
+    if (subscription && await isSubscriptionExpired(subscription)) {
+      subscription = null;
+    }
 
     if (subscription) {
       request.subscription = {

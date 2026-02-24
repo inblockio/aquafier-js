@@ -35,6 +35,14 @@ export interface Subscription {
   Plan: SubscriptionPlan;
 }
 
+export interface ExpiredSubscriptionInfo {
+  id: string;
+  plan_name: string;
+  expired_at: string;
+  grace_period_end: string;
+  grace_period_days: number;
+}
+
 export interface Payment {
   id: string;
   subscription_id: string;
@@ -80,6 +88,7 @@ interface SubscriptionState {
   subscriptionLoading: boolean;
   subscriptionError: string | null;
   isFreeTier: boolean;
+  expiredSubscription: ExpiredSubscriptionInfo | null;
 
   // Usage tracking
   usage: UsageStats | null;
@@ -110,7 +119,7 @@ interface SubscriptionActions {
   setPlansError: (error: string | null) => void;
 
   // Subscription
-  setCurrentSubscription: (subscription: Subscription | null, isFreeTier?: boolean) => void;
+  setCurrentSubscription: (subscription: Subscription | null, isFreeTier?: boolean, expiredSubscription?: ExpiredSubscriptionInfo | null) => void;
   setSubscriptionLoading: (loading: boolean) => void;
   setSubscriptionError: (error: string | null) => void;
 
@@ -142,6 +151,7 @@ const initialState: SubscriptionState = {
   subscriptionLoading: false,
   subscriptionError: null,
   isFreeTier: false,
+  expiredSubscription: null,
 
   usage: null,
   limits: null,
@@ -168,10 +178,11 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       setPlansError: (error) => set({ plansError: error, plansLoading: false }),
 
       // Subscription actions
-      setCurrentSubscription: (subscription, isFreeTier = false) =>
+      setCurrentSubscription: (subscription, isFreeTier = false, expiredSubscription = null) =>
         set({
           currentSubscription: subscription,
           isFreeTier,
+          expiredSubscription,
           subscriptionError: null,
         }),
       setSubscriptionLoading: (loading) => set({ subscriptionLoading: loading }),
