@@ -2,6 +2,8 @@ import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
 import { isUserAdmin } from '../utils/api_utils';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
+import { getFile } from '../utils/file_utils.js';
+import path from 'path';
 import Logger from "../utils/logger";
 
 export default async function adminController(fastify: FastifyInstance) {
@@ -106,6 +108,7 @@ export default async function adminController(fastify: FastifyInstance) {
                             select: {
                                 file_hash: true,
                                 file_location: true,
+                                file_size: true,
                                 createdAt: true
                             }
                         })
@@ -197,6 +200,52 @@ export default async function adminController(fastify: FastifyInstance) {
         } catch (error) {
             Logger.error('Error toggling admin status:', error);
             return reply.code(500).send({ error: 'Internal Server Error' });
+        }
+    });
+
+    // Admin file serving endpoint (bypasses ownership check)
+    fastify.get('/admin/files/:fileHash', async (request, reply) => {
+        const { fileHash } = request.params as { fileHash: string };
+
+        if (!fileHash || fileHash.trim() === '') {
+            return reply.code(400).send({ error: 'Missing or empty file hash' });
+        }
+
+        try {
+            const file = await prisma.file.findFirst({
+                where: { file_hash: fileHash }
+            });
+
+            if (!file) {
+                return reply.code(404).send({ error: 'File not found' });
+            }
+
+            const fileContent = await getFile(file.file_location!);
+
+            const fileExt = path.extname(file.file_location ?? '').toLowerCase();
+            const mimeTypes: Record<string, string> = {
+                '.pdf': 'application/pdf',
+                '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+                '.png': 'image/png', '.gif': 'image/gif',
+                '.webp': 'image/webp', '.svg': 'image/svg+xml',
+                '.bmp': 'image/bmp',
+                '.mp4': 'video/mp4', '.webm': 'video/webm',
+                '.mov': 'video/quicktime', '.avi': 'video/x-msvideo',
+                '.mp3': 'audio/mpeg', '.wav': 'audio/wav',
+                '.ogg': 'audio/ogg', '.flac': 'audio/flac',
+                '.json': 'application/json',
+                '.txt': 'text/plain', '.md': 'text/markdown',
+                '.html': 'text/html', '.css': 'text/css',
+                '.js': 'text/javascript', '.ts': 'text/typescript',
+                '.xml': 'application/xml',
+                '.csv': 'text/csv',
+            };
+
+            reply.header('Content-Type', mimeTypes[fileExt] || 'application/octet-stream');
+            return reply.send(fileContent);
+        } catch (error) {
+            Logger.error('Error serving admin file:', error);
+            return reply.code(500).send({ error: 'Error reading file content' });
         }
     });
 }
