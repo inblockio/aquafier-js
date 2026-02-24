@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
 import { isUserAdmin } from '../utils/api_utils';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
-import { getFile } from '../utils/file_utils.js';
+import { getFile, getFileSize } from '../utils/file_utils.js';
 import path from 'path';
 import Logger from "../utils/logger";
 
@@ -113,6 +113,21 @@ export default async function adminController(fastify: FastifyInstance) {
                             }
                         })
                     ]);
+
+                    // Resolve file sizes from filesystem for entries with 0 bytes in DB
+                    data = await Promise.all(
+                        (data as any[]).map(async (file) => {
+                            if (file.file_size === 0 && file.file_location) {
+                                try {
+                                    const actualSize = await getFileSize(file.file_location);
+                                    if (actualSize && actualSize > 0) {
+                                        return { ...file, file_size: actualSize };
+                                    }
+                                } catch (_) { /* keep 0 if lookup fails */ }
+                            }
+                            return file;
+                        })
+                    );
                     break;
 
                 case 'payments':

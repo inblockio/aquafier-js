@@ -379,7 +379,7 @@ const AdminEntityList = () => {
         files: [
             { key: 'index', label: '#', render: (_val, _row, rowIndex) => (pagination.page - 1) * pagination.limit + rowIndex + 1 },
             { key: 'file_hash', label: 'File Hash', render: (val) => <span title={val} className="font-mono text-xs">{formatAddress(val)}</span> },
-            { key: 'file_location', label: 'File Name', render: (val) => <span className="font-medium text-slate-700 truncate max-w-[200px] block" title={val}>{getFileNameFromLocation(val)}</span> },
+            { key: 'file_location', label: 'File Name', render: (val) => <span className="font-medium text-slate-700 truncate block" title={getFileNameFromLocation(val)}>{getFileNameFromLocation(val)}</span> },
             { key: 'file_size', label: 'Size', render: (val: number) => <span className="text-slate-500">{formatFileSize(val)}</span> },
             { key: 'createdAt', label: 'Created At', render: formatDate },
         ],
