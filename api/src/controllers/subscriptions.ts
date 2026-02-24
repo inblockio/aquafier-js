@@ -185,7 +185,18 @@ export default async function subscriptionsController(fastify: FastifyInstance) 
             const periodEnd = new Date(now);
             periodEnd.setMonth(periodEnd.getMonth() + 1);
 
-            const newSubscription = await prisma.subscription.create({
+            // Check for existing free plan subscription before creating a new one
+            const existingFreeSubscription = await prisma.subscription.findFirst({
+              where: {
+                user_address: userAddress,
+                plan_id: freePlan.id,
+                status: 'ACTIVE',
+              },
+              include: { Plan: true },
+              orderBy: { createdAt: 'desc' },
+            });
+
+            const freeSubscription = existingFreeSubscription || await prisma.subscription.create({
               data: {
                 user_address: userAddress,
                 plan_id: freePlan.id,
@@ -200,10 +211,28 @@ export default async function subscriptionsController(fastify: FastifyInstance) 
               },
             });
 
-            Logger.info(`Auto-created free subscription for user ${userAddress}`, {
-              subscription_id: newSubscription.id,
-              plan_id: freePlan.id,
-            });
+            if (!existingFreeSubscription) {
+              Logger.info(`Auto-created free subscription for user ${userAddress}`, {
+                subscription_id: freeSubscription.id,
+                plan_id: freePlan.id,
+              });
+            }
+
+            // If we didn't just expire a subscription on this request, check for
+            // a recently expired non-free subscription still within the grace period
+            if (!expiredSubscription) {
+              const gracePeriodCutoff = new Date(now.getTime() - GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000);
+              expiredSubscription = await prisma.subscription.findFirst({
+                where: {
+                  user_address: userAddress,
+                  status: 'EXPIRED',
+                  plan_id: { not: freePlan.id },
+                  current_period_end: { gte: gracePeriodCutoff },
+                },
+                include: { Plan: true },
+                orderBy: { current_period_end: 'desc' },
+              });
+            }
 
             // If there was an expired subscription, include grace period info
             const gracePeriodEnd = expiredSubscription
@@ -213,8 +242,8 @@ export default async function subscriptionsController(fastify: FastifyInstance) 
             return reply.code(200).send({
               success: true,
               data: {
-                subscription: newSubscription,
-                plan: newSubscription.Plan,
+                subscription: freeSubscription,
+                plan: freeSubscription.Plan,
                 is_free_tier: true,
                 ...(expiredSubscription && {
                   expired_subscription: {
