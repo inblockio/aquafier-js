@@ -252,7 +252,10 @@ const Dashboard = () => {
                         <h2 className="text-lg font-bold text-slate-800">Financial Overview</h2>
                     </div>
                     <div className="space-y-4">
-                         <div className="p-4 bg-slate-50 rounded-lg flex justify-between items-center">
+                         <div
+                            onClick={() => navigate('/app/admin/list/payments')}
+                            className="p-4 bg-slate-50 rounded-lg flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors"
+                         >
                             <div>
                                 <p className="text-sm text-slate-500 mb-1">Total Payments</p>
                                 <p className="text-2xl font-bold text-slate-800">{metrics.payments.total}</p>
@@ -267,11 +270,15 @@ const Dashboard = () => {
                              <h3 className="text-xs font-semibold text-slate-500 mb-3 uppercase tracking-wider">Payment Status</h3>
                              <div className="space-y-2">
                                 {metrics.payments.breakdown?.map((item, idx) => (
-                                    <div key={idx} className="flex justify-between items-center bg-slate-50 px-3 py-3 rounded-lg border border-slate-100">
+                                    <div
+                                        key={idx}
+                                        onClick={() => navigate(`/app/admin/list/payments?status=${item.status}`)}
+                                        className="flex justify-between items-center bg-slate-50 px-3 py-3 rounded-lg border border-slate-100 cursor-pointer hover:bg-slate-100 hover:border-slate-200 transition-colors"
+                                    >
                                         <div className="flex items-center gap-2">
                                             <div className={`w-2 h-2 rounded-full ${
-                                                item.status === 'SUCCEEDED' ? 'bg-emerald-500' : 
-                                                item.status === 'PENDING' ? 'bg-amber-500' : 
+                                                item.status === 'SUCCEEDED' ? 'bg-emerald-500' :
+                                                item.status === 'PENDING' ? 'bg-amber-500' :
                                                 item.status === 'FAILED' ? 'bg-red-500' : 'bg-slate-500'
                                             }`} />
                                             <span className="text-slate-600 text-sm capitalize">

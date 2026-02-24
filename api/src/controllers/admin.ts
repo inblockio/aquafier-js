@@ -31,7 +31,7 @@ export default async function adminController(fastify: FastifyInstance) {
 
     fastify.get('/admin/data/:type', async (request, reply) => {
         const { type } = request.params as { type: string };
-        const { page = 1, limit = 20 } = request.query as { page?: number, limit?: number };
+        const { page = 1, limit = 20, status } = request.query as { page?: number, limit?: number, status?: string };
 
         const pageNum = Number(page);
         const limitNum = Number(limit);
@@ -113,9 +113,11 @@ export default async function adminController(fastify: FastifyInstance) {
                     break;
 
                 case 'payments':
+                    const paymentWhere = status ? { status: status as any } : {};
                     [totalCount, data] = await Promise.all([
-                        prisma.payment.count(),
+                        prisma.payment.count({ where: paymentWhere }),
                         prisma.payment.findMany({
+                            where: paymentWhere,
                             skip,
                             take: limitNum,
                             orderBy: { createdAt: 'desc' },

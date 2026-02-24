@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import apiClient from '@/api/axiosInstance'
 import { useStore } from 'zustand';
 import appStore from '@/store';
@@ -9,7 +9,8 @@ import {
     ChevronRight,
     ArrowLeft,
     RefreshCw,
-    Loader2
+    Loader2,
+    X
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -80,7 +81,10 @@ const AdminToggleButton = ({ row, session, backendUrl, onSuccess }: {
 const AdminEntityList = () => {
     const { type } = useParams<{ type: string }>();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { session, backend_url } = useStore(appStore);
+
+    const statusFilter = type === 'payments' ? searchParams.get('status') : null;
 
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -91,14 +95,22 @@ const AdminEntityList = () => {
         totalPages: 0
     });
 
+    const clearStatusFilter = () => {
+        setSearchParams({});
+    };
+
     const fetchData = async (page: number) => {
         if (!session || !backend_url || !type) return;
 
         setLoading(true);
         try {
+            const params: Record<string, any> = { page, limit: pagination.limit };
+            if (statusFilter) {
+                params.status = statusFilter;
+            }
             const res = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/admin/data/${type}`), {
                 headers: { 'nonce': session.nonce },
-                params: { page, limit: pagination.limit }
+                params
             });
 
             setData(res.data.data);
@@ -198,7 +210,7 @@ const AdminEntityList = () => {
     useEffect(() => {
         setPagination(prev => ({ ...prev, page: 1 }));
         fetchData(1);
-    }, [type, session, backend_url]);
+    }, [type, session, backend_url, statusFilter]);
 
     const handlePageChange = (newPage: number) => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
@@ -222,7 +234,9 @@ const AdminEntityList = () => {
                     </button>
                     <div>
                         <h1 className="text-2xl font-bold text-slate-800 capitalize">{getTitle(type)}</h1>
-                        <p className="text-slate-500 text-sm">Viewing {type} records</p>
+                        <p className="text-slate-500 text-sm">
+                            {statusFilter ? `Showing ${statusFilter.toLowerCase()} payments` : `Viewing ${type} records`}
+                        </p>
                     </div>
                 </div>
                 <button
@@ -232,6 +246,19 @@ const AdminEntityList = () => {
                     <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
                 </button>
             </div>
+
+            {/* Status Filter Badge */}
+            {statusFilter && (
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-500">Filtered by:</span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                        {statusFilter}
+                        <button onClick={clearStatusFilter} className="hover:bg-blue-100 rounded-full p-0.5 transition-colors">
+                            <X className="w-3 h-3" />
+                        </button>
+                    </span>
+                </div>
+            )}
 
             {/* Table */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
