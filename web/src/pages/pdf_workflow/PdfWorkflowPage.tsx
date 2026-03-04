@@ -97,6 +97,16 @@ export default function PdfWorkflowPage() {
                   const firstHash: string = revisionHashes[0]
                   const firstRevision: Revision = selectedFileInfoLocal!.aquaTree!.revisions[firstHash]
 
+                  const fourthRevisionHash = revisionHashes[3]
+                  const fourthRevision = orderedTree.revisions[fourthRevisionHash]
+                  let indexToSliceFrom = 4
+
+                  if (fourthRevision.revision_type === "link") {
+                        indexToSliceFrom = 5
+                  } else {
+                        indexToSliceFrom = 4
+                  }
+
                   const signers: string[] = firstRevision?.forms_signers.split(',')
 
                   let signatureRevionHashesData: Array<SummaryDetailsDisplayData> = []
@@ -105,7 +115,7 @@ export default function PdfWorkflowPage() {
 
                   if (revisionHashes.length > 5) {
                         // remove the first 4 elements from the revision list
-                        fourthItmeHashOnwards = revisionHashes.slice(5)
+                        fourthItmeHashOnwards = revisionHashes.slice(indexToSliceFrom)
                         signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
 
                         signatureRevionHashesData = signatureRevionHashes
@@ -168,13 +178,13 @@ export default function PdfWorkflowPage() {
                         }
                   }
                   fetchSelectedFileInfo()
-            }else {
+            } else {
                   setSelectedFileInfoLocal(selectedFileInfo)
             }
       }, [])
 
       useEffect(() => {
-            if(selectedFileInfo){
+            if (selectedFileInfo) {
                   setSelectedFileInfoLocal(selectedFileInfo)
             }
       }, [JSON.stringify(selectedFileInfo)])
@@ -183,7 +193,7 @@ export default function PdfWorkflowPage() {
             loadData()
       }, [JSON.stringify(selectedFileInfoLocal)])
 
-      const noOp = (_step: number) => {}
+      const noOp = (_step: number) => { }
 
       const pageContent = () => {
             return (
@@ -253,12 +263,12 @@ export default function PdfWorkflowPage() {
             }
 
             if (selectedFileInfoLocal == null) {
-                        return (
-                              <Alert variant="destructive">
-                                    <AlertDescription>Selected File not found.</AlertDescription>
-                              </Alert>
-                        )
-                  }
+                  return (
+                        <Alert variant="destructive">
+                              <AlertDescription>Selected File not found.</AlertDescription>
+                        </Alert>
+                  )
+            }
 
             return pageContent()
       }

@@ -323,6 +323,16 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ selec
                   const pdfHash = revisionHashes[2]
                   const thirdRevision: Revision = selectedFileInfo!.aquaTree!.revisions[pdfHash]
 
+                  const fourthRevisionHash = revisionHashes[3]
+                  const fourthRevision = orderedTree.revisions[fourthRevisionHash]
+                  let indexToSliceFrom = 4
+
+                  if (fourthRevision.revision_type === "link") {
+                        indexToSliceFrom = 5
+                  } else {
+                        indexToSliceFrom = 4
+                  }
+
                   const hashOfLinkedDocument = thirdRevision.link_verification_hashes![0]!
                   const fileName = selectedFileInfo!.aquaTree!.file_index[hashOfLinkedDocument]
                   setFileNameData(fileName)
@@ -344,7 +354,7 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ selec
                   if (revisionHashes.length > 5) {
 
                         // remove the first 4 elements from the revision list
-                        fourthItmeHashOnwards = revisionHashes.slice(5)
+                        fourthItmeHashOnwards = revisionHashes.slice(indexToSliceFrom)
                         signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
 
                         const signatureRevionHashesDataAddress = signatureRevionHashes.map(e => e.walletAddress)

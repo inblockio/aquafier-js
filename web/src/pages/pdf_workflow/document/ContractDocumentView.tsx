@@ -1,18 +1,18 @@
-import React, {useEffect, useState} from 'react'
+import React, { useEffect, useState } from 'react'
 import appStore from '../../../store'
-import {useStore} from 'zustand'
-import {ContractDocumentViewProps, SignatureData, SummaryDetailsDisplayData} from '../../../types/types'
+import { useStore } from 'zustand'
+import { ContractDocumentViewProps, SignatureData, SummaryDetailsDisplayData } from '../../../types/types'
 import {
-    AquaTree,
-    getGenesisHash,
-    getLatestVH,
-    OrderRevisionInAquaTree,
-    Revision
+      AquaTree,
+      getGenesisHash,
+      getLatestVH,
+      OrderRevisionInAquaTree,
+      Revision
 } from 'aqua-js-sdk/web'
-import {ensureDomainUrlHasSSL, getAquatreeObject, getHighestFormIndex, isAquaTree, parseAquaTreeContent, reorderRevisionsInAquaTree} from '../../../utils/functions'
+import { ensureDomainUrlHasSSL, getAquatreeObject, getHighestFormIndex, isAquaTree, parseAquaTreeContent, reorderRevisionsInAquaTree } from '../../../utils/functions'
 
-import {PDFDisplayWithJustSimpleOverlay} from './SignatureOverlay'
-import {toast} from 'sonner'
+import { PDFDisplayWithJustSimpleOverlay } from './SignatureOverlay'
+import { toast } from 'sonner'
 import PdfSigner from './PdfSigner'
 import apiClient from '@/api/axiosInstance'
 
@@ -142,16 +142,28 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
       }
       const loadSignatures = async (): Promise<SignatureData[]> => {
             const sigData: SignatureData[] = []
+            const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
             const orderedHashes = reorderRevisionsInAquaTree(selectedFileInfo!.aquaTree!)
 
             // const revisions = orderedTree.revisions
             const revisionHashes = orderedHashes // Object.keys(revisions)
+
+            const fourthRevisionHash = revisionHashes[3]
+            const fourthRevision = orderedTree.revisions[fourthRevisionHash]
+            let indexToSliceFrom = 4
+
+            if (fourthRevision.revision_type === "link") {
+                  indexToSliceFrom = 5
+            } else {
+                  indexToSliceFrom = 4
+            }
+
             let fourthItmeHashOnwards: string[] = []
             let signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
 
             if (revisionHashes.length > 5) {
                   // remove the first 4 elements from the revision list
-                  fourthItmeHashOnwards = revisionHashes.slice(5)
+                  fourthItmeHashOnwards = revisionHashes.slice(indexToSliceFrom)
                   signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
             }
 
@@ -223,7 +235,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
 
                               const aquaTree = OrderRevisionInAquaTree(aquaTreeGeneral)
                               const allHashes = Object.keys(aquaTree.revisions)
-                              
+
                               if (allHashes.includes(revisionHashWithPositions)) {
                                     revisionSigPosition = aquaTree.revisions[revisionHashWithPositions]
                               }
@@ -478,7 +490,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
                         <PDFDisplayWithJustSimpleOverlay pdfUrl={pdfURLObject!} annotationsInDocument={signatures} signatures={signatures} latestRevisionHash={getLatestVH(selectedFileInfo.aquaTree!)} />
                   </div>
             )
-      } 
+      }
 
       // Default case - show signing interface
       return <PdfSigner selectedFileInfo={selectedFileInfo} documentSignatures={signatures} fileData={pdfFile} setActiveStep={setActiveStep} onSidebarReady={onSidebarReady} />
