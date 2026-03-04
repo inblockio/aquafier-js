@@ -108,16 +108,17 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }:
                 isAquaFile: false,
             })
             setIsOpen(true)
+            return
         } else {
             const allAquaTrees = newFileObjects.filter(e => isAquaTree(e.fileObject.fileContent))
-            const missingFile = checkAllFilesAvailable(allAquaTrees, newFileObjects)
+            const missingFile = await checkAllFilesAvailable(allAquaTrees, newFileObjects)
             if (missingFile) {
                 setExpectedFile(missingFile)
                 setIsOpen(true)
                 return
             }
         }
-        
+
         // Trigger reload for all files and stats
         await triggerWorkflowReload(RELOAD_KEYS.user_files, true);
         await triggerWorkflowReload(RELOAD_KEYS.all_files, true);
@@ -157,27 +158,48 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }:
             const fileHash = findFileRevision(aquaTree)
             const actualUrlToFetch = ensureDomainUrlHasSSL(backend_url)
 
-            const response = await apiClient.get(`${actualUrlToFetch}/files/${fileHash}`, {
-                headers: {
-                    Nonce: session?.nonce ?? '--error--',
-                },
-                validateStatus: (status) => status < 500,
-                responseType: 'blob',
-            })
+            let fileNotFound = false
+            let fileBlob: Blob | null = null
 
-            if (response.status !== 200) {
+            try {
+                const response = await apiClient.get(`${actualUrlToFetch}/files/${fileHash}`, {
+                    headers: {
+                        Nonce: session?.nonce ?? '--error--',
+                    },
+                    validateStatus: () => true,
+                    responseType: 'blob',
+                })
+
+                fileNotFound = response.status !== 200
+                if (!fileNotFound) {
+                    // Server may return HTTP 200 with {"success":false,...} when file is missing
+                    try {
+                        const text = await (response.data as Blob).text()
+                        const json = JSON.parse(text)
+                        if (json.success === false) fileNotFound = true
+                    } catch {
+                        // Not a JSON error body — blob is real file data
+                        fileBlob = response.data as Blob
+                    }
+                }
+            } catch {
+                // Network error or 500 — treat as file not found
+                fileNotFound = true
+            }
+
+            if (fileNotFound) {
+                setUploading(false)
                 if (fileHash) {
                     setRequiredFileHash(fileHash)
                     setIsOpen(true)
                     return
                 } else {
-                    setUploading(false)
                     toast.error(`Could not determine required file hash from AquaTree`)
                     return
                 }
             }
 
-            const blob: Blob = response.data
+            const blob: Blob = fileBlob!
             const fileName = getFileName(aquaTree)
             const arrayBuffer = await blob.arrayBuffer()
             const uint8Array = new Uint8Array(arrayBuffer)
@@ -219,17 +241,40 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }:
         }
     }
 
-    const findMissingFileForLinkHash = (aquaTreeItem: AquaTree, linkHash: string, newFileObjects: Array<{
+    const findMissingFileForLinkHash = async (aquaTreeItem: AquaTree, linkHash: string, newFileObjects: Array<{
         file: File;
         fileObject: FileObject
-    }>): UploadLinkAquaTreeExpectedData | null => {
+    }>): Promise<UploadLinkAquaTreeExpectedData | null> => {
         const revisionItem = aquaTreeItem.revisions[linkHash]
         const fileRevisionHash = revisionItem.link_verification_hashes![0]
         const fileName = aquaTreeItem.file_index[fileRevisionHash]
         const aquaFile = `${fileName}.aqua.json`
+        const actualUrlToFetch = ensureDomainUrlHasSSL(backend_url)
 
         const aquaFileItemObject = newFileObjects.find(e => e.fileObject.fileName === aquaFile)
         if (!aquaFileItemObject) {
+            // Check if the linked aqua tree already exists in the user's context by genesis hash
+            const userLinkedFile = files.fileData.find(userFile => {
+                const genHash = getGenesisHash(userFile.aquaTree!)
+                return genHash === fileRevisionHash
+            })
+
+            if (userLinkedFile) {
+                // Found it in user context — verify raw file is also on server
+                const genHash = getGenesisHash(userLinkedFile.aquaTree!)
+                const genRevision = userLinkedFile.aquaTree!.revisions[genHash!]
+                const rawFileHash = genRevision?.file_hash
+                if (rawFileHash) {
+                    const serverCheck = await apiClient.get(`${actualUrlToFetch}/files/${rawFileHash}`, {
+                        headers: { Nonce: session?.nonce ?? '--error--' },
+                        validateStatus: (status) => status < 500,
+                    })
+                    if (serverCheck.status === 200) {
+                        return null // Linked aqua tree and its raw file are on the server
+                    }
+                }
+            }
+
             return {
                 displayText: `please upload ${aquaFile}.`,
                 exectedFileHash: '',
@@ -241,8 +286,8 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }:
 
         const fileItemObject = newFileObjects.find(e => e.fileObject.fileName === fileName)
         if (!fileItemObject) {
-            const aquaFileItemObject = newFileObjects.find(e => e.fileObject.fileName === aquaFile)
-            if (!aquaFileItemObject) {
+            const resolvedAquaFileObject = newFileObjects.find(e => e.fileObject.fileName === aquaFile)
+            if (!resolvedAquaFileObject) {
                 return {
                     displayText: `please upload ${aquaFile} .`,
                     exectedFileHash: '',
@@ -253,21 +298,32 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }:
             }
 
             let aquaTree: AquaTree;
-            const contentData = aquaFileItemObject.fileObject.fileContent
+            const contentData = resolvedAquaFileObject.fileObject.fileContent
             if (typeof contentData == 'string') {
-                aquaTree = JSON.parse(aquaFileItemObject.fileObject.fileContent as string)
+                aquaTree = JSON.parse(resolvedAquaFileObject.fileObject.fileContent as string)
             } else if (typeof contentData === 'object') {
-                aquaTree = aquaFileItemObject.fileObject.fileContent as AquaTree
+                aquaTree = resolvedAquaFileObject.fileObject.fileContent as AquaTree
             }
 
             // @ts-ignore
             const genHash = getGenesisHash(aquaTree)
             if (genHash == null) {
-                throw Error(`Genesis hash cannot be null for ${aquaFileItemObject.fileObject.fileName}`)
+                throw Error(`Genesis hash cannot be null for ${resolvedAquaFileObject.fileObject.fileName}`)
             }
             // @ts-ignore
             const genRevision = aquaTree.revisions[genHash]
             const fileHash = genRevision.file_hash
+
+            // Check if the raw file already exists on the server before prompting
+            if (fileHash) {
+                const serverCheck = await apiClient.get(`${actualUrlToFetch}/files/${fileHash}`, {
+                    headers: { Nonce: session?.nonce ?? '--error--' },
+                    validateStatus: (status) => status < 500,
+                })
+                if (serverCheck.status === 200) {
+                    return null // Raw file already on server, nothing to upload
+                }
+            }
 
             return {
                 displayText: `please upload ${fileName}`,
@@ -281,17 +337,17 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }:
         return null
     }
 
-    const checkAllFilesAvailable = (
+    const checkAllFilesAvailable = async (
         allAquaTrees: Array<{ file: File; fileObject: FileObject }>,
         newFileObjects: Array<{ file: File; fileObject: FileObject }>
-    ): UploadLinkAquaTreeExpectedData | null => {
+    ): Promise<UploadLinkAquaTreeExpectedData | null> => {
         for (const aFileObject of allAquaTrees) {
             const aquaTreeItem: AquaTree = aFileObject.fileObject.fileContent as AquaTree
             const linkHashes = allLinkRevisionHashes(aquaTreeItem)
 
             if (linkHashes.length > 0) {
                 for (const linkHash of linkHashes) {
-                    const missingFile = findMissingFileForLinkHash(aquaTreeItem, linkHash, newFileObjects)
+                    const missingFile = await findMissingFileForLinkHash(aquaTreeItem, linkHash, newFileObjects)
                     if (missingFile) {
                         return missingFile
                     }
@@ -351,7 +407,7 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }:
 
         const allAquaTrees = newFileObjects.filter(e => isAquaTree(e.fileObject.fileContent))
 
-        const missingFile = checkAllFilesAvailable(allAquaTrees, newFileObjects)
+        const missingFile = await checkAllFilesAvailable(allAquaTrees, newFileObjects)
         if (missingFile) {
             setExpectedFile(missingFile)
             setIsOpen(true)
@@ -402,6 +458,7 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }:
             const fileDataContent = await readFileContent(selectedFile)
             const fileHash = aquafier.getFileHash(fileDataContent)
             if (fileHash !== requiredFileHash) {
+                setUploading(false)
                 toast.error("Dropped file hash doesn't match the required hash in the AquaTree..")
             } else {
                 setSelectedFileName(selectedFile.name)
@@ -432,8 +489,12 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload }:
         event.preventDefault()
 
         if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
-            const file = event.dataTransfer.files[0]
-            await modalSelectedFile(file)
+            const droppedFile = event.dataTransfer.files[0]
+            if (expectedFile == null) {
+                await modalSelectedFile(droppedFile)
+            } else {
+                await inspectMultiFileUpload(droppedFile)
+            }
         }
     }
 
