@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Calendar, AlertCircle, X, HardDrive, FileText, File, RefreshCcw } from 'lucide-react';
+import { CreditCard, Calendar, AlertCircle, AlertTriangle, X, HardDrive, FileText, File, RefreshCcw } from 'lucide-react';
 import { useSubscriptionStore } from '../../stores/subscriptionStore';
 import {
   fetchCurrentSubscription,
@@ -19,6 +19,7 @@ export default function SubscriptionPage() {
   const {
     currentSubscription,
     isFreeTier,
+    expiredSubscription,
     setCurrentSubscription,
     setSubscriptionLoading,
     setSubscriptionError,
@@ -32,7 +33,7 @@ export default function SubscriptionPage() {
     try {
       setSubscriptionLoading(true);
       const data = await fetchCurrentSubscription();
-      setCurrentSubscription(data.subscription, data.is_free_tier);
+      setCurrentSubscription(data.subscription, data.is_free_tier, data.expired_subscription ?? null);
     } catch (error: any) {
       setSubscriptionError(error.message);
     }
@@ -141,6 +142,42 @@ export default function SubscriptionPage() {
           Manage your subscription and billing
         </p>
       </div>
+
+      {/* Expired Subscription Warning Banner */}
+      {expiredSubscription && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-6">
+          <div className="flex items-start gap-4">
+            <AlertTriangle className="w-6 h-6 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-200">
+                Your {expiredSubscription.plan_name} plan has expired
+              </h3>
+              <p className="text-sm text-amber-800 dark:text-amber-300 mt-1">
+                Your subscription expired on{' '}
+                <span className="font-medium">{formatDate(expiredSubscription.expired_at)}</span>.
+                You have been moved to the Free Plan.
+              </p>
+              <div className="mt-3 p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                <p className="text-sm text-amber-900 dark:text-amber-200 font-medium">
+                  {expiredSubscription.grace_period_days}-day grace period until{' '}
+                  <span className="font-bold">{formatDate(expiredSubscription.grace_period_end)}</span>
+                </p>
+                <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+                  After the grace period, any data exceeding Free Plan limits will be permanently deleted.
+                  This includes files above the free tier file limit and storage above the free tier storage limit.
+                  Renew your subscription to keep all your data.
+                </p>
+              </div>
+              <button
+                onClick={handleUpgrade}
+                className="mt-4 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                Renew Subscription
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Current Plan Card */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

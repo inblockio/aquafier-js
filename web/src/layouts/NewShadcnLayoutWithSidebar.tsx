@@ -4,6 +4,7 @@ import { Separator } from '../components/ui/separator'
 import NotificationsBell from '../pages/notifications/NotificationsBell'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar'
 import appStore from '../store'
+import { useSubscriptionStore } from '../stores/subscriptionStore'
 import { Crown, X } from 'lucide-react'
 import { Outlet } from 'react-router-dom'
 import { Toaster } from 'sonner'
@@ -35,7 +36,11 @@ export default function NewShadcnLayoutWithSidebar() {
             formTemplates
       } = useStore(appStore)
 
+      const { currentSubscription, isFreeTier } = useSubscriptionStore()
+
       const [_drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
+
+      const planDisplayName = currentSubscription?.Plan?.display_name || 'Free Plan'
 
       const getClasses = () => {
             if (openDialog?.dialogType === 'form_template_editor') {
@@ -67,7 +72,11 @@ export default function NewShadcnLayoutWithSidebar() {
                                                 <div className="hidden md:flex items-center space-x-4 ms-auto">
                                                       <NotificationsBell />
                                                       <div className="flex items-center gap-3">
-                                                            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5"
+                                                            <div className={`flex items-center gap-2 rounded-lg px-3 py-1.5 cursor-pointer ${
+                                                                  isFreeTier
+                                                                        ? 'bg-blue-50 border border-blue-200'
+                                                                        : 'bg-green-50 border border-green-200'
+                                                                  }`}
                                                                   onClick={() => {
                                                                         setOpenDialog({
                                                                               dialogType: 'early_bird_offer',
@@ -78,8 +87,8 @@ export default function NewShadcnLayoutWithSidebar() {
                                                                         })
                                                                   }}
                                                             >
-                                                                  <Crown className="w-4 h-4 text-blue-600" />
-                                                                  <span className="text-sm text-blue-700 font-medium">Free Plan</span>
+                                                                  <Crown className={`w-4 h-4 ${isFreeTier ? 'text-blue-600' : 'text-green-600'}`} />
+                                                                  <span className={`text-sm font-medium ${isFreeTier ? 'text-blue-700' : 'text-green-700'}`}>{planDisplayName}</span>
                                                             </div>
                                                       </div>
                                                       <ConnectWallet dataTestId="sign-in-button-files-list" />

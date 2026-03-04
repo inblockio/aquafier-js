@@ -1,15 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import apiClient from '@/api/axiosInstance'
 import { useStore } from 'zustand';
 import appStore from '@/store';
 import { ensureDomainUrlHasSSL } from '@/utils/functions';
+import { getContentTypeFromFileName } from '@/components/file_preview/constants';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from '@/components/ui/dialog';
 import {
     ChevronLeft,
     ChevronRight,
     ArrowLeft,
     RefreshCw,
-    Loader2
+    Loader2,
+    X,
+    Download,
+    FileIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -77,13 +88,217 @@ const AdminToggleButton = ({ row, session, backendUrl, onSuccess }: {
     );
 };
 
+const formatFileSize = (bytes: number) => {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${(bytes / Math.pow(k, i)).toFixed(i > 0 ? 1 : 0)} ${sizes[i]}`;
+};
+
+const getFileNameFromLocation = (location: string) => {
+    if (!location) return 'Unknown';
+    const parts = location.replace(/\\/g, '/').split('/');
+    return parts[parts.length - 1] || location;
+};
+
+const FilePreviewDialog = ({ file, open, onClose, session, backendUrl }: {
+    file: any;
+    open: boolean;
+    onClose: () => void;
+    session: any;
+    backendUrl: string;
+}) => {
+    const [fileURL, setFileURL] = useState<string>('');
+    const [textContent, setTextContent] = useState<string>('');
+    const [contentType, setContentType] = useState<string>('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const fileName = getFileNameFromLocation(file?.file_location || '');
+
+    const fetchFile = useCallback(async () => {
+        if (!file?.file_hash || !session || !backendUrl) return;
+
+        setIsLoading(true);
+        setFileURL('');
+        setTextContent('');
+        try {
+            const res = await apiClient.get(
+                ensureDomainUrlHasSSL(`${backendUrl}/admin/files/${file.file_hash}`),
+                {
+                    headers: { nonce: session.nonce },
+                    responseType: 'arraybuffer',
+                }
+            );
+
+            let ct = res.headers['content-type'] || '';
+            if (ct === 'application/octet-stream' || !ct) {
+                ct = getContentTypeFromFileName(fileName);
+            }
+            setContentType(ct);
+
+            if (ct.startsWith('text/') || ct === 'application/json' || ct === 'application/xml') {
+                const decoder = new TextDecoder('utf-8');
+                setTextContent(decoder.decode(res.data));
+            }
+
+            const blob = new Blob([res.data], { type: ct });
+            setFileURL(URL.createObjectURL(blob));
+        } catch (err) {
+            console.error('Error fetching file preview:', err);
+            toast.error('Failed to load file preview');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [file?.file_hash, session, backendUrl, fileName]);
+
+    useEffect(() => {
+        if (open && file) fetchFile();
+        return () => {
+            if (fileURL) URL.revokeObjectURL(fileURL);
+        };
+    }, [open, file?.file_hash]);
+
+    const handleDownload = () => {
+        if (!fileURL) return;
+        const a = document.createElement('a');
+        a.href = fileURL;
+        a.download = fileName;
+        a.click();
+    };
+
+    const renderPreview = () => {
+        if (isLoading) {
+            return (
+                <div className="flex flex-col items-center justify-center py-16">
+                    <RefreshCw className="w-8 h-8 text-blue-500 animate-spin mb-3" />
+                    <p className="text-slate-500">Loading preview...</p>
+                </div>
+            );
+        }
+
+        if (!fileURL && !textContent) {
+            return (
+                <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                    <FileIcon className="w-12 h-12 mb-3" />
+                    <p>No preview available</p>
+                </div>
+            );
+        }
+
+        // Images
+        if (contentType.startsWith('image/')) {
+            return <img src={fileURL} alt={fileName} className="max-w-full max-h-[60vh] object-contain mx-auto rounded" />;
+        }
+
+        // Video
+        if (contentType.startsWith('video/')) {
+            return (
+                <video controls className="max-w-full max-h-[60vh] mx-auto rounded">
+                    <source src={fileURL} type={contentType} />
+                    Your browser does not support this video format.
+                </video>
+            );
+        }
+
+        // Audio
+        if (contentType.startsWith('audio/')) {
+            return (
+                <div className="flex flex-col items-center justify-center py-8">
+                    <FileIcon className="w-16 h-16 text-slate-300 mb-4" />
+                    <p className="text-sm text-slate-500 mb-4">{fileName}</p>
+                    <audio controls className="w-full max-w-md">
+                        <source src={fileURL} type={contentType} />
+                    </audio>
+                </div>
+            );
+        }
+
+        // PDF
+        if (contentType === 'application/pdf') {
+            return <iframe src={fileURL} className="w-full h-[60vh] rounded border border-slate-200" title={fileName} />;
+        }
+
+        // JSON
+        if (contentType === 'application/json') {
+            try {
+                const parsed = JSON.parse(textContent);
+                return (
+                    <pre className="bg-slate-900 text-green-400 p-4 rounded-lg overflow-auto max-h-[60vh] text-xs font-mono">
+                        {JSON.stringify(parsed, null, 2)}
+                    </pre>
+                );
+            } catch {
+                return <pre className="bg-slate-50 p-4 rounded-lg overflow-auto max-h-[60vh] text-xs font-mono text-slate-700">{textContent}</pre>;
+            }
+        }
+
+        // Text / code
+        if (contentType.startsWith('text/') || contentType === 'application/xml') {
+            return (
+                <pre className="bg-slate-50 p-4 rounded-lg overflow-auto max-h-[60vh] text-xs font-mono text-slate-700 whitespace-pre-wrap">
+                    {textContent}
+                </pre>
+            );
+        }
+
+        // Fallback
+        return (
+            <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                <FileIcon className="w-16 h-16 mb-3" />
+                <p className="mb-1">Preview not available for this file type</p>
+                <p className="text-xs">{contentType || 'Unknown type'}</p>
+            </div>
+        );
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+            <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto" hideTitle={false}>
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-base pr-8">
+                        <FileIcon className="w-4 h-4 text-slate-400 shrink-0" />
+                        <span className="truncate">{fileName}</span>
+                    </DialogTitle>
+                    <DialogDescription>
+                        <div className="flex items-center gap-3 text-xs text-slate-500">
+                            <span>{formatFileSize(file?.file_size || 0)}</span>
+                            <span className="text-slate-300">|</span>
+                            <span className="font-mono">{formatAddress(file?.file_hash || '')}</span>
+                            <span className="text-slate-300">|</span>
+                            <span>{formatDate(file?.createdAt || '')}</span>
+                        </div>
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="mt-2">
+                    {renderPreview()}
+                </div>
+                <div className="flex justify-end mt-2">
+                    <button
+                        onClick={handleDownload}
+                        disabled={!fileURL}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        <Download className="w-4 h-4" />
+                        Download
+                    </button>
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 const AdminEntityList = () => {
     const { type } = useParams<{ type: string }>();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { session, backend_url } = useStore(appStore);
+
+    const statusFilter = type === 'payments' ? searchParams.get('status') : null;
 
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [previewFile, setPreviewFile] = useState<any>(null);
     const [pagination, setPagination] = useState({
         page: 1,
         limit: 20,
@@ -91,14 +306,22 @@ const AdminEntityList = () => {
         totalPages: 0
     });
 
+    const clearStatusFilter = () => {
+        setSearchParams({});
+    };
+
     const fetchData = async (page: number) => {
         if (!session || !backend_url || !type) return;
 
         setLoading(true);
         try {
+            const params: Record<string, any> = { page, limit: pagination.limit };
+            if (statusFilter) {
+                params.status = statusFilter;
+            }
             const res = await apiClient.get(ensureDomainUrlHasSSL(`${backend_url}/admin/data/${type}`), {
                 headers: { 'nonce': session.nonce },
-                params: { page, limit: pagination.limit }
+                params
             });
 
             setData(res.data.data);
@@ -156,7 +379,8 @@ const AdminEntityList = () => {
         files: [
             { key: 'index', label: '#', render: (_val, _row, rowIndex) => (pagination.page - 1) * pagination.limit + rowIndex + 1 },
             { key: 'file_hash', label: 'File Hash', render: (val) => <span title={val} className="font-mono text-xs">{formatAddress(val)}</span> },
-            { key: 'file_location', label: 'Location' },
+            { key: 'file_location', label: 'File Name', render: (val) => <span className="font-medium text-slate-700 truncate block" title={getFileNameFromLocation(val)}>{getFileNameFromLocation(val)}</span> },
+            { key: 'file_size', label: 'Size', render: (val: number) => <span className="text-slate-500">{formatFileSize(val)}</span> },
             { key: 'createdAt', label: 'Created At', render: formatDate },
         ],
         payments: [
@@ -198,7 +422,7 @@ const AdminEntityList = () => {
     useEffect(() => {
         setPagination(prev => ({ ...prev, page: 1 }));
         fetchData(1);
-    }, [type, session, backend_url]);
+    }, [type, session, backend_url, statusFilter]);
 
     const handlePageChange = (newPage: number) => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
@@ -222,7 +446,9 @@ const AdminEntityList = () => {
                     </button>
                     <div>
                         <h1 className="text-2xl font-bold text-slate-800 capitalize">{getTitle(type)}</h1>
-                        <p className="text-slate-500 text-sm">Viewing {type} records</p>
+                        <p className="text-slate-500 text-sm">
+                            {statusFilter ? `Showing ${statusFilter.toLowerCase()} payments` : `Viewing ${type} records`}
+                        </p>
                     </div>
                 </div>
                 <button
@@ -232,6 +458,19 @@ const AdminEntityList = () => {
                     <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
                 </button>
             </div>
+
+            {/* Status Filter Badge */}
+            {statusFilter && (
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-500">Filtered by:</span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                        {statusFilter}
+                        <button onClick={clearStatusFilter} className="hover:bg-blue-100 rounded-full p-0.5 transition-colors">
+                            <X className="w-3 h-3" />
+                        </button>
+                    </span>
+                </div>
+            )}
 
             {/* Table */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -262,7 +501,11 @@ const AdminEntityList = () => {
                                 </tr>
                             ) : (
                                 data.map((row, idx) => (
-                                    <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                                    <tr
+                                        key={idx}
+                                        className={`hover:bg-slate-50/50 transition-colors ${type === 'files' ? 'cursor-pointer' : ''}`}
+                                        onClick={() => type === 'files' && setPreviewFile(row)}
+                                    >
                                         {columnsMap[type].map((col) => (
                                             <td key={col.key} className="px-6 py-4 text-slate-600">
                                                 {col.render ? col.render(row[col.key], row, idx) : row[col.key] || '-'}
@@ -300,6 +543,17 @@ const AdminEntityList = () => {
                     </div>
                 </div>
             </div>
+
+            {/* File Preview Dialog */}
+            {type === 'files' && (
+                <FilePreviewDialog
+                    file={previewFile}
+                    open={!!previewFile}
+                    onClose={() => setPreviewFile(null)}
+                    session={session}
+                    backendUrl={backend_url}
+                />
+            )}
         </div>
     );
 };
