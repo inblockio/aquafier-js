@@ -16,7 +16,26 @@ export interface SecurityInfoOptions {
   reason: string;
   platformName: string;
   platformUrl: string;
+  aquafierCommitHash?: string;
 }
+
+// Known build commit hashes for archival reference
+const ARCHIVE_BUILDS = {
+  'aqua-js-sdk': {
+    repo: 'https://github.com/inblockio/aqua-js-sdk',
+    commit: 'f19bd0927b44a04736c2dc86fe2db6559ba44269',
+  },
+  'aqua-js-cli': {
+    repo: 'https://github.com/inblockio/aqua-js-cli',
+    commit: '32e8b1f1cfe363ba77fff7b107494dc9d8eabf67',
+  },
+  'aquafier-js': {
+    repo: 'https://github.com/inblockio/aquafier-js',
+    commit: '8271a2bce4b02c54895163f734ca88b49684f686',
+  },
+};
+
+const FALLBACK_VERIFY_URL = 'https://aquafier.inblock.io/app/verify-document';
 
 /**
  * Adds a security information page as the last page of the PDF document.
@@ -25,7 +44,7 @@ export async function addSecurityInfoPage(
   pdfDoc: PDFDocument,
   options: SecurityInfoOptions
 ): Promise<void> {
-  const { signers, signedAt, documentId, reason, platformName, platformUrl } = options;
+  const { signers, signedAt, documentId, reason, platformName, platformUrl, aquafierCommitHash } = options;
 
   // Use existing page size or default to US Letter
   const existingPages = pdfDoc.getPages();
@@ -76,13 +95,13 @@ export async function addSecurityInfoPage(
     color: white,
   });
 
-  cursorY -= headerHeight + 25;
+  cursorY -= headerHeight + 18;
 
   // ── 2. Document Information ────────────────────────────────────────
-  cursorY = drawSectionTitle(page, 'Document Information', margin, cursorY, helveticaBold, sectionTitleColor);
+  cursorY = drawSectionTitle(page, 'Document information', margin, cursorY, helveticaBold, sectionTitleColor);
   cursorY -= 5;
 
-  // Draw a light background for the info block
+  // Build info items (excluding reason, which gets its own wrapped block)
   const infoItems: Array<[string, string]> = [];
   if (documentId) {
     infoItems.push(['Document ID:', documentId]);
@@ -90,9 +109,14 @@ export async function addSecurityInfoPage(
   infoItems.push(['Signed At:', formatDate(signedAt)]);
   infoItems.push(['Protocol:', 'Aqua Protocol v3.2']);
   infoItems.push(['Platform:', `${platformName} (${platformUrl})`]);
-  infoItems.push(['Reason:', reason]);
 
-  const infoBlockHeight = infoItems.length * 18 + 10;
+  // Wrap the reason text into multiple lines
+  const reasonLabel = 'Reason:';
+  const reasonMaxWidth = contentWidth - 120;
+  const reasonLines = wrapText(reason, helvetica, 9, reasonMaxWidth);
+
+  // Calculate info block height: regular items + reason lines
+  const infoBlockHeight = infoItems.length * 18 + reasonLines.length * 14 + 20;
   page.drawRectangle({
     x: margin,
     y: cursorY - infoBlockHeight,
@@ -111,7 +135,6 @@ export async function addSecurityInfoPage(
       font: helveticaBold,
       color: darkGray,
     });
-    // Truncate long values to fit the page
     const maxValueWidth = contentWidth - 120;
     const truncatedValue = truncateText(value, helvetica, 9, maxValueWidth);
     page.drawText(sanitizeTextForWinAnsi(truncatedValue), {
@@ -123,11 +146,35 @@ export async function addSecurityInfoPage(
     });
   }
 
-  cursorY -= 25;
+  // Draw reason with text wrapping
+  cursorY -= 16;
+  page.drawText(sanitizeTextForWinAnsi(reasonLabel), {
+    x: margin + 10,
+    y: cursorY,
+    size: 9,
+    font: helveticaBold,
+    color: darkGray,
+  });
+
+  for (let i = 0; i < reasonLines.length; i++) {
+    const lineY = i === 0 ? cursorY : cursorY;
+    page.drawText(sanitizeTextForWinAnsi(reasonLines[i]), {
+      x: margin + 110,
+      y: lineY,
+      size: 9,
+      font: helvetica,
+      color: darkGray,
+    });
+    if (i < reasonLines.length - 1) {
+      cursorY -= 14;
+    }
+  }
+
+  cursorY -= 19;
 
   // ── 3. Signers ─────────────────────────────────────────────────────
   cursorY = drawSectionTitle(page, 'Signers', margin, cursorY, helveticaBold, sectionTitleColor);
-  cursorY -= 5;
+  cursorY -= 6;
 
   // Table header
   const tableHeaderHeight = 20;
@@ -190,17 +237,16 @@ export async function addSecurityInfoPage(
     });
   }
 
-  cursorY -= 25;
+  cursorY -= 18;
 
   // ── 4. How This Document Is Secured ────────────────────────────────
-  cursorY = drawSectionTitle(page, 'How This Document Is Secured', margin, cursorY, helveticaBold, sectionTitleColor);
+  cursorY = drawSectionTitle(page, 'How this document is secured', margin, cursorY, helveticaBold, sectionTitleColor);
   cursorY -= 5;
 
   const securityItems = [
     ['Cryptographic Hashing (SHA-256)', 'Document integrity is ensured through SHA-256 hash verification.'],
-    ['Digital Signatures (PKCS#7)', 'Each signer\'s identity is verified using PKCS#7 digital signatures.'],
-    ['Blockchain Witnessing', 'Document hashes are anchored to a blockchain for tamper-proof timestamping.'],
-    ['Aqua Protocol Chain', 'A verifiable chain of revisions and signatures is maintained via the Aqua Protocol.'],
+    ['Digital Signatures (Ethereum secp256k1 + PKCS#7)', 'Signers are authenticated via Ethereum wallet signatures (secp256k1). The PDF is additionally signed with PKCS#7 for Adobe compatibility.'],
+    ['Aqua Protocol Verification Record', 'A verifiable hash-tree is embedded with signatures within the PDF for verification.'],
   ];
 
   for (const [title, description] of securityItems) {
@@ -212,8 +258,65 @@ export async function addSecurityInfoPage(
       font: helveticaBold,
       color: darkGray,
     });
-    cursorY -= 13;
-    page.drawText(sanitizeTextForWinAnsi(description), {
+
+    // Wrap description text
+    const descMaxWidth = contentWidth - 34;
+    const descLines = wrapText(description, helvetica, 8, descMaxWidth);
+    for (const line of descLines) {
+      cursorY -= 13;
+      page.drawText(sanitizeTextForWinAnsi(line), {
+        x: margin + 24,
+        y: cursorY,
+        size: 8,
+        font: helvetica,
+        color: mediumGray,
+      });
+    }
+  }
+
+  cursorY -= 15;
+
+  // ── 5. Archive Notice ──────────────────────────────────────────────
+  cursorY = drawSectionTitle(page, 'Archive notice', margin, cursorY, helveticaBold, sectionTitleColor);
+  cursorY -= 3;
+
+  const archiveIntro = 'Store the signed contract alongside the Aquafier Server App, the CLI tool, and the Aqua SDK for verification.';
+  const archiveIntroLines = wrapText(archiveIntro, helvetica, 7, contentWidth - 20);
+  for (const line of archiveIntroLines) {
+    cursorY -= 10;
+    page.drawText(sanitizeTextForWinAnsi(line), {
+      x: margin + 10,
+      y: cursorY,
+      size: 9,
+      font: helvetica,
+      color: darkGray,
+    });
+  }
+
+  cursorY -= 5;
+
+  // Use the runtime commit hash for aquafier-js if available
+  const aquafierJsCommit = aquafierCommitHash || ARCHIVE_BUILDS['aquafier-js'].commit;
+
+  const buildEntries: Array<[string, string, string]> = [
+    ['Aqua JS SDK', ARCHIVE_BUILDS['aqua-js-sdk'].repo, ARCHIVE_BUILDS['aqua-js-sdk'].commit],
+    ['Aqua JS CLI', ARCHIVE_BUILDS['aqua-js-cli'].repo, ARCHIVE_BUILDS['aqua-js-cli'].commit],
+    ['Aquafier JS', ARCHIVE_BUILDS['aquafier-js'].repo, aquafierJsCommit],
+  ];
+
+  for (const [name, repo, commit] of buildEntries) {
+    cursorY -= 12;
+    const entryText = `${name}: ${repo}`;
+    const entryTruncated = truncateText(entryText, helvetica, 7, contentWidth - 20);
+    page.drawText(sanitizeTextForWinAnsi(`\u2022  ${entryTruncated}`), {
+      x: margin + 10,
+      y: cursorY,
+      size: 8,
+      font: helvetica,
+      color: darkGray,
+    });
+    cursorY -= 11;
+    page.drawText(sanitizeTextForWinAnsi(`Commit: ${commit}`), {
       x: margin + 24,
       y: cursorY,
       size: 8,
@@ -222,18 +325,18 @@ export async function addSecurityInfoPage(
     });
   }
 
-  cursorY -= 25;
+  cursorY -= 17;
 
-  // ── 5. Verification ────────────────────────────────────────────────
+  // ── 6. Verification ────────────────────────────────────────────────
   cursorY = drawSectionTitle(page, 'Verification', margin, cursorY, helveticaBold, sectionTitleColor);
-  cursorY -= 10;
+  cursorY -= 5;
 
   const verifyUrl = `${platformUrl}/app/verify-document`;
 
   // Generate QR code as PNG
   try {
     const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
-      width: 120,
+      width: 100,
       margin: 1,
       color: { dark: '#E55B1F', light: '#ffffff' },
     });
@@ -243,7 +346,7 @@ export async function addSecurityInfoPage(
     const qrBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
     const qrImage = await pdfDoc.embedPng(qrBytes);
 
-    const qrSize = 100;
+    const qrSize = 70;
     const qrX = margin + 10;
     const qrY = cursorY - qrSize;
 
@@ -255,43 +358,45 @@ export async function addSecurityInfoPage(
     });
 
     // Text next to QR code
-    const textX = qrX + qrSize + 20;
+    const textX = qrX + qrSize + 15;
     page.drawText(sanitizeTextForWinAnsi('Scan to Verify'), {
       x: textX,
-      y: cursorY - 15,
-      size: 11,
+      y: cursorY - 12,
+      size: 10,
       font: helveticaBold,
       color: darkGray,
     });
 
-    page.drawText(sanitizeTextForWinAnsi('To verify this document, scan the QR code'), {
+    page.drawText(sanitizeTextForWinAnsi('To verify this document, scan the QR code or visit:'), {
       x: textX,
-      y: cursorY - 32,
-      size: 9,
+      y: cursorY - 26,
+      size: 8,
       font: helvetica,
       color: mediumGray,
     });
 
-    page.drawText(sanitizeTextForWinAnsi('or visit the URL below:'), {
-      x: textX,
-      y: cursorY - 45,
-      size: 9,
-      font: helvetica,
-      color: mediumGray,
-    });
-
-    const urlTruncated = truncateText(verifyUrl, helvetica, 8, contentWidth - qrSize - 40);
+    // Primary URL
+    const urlTruncated = truncateText(verifyUrl, helvetica, 7, contentWidth - qrSize - 35);
     page.drawText(sanitizeTextForWinAnsi(urlTruncated), {
       x: textX,
-      y: cursorY - 62,
-      size: 8,
+      y: cursorY - 40,
+      size: 7,
       font: helvetica,
       color: sectionTitleColor,
     });
 
-    cursorY = qrY - 15;
+    // Fallback URL
+    page.drawText(sanitizeTextForWinAnsi(`Fallback: ${FALLBACK_VERIFY_URL}`), {
+      x: textX,
+      y: cursorY - 52,
+      size: 7,
+      font: helvetica,
+      color: sectionTitleColor,
+    });
+
+    cursorY = qrY - 10;
   } catch (qrError) {
-    // Fallback if QR generation fails — just show the URL
+    // Fallback if QR generation fails — just show the URLs
     console.error('Failed to generate QR code:', qrError);
     page.drawText(sanitizeTextForWinAnsi(`Verify at: ${verifyUrl}`), {
       x: margin + 10,
@@ -300,10 +405,17 @@ export async function addSecurityInfoPage(
       font: helvetica,
       color: sectionTitleColor,
     });
-    cursorY -= 30;
+    page.drawText(sanitizeTextForWinAnsi(`Fallback: ${FALLBACK_VERIFY_URL}`), {
+      x: margin + 10,
+      y: cursorY - 28,
+      size: 8,
+      font: helvetica,
+      color: mediumGray,
+    });
+    cursorY -= 40;
   }
 
-  // ── 6. Footer ──────────────────────────────────────────────────────
+  // ── 7. Footer ──────────────────────────────────────────────────────
   const footerText = `Generated by ${platformName}  |  ${platformUrl}`;
   const footerTextWidth = helvetica.widthOfTextAtSize(sanitizeTextForWinAnsi(footerText), 8);
   const footerX = (pageWidth - footerTextWidth) / 2;
@@ -369,6 +481,32 @@ function truncateText(text: string, font: PDFFont, fontSize: number, maxWidth: n
     truncated = truncated.slice(0, -1);
   }
   return truncated + '...';
+}
+
+/**
+ * Wraps text into multiple lines to fit within a given width.
+ */
+function wrapText(text: string, font: PDFFont, fontSize: number, maxWidth: number): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    if (font.widthOfTextAtSize(sanitizeTextForWinAnsi(testLine), fontSize) <= maxWidth) {
+      currentLine = testLine;
+    } else {
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+      currentLine = word;
+    }
+  }
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines.length > 0 ? lines : [''];
 }
 
 /**

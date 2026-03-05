@@ -18,6 +18,7 @@ import { addSecurityInfoPage } from './pdf-security-info-page';
 import { getCorrectUTF8JSONString } from '../lib/utils';
 import { ApiFileInfo } from '../models/FileInfo';
 import apiClient from '@/api/axiosInstance';
+import versionInfo from '../version-info.json';
 
 // Platform identification
 const PLATFORM_NAME = 'Aquafier';
@@ -631,6 +632,7 @@ export async function signPdfDocument(
       reason,
       platformName: PLATFORM_NAME,
       platformUrl: PLATFORM_URL,
+      aquafierCommitHash: versionInfo.commitHash,
     });
   } else {
     console.log('signPdfDocument - skipping security info page (already present)');
