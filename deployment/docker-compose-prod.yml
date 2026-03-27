@@ -17,19 +17,19 @@ services:
       timeout: 5s
       retries: 5
 
-  filebeat:
-    image: docker.elastic.co/beats/filebeat:9.3.2
-    container_name: filebeat
-    user: root
-    volumes:
-      - filebeat_data:/usr/share/filebeat/data
-      - ./filebeat.docker.yml:/usr/share/filebeat/filebeat.yml:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      - CLOUD_ID=${CLOUD_ID}
-      - CLOUD_AUTH=${CLOUD_AUTH}
-    command: [ "-e", "--strict.perms=false" ]  # config is root-owned on many hosts
+#  filebeat:
+#    image: docker.elastic.co/beats/filebeat:9.2.4
+#    container_name: filebeat
+#    user: root
+#    volumes:
+#      - filebeat_data:/usr/share/filebeat/data
+#      - ./filebeat.docker.yml:/usr/share/filebeat/filebeat.yml:ro
+#      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+#      - /var/run/docker.sock:/var/run/docker.sock:ro
+#    environment:
+#      - CLOUD_ID=${CLOUD_ID}
+#      - CLOUD_AUTH=${CLOUD_AUTH}
+#    command: [ "-e", "--strict.perms=false" ]  # config is root-owned on many hosts
 
   aqua-container:
     image: ghcr.io/inblockio/aquafier-js:main
@@ -108,4 +108,4 @@ volumes:
   proxy_data_html:
   proxy_data_certs:
   postgres_data:
-  filebeat_data:
+#  filebeat_data:
