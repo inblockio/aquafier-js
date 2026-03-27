@@ -1233,17 +1233,37 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   }
             }
 
-            // Validate PDF files
+            // Validate document files
             if (field.type === 'document') {
                   const files = e?.target?.files
                   if (files && files.length > 0) {
-                        // const file = files[0]
                         for (let index = 0; index < files.length; index++) {
                               const file = files[index];
-                              if (file.type !== 'application/pdf') {
-                                    alert('Please select a PDF file')
-                                    e.target.value = ''
-                                    return
+                              if (field.accept) {
+                                    // Validate against the accept list
+                                    const acceptedTypes = field.accept.split(',').map(t => t.trim().toLowerCase())
+                                    const fileExt = '.' + file.name.split('.').pop()?.toLowerCase()
+                                    const isAccepted = acceptedTypes.some(acceptType => {
+                                          if (acceptType.startsWith('.')) {
+                                                return fileExt === acceptType
+                                          }
+                                          if (acceptType.endsWith('/*')) {
+                                                return file.type.startsWith(acceptType.replace('/*', '/'))
+                                          }
+                                          return file.type === acceptType
+                                    })
+                                    if (!isAccepted) {
+                                          alert(`File type not supported. Accepted types: ${field.accept}`)
+                                          e.target.value = ''
+                                          return
+                                    }
+                              } else {
+                                    // Default: PDF-only validation
+                                    if (file.type !== 'application/pdf') {
+                                          alert('Please select a PDF file')
+                                          e.target.value = ''
+                                          return
+                                    }
                               }
                         }
                   }

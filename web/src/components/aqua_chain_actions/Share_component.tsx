@@ -233,7 +233,7 @@ const ShareComponent = () => {
       }
 
       return (
-            <div className='h-full w-full'>
+            <div className='h-full w-full max-h-[100dvh]'>
                   {/* <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"> */}
                   {/* <div className="sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[65vh] sm:max-h-[65vh] !max-w-[95vw] !w-[95vw]  bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden"> */}
                   {/* <div className=" "> */}
@@ -262,9 +262,7 @@ const ShareComponent = () => {
                   </div>
 
                   {/* Content */}
-                  <div className="px-2 md:px-6 py-2 md:py-6 space-y-6 overflow-y-auto" style={{
-                        height: "calc(100% - 140px)"
-                  }}>
+                  <div className="px-2 md:px-6 py-2 md:py-6 space-y-6 overflow-y-auto h-[calc(100%-80px)] md:h-[calc(100%-140px)]">
                         {/* Warning */}
                         <div className="flex gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                               <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
@@ -285,7 +283,7 @@ const ShareComponent = () => {
                                     Who can access
                               </h3>
 
-                              <div className="flex gap-2 w-full">
+                              <div className="flex flex-col md:flex-row gap-2 w-full">
                                     {/* Public Option */}
                                     <div
                                           className={`p-4 flex-1 rounded-lg border-2 cursor-pointer transition-all ${recipientType !== 'specific'
@@ -414,7 +412,7 @@ const ShareComponent = () => {
                               <h3 className="text-base font-medium text-gray-900">Version to share</h3>
                               <p className="text-sm text-gray-600">Choose whether recipients get the current version or receive updates automatically.</p>
 
-                              <div className="flex w-full gap-2">
+                              <div className="flex flex-col md:flex-row w-full gap-2">
                                     {/* Latest Option */}
                                     <div
                                           className={`p-4 flex-1 rounded-lg border-2 cursor-pointer transition-all ${optionType === 'latest'
@@ -486,6 +484,53 @@ const ShareComponent = () => {
                                     <p className="text-xs text-gray-500">Share this link with your intended recipients</p>
                               </div>
                         )}
+
+                        {/* Mobile action buttons - visible only on mobile, above Previous Shares */}
+                        <div className="md:hidden flex justify-between items-center gap-3 py-2 border-t border-gray-100">
+                              <Button
+                                    onClick={() => {
+                                          setOpenDialog(null)
+                                          setSelectedFileInfo(null)
+                                    }}
+                                    variant={"outline"}
+                              >
+                                    Cancel
+                              </Button>
+                              <div className="flex gap-2">
+                                    {shared ? (
+                                          <Button
+                                                onClick={handleCopy}
+                                                className="bg-gray-600 text-white rounded-md hover:bg-gray-700 cursor-pointer transition-colors flex items-center gap-2"
+                                          >
+                                                {copied ? (
+                                                      <>
+                                                            <Check className="w-4 h-4" />
+                                                            Copied!
+                                                      </>
+                                                ) : (
+                                                      <>
+                                                            <Copy className="w-4 h-4" />
+                                                            Copy
+                                                      </>
+                                                )}
+                                          </Button>
+                                    ) : null}
+
+                                    <Button
+                                          onClick={handleShare}
+                                          disabled={shared ? true : false}
+                                          size={"default"}
+                                          className="bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                                    >
+                                          {sharing ? (
+                                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                          ) : (
+                                                <Share2 className="w-4 h-4" />
+                                          )}
+                                          {sharing ? <span>Sharing...</span> : <span>Create Share Link</span>}
+                                    </Button>
+                              </div>
+                        </div>
 
                         {/* Existing Contracts */}
                         <div className="border-t pt-6 flex flex-col gap-2">
@@ -562,8 +607,8 @@ const ShareComponent = () => {
                         </div>
                   </div>
 
-                  {/* Footer */}
-                  <div className="px-6 py-2 border-t border-gray-100 bg-gray-50 h-[60px] flex justify-between items-center gap-3">
+                  {/* Footer - hidden on mobile, shown on md+ */}
+                  <div className="px-6 py-2 border-t border-gray-100 bg-gray-50 h-[60px] hidden md:flex justify-between items-center gap-3">
                         <Button
                               onClick={() => {
                                     setOpenDialog(null)

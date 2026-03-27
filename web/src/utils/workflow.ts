@@ -83,6 +83,16 @@ export const processContractInformation = (selectedFileInfo: ApiFileInfo): ICont
       const firstHash: string = revisionHashes[0]
       const firstRevision: Revision = selectedFileInfo.aquaTree!.revisions[firstHash]
 
+      const fourthRevisionHash = revisionHashes[3]
+      const fourthRevision = orderedTree.revisions[fourthRevisionHash]
+      let indexToSliceFrom = 4
+
+      if (fourthRevision.revision_type === "link") {
+            indexToSliceFrom = 5
+      } else {
+            indexToSliceFrom = 4
+      }
+
       const pdfHash = revisionHashes[2]
       const thirdRevision: Revision = selectedFileInfo.aquaTree!.revisions[pdfHash]
       const hashOfLinkedDocument = thirdRevision.link_verification_hashes![0]!
@@ -97,7 +107,7 @@ export const processContractInformation = (selectedFileInfo: ApiFileInfo): ICont
       const signers: string[] = firstRevision.forms_signers.split(',').map((e: string) => e.trim())
 
       if (revisionHashes.length > 5) {
-            fourthItemHashOnwards = revisionHashes.slice(5)
+            fourthItemHashOnwards = revisionHashes.slice(indexToSliceFrom)
             signatureRevisionHashes = getSignatureRevionHashes(fourthItemHashOnwards, selectedFileInfo)
 
             const signatureRevisionHashesDataAddress = signatureRevisionHashes.map(e => e.walletAddress)

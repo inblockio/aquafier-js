@@ -40,7 +40,7 @@ export default async function filesController(fastify: FastifyInstance) {
         // console.log(cliRedify(JSON.stringify(file, null, 4)))
 
         if (file == null) {
-            return reply.code(500).send({ success: false, message: `Error file  not found ` });
+            return reply.code(404).send({ success: false, message: `Error file  not found ` });
         }
 
         let fileIndex = await prisma.fileIndex.findFirst({
@@ -50,7 +50,7 @@ export default async function filesController(fastify: FastifyInstance) {
         })
 
         if (fileIndex == null) {
-            return reply.code(500).send({ success: false, message: `Error file uri  not found ` });
+            return reply.code(404).send({ success: false, message: `Error file uri  not found ` });
         }
 
 

@@ -1,13 +1,14 @@
 [
   {
     "name": "document",
-    "label": "Document",
+    "label": "Certificate File",
     "type": "document",
     "required": true,
     "isArray": true,
-    "isHidden": false
+    "isHidden": false,
+    "accept": ".pdf,.jpg,.jpeg,.png,.gif,.webp,.mp4,.webm,.mov,.heic"
   },
-  {
+  { 
     "name": "creator",
     "label": "Creator",
     "type": "wallet_address",

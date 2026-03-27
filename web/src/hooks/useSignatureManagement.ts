@@ -11,6 +11,7 @@ import { ensureDomainUrlHasSSL, fetchImage, getGenesisHash, timeStampToDateObjec
 import { API_ENDPOINTS } from '@/utils/constants'
 import { reloadDB, RELOAD_KEYS } from '@/utils/reloadDatabase'
 import { toast } from 'sonner'
+import { OrderRevisionInAquaTree } from 'aqua-js-sdk'
 
 interface UseSignatureManagementProps {
       selectedFileInfo: ApiFileInfo
@@ -168,8 +169,21 @@ export function useSignatureManagement({
       // Effect to set up signers, PDF file, and load signatures
       useEffect(() => {
             let signersList: string[] = []
-            const allHashes = Object.keys(selectedFileInfo!.aquaTree!.revisions!)
-            const firstRevision = selectedFileInfo!.aquaTree?.revisions[allHashes[0]]
+            const orderedAquaTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
+
+            const allHashes = Object.keys(orderedAquaTree.revisions)
+
+            const firstRevision = orderedAquaTree.revisions[allHashes[0]]
+            
+            const fourthRevisionHash = allHashes[3]
+            const fourthRevision = orderedAquaTree.revisions[fourthRevisionHash]
+            let indexToSliceFrom = 4
+
+            if(fourthRevision.revision_type === "link"){
+                 indexToSliceFrom = 5 
+            }else {
+                  indexToSliceFrom = 4
+            }
 
             if (firstRevision?.forms_signers) {
                   if (firstRevision.forms_signers.includes(',')) {
@@ -181,7 +195,7 @@ export function useSignatureManagement({
 
             setSigners(signersList)
 
-            const fourthItmeHashOnwards = allHashes.slice(5)
+            const fourthItmeHashOnwards = allHashes.slice(indexToSliceFrom)
             let allSignersData = [...signersList]
 
             try {

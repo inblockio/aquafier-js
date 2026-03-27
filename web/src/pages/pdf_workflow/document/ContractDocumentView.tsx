@@ -1,18 +1,18 @@
-import React, {useEffect, useState} from 'react'
+import React, { useEffect, useState } from 'react'
 import appStore from '../../../store'
-import {useStore} from 'zustand'
-import {ContractDocumentViewProps, SignatureData, SummaryDetailsDisplayData} from '../../../types/types'
+import { useStore } from 'zustand'
+import { ContractDocumentViewProps, SignatureData, SummaryDetailsDisplayData } from '../../../types/types'
 import {
-    AquaTree,
-    getGenesisHash,
-    getLatestVH,
-    OrderRevisionInAquaTree,
-    Revision
+      AquaTree,
+      getGenesisHash,
+      getLatestVH,
+      OrderRevisionInAquaTree,
+      Revision
 } from 'aqua-js-sdk/web'
-import {ensureDomainUrlHasSSL, getAquatreeObject, getHighestFormIndex, isAquaTree, parseAquaTreeContent, reorderRevisionsInAquaTree} from '../../../utils/functions'
+import { ensureDomainUrlHasSSL, getAquatreeObject, getHighestFormIndex, isAquaTree, parseAquaTreeContent, reorderRevisionsInAquaTree } from '../../../utils/functions'
 
-import {PDFDisplayWithJustSimpleOverlay} from './SignatureOverlay'
-import {toast} from 'sonner'
+import { PDFDisplayWithJustSimpleOverlay } from './SignatureOverlay'
+import { toast } from 'sonner'
 import PdfSigner from './PdfSigner'
 import apiClient from '@/api/axiosInstance'
 
@@ -52,7 +52,13 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
                   if (hashSigPosition.length > 0) {
                         const allAquaTrees = selectedFileInfo?.fileObject.filter(e => isAquaTree(e.fileContent))
 
-                        const hashSigPositionHashString = selectedFileInfo!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0]
+                        const sigPositionRevision = selectedFileInfo!.aquaTree!.revisions[hashSigPosition]
+                        if (!sigPositionRevision?.link_verification_hashes?.[0]) {
+                              console.error(`[aqua_sign] Revision not found or missing link_verification_hashes for hashSigPosition: ${hashSigPosition}`)
+                              toast.error("Error: signature position revision data is missing or incomplete.")
+                              continue
+                        }
+                        const hashSigPositionHashString = sigPositionRevision.link_verification_hashes[0]
 
                         if (allAquaTrees) {
                               for (const anAquaTreeFileObject of allAquaTrees) {
@@ -142,16 +148,28 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
       }
       const loadSignatures = async (): Promise<SignatureData[]> => {
             const sigData: SignatureData[] = []
+            const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
             const orderedHashes = reorderRevisionsInAquaTree(selectedFileInfo!.aquaTree!)
 
             // const revisions = orderedTree.revisions
             const revisionHashes = orderedHashes // Object.keys(revisions)
+
+            const fourthRevisionHash = revisionHashes[3]
+            const fourthRevision = orderedTree.revisions[fourthRevisionHash]
+            let indexToSliceFrom = 4
+
+            if (fourthRevision.revision_type === "link") {
+                  indexToSliceFrom = 5
+            } else {
+                  indexToSliceFrom = 4
+            }
+
             let fourthItmeHashOnwards: string[] = []
             let signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
 
             if (revisionHashes.length > 5) {
                   // remove the first 4 elements from the revision list
-                  fourthItmeHashOnwards = revisionHashes.slice(5)
+                  fourthItmeHashOnwards = revisionHashes.slice(indexToSliceFrom)
                   signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
             }
 
@@ -160,8 +178,14 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
                   const revisionSigImage = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashWithSinatureRevision]
                   const linkRevisionWithSignaturePositions: Revision = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashWithSignaturePosition]
                   const revisionMetMask: Revision = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashMetamask]
+
+                  if (!revisionSigImage?.link_verification_hashes?.[0]) {
+                        console.error(`[aqua_sign] revisionSigImage missing or has no link_verification_hashes for hash: ${sigHash.revisionHashWithSinatureRevision}`)
+                        toast.error("Error: could not load signature image revision data.")
+                        continue
+                  }
                   // get the name
-                  const referenceRevisin: string = revisionSigImage.link_verification_hashes![0]
+                  const referenceRevisin: string = revisionSigImage.link_verification_hashes[0]
                   let name = 'name-err'
                   let imageDataUrl = ''
                   for (const item of selectedFileInfo?.fileObject ?? []) {
@@ -183,7 +207,11 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
                                     if (signatureRevision.revision_type != 'link') {
                                           throw Error(`Error expected link`)
                                     }
-                                    const imgFileHash = signatureRevision.link_file_hashes![0]
+                                    if (!signatureRevision.link_file_hashes?.[0]) {
+                                          console.error(`[aqua_sign] signatureRevision missing link_file_hashes for hash: ${signatureRevisionHash}`)
+                                          break
+                                    }
+                                    const imgFileHash = signatureRevision.link_file_hashes[0]
                                     const imageUrl = findImageUrl(imgFileHash)
                                     if (imageUrl) {
                                           const image = await fetchImage(imageUrl)
@@ -214,7 +242,12 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
 
                   let revisionSigPosition: Revision | null = null
 
-                  const revisionHashWithPositions = linkRevisionWithSignaturePositions.link_verification_hashes![0]
+                  if (!linkRevisionWithSignaturePositions?.link_verification_hashes?.[0]) {
+                        console.error(`[aqua_sign] linkRevisionWithSignaturePositions missing or has no link_verification_hashes for hash: ${sigHash.revisionHashWithSignaturePosition}`)
+                        toast.error("Error: could not load signature position data.")
+                        continue
+                  }
+                  const revisionHashWithPositions = linkRevisionWithSignaturePositions.link_verification_hashes[0]
 
                   for (const item of selectedFileInfo?.fileObject ?? []) {
                         const isAquaTreeItem = isAquaTree(item.fileContent)
@@ -223,7 +256,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
 
                               const aquaTree = OrderRevisionInAquaTree(aquaTreeGeneral)
                               const allHashes = Object.keys(aquaTree.revisions)
-                              
+
                               if (allHashes.includes(revisionHashWithPositions)) {
                                     revisionSigPosition = aquaTree.revisions[revisionHashWithPositions]
                               }
@@ -478,7 +511,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
                         <PDFDisplayWithJustSimpleOverlay pdfUrl={pdfURLObject!} annotationsInDocument={signatures} signatures={signatures} latestRevisionHash={getLatestVH(selectedFileInfo.aquaTree!)} />
                   </div>
             )
-      } 
+      }
 
       // Default case - show signing interface
       return <PdfSigner selectedFileInfo={selectedFileInfo} documentSignatures={signatures} fileData={pdfFile} setActiveStep={setActiveStep} onSidebarReady={onSidebarReady} />

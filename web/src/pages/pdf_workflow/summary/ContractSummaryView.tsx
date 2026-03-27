@@ -49,7 +49,13 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ selec
                   if (hashSigPosition.length > 0) {
                         const allAquaTrees = selectedFileInfo?.fileObject.filter(e => isAquaTree(e.fileContent))
 
-                        const hashSigPositionHashString = selectedFileInfo!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0]
+                        const sigPositionRevision = selectedFileInfo!.aquaTree!.revisions[hashSigPosition]
+                        if (!sigPositionRevision?.link_verification_hashes?.[0]) {
+                              console.error(`[aqua_sign] Revision not found or missing link_verification_hashes for hashSigPosition: ${hashSigPosition}`)
+                              toast.error("Error: signature position revision data is missing or incomplete.")
+                              continue
+                        }
+                        const hashSigPositionHashString = sigPositionRevision.link_verification_hashes[0]
 
                         if (allAquaTrees) {
                               for (const anAquaTreeFileObject of allAquaTrees) {
@@ -323,7 +329,22 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ selec
                   const pdfHash = revisionHashes[2]
                   const thirdRevision: Revision = selectedFileInfo!.aquaTree!.revisions[pdfHash]
 
-                  const hashOfLinkedDocument = thirdRevision.link_verification_hashes![0]!
+                  const fourthRevisionHash = revisionHashes[3]
+                  const fourthRevision = orderedTree.revisions[fourthRevisionHash]
+                  let indexToSliceFrom = 4
+
+                  if (fourthRevision.revision_type === "link") {
+                        indexToSliceFrom = 5
+                  } else {
+                        indexToSliceFrom = 4
+                  }
+
+                  if (!thirdRevision?.link_verification_hashes?.[0]) {
+                        console.error(`[aqua_sign] thirdRevision missing or has no link_verification_hashes for pdfHash: ${pdfHash}`)
+                        toast.error("Error: could not resolve linked document hash.")
+                        return
+                  }
+                  const hashOfLinkedDocument = thirdRevision.link_verification_hashes[0]
                   const fileName = selectedFileInfo!.aquaTree!.file_index[hashOfLinkedDocument]
                   setFileNameData(fileName)
                   // const creatorSignatureHash = revisionHashes[3]
@@ -344,7 +365,7 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ selec
                   if (revisionHashes.length > 5) {
 
                         // remove the first 4 elements from the revision list
-                        fourthItmeHashOnwards = revisionHashes.slice(5)
+                        fourthItmeHashOnwards = revisionHashes.slice(indexToSliceFrom)
                         signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
 
                         const signatureRevionHashesDataAddress = signatureRevionHashes.map(e => e.walletAddress)

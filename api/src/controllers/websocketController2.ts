@@ -330,7 +330,7 @@ export function getWalletConnectionInfo(walletAddress: string) {
 
 export default async function enhancedWebSocketController(fastify: FastifyInstance) {
     // Enhanced WebSocket route with wallet address support
-    fastify.get('/ws/notifications/:wallet_address', { websocket: true }, (connection, req) => {
+    fastify.get('/ws/notifications/:wallet_address', { websocket: true, config: { otel: false } }, (connection, req) => {
         const { wallet_address } = req.params as { wallet_address: string };
         const userId = (req.query as { userId?: string })?.userId;
         const ws = connection;
@@ -552,7 +552,7 @@ export default async function enhancedWebSocketController(fastify: FastifyInstan
     // ============= Legacy WebSocket routes from websocketController.ts =============
 
     // Legacy WebSocket route
-    fastify.get('/ws', { websocket: true }, (connection, req) => {
+    fastify.get('/ws', { websocket: true, config: { otel: false } }, (connection, req) => {
         // Extract user ID from query parameters
         const userId = (req.query as { userId?: string })?.userId;
 

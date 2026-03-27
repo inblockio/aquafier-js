@@ -320,7 +320,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             }
 
             // First try to find identity_claim
-            let identityClaim = claims.find((claim) => claim.claimType === 'identity_claim')
+            let identityClaim = claims.find((claim) => ['identity_claim', 'user_signature', 'email_claim', 'ens_claim'].includes(claim.claimType))
 
             // If not found, try user_signature
             if (!identityClaim) {
@@ -455,7 +455,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         }
 
                         {
-                              (walletAddress === session?.address && ensName && claims.length > 0 && !isLoading && !loading && !hasEnsClaim()) ? (
+                              (walletAddress === session?.address && ensName && !isLoading && !loading && !hasEnsClaim()) ? (
                                     <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                           <div className="flex flex-col gap-1">
                                                 <p className="text-sm font-medium text-green-800">You have an ENS name</p>

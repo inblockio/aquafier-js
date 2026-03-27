@@ -29,7 +29,7 @@ console.log('Creating WagmiAdapter...')
 
 
 // 3. Set the networks
-export const chains: [AppKitNetwork, ...AppKitNetwork[]] = [mainnet, sepolia, holesky];
+export const chains = [mainnet, sepolia, holesky] as [AppKitNetwork, ...AppKitNetwork[]];
 
 // 4. Create Wagmi Adapter with custom transports
 const wagmiAdapter = new WagmiAdapter({
