@@ -49,7 +49,13 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ selec
                   if (hashSigPosition.length > 0) {
                         const allAquaTrees = selectedFileInfo?.fileObject.filter(e => isAquaTree(e.fileContent))
 
-                        const hashSigPositionHashString = selectedFileInfo!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0]
+                        const sigPositionRevision = selectedFileInfo!.aquaTree!.revisions[hashSigPosition]
+                        if (!sigPositionRevision?.link_verification_hashes?.[0]) {
+                              console.error(`[aqua_sign] Revision not found or missing link_verification_hashes for hashSigPosition: ${hashSigPosition}`)
+                              toast.error("Error: signature position revision data is missing or incomplete.")
+                              continue
+                        }
+                        const hashSigPositionHashString = sigPositionRevision.link_verification_hashes[0]
 
                         if (allAquaTrees) {
                               for (const anAquaTreeFileObject of allAquaTrees) {
@@ -333,7 +339,12 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ selec
                         indexToSliceFrom = 4
                   }
 
-                  const hashOfLinkedDocument = thirdRevision.link_verification_hashes![0]!
+                  if (!thirdRevision?.link_verification_hashes?.[0]) {
+                        console.error(`[aqua_sign] thirdRevision missing or has no link_verification_hashes for pdfHash: ${pdfHash}`)
+                        toast.error("Error: could not resolve linked document hash.")
+                        return
+                  }
+                  const hashOfLinkedDocument = thirdRevision.link_verification_hashes[0]
                   const fileName = selectedFileInfo!.aquaTree!.file_index[hashOfLinkedDocument]
                   setFileNameData(fileName)
                   // const creatorSignatureHash = revisionHashes[3]

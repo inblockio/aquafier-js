@@ -49,7 +49,13 @@ export default function PdfWorkflowPage() {
                   if (hashSigPosition.length > 0) {
                         const allAquaTrees = selectedFileInfoLocal?.fileObject.filter(e => isAquaTree(e.fileContent))
 
-                        const hashSigPositionHashString = selectedFileInfoLocal!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0]
+                        const sigPositionRevision = selectedFileInfoLocal!.aquaTree!.revisions[hashSigPosition]
+                        if (!sigPositionRevision?.link_verification_hashes?.[0]) {
+                              console.error(`[aqua_sign] Revision not found or missing link_verification_hashes for hashSigPosition: ${hashSigPosition}`)
+                              toast.error("Error: signature position revision data is missing or incomplete.")
+                              continue
+                        }
+                        const hashSigPositionHashString = sigPositionRevision.link_verification_hashes[0]
 
                         if (allAquaTrees) {
                               for (const anAquaTreeFileObject of allAquaTrees) {
