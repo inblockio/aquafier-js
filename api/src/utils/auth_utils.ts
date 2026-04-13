@@ -1,5 +1,6 @@
 import { SiweMessage } from "siwe";
 import { createPublicClient, http } from 'viem';
+import { ethers } from 'ethers';
 
 const alchemyKey = process.env.ALCHEMY_API_KEY;
 
@@ -57,15 +58,30 @@ export async function verifySiweMessage(message: string, signature: string) {
     // console.log('Chain ID:', chainId);
     // console.log('Nonce:', nonce);
 
+    // Fast path: try local ECDSA recovery first. For standard EOA signatures
+    // this avoids any RPC call, so verification can't be broken by upstream
+    // RPC failures, rate limits, or missing API keys.
+    try {
+      const recovered = ethers.verifyMessage(message, signature);
+      if (recovered.toLowerCase() === address.toLowerCase()) {
+        return {
+          isValid: true,
+          address,
+          expirationTime,
+          nonce,
+        };
+      }
+    } catch {
+      // Not a standard 65-byte ECDSA signature (e.g. smart wallet) — fall
+      // through to the on-chain verification path below.
+    }
+
     // Use Alchemy or publicnode instead of WalletConnect RPC
     const rpcUrl = getRpcUrl(chainId);
-    // console.log('RPC URL:', rpcUrl);
 
     const publicClient = createPublicClient({
       transport: http(rpcUrl)
     });
-
-    // console.log('Calling publicClient.verifyMessage...');
 
     // Check if the address is a contract (smart wallet) by checking bytecode
     const bytecode = await publicClient.getBytecode({ address: address as `0x${string}` });
