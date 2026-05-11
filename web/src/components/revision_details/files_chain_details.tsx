@@ -21,6 +21,7 @@ import { RevisionDisplay } from './files_revision_display'
 import ErrorBoundary from '../shared/error_boundary'
 import { CustomAlert } from '../ui/alert-custom'
 import { RevisionDetailsSummary } from './files_revision_details'
+import { getHeader } from '@/utils/api-helpers'
 
 export const CompleteChainView = ({ callBack, selectedFileInfo, hideFilePreview }: ICompleteChainView) => {
       const [showMoreDetails, setShowMoreDetails] = useState(false)
@@ -54,7 +55,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo, hideFilePreview 
                         headers: { nonce: `${session?.nonce}` },
                         responseType: 'arraybuffer',
                   })
-                  const contentType = response.headers['content-type'] || ''
+                  const contentType = getHeader(response.headers, 'content-type')
                   if (contentType.startsWith('text/') || ['application/json', 'application/xml', 'application/javascript'].includes(contentType)) {
                         return new TextDecoder().decode(response.data)
                   }

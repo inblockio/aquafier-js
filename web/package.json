@@ -52,7 +52,7 @@
     "@types/react-signature-canvas": "^1.0.7",
     "@wagmi/core": "^2.22.0",
     "aqua-js-sdk": "^3.2.1-45",
-    "axios": "^1.13.2",
+    "axios": "^1.16.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

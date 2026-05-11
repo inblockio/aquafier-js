@@ -23,6 +23,7 @@ import {
     FileIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { getHeader } from '@/utils/api-helpers';
 
 interface Column {
     key: string;
@@ -131,7 +132,7 @@ const FilePreviewDialog = ({ file, open, onClose, session, backendUrl }: {
                 }
             );
 
-            let ct = res.headers['content-type'] || '';
+            let ct = getHeader(res.headers, 'content-type');
             if (ct === 'application/octet-stream' || !ct) {
                 ct = getContentTypeFromFileName(fileName);
             }
