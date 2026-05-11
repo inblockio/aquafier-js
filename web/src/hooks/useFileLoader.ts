@@ -10,6 +10,7 @@ import {
 import { getContentTypeFromFileName } from '@/components/file_preview/constants'
 import heic2any from 'heic2any'
 import apiClient from '@/api/axiosInstance'
+import { getHeader } from '@/utils/api-helpers'
 
 // Add declaration for docx-preview global type
 declare global {
@@ -200,7 +201,7 @@ export function useFileLoader(fileInfo: FileObject) {
                                     responseType: 'arraybuffer',
                               })
 
-                              let contentType = response.headers['content-type'] || ''
+                              let contentType = getHeader(response.headers, 'content-type')
 
                               if (contentType === 'application/octet-stream' || contentType === '') {
                                     contentType = getContentTypeFromFileName(fileInfo.fileName || '')

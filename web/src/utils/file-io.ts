@@ -3,6 +3,7 @@ import { isTextFile } from './file-detection'
 import { ApiFileInfo } from '../models/FileInfo'
 import Aquafier, { AquaTree, Revision } from 'aqua-js-sdk'
 import apiClient from '@/api/axiosInstance'
+import { getHeader } from './api-helpers'
 
 /**
  * Reads a File object as text
@@ -260,7 +261,7 @@ export const fetchFileData = async (url: string, nonce: string): Promise<string 
             })
 
             // Get MIME type from headers
-            const contentType = response.headers['content-type'] || ''
+            const contentType = getHeader(response.headers, 'content-type')
 
             // Process based on content type
             if (contentType.startsWith('text/') || contentType === 'application/json' || contentType === 'application/xml' || contentType === 'application/javascript') {

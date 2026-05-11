@@ -2,6 +2,32 @@ import { ApiFileInfo } from '../models/FileInfo'
 import { ApiFilePaginationData } from '@/types/types'
 import { ensureDomainUrlHasSSL } from './network'
 import apiClient from '@/api/axiosInstance'
+import type { AxiosResponseHeaders, RawAxiosResponseHeaders } from 'axios'
+
+/**
+ * Normalize a header value from an axios response into a plain string.
+ *
+ * axios v1.x types header values as `string | number | true | string[] | AxiosHeaders`
+ * because HTTP technically allows multi-valued headers. For our usage (content-type,
+ * etc.) we always want a single string we can call .startsWith()/.includes() on and
+ * pass to Blob({ type }).
+ *
+ * @param headers  response.headers from any axios call
+ * @param name     header name (case-insensitive per HTTP, but axios normalizes to lowercase)
+ * @param fallback value returned when the header is missing or shaped unexpectedly
+ *
+ * TODO: implement. See README of this PR for the chosen strategy (A/B/C).
+ */
+export function getHeader(
+      headers: AxiosResponseHeaders | RawAxiosResponseHeaders,
+      name: string,
+      fallback: string = ''
+): string {
+      const v = (headers as Record<string, unknown>)[name]
+      if (typeof v === 'string') return v
+      if (Array.isArray(v)) return typeof v[0] === 'string' ? v[0] : fallback
+      return fallback
+}
 
 export async function fetchSystemFiles(url: string, metamaskAddress: string = ''): Promise<Array<ApiFileInfo>> {
       try {
@@ -90,7 +116,7 @@ export const fetchImage = async (fileUrl: string, nonce: string) => {
             })
 
             // Get content type from headers
-            let contentType = response.headers['content-type'] || ''
+            let contentType = getHeader(response.headers, 'content-type')
 
             // If content type is missing or generic, try to detect from URL
             if (contentType === 'application/octet-stream' || contentType === '') {

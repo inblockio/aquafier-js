@@ -15,6 +15,7 @@ import { PDFDisplayWithJustSimpleOverlay } from './SignatureOverlay'
 import { toast } from 'sonner'
 import PdfSigner from './PdfSigner'
 import apiClient from '@/api/axiosInstance'
+import { getHeader } from '@/utils/api-helpers'
 
 export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSidebarReady?: (sidebar: React.ReactNode) => void }> = ({ setActiveStep, selectedFileInfo, onSidebarReady }) => {
       const [pdfLoadingFile, setLoadingPdfFile] = useState<boolean>(true)
@@ -113,7 +114,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
                   }
 
                   // Get content type from headers
-                  let contentType = response.headers['content-type'] || ''
+                  let contentType = getHeader(response.headers, 'content-type')
 
                   // If content type is missing or generic, try to detect from URL
                   if (contentType === 'application/octet-stream' || contentType === '') {
@@ -437,7 +438,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps & { onSide
                   throw new Error(`Failed to fetch file: ${response.status}`)
             }
 
-            let contentType = response.headers['content-type'] || ''
+            let contentType = getHeader(response.headers, 'content-type')
 
             // Detect content type from URL if missing
             if (contentType === 'application/octet-stream' || contentType === '') {

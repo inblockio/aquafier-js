@@ -18,6 +18,7 @@ import { addSecurityInfoPage } from './pdf-security-info-page';
 import { getCorrectUTF8JSONString } from '../lib/utils';
 import { ApiFileInfo } from '../models/FileInfo';
 import apiClient from '@/api/axiosInstance';
+import { getHeader } from './api-helpers';
 import versionInfo from '../version-info.json';
 
 // Platform identification
@@ -498,7 +499,7 @@ export async function signPdfDocument(
                   responseType: 'arraybuffer',
                 });
                 fileBytes = new Uint8Array(response.data);
-                mimeType = response.headers['content-type'] || getMimeTypeFromFilename(fileObj.fileName);
+                mimeType = getHeader(response.headers, 'content-type', getMimeTypeFromFilename(fileObj.fileName));
                 description = 'Aquafier fetched asset';
               } catch (fetchError) {
                 console.error(`Failed to fetch URL-based file ${fileObj.fileName}:`, fetchError);
