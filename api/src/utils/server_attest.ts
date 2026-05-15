@@ -75,7 +75,7 @@ export async function serverAttestation(identityClaimId: string, walletAddress: 
             const genHash = getGenesisHash(aquaTree)
             if (genHash) {
                 const genRevision = aquaTree.revisions[genHash]
-                if (genRevision && genRevision["forms_type"] === "simple_claim") {
+                if (genRevision && genRevision["forms_type"] === "simple_claim" && genRevision["forms_claim_context"] === "Self issued server identity") {
                     serverIdentityAquaTree = aquaTree
                     serverIdentityFileObjects = fileObjects
                     break
@@ -259,35 +259,15 @@ export async function createServerIdentity() {
 
     const res = await prisma.revision.findFirst({
         where: {
-            AND: {
-                previous: {
-                    equals: ""
-                },
-                revision_type: {
-                    equals: "form"
-                },
-                pubkey_hash: {
-                    startsWith: walletAddress
-                }
-            },
-        },
-        select: {
-            AquaForms: {
-                where: {
-                    AND: {
-                        key: {
-                            equals: "forms_type"
-                        },
-                        value: {
-                            equals: "simple_claim"
-                        }
-                    }
-                }
-            }
+            previous: "",
+            revision_type: "form",
+            pubkey_hash: { startsWith: walletAddress },
+            AND: [
+                { AquaForms: { some: { key: "forms_type", value: { equals: "simple_claim" } } } },
+                { AquaForms: { some: { key: "forms_claim_context", value: { equals: "Self issued server identity" } } } }
+            ]
         }
     })
-
-    console.log("Res: ", res)
 
     if (res) {
         return
