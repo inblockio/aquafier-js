@@ -403,7 +403,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         const entryGenHash = getGenesisHash(entryAquaTree)
                         if (entryGenHash) {
                             const genRevision = entryAquaTree.revisions[entryGenHash]
-                            if (genRevision && genRevision["forms_type"] === "simple_claim") {
+                            if (genRevision && genRevision["forms_type"] === "simple_claim" && genRevision["forms_claim_context"] === "Self issued server identity") {
                                 serverIdentityAquaTree = entryAquaTree
                                 serverIdentityFileObjects = entryFileObjects
                                 break
