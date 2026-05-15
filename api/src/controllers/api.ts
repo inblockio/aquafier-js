@@ -9,6 +9,7 @@ import path from 'path';
 import { getAquaAssetDirectory } from "../utils/file_utils";
 import { checkFolderExists } from "../utils/api_utils";
 import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
+import { generateOtp, storeOtp, verifyOtp, sendEmailOtp } from "../utils/email_otp";
 
 // Rate-limiting configuration
 const RATE_LIMIT_CONFIG = {
@@ -231,26 +232,35 @@ if (hasProtocol && !isAllowed) {
       });
     }
 
-    const twilio = process.env.TWILIO_VERIFY_SERVICE_SID;
+    if (verificationType === "email") {
+      const valid = verifyOtp(revisionDataPar.email_or_phone_number, revisionDataPar.code);
+      if (!valid) {
+        return reply
+          .code(400)
+          .send({ success: false, message: "Invalid or expired verification code" });
+      }
+    } else {
+      const twilio = process.env.TWILIO_VERIFY_SERVICE_SID;
 
-    if (!twilio) {
-      return reply
-        .code(500)
-        .send({ success: false, message: "Twilio env variable not set" });
-    }
+      if (!twilio) {
+        return reply
+          .code(500)
+          .send({ success: false, message: "Twilio env variable not set" });
+      }
 
-    try {
-      await twilioClient.verify.v2
-        .services(twilio)
-        .verificationChecks.create({
-          to: revisionDataPar.email_or_phone_number,
-          code: revisionDataPar.code,
-        });
-    } catch (err: any) {
-        Logger.error("🛑 Twilio Verify initiation failed", err.message);
-      return reply
-        .code(500)
-        .send({ ok: false, error: `Twilio Failed ${err.message}` });
+      try {
+        await twilioClient.verify.v2
+          .services(twilio)
+          .verificationChecks.create({
+            to: revisionDataPar.email_or_phone_number,
+            code: revisionDataPar.code,
+          });
+      } catch (err: any) {
+        Logger.error("Twilio Verify check failed", err.message);
+        return reply
+          .code(500)
+          .send({ ok: false, error: `Twilio Failed ${err.message}` });
+      }
     }
 
     return reply
@@ -337,26 +347,39 @@ if (hasProtocol && !isAllowed) {
       });
     }
 
-    const { TWILIO_VERIFY_SERVICE_SID } = process.env;
+    if (verificationType === "email") {
+      try {
+        const code = generateOtp();
+        storeOtp(revisionDataPar.email_or_phone_number, code);
+        await sendEmailOtp(revisionDataPar.email_or_phone_number, code);
+      } catch (err: any) {
+        Logger.error("Email OTP send failed", err.message);
+        return reply
+          .code(500)
+          .send({ ok: false, error: `Email send failed: ${err.message}` });
+      }
+    } else {
+      const { TWILIO_VERIFY_SERVICE_SID } = process.env;
 
-    if (!TWILIO_VERIFY_SERVICE_SID) {
-      return reply
-        .code(500)
-        .send({ success: false, message: "Twilio env variable not set" });
-    }
+      if (!TWILIO_VERIFY_SERVICE_SID) {
+        return reply
+          .code(500)
+          .send({ success: false, message: "Twilio env variable not set" });
+      }
 
-    try {
-      await twilioClient.verify.v2
-        .services(TWILIO_VERIFY_SERVICE_SID)
-        .verifications.create({
-          to: revisionDataPar.email_or_phone_number,
-          channel,
-        });
-    } catch (err: any) {
-        Logger.error("🛑 Twilio Verify initiation failed", err.message);
-      return reply
-        .code(500)
-        .send({ ok: false, error: `Twilio Failed ${err.message}` });
+      try {
+        await twilioClient.verify.v2
+          .services(TWILIO_VERIFY_SERVICE_SID)
+          .verifications.create({
+            to: revisionDataPar.email_or_phone_number,
+            channel: "sms",
+          });
+      } catch (err: any) {
+        Logger.error("Twilio Verify initiation failed", err.message);
+        return reply
+          .code(500)
+          .send({ ok: false, error: `Twilio Failed ${err.message}` });
+      }
     }
 
     return reply
