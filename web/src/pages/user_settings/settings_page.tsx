@@ -75,7 +75,7 @@ const DeleteUserData = () => {
                               theme: 'light',
                               ens_name: '',
                               enable_dba_claim: false,
-                              witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+                              witness_contract_address: '0x269Ff9a5CB9BD5319bd95b248d2579Aa1e9D78FE',
                         })
                         setFiles({ fileData: [], status: 'idle' })
                         setSession(null)
@@ -129,7 +129,7 @@ export default function SettingsPage() {
       const [cliPubKey, _setCliPubKey] = useState<string>(user_profile.cli_pub_key)
       const [cliPrivKey, _setCliPrivKey] = useState<string>(user_profile.cli_priv_key)
       const [ensName, setEnsName] = useState<string>(user_profile.ens_name)
-      const [contract, _setContract] = useState<string>(user_profile.witness_contract_address ?? '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611')
+      const [contract, _setContract] = useState<string>(user_profile.witness_contract_address ?? '0x269Ff9a5CB9BD5319bd95b248d2579Aa1e9D78FE')
       const [alchemyKey, setAlchemyKey] = useState<string>(user_profile.alchemy_key ?? 'ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ')
 
       const networks = ['mainnet', 'sepolia', 'holesky']
@@ -177,7 +177,7 @@ export default function SettingsPage() {
                         alchemy_key: alchemyKey,
                         theme: 'light',
                         enable_dba_claim: user_profile.enable_dba_claim,
-                        witness_contract_address: contract ?? '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+                        witness_contract_address: contract ?? '0x269Ff9a5CB9BD5319bd95b248d2579Aa1e9D78FE',
                   })
 
                   toast.success('Settings saved successfully')

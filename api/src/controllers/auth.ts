@@ -48,7 +48,7 @@ export default async function authController(fastify: FastifyInstance) {
           alchemy_key: "ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ",
           witness_network: process.env.DEFAULT_WITNESS_NETWORK ?? "sepolia",
           theme: "light",
-          witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+          witness_contract_address: '0x269Ff9a5CB9BD5319bd95b248d2579Aa1e9D78FE',
         }
 
         settingsData = await prisma.settings.create({
@@ -272,7 +272,7 @@ export default async function authController(fastify: FastifyInstance) {
           alchemy_key: "ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ",
           witness_network: process.env.DEFAULT_WITNESS_NETWORK ?? "sepolia",
           theme: "light",
-          witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+          witness_contract_address: '0x269Ff9a5CB9BD5319bd95b248d2579Aa1e9D78FE',
         }
 
         await prisma.notifications.create({

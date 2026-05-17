@@ -57,7 +57,7 @@ const LoadConfiguration = () => {
                               witness_network: '',
                               theme: 'light',
                               enable_dba_claim: false,
-                              witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+                              witness_contract_address: '0x269Ff9a5CB9BD5319bd95b248d2579Aa1e9D78FE',
                         })
                   }
             }
@@ -103,7 +103,7 @@ const LoadConfiguration = () => {
                               witness_network: '',
                               theme: 'light',
                               enable_dba_claim: false,
-                              witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+                              witness_contract_address: '0x269Ff9a5CB9BD5319bd95b248d2579Aa1e9D78FE',
                         })
                   }
             } else {

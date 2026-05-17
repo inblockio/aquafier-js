@@ -3,7 +3,7 @@ import { WebConfig } from "../types/types"
 import { Building2, CheckCircle, CreditCard, Droplet, FileText, Globe, Mail, PenTool, Phone, Shield, User, UserCircle } from "lucide-react"
 // import {APMConfig} from "@/types/apm.ts";
 
-export const SEPOLIA_SMART_CONTRACT_ADDRESS = '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611'
+export const SEPOLIA_SMART_CONTRACT_ADDRESS = '0xA2d37EfeE13f669cd59C84F278821DE4D730F3eE'
 export const SYSTEM_WALLET_ADDRESS = "0xfabacc150f2a0000000000000000000000000000"
 
 export const maxUserFileSizeForUpload = 1024 * 1024 * 1024 // 1 GB in bytes
@@ -25,9 +25,9 @@ export const ETH_CHAINID_MAP_NUMBERS: Record<string, number> = {
 }
 
 export const ETH_CHAIN_ADDRESSES_MAP: Record<string, string> = {
-      mainnet: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
-      sepolia: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
-      holesky: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+      mainnet: '0x269Ff9a5CB9BD5319bd95b248d2579Aa1e9D78FE',
+      sepolia: '0xA2d37EfeE13f669cd59C84F278821DE4D730F3eE',
+      holesky: '0x269Ff9a5CB9BD5319bd95b248d2579Aa1e9D78FE',
 }
 
 export const WITNESS_NETWORK_MAP: Record<string, string> = {
@@ -127,7 +127,7 @@ export const USER_PROFILE_DEFAULT = {
                         theme: 'light',
                         witness_network:"mainnet",
                         enable_dba_claim: false,
-                        witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+                        witness_contract_address: '0x269Ff9a5CB9BD5319bd95b248d2579Aa1e9D78FE',
                   }
 export const testWitness = {
       previous_verification_hash: '0x8fe3842787eb5d37c2fb170906a3d4c73c32b9dab7aab4525a06199fe9b9c823',
