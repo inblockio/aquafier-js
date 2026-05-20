@@ -4,7 +4,12 @@ import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  // Production builds drop console.log/debug/info (console.warn & console.error
+  // are kept). esbuild `pure` removes these calls during minification.
+  esbuild: {
+    pure: command === 'build' ? ['console.log', 'console.debug', 'console.info'] : [],
+  },
   plugins: [
     react(),
     tailwindcss(),
@@ -34,4 +39,4 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
-})
+}))

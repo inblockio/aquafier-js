@@ -1,17 +1,17 @@
 FROM node:24-slim AS builder_web
 
 WORKDIR /build/web
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.1.3 --activate
 COPY web .
 RUN pnpm install --frozen-lockfile
 
 RUN pnpm run build
 
-FROM node:24-slim as builder_api
+FROM node:24-slim AS builder_api
 
 # Copy and prepare backend
 WORKDIR /build/api
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.1.3 --activate
 COPY api .
 RUN pnpm install --frozen-lockfile
 
@@ -20,8 +20,13 @@ RUN pnpm run build
 
 FROM node:24-slim
 
+# pnpm 11 refuses global installs (pnpm add -g) unless its global bin dir is on PATH.
+# The global bin directory is $PNPM_HOME/bin.
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME/bin:$PATH"
+
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.1.3 --activate
 
 # Create necessary directories first
 RUN mkdir -p /app/utils
@@ -60,9 +65,9 @@ COPY api/prisma /app/backend/prisma
 #we need prisma migration
 WORKDIR /app/backend
 
-# Install Prisma CLI globally and generate client
-RUN pnpm add -g prisma && pnpm add -g serve
-# RUN npx prisma generate
+# Install 'serve' globally — start_aqua.sh uses it to serve the built frontend.
+# prisma is NOT installed globally: runtime scripts use the local prisma from the --prod install.
+RUN pnpm add -g serve@14.2.6
 
 # Copy frontend and backend build artifacts
 COPY --from=builder_web /build/web/dist /app/frontend
@@ -70,6 +75,7 @@ COPY --from=builder_api /build/api/dist /app/backend/dist
 COPY --from=builder_api /build/api/assets /app/backend/assets
 COPY --from=builder_api /build/api/package.json /app/backend/package.json
 COPY --from=builder_api /build/api/pnpm-lock.yaml /app/backend/pnpm-lock.yaml
+COPY --from=builder_api /build/api/pnpm-workspace.yaml /app/backend/pnpm-workspace.yaml
 
 # Install backend dependencies
 RUN pnpm install --frozen-lockfile --prod
