@@ -7,7 +7,7 @@ RUN pnpm install --frozen-lockfile
 
 RUN pnpm run build
 
-FROM node:24-slim as builder_api
+FROM node:24-slim AS builder_api
 
 # Copy and prepare backend
 WORKDIR /build/api
