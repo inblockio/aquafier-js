@@ -62,15 +62,19 @@ jobs:
           Xvfb :99 -screen 0 1280x1024x24 &
           export DISPLAY=:99
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       - uses: actions/setup-node@v6
         with:
           node-version: lts/*
 
       - name: Install dependencies
-        run: cd e2e && npm ci
+        run: cd e2e && pnpm install --frozen-lockfile
 
       - name: Install Playwright Browsers
-        run:  cd e2e && npx playwright install --with-deps chromium
+        run:  cd e2e && pnpm exec playwright install --with-deps chromium
 
       - name: Change MetaMask install-script permissions
         run: chmod +x ./e2e/script/prepare_browser.sh
@@ -84,7 +88,7 @@ jobs:
       - name: Run Playwright tests
         env:
           DISPLAY: :99
-        run: cd e2e && npx playwright test
+        run: cd e2e && pnpm exec playwright test
 
       - uses: actions/upload-artifact@v6
         if: ${{ !cancelled() }}

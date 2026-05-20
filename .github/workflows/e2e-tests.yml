@@ -124,6 +124,10 @@ jobs:
           Xvfb :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
           echo "Started Xvfb display server"
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       - uses: actions/setup-node@v6
         with:
           node-version: lts/*
@@ -132,19 +136,19 @@ jobs:
         run: |
           echo "Current path: $(pwd)"
           cd e2e
-          npm ci
-          echo "Installed npm dependencies"
+          pnpm install --frozen-lockfile
+          echo "Installed pnpm dependencies"
 
       - name: Install Playwright browsers
         run: |
           cd e2e
-          npx playwright install --with-deps chromium
+          pnpm exec playwright install --with-deps chromium
           echo "Installed Playwright chromium browser"
 
       - name: Verify Playwright installation
         run: |
           cd e2e
-          npx playwright --version
+          pnpm exec playwright --version
           echo "Checking for chromium executable..."
           find ~/.cache/ms-playwright -name "chrome-linux" -o -name "chrome" 2>/dev/null | head -5
           ls -la ~/.cache/ms-playwright/chromium-* 2>/dev/null || echo "Chromium cache directory not found"
@@ -169,12 +173,12 @@ jobs:
           echo "Current directory: $(pwd)"
           echo "MetaMask extension directory exists: $(test -d ../e2e/metamask-extension && echo 'Yes' || echo 'No')"
           echo "Node version: $(node -v)"
-          echo "NPM version: $(npm -v)"
+          echo "pnpm version: $(pnpm -v)"
           echo "PLAYWRIGHT_BROWSERS_PATH: $PLAYWRIGHT_BROWSERS_PATH"
           
           # Run all tests with more conservative settings
           echo "Running all tests..."
-          npx playwright test --reporter=list,github --workers=1 --timeout=180000 --retries=2
+          pnpm exec playwright test --reporter=list,github --workers=1 --timeout=180000 --retries=2
           echo "All tests completed"
 
       - name: Upload test artifacts

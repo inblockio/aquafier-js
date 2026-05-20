@@ -1,24 +1,27 @@
-FROM node:24-slim AS builder_npm_web
+FROM node:24-slim AS builder_web
 
 WORKDIR /build/web
+RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY web .
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
-RUN npm run build
+RUN pnpm run build
 
-FROM node:24-slim as builder_npm_api
+FROM node:24-slim as builder_api
 
 # Copy and prepare backend
 WORKDIR /build/api
+RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY api .
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
 # Compile TypeScript to JavaScript
-RUN npm run build
+RUN pnpm run build
 
 FROM node:24-slim
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Create necessary directories first
 RUN mkdir -p /app/utils
@@ -58,18 +61,18 @@ COPY api/prisma /app/backend/prisma
 WORKDIR /app/backend
 
 # Install Prisma CLI globally and generate client
-RUN npm install -g prisma && npm install -g serve
+RUN pnpm add -g prisma && pnpm add -g serve
 # RUN npx prisma generate
 
 # Copy frontend and backend build artifacts
-COPY --from=builder_npm_web /build/web/dist /app/frontend
-COPY --from=builder_npm_api /build/api/dist /app/backend/dist
-COPY --from=builder_npm_api /build/api/assets /app/backend/assets
-COPY --from=builder_npm_api /build/api/package.json /app/backend/package.json
-COPY --from=builder_npm_api /build/api/package-lock.json /app/backend/package-lock.json
+COPY --from=builder_web /build/web/dist /app/frontend
+COPY --from=builder_api /build/api/dist /app/backend/dist
+COPY --from=builder_api /build/api/assets /app/backend/assets
+COPY --from=builder_api /build/api/package.json /app/backend/package.json
+COPY --from=builder_api /build/api/pnpm-lock.yaml /app/backend/pnpm-lock.yaml
 
 # Install backend dependencies
-RUN npm ci --only=production
+RUN pnpm install --frozen-lockfile --prod
 
 # Copy startup and migration scripts
 COPY actionfiles/aquafier-ts/script/start_aqua.sh /app/start_aqua.sh

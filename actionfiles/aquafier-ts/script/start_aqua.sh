@@ -127,7 +127,7 @@ cd /app/backend
 
 # Always generate Prisma client first
 echo "Generating Prisma client..."
-npx prisma generate || {
+pnpm exec prisma generate || {
   echo "ERROR: Prisma generate failed"
   exit 1
 }
@@ -142,7 +142,7 @@ if [ "$RESET_DATABASE" = "true" ]; then
     
     # FIXED: Use a more reliable reset approach
     echo "Step 1: Resetting database with migrate reset..."
-    npx prisma migrate reset --force || {
+    pnpm exec prisma migrate reset --force || {
         echo "Migrate reset failed, trying manual approach..."
         # Manual reset approach
         echo "Step 1a: Dropping all tables manually..."
@@ -159,7 +159,7 @@ if [ "$RESET_DATABASE" = "true" ]; then
         unset PGPASSWORD
         
         echo "Step 1b: Pushing fresh schema..."
-        npx prisma db push --force-reset || {
+        pnpm exec prisma db push --force-reset || {
             echo "ERROR: Schema push after manual reset failed"
             exit 1
         }
@@ -184,20 +184,20 @@ if [ "$RESET_DATABASE" = "true" ]; then
     # If no tables were created, force schema creation
     if [ "$tables_after_reset" -eq "0" ]; then
         echo "Step 2a: No tables found after reset, forcing schema creation..."
-        npx prisma db push || {
+        pnpm exec prisma db push || {
             echo "ERROR: Failed to create schema after reset"
             exit 1
         }
     fi
-    
+
     # ADDITIONAL: Run migrate dev to ensure proper migration state
     echo "Step 3: Initializing migration history..."
-    npx prisma migrate dev --name init --create-only || {
+    pnpm exec prisma migrate dev --name init --create-only || {
         echo "Could not create migration file, but schema should be ready"
     }
-    
+
     # Apply the migration if it was created
-    npx prisma migrate deploy || {
+    pnpm exec prisma migrate deploy || {
         echo "Migration deploy failed, but schema should still be ready"
     }
     
@@ -258,7 +258,7 @@ elif [ "$table_count" -eq "0" ] || [ "$data_exists" = "false" ]; then
     
     # Always use db push for empty databases to ensure all tables are created
     echo "Pushing complete schema to empty database..."
-    npx prisma db push || {
+    pnpm exec prisma db push || {
         echo "ERROR: Schema push failed"
         exit 1
     }
@@ -377,7 +377,7 @@ echo "  SIWE table exists: $siwe_table_exists"
 if [ "$siwe_table_exists" = "0" ]; then
     echo "🚨 CRITICAL ERROR: siwe_session table is missing!"
     echo "Attempting emergency schema push..."
-    npx prisma db push --force || {
+    pnpm exec prisma db push --force || {
         echo "Emergency schema push failed!"
         exit 1
     }
@@ -443,7 +443,7 @@ if [ -n "${TRACING_ENABLE}" ] && [ "${TRACING_ENABLE}" = 'true' ] && [ -n "${TRA
   export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Bearer ${TRACING_SECRET}"
   export OTEL_METRICS_EXPORTER="otlp"
   export OTEL_LOGS_EXPORTER="otlp"
-  npm install --save @elastic/opentelemetry-node
+  pnpm add @elastic/opentelemetry-node
 fi
 
 # Start backend in the background
