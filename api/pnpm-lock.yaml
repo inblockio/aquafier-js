@@ -115,6 +115,9 @@ importers:
       winston:
         specifier: ^3.18.3
         version: 3.19.0
+      ws:
+        specifier: ^8.18.1
+        version: 8.20.1
     devDependencies:
       '@types/estree':
         specifier: ^1.0.8
