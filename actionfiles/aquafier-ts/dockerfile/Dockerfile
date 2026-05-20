@@ -21,8 +21,9 @@ RUN pnpm run build
 FROM node:24-slim
 
 # pnpm 11 refuses global installs (pnpm add -g) unless its global bin dir is on PATH.
+# The global bin directory is $PNPM_HOME/bin.
 ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+ENV PATH="$PNPM_HOME/bin:$PATH"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN corepack enable && corepack prepare pnpm@11.1.3 --activate
