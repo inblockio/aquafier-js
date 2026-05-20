@@ -20,6 +20,10 @@ RUN pnpm run build
 
 FROM node:24-slim
 
+# pnpm 11 refuses global installs (pnpm add -g) unless its global bin dir is on PATH.
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN corepack enable && corepack prepare pnpm@11.1.3 --activate
 
@@ -60,9 +64,9 @@ COPY api/prisma /app/backend/prisma
 #we need prisma migration
 WORKDIR /app/backend
 
-# Install Prisma CLI globally and generate client
-RUN pnpm add -g prisma && pnpm add -g serve
-# RUN npx prisma generate
+# Install 'serve' globally — start_aqua.sh uses it to serve the built frontend.
+# prisma is NOT installed globally: runtime scripts use the local prisma from the --prod install.
+RUN pnpm add -g serve@14.2.6
 
 # Copy frontend and backend build artifacts
 COPY --from=builder_web /build/web/dist /app/frontend
