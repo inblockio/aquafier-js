@@ -443,7 +443,9 @@ if [ -n "${TRACING_ENABLE}" ] && [ "${TRACING_ENABLE}" = 'true' ] && [ -n "${TRA
   export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Bearer ${TRACING_SECRET}"
   export OTEL_METRICS_EXPORTER="otlp"
   export OTEL_LOGS_EXPORTER="otlp"
-  pnpm add @elastic/opentelemetry-node
+  # @elastic/opentelemetry-node is a bundled dependency (already installed in the
+  # image). No runtime `pnpm add` needed — under pnpm 11 it fails and, with
+  # `set -e`, aborts startup before the backend launches.
 fi
 
 # Start backend in the background
