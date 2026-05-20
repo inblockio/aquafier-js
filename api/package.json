@@ -8,9 +8,9 @@
     "build": "rm -rf dist && tsc && node fix-imports.mjs",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
-    "test": "npx tap",
-    "migrate-reset": "npx prisma migrate reset",
-    "migrate-dev": "npx prisma migrate dev",
+    "test": "tap",
+    "migrate-reset": "prisma migrate reset",
+    "migrate-dev": "prisma migrate dev",
     "seed": "tsx prisma/seed.ts"
   },
   "keywords": [],
