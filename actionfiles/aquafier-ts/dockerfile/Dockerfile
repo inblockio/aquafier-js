@@ -1,7 +1,7 @@
 FROM node:24-slim AS builder_web
 
 WORKDIR /build/web
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.1.3 --activate
 COPY web .
 RUN pnpm install --frozen-lockfile
 
@@ -11,7 +11,7 @@ FROM node:24-slim AS builder_api
 
 # Copy and prepare backend
 WORKDIR /build/api
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.1.3 --activate
 COPY api .
 RUN pnpm install --frozen-lockfile
 
@@ -21,7 +21,7 @@ RUN pnpm run build
 FROM node:24-slim
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.1.3 --activate
 
 # Create necessary directories first
 RUN mkdir -p /app/utils
@@ -70,6 +70,7 @@ COPY --from=builder_api /build/api/dist /app/backend/dist
 COPY --from=builder_api /build/api/assets /app/backend/assets
 COPY --from=builder_api /build/api/package.json /app/backend/package.json
 COPY --from=builder_api /build/api/pnpm-lock.yaml /app/backend/pnpm-lock.yaml
+COPY --from=builder_api /build/api/pnpm-workspace.yaml /app/backend/pnpm-workspace.yaml
 
 # Install backend dependencies
 RUN pnpm install --frozen-lockfile --prod
