@@ -18,8 +18,8 @@ importers:
         specifier: ^1.53.1
         version: 1.60.0
       undici-types:
-        specifier: ^7.8.0
-        version: 7.25.0
+        specifier: ^8.0.0
+        version: 8.3.0
     devDependencies:
       '@playwright/test':
         specifier: ^1.53.1
@@ -89,8 +89,8 @@ packages:
   undici-types@7.16.0:
     resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
 
-  undici-types@7.25.0:
-    resolution: {integrity: sha512-AXNgS1Byr27fTI+2bsPEkV9CxkT8H6xNyRI68b3TatlZo3RkzlqQBLL+w7SmGPVpokjHbcuNVQUWE7FRTg+LRA==}
+  undici-types@8.3.0:
+    resolution: {integrity: sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ==}
 
   ws@8.17.1:
     resolution: {integrity: sha512-6XQFvXTkbfUOZOKKILFG1PDK2NDQs4azKQl26T0YS5CxqWLgXajbPZ+h4gZekJyRqFU8pvnbAbbs/3TgRPy+GQ==}
@@ -160,6 +160,6 @@ snapshots:
 
   undici-types@7.16.0: {}
 
-  undici-types@7.25.0: {}
+  undici-types@8.3.0: {}
 
   ws@8.17.1: {}
