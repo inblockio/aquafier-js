@@ -107,8 +107,8 @@ importers:
         specifier: ^1.3.19
         version: 1.3.19(sinon@22.0.0)(typescript@5.9.3)
       twilio:
-        specifier: ^5.10.5
-        version: 5.13.1
+        specifier: ^6.0.0
+        version: 6.0.2
       viem:
         specifier: ^2.44.4
         version: 2.50.4(typescript@5.9.3)
@@ -4015,9 +4015,9 @@ packages:
     resolution: {integrity: sha512-50QV99kCKH5P/Vs4E2Gzp7BopNV+KzTXqWeaxrfu5IQJBOULRsTIS9seSsOVT8ZnGXzCyx55nYWAi4qJzpZKEQ==}
     engines: {node: ^20.17.0 || >=22.9.0}
 
-  twilio@5.13.1:
-    resolution: {integrity: sha512-sT+PkhptF4Mf7t8eXFFvPQx4w5VHnBIPXbltGPMFRe+R2GxfRdMuFbuNA/cEm0aQR6LFQOn33+fhClg+TjRVqQ==}
-    engines: {node: '>=14.0'}
+  twilio@6.0.2:
+    resolution: {integrity: sha512-RN3TZxUtxLz2HBZVt62+LdZxQbrMVgYKtuzLgwmO7nqKvR+gQS5mCackD9hf4Y7MmoK/bX7tCm7kaJC8kC8zFA==}
+    engines: {node: '>=20.0.0'}
 
   type-detect@4.0.8:
     resolution: {integrity: sha512-0fr/mIH1dlO+x7TlcMy+bIDqKPsw/70tVyeHW787goQjhmqaZe10uwLujubK9q9Lg6Fiho1KUKDYz0Z7k7g5/g==}
@@ -8905,7 +8905,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  twilio@5.13.1:
+  twilio@6.0.2:
     dependencies:
       axios: 1.16.1
       dayjs: 1.11.20
