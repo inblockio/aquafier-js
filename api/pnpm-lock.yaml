@@ -48,7 +48,7 @@ importers:
         version: 1.9.1
       '@prisma/client':
         specifier: ^6.4.1
-        version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+        version: 6.19.3(prisma@6.19.3(typescript@6.0.3))(typescript@6.0.3)
       '@sentry/node':
         specifier: ^10.27.0
         version: 10.53.1(@opentelemetry/exporter-trace-otlp-http@0.218.0(@opentelemetry/api@1.9.1))
@@ -57,7 +57,7 @@ importers:
         version: 10.53.1(@opentelemetry/exporter-trace-otlp-http@0.218.0(@opentelemetry/api@1.9.1))
       aqua-js-sdk:
         specifier: ^3.2.1-45
-        version: 3.2.1-45(ethers@6.16.0)(typescript@5.9.3)
+        version: 3.2.1-45(ethers@6.16.0)(typescript@6.0.3)
       axios:
         specifier: ^1.16.0
         version: 1.16.1
@@ -93,7 +93,7 @@ importers:
         version: 1.17.1
       prisma:
         specifier: ^6.4.1
-        version: 6.19.3(typescript@5.9.3)
+        version: 6.19.3(typescript@6.0.3)
       siwe:
         specifier: ^3.0.0
         version: 3.0.0(ethers@6.16.0)
@@ -102,16 +102,16 @@ importers:
         version: 20.4.1(@types/node@24.12.4)
       tap:
         specifier: ^21.1.3
-        version: 21.7.4(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
+        version: 21.7.4(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.3)
       ts-mock-imports:
         specifier: ^1.3.19
-        version: 1.3.19(sinon@22.0.0)(typescript@5.9.3)
+        version: 1.3.19(sinon@22.0.0)(typescript@6.0.3)
       twilio:
         specifier: ^5.10.5
         version: 5.13.1
       viem:
         specifier: ^2.44.4
-        version: 2.50.4(typescript@5.9.3)
+        version: 2.50.4(typescript@6.0.3)
       winston:
         specifier: ^3.18.3
         version: 3.19.0
@@ -130,22 +130,22 @@ importers:
         version: 2.0.4
       '@types/tap':
         specifier: ^18.0.0
-        version: 18.0.0(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
+        version: 18.0.0(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.3)
       '@types/ws':
         specifier: ^8.18.1
         version: 8.18.1
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@types/node@24.12.4)(typescript@5.9.3)
+        version: 10.9.2(@types/node@24.12.4)(typescript@6.0.3)
       ts-node-dev:
         specifier: ^2.0.0
-        version: 2.0.0(@types/node@24.12.4)(typescript@5.9.3)
+        version: 2.0.0(@types/node@24.12.4)(typescript@6.0.3)
       tsx:
         specifier: ^4.20.6
         version: 4.22.3
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^6.0.0
+        version: 6.0.3
 
 packages:
 
@@ -4040,6 +4040,11 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  typescript@6.0.3:
+    resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   uint8arrays@3.1.1:
     resolution: {integrity: sha512-+QJa8QRnbdXVpHYjLoTpJIdCTiw9Ir62nocClWuXIq2JIh4Uta0cQsTSpFL678p2CN8B+XSApwcU+pQEqVpKWg==}
 
@@ -4287,7 +4292,7 @@ snapshots:
       enabled: 2.0.0
       kuler: 2.0.0
 
-  '@didtools/cacao@3.0.1(typescript@5.9.3)':
+  '@didtools/cacao@3.0.1(typescript@6.0.3)':
     dependencies:
       '@didtools/codecs': 3.0.0
       '@didtools/siwx': 2.0.0
@@ -4295,7 +4300,7 @@ snapshots:
       caip: 1.1.1
       multiformats: 13.4.2
       uint8arrays: 5.1.1
-      viem: 1.21.4(typescript@5.9.3)
+      viem: 1.21.4(typescript@6.0.3)
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -4308,9 +4313,9 @@ snapshots:
       multiformats: 13.4.2
       uint8arrays: 5.1.1
 
-  '@didtools/pkh-ethereum@0.6.0(typescript@5.9.3)':
+  '@didtools/pkh-ethereum@0.6.0(typescript@6.0.3)':
     dependencies:
-      '@didtools/cacao': 3.0.1(typescript@5.9.3)
+      '@didtools/cacao': 3.0.1(typescript@6.0.3)
       '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@stablelib/random': 1.0.2
@@ -4666,6 +4671,22 @@ snapshots:
       diff: 4.0.4
       make-error: 1.3.6
       typescript: 5.9.3
+      v8-compile-cache-lib: 3.0.1
+
+  '@isaacs/ts-node-temp-fork-for-pr-2009@10.9.7(@types/node@24.12.4)(typescript@6.0.3)':
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      '@tsconfig/node14': 14.1.8
+      '@tsconfig/node16': 16.1.8
+      '@tsconfig/node18': 18.2.6
+      '@tsconfig/node20': 20.1.9
+      '@types/node': 24.12.4
+      acorn: 8.16.0
+      acorn-walk: 8.3.5
+      arg: 4.1.3
+      diff: 4.0.4
+      make-error: 1.3.6
+      typescript: 6.0.3
       v8-compile-cache-lib: 3.0.1
 
   '@isaacs/which@7.0.4':
@@ -5636,10 +5657,10 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
-  '@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)':
+  '@prisma/client@6.19.3(prisma@6.19.3(typescript@6.0.3))(typescript@6.0.3)':
     optionalDependencies:
-      prisma: 6.19.3(typescript@5.9.3)
-      typescript: 5.9.3
+      prisma: 6.19.3(typescript@6.0.3)
+      typescript: 6.0.3
 
   '@prisma/config@6.19.3':
     dependencies:
@@ -6168,6 +6189,16 @@ snapshots:
       - '@types/node'
       - typescript
 
+  '@tapjs/typescript@3.5.10(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/node@24.12.4)(typescript@6.0.3)':
+    dependencies:
+      '@isaacs/ts-node-temp-fork-for-pr-2009': 10.9.7(@types/node@24.12.4)(typescript@6.0.3)
+      '@tapjs/core': 4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - typescript
+
   '@tapjs/worker@4.3.10(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
     dependencies:
       '@tapjs/core': 4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -6248,9 +6279,9 @@ snapshots:
 
   '@types/strip-json-comments@0.0.30': {}
 
-  '@types/tap@18.0.0(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
+  '@types/tap@18.0.0(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.3)':
     dependencies:
-      tap: 21.7.4(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
+      tap: 21.7.4(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.3)
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
@@ -6308,13 +6339,13 @@ snapshots:
 
   abbrev@4.0.0: {}
 
-  abitype@0.9.8(typescript@5.9.3):
+  abitype@0.9.8(typescript@6.0.3):
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
 
-  abitype@1.2.3(typescript@5.9.3):
+  abitype@1.2.3(typescript@6.0.3):
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
 
   abort-controller@3.0.0:
     dependencies:
@@ -6374,21 +6405,21 @@ snapshots:
 
   apg-js@4.4.0: {}
 
-  aqua-js-sdk@3.2.1-45(ethers@6.16.0)(typescript@5.9.3):
+  aqua-js-sdk@3.2.1-45(ethers@6.16.0)(typescript@6.0.3):
     dependencies:
       asn1js: 3.0.10
       buffer: 6.0.3
       crypto-browserify: 3.12.1
       did-resolver: 4.1.0
-      dids: 5.0.3(typescript@5.9.3)
+      dids: 5.0.3(typescript@6.0.3)
       ethers: 6.16.0
       http-status-codes: 2.3.0
       js-sha3: 0.9.3
-      key-did-provider-ed25519: 4.0.2(typescript@5.9.3)
+      key-did-provider-ed25519: 4.0.2(typescript@6.0.3)
       key-did-resolver: 4.0.0
       merkletreejs: 0.5.2
       node-forge: 1.4.0
-      nostr-tools: 2.23.5(typescript@5.9.3)
+      nostr-tools: 2.23.5(typescript@6.0.3)
       open: 10.2.0
       openid-client: 5.7.1
       pkijs: 3.4.0
@@ -6868,11 +6899,11 @@ snapshots:
 
   did-resolver@4.1.0: {}
 
-  dids@5.0.3(typescript@5.9.3):
+  dids@5.0.3(typescript@6.0.3):
     dependencies:
-      '@didtools/cacao': 3.0.1(typescript@5.9.3)
+      '@didtools/cacao': 3.0.1(typescript@6.0.3)
       '@didtools/codecs': 3.0.0
-      '@didtools/pkh-ethereum': 0.6.0(typescript@5.9.3)
+      '@didtools/pkh-ethereum': 0.6.0(typescript@6.0.3)
       '@stablelib/random': 1.0.2
       codeco: 1.4.3
       dag-jose-utils: 4.0.0
@@ -7630,11 +7661,11 @@ snapshots:
       jwa: 2.0.1
       safe-buffer: 5.2.1
 
-  key-did-provider-ed25519@4.0.2(typescript@5.9.3):
+  key-did-provider-ed25519@4.0.2(typescript@6.0.3):
     dependencies:
       '@noble/curves': 1.9.7
       did-jwt: 7.4.7
-      dids: 5.0.3(typescript@5.9.3)
+      dids: 5.0.3(typescript@6.0.3)
       fast-json-stable-stringify: 2.1.0
       rpc-utils: 0.6.2
       uint8arrays: 5.1.1
@@ -7915,7 +7946,7 @@ snapshots:
 
   normalize-path@3.0.0: {}
 
-  nostr-tools@2.23.5(typescript@5.9.3):
+  nostr-tools@2.23.5(typescript@6.0.3):
     dependencies:
       '@noble/ciphers': 2.1.1
       '@noble/curves': 2.0.1
@@ -7925,7 +7956,7 @@ snapshots:
       '@scure/bip39': 2.0.1
       nostr-wasm: 0.1.0
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
 
   nostr-wasm@0.1.0: {}
 
@@ -8019,7 +8050,7 @@ snapshots:
       object-hash: 2.2.0
       oidc-token-hash: 5.2.0
 
-  ox@0.14.22(typescript@5.9.3):
+  ox@0.14.22(typescript@6.0.3):
     dependencies:
       '@adraffy/ens-normalize': 1.11.1
       '@noble/ciphers': 1.3.0
@@ -8027,10 +8058,10 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.9.3)
+      abitype: 1.2.3(typescript@6.0.3)
       eventemitter3: 5.0.1
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
     transitivePeerDependencies:
       - zod
 
@@ -8208,12 +8239,12 @@ snapshots:
     dependencies:
       xtend: 4.0.2
 
-  prisma@6.19.3(typescript@5.9.3):
+  prisma@6.19.3(typescript@6.0.3):
     dependencies:
       '@prisma/config': 6.19.3
       '@prisma/engines': 6.19.3
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
     transitivePeerDependencies:
       - magicast
 
@@ -8711,7 +8742,7 @@ snapshots:
       yaml: 2.9.0
       yaml-types: 0.4.0(yaml@2.9.0)
 
-  tap@21.7.4(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3):
+  tap@21.7.4(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.3):
     dependencies:
       '@tapjs/after': 3.3.10(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@tapjs/after-each': 4.3.10(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
@@ -8730,7 +8761,7 @@ snapshots:
       '@tapjs/spawn': 4.3.10(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@tapjs/stdin': 4.3.10(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@tapjs/test': 4.4.8(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@tapjs/typescript': 3.5.10(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/node@24.12.4)(typescript@5.9.3)
+      '@tapjs/typescript': 3.5.10(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/node@24.12.4)(typescript@6.0.3)
       '@tapjs/worker': 4.3.10(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       resolve-import: 2.4.0
     transitivePeerDependencies:
@@ -8813,12 +8844,12 @@ snapshots:
 
   trivial-deferred@2.0.0: {}
 
-  ts-mock-imports@1.3.19(sinon@22.0.0)(typescript@5.9.3):
+  ts-mock-imports@1.3.19(sinon@22.0.0)(typescript@6.0.3):
     dependencies:
       sinon: 22.0.0
-      typescript: 5.9.3
+      typescript: 6.0.3
 
-  ts-node-dev@2.0.0(@types/node@24.12.4)(typescript@5.9.3):
+  ts-node-dev@2.0.0(@types/node@24.12.4)(typescript@6.0.3):
     dependencies:
       chokidar: 3.6.0
       dynamic-dedupe: 0.3.0
@@ -8828,15 +8859,15 @@ snapshots:
       rimraf: 2.7.1
       source-map-support: 0.5.21
       tree-kill: 1.2.2
-      ts-node: 10.9.2(@types/node@24.12.4)(typescript@5.9.3)
+      ts-node: 10.9.2(@types/node@24.12.4)(typescript@6.0.3)
       tsconfig: 7.0.0
-      typescript: 5.9.3
+      typescript: 6.0.3
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
       - '@types/node'
 
-  ts-node@10.9.2(@types/node@24.12.4)(typescript@5.9.3):
+  ts-node@10.9.2(@types/node@24.12.4)(typescript@6.0.3):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.12
@@ -8850,7 +8881,7 @@ snapshots:
       create-require: 1.1.1
       diff: 4.0.4
       make-error: 1.3.6
-      typescript: 5.9.3
+      typescript: 6.0.3
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
 
@@ -8932,6 +8963,8 @@ snapshots:
 
   typescript@5.9.3: {}
 
+  typescript@6.0.3: {}
+
   uint8arrays@3.1.1:
     dependencies:
       multiformats: 9.9.0
@@ -8974,35 +9007,35 @@ snapshots:
 
   varint@6.0.0: {}
 
-  viem@1.21.4(typescript@5.9.3):
+  viem@1.21.4(typescript@6.0.3):
     dependencies:
       '@adraffy/ens-normalize': 1.10.0
       '@noble/curves': 1.2.0
       '@noble/hashes': 1.3.2
       '@scure/bip32': 1.3.2
       '@scure/bip39': 1.2.1
-      abitype: 0.9.8(typescript@5.9.3)
+      abitype: 0.9.8(typescript@6.0.3)
       isows: 1.0.3(ws@8.20.1)
       ws: 8.20.1
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
       - zod
 
-  viem@2.50.4(typescript@5.9.3):
+  viem@2.50.4(typescript@6.0.3):
     dependencies:
       '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.9.3)
+      abitype: 1.2.3(typescript@6.0.3)
       isows: 1.0.7(ws@8.20.1)
-      ox: 0.14.22(typescript@5.9.3)
+      ox: 0.14.22(typescript@6.0.3)
       ws: 8.20.1
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
