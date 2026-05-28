@@ -23,7 +23,7 @@
     "@fastify/compress": "^8.3.1",
     "@fastify/cors": "^11.1.0",
     "@fastify/formbody": "^8.0.2",
-    "@fastify/multipart": "^9.3.0",
+    "@fastify/multipart": "^10.0.0",
     "@fastify/oauth2": "^8.1.2",
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/static": "^9.0.0",
