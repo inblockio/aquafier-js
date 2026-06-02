@@ -43,6 +43,9 @@ importers:
       '@fastify/websocket':
         specifier: ^11.2.0
         version: 11.2.0
+      '@opentelemetry/api':
+        specifier: ^1.9.1
+        version: 1.9.1
       '@prisma/client':
         specifier: ^6.4.1
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
@@ -112,6 +115,9 @@ importers:
       winston:
         specifier: ^3.18.3
         version: 3.19.0
+      ws:
+        specifier: ^8.18.1
+        version: 8.20.1
     devDependencies:
       '@types/estree':
         specifier: ^1.0.8
