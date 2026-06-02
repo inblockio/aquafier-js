@@ -24,6 +24,7 @@ import { useState } from 'react'
 import { RELOAD_KEYS, triggerWorkflowReload } from '../utils/reloadDatabase';
 import WorkspaceDialogUI from '@/components/workspace/workspace_download_dialog_ui'
 import IdentityCardDialogUi from '@/components/claims/identity_card_dialog_ui'
+import DeprecationBanner from '@/components/shared/DeprecationBanner'
  
 export default function NewShadcnLayoutWithSidebar() {
   
@@ -63,6 +64,7 @@ export default function NewShadcnLayoutWithSidebar() {
                               <WebsocketFragment />
                               <AppSidebar className="hidden md:block" />
                               <SidebarInset className='relative h-screen overflow-y-auto'>
+                                    <DeprecationBanner />
                                     <header className="flex h-16 shrink-0 items-center gap-2 border-b sticky top-0 z-50 bg-accent w-full">
                                           <div className="flex items-center gap-2 px-3 w-full">
                                                 <SidebarTrigger />

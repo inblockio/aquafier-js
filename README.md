@@ -1,6 +1,8 @@
 
 # Aquafier-js
 
+> **Deprecation Notice:** Aquafier-JS (Aqua Protocol v3.2) is being phased out in favor of [AquaFire](https://aquafire.inblock.io/), the next-generation implementation built on Aqua Protocol v4. New users should start with AquaFire directly. Existing users are encouraged to migrate at their earliest convenience.
+
 Aquafier-JS is a reference implementation of the Aqua Protocol, demonstrating how its features can be integrated into modern web and backend applications.
 The project enables digital content signing, provenance verification, and integrity validation, serving as an example for real-world Aqua use cases.
 
@@ -155,7 +157,7 @@ Local has no proxy/letsencrypt container and has exposed ports (for debugging re
 
 We use Github-Actions to build our images. You can find the Workflow-Definition under `./github/workflows/build-docker.yml`. This image uses the dockerfile under `actionfiles/aquafier-ts/dockerfile/Dockerfile` to create an image and push this image to the github-registry. You can find this images under https://github.com/inblockio/aquafier-js/pkgs/container/aquafier-js. The Tag depends on the build-base and contains the commit sha. 
 
-To build locally use `NODE_OPTIONS="--max-old-space-size=4096" npm run build ` in web and api folder, this will generate dist files for you.
+To build locally use `NODE_OPTIONS="--max-old-space-size=4096" pnpm run build` in web and api folder, this will generate dist files for you.
 
 ## Contribution
 

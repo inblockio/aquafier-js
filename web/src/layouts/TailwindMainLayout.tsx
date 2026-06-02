@@ -7,6 +7,7 @@ import appStore from '../store'
 import { useStore } from 'zustand'
 import { useCallback, useEffect, useState } from 'react'
 import { WebConfig } from '@/types/types'
+import DeprecationBanner from '@/components/shared/DeprecationBanner'
 
 const Header = () => {
       const [isDark, setIsDark] = useState(() => {
@@ -261,6 +262,7 @@ const TailwindMainLayout = () => {
 
       return (
             <div className="bg-background text-foreground font-body flex flex-col min-h-screen">
+                  <DeprecationBanner />
                   <Header />
                   <main className="flex-grow">
                         {isCustomLanding ? (
