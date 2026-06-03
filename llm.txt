@@ -111,9 +111,9 @@ Key configuration:
 ## Getting Started
 1. Clone the repository
 2. Configure environment variables from `.env.sample`
-3. Install dependencies: `npm install`
-4. Run migrations: `npm run migrate-dev`
-5. Start development server: `npm run dev`
+3. Install dependencies: `pnpm install`
+4. Run migrations: `pnpm run migrate-dev`
+5. Start development server: `pnpm run dev`
 
 ## Project Structure
 ```
