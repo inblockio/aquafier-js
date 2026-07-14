@@ -33,18 +33,26 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           push: true
 
-  deploy_dev:
-    if: github.ref == 'refs/heads/dev'
-    needs: build
-    uses: ./.github/workflows/deploy-dev.yml
-    secrets:
-      RUNNER_PRIVATE_KEY: ${{ secrets.RUNNER_PRIVATE_KEY }}
-      PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
+  # Deployment is disabled. dev.inblock.io and aquafier.inblock.io are no longer
+  # served, so these jobs would SSH into hosts that are gone. The image is still
+  # built and pushed to ghcr.io above; only the rollout is switched off.
+  #
+  # To bring an environment back, uncomment the matching job below. The underlying
+  # deploy-dev.yml / deploy-main.yml still exist and can also be run by hand via
+  # workflow_dispatch.
 
-  deploy_main:
-    if: github.ref == 'refs/heads/main'
-    needs: build
-    uses: ./.github/workflows/deploy-main.yml
-    secrets:
-      RUNNER_PRIVATE_KEY: ${{ secrets.RUNNER_PRIVATE_KEY }}
-      PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
+  # deploy_dev:
+  #   if: github.ref == 'refs/heads/dev'
+  #   needs: build
+  #   uses: ./.github/workflows/deploy-dev.yml
+  #   secrets:
+  #     RUNNER_PRIVATE_KEY: ${{ secrets.RUNNER_PRIVATE_KEY }}
+  #     PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
+
+  # deploy_main:
+  #   if: github.ref == 'refs/heads/main'
+  #   needs: build
+  #   uses: ./.github/workflows/deploy-main.yml
+  #   secrets:
+  #     RUNNER_PRIVATE_KEY: ${{ secrets.RUNNER_PRIVATE_KEY }}
+  #     PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
