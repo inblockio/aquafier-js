@@ -130,3 +130,58 @@ export async function deleteAdminPlan(planId: string): Promise<void> {
         throw new Error(response.data.error || 'Failed to delete plan');
     }
 }
+
+export interface BackupUser {
+    address: string;
+    treeCount: number;
+    estimatedBytes: number;
+}
+
+export async function fetchBackupUsers(): Promise<BackupUser[]> {
+    const url = ensureDomainUrlHasSSL(`${getBackendUrl()}/admin/backup/users`);
+    const response = await apiClient.get(url, { headers: getHeaders() });
+    return response.data.users ?? [];
+}
+
+/**
+ * Pull one user's workspace zip and hand it to the browser as a download.
+ *
+ * The server streams the archive, so this holds one user's backup in memory at a
+ * time — which is why the caller must not run these concurrently.
+ */
+export async function downloadUserBackup(address: string): Promise<void> {
+    const url = ensureDomainUrlHasSSL(`${getBackendUrl()}/admin/backup/${address}`);
+
+    const response = await apiClient.get(url, {
+        headers: getHeaders(),
+        responseType: 'blob',
+    });
+
+    const blobUrl = window.URL.createObjectURL(response.data);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.setAttribute('download', `workspace_${address}.zip`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode?.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+}
+
+export interface DeletionSummary {
+    [table: string]: number;
+}
+
+export async function deleteUserDataAsAdmin(address: string): Promise<DeletionSummary> {
+    const url = ensureDomainUrlHasSSL(`${getBackendUrl()}/admin/user_data/${address}`);
+
+    const response = await apiClient.delete(url, {
+        headers: getHeaders(),
+        reloadKeys: [RELOAD_KEYS.user_stats],
+    });
+
+    if (!response.data.success) {
+        throw new Error(response.data.error || 'Failed to delete user data');
+    }
+
+    return response.data.deleted ?? {};
+}

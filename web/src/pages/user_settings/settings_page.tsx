@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { ContactsService } from '@/storage/databases/contactsDb'
 import { AquaSystemNamesService } from '@/storage/databases/aquaSystemNames'
+import AdminDataManagement from '@/components/admin/admin_data_management'
 
 interface IConfirmDeleteDialog {
       children: React.ReactNode
@@ -123,7 +124,7 @@ const DeleteUserData = () => {
 }
 
 export default function SettingsPage() {
-      const { setUserProfile, user_profile, backend_url, metamaskAddress, session } = useStore(appStore)
+      const { setUserProfile, user_profile, backend_url, metamaskAddress, session, isAdmin } = useStore(appStore)
 
       const [activeNetwork, setActiveNetwork] = useState<string>(user_profile.witness_network ?? "sepolia")
       const [cliPubKey, _setCliPubKey] = useState<string>(user_profile.cli_pub_key)
@@ -324,6 +325,10 @@ export default function SettingsPage() {
                                           Save Changes
                                     </button>
                               </div>
+
+                              {/* Admin-only. These act on other users' data, so they are deliberately
+                                  kept apart from the settings above, which only ever affect you. */}
+                              {isAdmin && <AdminDataManagement />}
                         </div>
                   </div>
             </div>

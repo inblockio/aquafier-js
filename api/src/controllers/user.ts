@@ -7,8 +7,7 @@ import { SettingsRequest, UserAttestationAddressesRequest } from '../models/requ
 import { fetchEnsExpiry, fetchEnsName } from '../utils/api_utils';
 import { getAddressGivenEnsName, isEnsNameOrAddrss } from '../utils/server_utils';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
-import { Prisma, PrismaClient, UserAttestationAddresses } from '@prisma/client';
-import { DefaultArgs } from '@prisma/client/runtime/library';
+import { UserAttestationAddresses } from '@prisma/client';
 import Logger from '../utils/logger';
 import { TEMPLATE_HASHES } from '../models/constants';
 import fs from 'fs';
@@ -18,7 +17,7 @@ import { saveAquaTree } from '../utils/revisions_utils';
 import { saveFileAndCreateOrUpdateFileIndex } from '../utils/aqua_tree_utils';
 import Aquafier, { cliRedify } from 'aqua-js-sdk';
 import { calculateStorageUsage } from '../utils/stats';
-import { usageService } from '../services/usageService';
+import { clearUserData } from '../services/user_data_service';
 
 export default async function userController(fastify: FastifyInstance) {
 
@@ -500,249 +499,16 @@ export default async function userController(fastify: FastifyInstance) {
         try {
             const userAddress = request.user!.address;
 
-            // Start a transaction to ensure all operations succeed or fail together
-            await prisma.$transaction(async (tx) => {
-                Logger.info('Starting user data deletion transaction for user:', userAddress);
-
-                const deletedNotifications = await tx.notifications.deleteMany({
-                    where: { receiver: userAddress }
-                });
-                Logger.info(`Deleted deletedNotifications ${deletedNotifications.count}  records`);
-
-                // Step 1: Delete all Latest records associated with user address
-                const deletedLatest = await tx.latest.deleteMany({
-                    where: { user: userAddress }
-                });
-                Logger.info(`Deleted ${deletedLatest.count} latest records`);
-
-                // const deletedContracts = await tx.contract.deleteMany({
-                //     where: {
-                //         receiver: {
-                //             contains: userAddress,
-                //             mode: 'insensitive'
-                //         },
-                //     }
-                // });
-                // Logger.debug(`Deleted ${deletedContracts.count} contracts records`);
-
-
-
-                // contracts
-                // start witth recipients
-                // Updated soft delete logic - adds user address to receiver_has_deleted array
-                // instead of hard deleting contracts
-
-                // First, find all contracts where the user is a recipient
-                const contractsToSoftDelete = await tx.contract.findMany({
-                    where: {
-                        recipients: {
-                            has: userAddress
-                        }
-                    }
-                });
-
-                // Logger.debug(`Found ${contractsToSoftDelete.length} contracts where user is a recipient`);
-
-                // Filter out contracts where the user has already soft-deleted (to avoid duplicates)
-                const contractsNeedingSoftDelete = contractsToSoftDelete.filter(contract =>
-                    !contract.receiver_has_deleted?.includes(userAddress)
-                );
-
-                // Logger.debug(`${contractsNeedingSoftDelete.length} contracts need soft delete for user ${userAddress}`);
-
-                // Add the user's address to the receiver_has_deleted array for each contract
-                let updatedContractsCount = 0;
-
-                for (const contract of contractsNeedingSoftDelete) {
-                    await tx.contract.update({
-                        where: {
-                            hash: contract.hash
-                        },
-                        data: {
-                            receiver_has_deleted: {
-                                push: userAddress
-                            }
-                        }
-                    });
-                    updatedContractsCount++;
-                }
-
-                // Logger.debug(`Soft deleted ${updatedContractsCount} contracts for user ${userAddress}`);
-
-
-                // also delete contracts where user is the sender
-                const deletedSenderContracts = await tx.contract.deleteMany({
-                    where: {
-                        sender: {
-                            equals: userAddress,
-                            mode: 'insensitive'
-                        }
-                    }
-                });
-                Logger.info(`Hard deleted ${deletedSenderContracts.count} contracts where user was sender`);
-
-                // End of contracts
-
-                // Step 2: Get all revisions associated with this user
-                const userRevisions = await tx.revision.findMany({
-                    where: {
-                        pubkey_hash: {
-                            contains: userAddress,
-                            mode: 'insensitive'
-                        }
-                    },
-                    select: {
-                        pubkey_hash: true
-                    }
-                });
-
-                const revisionHashes = userRevisions.map(rev => rev.pubkey_hash);
-                Logger.info(`Found ${revisionHashes.length} revisions to process`);
-
-                if (revisionHashes.length > 0) {
-                    // Step 3: Delete dependent records in order
-
-                    // 3a. Delete Link records
-                    const deletedLinks = await tx.link.deleteMany({
-                        where: {
-                            hash: {
-                                in: revisionHashes
-                            }
-                        }
-                    });
-                    Logger.info(`Deleted ${deletedLinks.count} link records`);
-
-                    // 3b. Delete Signature records
-                    const deletedSignatures = await tx.signature.deleteMany({
-                        where: {
-                            hash: {
-                                in: revisionHashes
-                            }
-                        }
-                    });
-                    Logger.info(`Deleted ${deletedSignatures.count} signature records`);
-
-                    // 3c. Delete Witness records and associated WitnessEvent records
-                    const witnessRecords = await tx.witness.findMany({
-                        where: {
-                            hash: {
-                                in: revisionHashes
-                            }
-                        },
-                        select: {
-                            hash: true,
-                            Witness_merkle_root: true
-                        }
-                    });
-
-                    if (witnessRecords.length > 0) {
-
-                        for (const merkelItem of witnessRecords) {
-                            Logger.info(`Witness Record - Hash: ${merkelItem.hash}, Merkle Root: ${merkelItem.Witness_merkle_root}`);
-
-
-                            if (merkelItem.Witness_merkle_root == null) {
-                                Logger.info(`Skipping WitnessEvent deletion for hash ${merkelItem.hash} due to null Merkle root`);
-                                continue;
-                            }
-                            const allWithMerkleRoot = await prisma.witness.findMany({
-                                where: {
-                                    Witness_merkle_root: {
-                                        not: null,
-                                        equals: merkelItem.Witness_merkle_root
-                                    }
-                                }
-                            });
-
-                            if (allWithMerkleRoot.length <= 1) {
-                                // delete all witness event 
-                                const deletedWitnessEvents = await tx.witnessEvent.deleteMany({
-                                    where: {
-                                        Witness_merkle_root: {
-                                            equals: merkelItem.Witness_merkle_root
-                                        }
-                                    }
-                                });
-                                Logger.info(`Deleted ${deletedWitnessEvents.count} witness event records for merkle root ${merkelItem.Witness_merkle_root}`);
-
-                            }
-
-                        }
-
-
-                        // Delete Witness records
-                        const deletedWitness = await tx.witness.deleteMany({
-                            where: {
-                                hash: {
-                                    in: revisionHashes
-                                }
-                            }
-                        });
-                        Logger.info(`Deleted ${deletedWitness.count} witness records`);
-
-
-                    }
-
-                    // 3d. Delete AquaForms records
-                    const deletedAquaForms = await tx.aquaForms.deleteMany({
-                        where: {
-                            hash: {
-                                in: revisionHashes
-                            }
-                        }
-                    });
-                    Logger.info(`Deleted ${deletedAquaForms.count} aqua forms records`);
-
-                    // Step 4: Handle Files and FileIndex records
-                    for (const hash of revisionHashes) {
-                        // Use deleteMany instead of delete to avoid errors when records don't exist
-                        await prisma.fileName.deleteMany({
-                            where: {
-                                pubkey_hash: hash
-                            }
-                        });
-
-                        Logger.info(`Processing files for revision hash: ${hash}`);
-                        await handleFilesDeletion(tx, hash);
-                    }
-
-                    // Step 5: Finally delete Revision records
-                    const deletedRevisions = await tx.revision.deleteMany({
-                        where: {
-                            pubkey_hash: {
-                                in: revisionHashes
-                            }
-                        }
-                    });
-                    Logger.info(`Deleted ${deletedRevisions.count} revision records`);
-                }
-
-                Logger.info('User data deletion completed successfully');
+            // Only this device's session goes; the admin equivalent
+            // (DELETE /admin/user_data/:address) drops all of the target's sessions instead.
+            const deleted = await clearUserData(userAddress, {
+                sessionScope: { kind: 'nonce', nonce }
             });
-
-            // Step 6: Delete user templates (outside transaction for better error handling)
-            await deleteUserTemplates(userAddress);
-
-            // Step 7: Delete the session
-            await prisma.siweSession.delete({
-                where: { nonce }
-            });
-
-            // Step 8: Delete user settings
-            await prisma.settings.deleteMany({
-                where: {
-                    user_pub_key: userAddress
-                }
-            });
-
-            // Step 9: Recalculate usage stats after bulk deletion
-            usageService.recalculateUserUsage(userAddress).catch(err =>
-                Logger.error('Failed to recalculate usage after user data deletion:', err)
-            );
 
             return reply.code(200).send({
                 success: true,
-                message: 'All user data has been cleared successfully'
+                message: 'All user data has been cleared successfully',
+                deleted
             });
 
         } catch (error: any) {
@@ -754,6 +520,7 @@ export default async function userController(fastify: FastifyInstance) {
             });
         }
     });
+
 
     // Get user data stats 
     // fastify.get('/user_data_stats', {
@@ -1024,140 +791,5 @@ export default async function userController(fastify: FastifyInstance) {
 
 
 
-    // Helper function to handle files deletion
-    async function handleFilesDeletion(
-        tx: Omit<PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">,
-        pubKey: string) {
-        Logger.info('Starting files deletion process');
-
-        // Find FileIndex records associated with this user
-        let filesToDelete = await tx.fileIndex.findMany({
-            where: {
-                pubkey_hash: {
-                    hasSome: [pubKey]
-                }
-            },
-            select: {
-                file_hash: true,
-                pubkey_hash: true,
-            }
-        });
-
-        // If no exact matches, try partial matching
-        if (filesToDelete.length === 0) {
-            Logger.info('No exact matches found, trying partial matching');
-            const rawQuery = await tx.$queryRaw`
-            SELECT file_hash, pubkey_hash FROM file_index 
-            WHERE EXISTS (
-                SELECT 1 FROM unnest(pubkey_hash) AS h 
-                WHERE LOWER(h) LIKE LOWER('%' || ${pubKey} || '%')
-            )
-        `;
-            filesToDelete = rawQuery as { file_hash: string; pubkey_hash: string[]; }[];
-            Logger.info(`Found ${filesToDelete.length} matches with partial matching`);
-        }
-
-        if (filesToDelete.length > 0) {
-            // Group files by reference count for processing
-            const fileHashesToRemoveUser = new Set<string>();
-            const fileHashesToDeleteCompletely = new Set<string>();
-
-            for (const fileIndex of filesToDelete) {
-                const refCount = fileIndex.pubkey_hash.length;
-                fileHashesToRemoveUser.add(fileIndex.file_hash);
-
-                if (refCount <= 1) {
-                    // If this is the only reference, mark for complete deletion
-                    fileHashesToDeleteCompletely.add(fileIndex.file_hash);
-                }
-            }
-
-            // First, remove the user from pubkey_hash arrays for files with multiple references
-            for (const fileHash of fileHashesToRemoveUser) {
-                if (!fileHashesToDeleteCompletely.has(fileHash)) {
-                    // Update the pubkey_hash array to remove the user
-                    const currentFileIndex = await tx.fileIndex.findUnique({
-                        where: { file_hash: fileHash },
-                        select: { pubkey_hash: true }
-                    });
-
-                    if (currentFileIndex) {
-                        const updatedPubkeyHash = currentFileIndex.pubkey_hash.filter(
-                            hash => hash !== pubKey
-                        );
-
-                        if (updatedPubkeyHash.length === 0) {
-                            // If no references left after removal, mark for complete deletion
-                            fileHashesToDeleteCompletely.add(fileHash);
-                        } else {
-                            // Update with filtered array
-                            await tx.fileIndex.update({
-                                where: { file_hash: fileHash },
-                                data: { pubkey_hash: updatedPubkeyHash }
-                            });
-                        }
-                    }
-                }
-            }
-
-            // Delete FileIndex records that have no remaining references
-            if (fileHashesToDeleteCompletely.size > 0) {
-                const deletedFileIndexes = await tx.fileIndex.deleteMany({
-                    where: {
-                        file_hash: {
-                            in: Array.from(fileHashesToDeleteCompletely)
-                        }
-                    }
-                });
-                Logger.info(`Deleted ${deletedFileIndexes.count} file index records`);
-
-                // Now delete corresponding File records
-                const deletedFiles = await tx.file.deleteMany({
-                    where: {
-                        file_hash: {
-                            in: Array.from(fileHashesToDeleteCompletely)
-                        }
-                    }
-                });
-                Logger.info(`Deleted ${deletedFiles.count} file records`);
-            }
-
-            Logger.info(`Processed ${filesToDelete.length} file associations for user ${pubKey}`);
-        } else {
-            Logger.info(`No files found for user ${pubKey}`);
-        }
-    }
-
-    // Helper function to delete user templates
-    async function deleteUserTemplates(userAddress: string) {
-        Logger.info('Starting template deletion process');
-
-        const userTemplates = await prisma.aquaTemplate.findMany({
-            where: {
-                owner: userAddress
-            },
-            select: {
-                id: true
-            }
-        });
-
-        for (const template of userTemplates) {
-            // Delete template fields first
-            await prisma.aquaTemplateFields.deleteMany({
-                where: {
-                    aqua_form_id: template.id
-                }
-            });
-
-            // Delete template
-            await prisma.aquaTemplate.delete({
-                where: {
-                    id: template.id
-                }
-            });
-        }
-
-        Logger.info(`Deleted ${userTemplates.length} user templates`);
-    }
 
 }

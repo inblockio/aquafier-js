@@ -5,6 +5,38 @@ import { authenticate, AuthenticatedRequest } from '../middleware/auth_middlewar
 import { getFile, getFileSize } from '../utils/file_utils.js';
 import path from 'path';
 import Logger from "../utils/logger";
+import { getBackupUserList, streamUserBackup } from '../services/backup_service';
+import { clearUserData } from '../services/user_data_service';
+import { getHost, getPort } from '../utils/api_utils';
+
+const isEvmAddress = (value: string): boolean =>
+    typeof value === 'string' && /^0x[a-fA-F0-9]{40}$/.test(value);
+
+/**
+ * Refuse a delete that an operator is likely to regret, returning the reason
+ * to send back, or null when the delete may proceed.
+ *
+ * Deleting yourself is refused because "Clear Account Data" on the settings page
+ * already does that, and it correctly drops only the calling session. Deleting a
+ * super admin is refused so that a mistyped address cannot take out the very
+ * accounts that grant access to this endpoint.
+ */
+function guardDeleteTarget(target: string, requester: string): string | null {
+    if (target.toLowerCase() === requester?.toLowerCase()) {
+        return 'Cannot delete your own data here — use Clear Account Data in settings';
+    }
+
+    const superAdmins = (process.env.DASHBOARD_WALLETS || "")
+        .split(",")
+        .map(w => w.trim().toLowerCase())
+        .filter(Boolean);
+
+    if (superAdmins.includes(target.toLowerCase())) {
+        return 'Cannot delete data for a super admin';
+    }
+
+    return null;
+}
 
 export default async function adminController(fastify: FastifyInstance) {
 
@@ -215,6 +247,86 @@ export default async function adminController(fastify: FastifyInstance) {
         } catch (error) {
             Logger.error('Error toggling admin status:', error);
             return reply.code(500).send({ error: 'Internal Server Error' });
+        }
+    });
+
+    // Every user, with enough detail for an operator to see what an export will pull
+    // down before committing to it.
+    fastify.get('/admin/backup/users', async (_request, reply) => {
+        try {
+            const users = await getBackupUserList();
+            return reply.send({ users });
+        } catch (error) {
+            Logger.error('Error listing users for backup:', error);
+            return reply.code(500).send({ error: 'Internal Server Error' });
+        }
+    });
+
+    // Stream one user's complete workspace as a zip. Same archive layout as the
+    // browser-built backup, so the result stays importable.
+    fastify.get('/admin/backup/:address', async (request, reply) => {
+        const { address } = request.params as { address: string };
+
+        if (!isEvmAddress(address)) {
+            return reply.code(400).send({ error: 'Invalid address' });
+        }
+
+        const user = await prisma.users.findUnique({ where: { address } });
+        if (!user) {
+            return reply.code(404).send({ error: 'User not found' });
+        }
+
+        const host = request.headers.host || `${getHost()}:${getPort()}`;
+        const protocol = request.protocol || 'https';
+        const url = `${protocol}://${host}`;
+
+        try {
+            // Only throws before it hijacks the reply; once the archive is streaming
+            // it handles its own failures by destroying the socket.
+            await streamUserBackup(address, url, reply);
+        } catch (error) {
+            Logger.error(`Error starting backup for ${address}:`, error);
+            return reply.code(500).send({ error: 'Failed to build backup' });
+        }
+    });
+
+    // Wipe a target user's data. Irreversible.
+    fastify.delete('/admin/user_data/:address', async (request, reply) => {
+        const { address } = request.params as { address: string };
+        const requesterAddress = (request as any).walletAddress as string;
+
+        if (!isEvmAddress(address)) {
+            return reply.code(400).send({ error: 'Invalid address' });
+        }
+
+        const user = await prisma.users.findUnique({ where: { address } });
+        if (!user) {
+            return reply.code(404).send({ error: 'User not found' });
+        }
+
+        const refusal = guardDeleteTarget(address, requesterAddress);
+        if (refusal) {
+            return reply.code(403).send({ error: refusal });
+        }
+
+        try {
+            // 'all' — every session the target holds dies, so they are signed out
+            // everywhere. The admin's own session is untouched.
+            const deleted = await clearUserData(address, { sessionScope: { kind: 'all' } });
+
+            Logger.info(`Admin ${requesterAddress} cleared all data for ${address}`);
+
+            return reply.send({
+                success: true,
+                message: `All data for ${address} has been deleted`,
+                deleted
+            });
+        } catch (error: any) {
+            Logger.error(`Error clearing data for ${address}:`, error);
+            return reply.code(500).send({
+                error: 'Failed to delete user data',
+                message: error instanceof Error ? error.message : String(error)
+            });
         }
     });
 
