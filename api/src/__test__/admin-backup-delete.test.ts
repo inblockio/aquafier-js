@@ -263,7 +263,7 @@ test('the backup route streams a real, importable zip', async (t) => {
     const response = await fastify.inject({
         method: 'GET',
         url: `/admin/backup/${TARGET}`,
-        headers: { nonce: 'test-nonce-admin' },
+        headers: { nonce: 'test-nonce-admin', origin: 'http://localhost:5173' },
     });
 
     t.equal(response.statusCode, 200, 'the backup is served');
@@ -272,6 +272,16 @@ test('the backup route streams a real, importable zip', async (t) => {
         response.headers['content-disposition'],
         /workspace_0x1111/,
         'named after the user it belongs to'
+    );
+
+    // Regression: an earlier cut wrote reply.raw behind reply.hijack(), which skips the
+    // reply lifecycle. @fastify/cors sets Access-Control-Allow-Origin via reply.header(),
+    // and those are only flushed by send() -- so the route returned a 200 with a valid
+    // zip that every browser then blocked. Status alone does not prove this route works.
+    t.equal(
+        response.headers['access-control-allow-origin'],
+        'http://localhost:5173',
+        'and carries the CORS header, so a browser will actually surrender the body'
     );
 
     const zip = await JSZip.loadAsync(response.rawPayload);

@@ -76,29 +76,25 @@ export async function streamUserBackup(
 
     const archive = new ZipArchive({ zlib: { level: 9 } });
 
-    reply.raw.setHeader('Content-Type', 'application/zip');
-    reply.raw.setHeader(
-        'Content-Disposition',
-        `attachment; filename="workspace_${address}.zip"`
-    );
-
-    // We are writing the socket ourselves from here on, so Fastify must not try to
-    // send a reply of its own on top of the stream.
-    reply.hijack();
-    archive.pipe(reply.raw);
-
     archive.on('warning', (err) => Logger.error(`Backup archive warning for ${address}:`, err));
-    archive.on('error', (err) => {
-        Logger.error(`Backup archive error for ${address}:`, err);
-        reply.raw.destroy(err);
-    });
+    archive.on('error', (err) => Logger.error(`Backup archive error for ${address}:`, err));
+
+    // Hand the stream to Fastify rather than writing reply.raw ourselves. Writing raw
+    // (or reply.hijack()) skips the reply lifecycle, and the headers other plugins set
+    // through reply.header() -- @fastify/cors's Access-Control-Allow-Origin above all --
+    // are only flushed to the socket by send(). Bypassing it yields a 200 carrying a
+    // perfectly good zip that the browser then refuses to hand to JS.
+    reply
+        .header('Content-Type', 'application/zip')
+        .header('Content-Disposition', `attachment; filename="workspace_${address}.zip"`)
+        .send(archive);
 
     const nameWithHash: { name: string; hash: string }[] = [];
     const seenAssets = new Set<string>();
 
-    // Past the hijack there is no status code left to send, so nothing in here may
-    // throw: a failure has to tear the socket down, which is what tells the client
-    // the zip it received is truncated rather than handing it a corrupt file.
+    // The response is already streaming, so there is no status code left to send.
+    // Destroying the archive propagates the error through the pipe Fastify set up,
+    // which truncates the download rather than handing the client a corrupt zip.
     try {
         for (const record of latestRecords) {
             try {
@@ -146,8 +142,7 @@ export async function streamUserBackup(
         await archive.finalize();
     } catch (error) {
         Logger.error(`Backup stream failed for ${address}:`, error);
-        archive.destroy();
-        reply.raw.destroy();
+        archive.destroy(error instanceof Error ? error : new Error(String(error)));
     }
 }
 
