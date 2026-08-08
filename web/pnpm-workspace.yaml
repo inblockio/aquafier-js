@@ -16,3 +16,6 @@ allowBuilds:
   'esbuild': true
   'keccak': true
   'utf-8-validate': true
+minimumReleaseAgeExclude:
+  # Renovate security update: axios@1.18.0
+  - axios@1.18.0
