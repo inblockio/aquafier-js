@@ -16,3 +16,6 @@ allowBuilds:
   'esbuild': true
   'keccak': true
   'utf-8-validate': true
+minimumReleaseAgeExclude:
+  # Renovate security update: vite@7.3.5
+  - vite@7.3.5
