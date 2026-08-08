@@ -1,12 +1,8 @@
-# pnpm 11 reads project settings from this file, not the "pnpm" field in package.json.
-
-# Supply-chain hardening: refuse dependency versions published within the last
-# day (1440 minutes). This is the pnpm 11 default; pinned here explicitly.
 minimumReleaseAge: 1440
 
 # Security overrides — force minimum safe versions of transitive dependencies.
 overrides:
-  'ws@>=8.0.0 <8.17.1': '>=8.17.1'
+  'ws@>=8.0.0 <8.17.1': '>=8.21.0'
   'systeminformation@<5.27.14': '>=5.27.14'
   '@isaacs/brace-expansion@5.0.0': '>=5.0.1'
 
@@ -19,3 +15,6 @@ allowBuilds:
   '@sentry-internal/node-cpu-profiler': true
   'esbuild': true
   'protobufjs': true
+minimumReleaseAgeExclude:
+  # Renovate security update: ws@8.21.0
+  - ws@8.21.0
