@@ -20,7 +20,7 @@
   "dependencies": {
     "@elastic/ecs-winston-format": "^1.5.3",
     "@elastic/opentelemetry-node": "^1.6.0",
-    "@fastify/compress": "^8.3.1",
+    "@fastify/compress": "^9.0.0",
     "@fastify/cors": "^11.1.0",
     "@fastify/formbody": "^8.0.2",
     "@fastify/multipart": "^9.3.0",
