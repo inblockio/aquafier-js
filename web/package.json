@@ -59,7 +59,7 @@
     "dexie": "^4.2.1",
     "dexie-react-hooks": "^4.2.0",
     "dns-packet": "^5.6.1",
-    "docx-preview": "^0.3.7",
+    "docx-preview": "^0.4.0",
     "embla-carousel-react": "^8.6.0",
     "ethers": "^6.15.0",
     "heic2any": "^0.0.4",
