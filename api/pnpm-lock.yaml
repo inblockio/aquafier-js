@@ -48,7 +48,7 @@ importers:
         version: 1.9.1
       '@prisma/client':
         specifier: ^6.4.1
-        version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+        version: 6.19.3(prisma@6.19.3(typescript@7.0.2))(typescript@7.0.2)
       '@sentry/node':
         specifier: ^10.27.0
         version: 10.53.1(@opentelemetry/exporter-trace-otlp-http@0.218.0(@opentelemetry/api@1.9.1))
@@ -57,7 +57,7 @@ importers:
         version: 10.53.1(@opentelemetry/exporter-trace-otlp-http@0.218.0(@opentelemetry/api@1.9.1))
       aqua-js-sdk:
         specifier: ^3.2.1-45
-        version: 3.2.1-45(ethers@6.16.0)(typescript@5.9.3)
+        version: 3.2.1-45(ethers@6.16.0)(typescript@7.0.2)
       archiver:
         specifier: ^8.0.0
         version: 8.0.0
@@ -96,7 +96,7 @@ importers:
         version: 1.17.1
       prisma:
         specifier: ^6.4.1
-        version: 6.19.3(typescript@5.9.3)
+        version: 6.19.3(typescript@7.0.2)
       siwe:
         specifier: ^3.0.0
         version: 3.0.0(ethers@6.16.0)
@@ -105,16 +105,16 @@ importers:
         version: 20.4.1(@types/node@24.12.4)
       tap:
         specifier: ^21.1.3
-        version: 21.7.4(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
+        version: 21.7.4(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@7.0.2)
       ts-mock-imports:
         specifier: ^1.3.19
-        version: 1.3.19(sinon@22.0.0)(typescript@5.9.3)
+        version: 1.3.19(sinon@22.0.0)(typescript@7.0.2)
       twilio:
         specifier: ^5.10.5
         version: 5.13.1
       viem:
         specifier: ^2.44.4
-        version: 2.50.4(typescript@5.9.3)
+        version: 2.50.4(typescript@7.0.2)
       winston:
         specifier: ^3.18.3
         version: 3.19.0
@@ -136,22 +136,22 @@ importers:
         version: 2.0.4
       '@types/tap':
         specifier: ^18.0.0
-        version: 18.0.0(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
+        version: 18.0.0(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@7.0.2)
       '@types/ws':
         specifier: ^8.18.1
         version: 8.18.1
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@types/node@24.12.4)(typescript@5.9.3)
+        version: 10.9.2(@types/node@24.12.4)(typescript@7.0.2)
       ts-node-dev:
         specifier: ^2.0.0
-        version: 2.0.0(@types/node@24.12.4)(typescript@5.9.3)
+        version: 2.0.0(@types/node@24.12.4)(typescript@7.0.2)
       tsx:
         specifier: ^4.20.6
         version: 4.22.3
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ^7.0.0
+        version: 7.0.2
 
 packages:
 
@@ -1750,6 +1750,126 @@ packages:
     engines: {node: '>=16.20.0'}
     hasBin: true
 
+  '@typescript/typescript-aix-ppc64@7.0.2':
+    resolution: {integrity: sha512-MTKKkWB7p/0E9xi1d1tHtZ5PiLkGEMIq88pK2CubZjOsLtYTLqhgIgi6zepFa+9GHZ6h05NMCkQxGKiPXMxXtQ==}
+    engines: {node: '>=16.20.0'}
+    cpu: [ppc64]
+    os: [aix]
+
+  '@typescript/typescript-darwin-arm64@7.0.2':
+    resolution: {integrity: sha512-gowzar9MwS/aRWp6f3a4KUqzRjAZjOsmGNCM6LcTgXum+dBfgsBVMN+AgvOCCbguXyick6LJhpBszxMebJ8syA==}
+    engines: {node: '>=16.20.0'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@typescript/typescript-darwin-x64@7.0.2':
+    resolution: {integrity: sha512-SZ9xZInqApNlNGc9s0W1VSsktYSOe9cFqNOIqmN1Gs8SmkjKZYFt017G4VwPxASInODuAdbTW7sXiFUf893RgA==}
+    engines: {node: '>=16.20.0'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@typescript/typescript-freebsd-arm64@7.0.2':
+    resolution: {integrity: sha512-W5NH4y/J0plIIS5b2xvTEkU7JFxyqdMAOgf+Ilhl0vHQXKO5dZoxd+C/jEtq56c4F3wk71RB4BMRQ2XdI+bwYQ==}
+    engines: {node: '>=16.20.0'}
+    cpu: [arm64]
+    os: [freebsd]
+
+  '@typescript/typescript-freebsd-x64@7.0.2':
+    resolution: {integrity: sha512-UMGDx5sTpzNw3WiPebH7l90IWfJggEd+egHt/q6p7/Cm3zqoV7VxkGXt+3DxPIw8CcmvAB0j3sVVfbhX+M4Tpw==}
+    engines: {node: '>=16.20.0'}
+    cpu: [x64]
+    os: [freebsd]
+
+  '@typescript/typescript-linux-arm64@7.0.2':
+    resolution: {integrity: sha512-Qh4eU4/y3yDjnfjjyPYihMj5/ODIlmt+Bzu17OI+fiSRDW57QmU5SiN63exPRNJPKUzcc1INa1NXdrJ+MqHjUQ==}
+    engines: {node: '>=16.20.0'}
+    cpu: [arm64]
+    os: [linux]
+
+  '@typescript/typescript-linux-arm@7.0.2':
+    resolution: {integrity: sha512-gffT3xPz9sR7j/YJExkyPntrI0P2EP9XbOyWzth2/Gs0RstK+90RBcO0ncXoXy/beYll1SXw846Nf2zdnEz0QQ==}
+    engines: {node: '>=16.20.0'}
+    cpu: [arm]
+    os: [linux]
+
+  '@typescript/typescript-linux-loong64@7.0.2':
+    resolution: {integrity: sha512-uEHck9i8hoAzXPiYRib1O7miOnz23SxIeVl6F4LXox+qov1K35jHcEW6VHKvZI+pyvl7fZEP4MCU5LYvIq1GuQ==}
+    engines: {node: '>=16.20.0'}
+    cpu: [loong64]
+    os: [linux]
+
+  '@typescript/typescript-linux-mips64el@7.0.2':
+    resolution: {integrity: sha512-R4KvAMnE43W5Qeqb0Ly56O3mWMWIAgsMyz36DCaycd5nbg/9kzm0liw3JocfRqyJY0KPmzFjbswozXyW0DnIYA==}
+    engines: {node: '>=16.20.0'}
+    cpu: [mips64el]
+    os: [linux]
+
+  '@typescript/typescript-linux-ppc64@7.0.2':
+    resolution: {integrity: sha512-DORx5b3sd/4S7eayxm4FQv+A7CrkUIGRaHiwI8oiHTAI1fAPWhF4J0vAlkC8biAlHSVVwxMQ3tjZ2/DVbnQiiA==}
+    engines: {node: '>=16.20.0'}
+    cpu: [ppc64]
+    os: [linux]
+
+  '@typescript/typescript-linux-riscv64@7.0.2':
+    resolution: {integrity: sha512-wf0jqEDOjrPRnKwYRyyJDRo11KMbvMFrU+q4zqKyChODBzvlkbhNQfKvLxQCcwTpdDaXSHZTVuh0JoCrKCUMHQ==}
+    engines: {node: '>=16.20.0'}
+    cpu: [riscv64]
+    os: [linux]
+
+  '@typescript/typescript-linux-s390x@7.0.2':
+    resolution: {integrity: sha512-IkwJc3L7yhytWd/ewjyxNDfOmswCm9GWMJT/ue/dU4aZNbwZeYAetq42VyLmsmSjvoX7z74X6ZaYCtzAr0EuGw==}
+    engines: {node: '>=16.20.0'}
+    cpu: [s390x]
+    os: [linux]
+
+  '@typescript/typescript-linux-x64@7.0.2':
+    resolution: {integrity: sha512-EYdf2cNg7rgCWJnxCdJ+F3V39O8ihb37eHAu1LK8oAFizgTQbPOK7zHHXbPt8rX24COqODXeI3sIf0fCXG7H/A==}
+    engines: {node: '>=16.20.0'}
+    cpu: [x64]
+    os: [linux]
+
+  '@typescript/typescript-netbsd-arm64@7.0.2':
+    resolution: {integrity: sha512-+polYF4MF04aPpO5FTkHran9yUQDSXqy5GiSDKpsll5jy3l3+g9QLhpf39T+ePtefhXLOGrLl0QIjkQP6VnelA==}
+    engines: {node: '>=16.20.0'}
+    cpu: [arm64]
+    os: [netbsd]
+
+  '@typescript/typescript-netbsd-x64@7.0.2':
+    resolution: {integrity: sha512-8YIT0EHM/3dq10ZOVF/A7pc/YSMtbcecct4rWtexrnSCHOPcpC2KTLXfTCR6vDpnSiY12heNb1GiN/wu+T/FyA==}
+    engines: {node: '>=16.20.0'}
+    cpu: [x64]
+    os: [netbsd]
+
+  '@typescript/typescript-openbsd-arm64@7.0.2':
+    resolution: {integrity: sha512-APT8+ClYnuYm1u9+kgGXoMj2VzWzcymwh2gNSQVySHfkRDGOTVkoWLjCmOQSaO+PoqQ57B0flRp9SA+7GnnkzQ==}
+    engines: {node: '>=16.20.0'}
+    cpu: [arm64]
+    os: [openbsd]
+
+  '@typescript/typescript-openbsd-x64@7.0.2':
+    resolution: {integrity: sha512-yX7s+Q0Dln0Dt9tEzZsAjXXR/+ytBM7AlglaqyeMPxQszJ1JhlJdZ6jLA+IzldHtflX81em7lDao1xXu+aRRkg==}
+    engines: {node: '>=16.20.0'}
+    cpu: [x64]
+    os: [openbsd]
+
+  '@typescript/typescript-sunos-x64@7.0.2':
+    resolution: {integrity: sha512-dLJDGaLZ1D4HPQn62u1n8mBDkJREwMsAkCdkwd4Ieqw+x3TUyTsqY0YiBCtE6H6OzzgGk3iuZ3vFWRS+E8/d1g==}
+    engines: {node: '>=16.20.0'}
+    cpu: [x64]
+    os: [sunos]
+
+  '@typescript/typescript-win32-arm64@7.0.2':
+    resolution: {integrity: sha512-Gyl1Vy6OsWesLzmq+EP0Fb7b4Nid5232AvcA2SFcdYreldpNtYFFofPjnt62y9hQy7VTaZp65ICJjuAQRaVcIQ==}
+    engines: {node: '>=16.20.0'}
+    cpu: [arm64]
+    os: [win32]
+
+  '@typescript/typescript-win32-x64@7.0.2':
+    resolution: {integrity: sha512-0BQ3HkAHHlKLSp1qRvf3SUhGpGsDuhB/jgFw75guyqbxJqEaS0Cw/VFO8i2nHglJUzQCRtMMR/IBAKE3ETMC4g==}
+    engines: {node: '>=16.20.0'}
+    cpu: [x64]
+    os: [win32]
+
   abbrev@4.0.0:
     resolution: {integrity: sha512-a1wflyaL0tHtJSmLSOVybYhy22vRih4eduhhrkcjgrWGnRfrZtovJ2FRjxuTtkkj47O/baf0R86QU5OuYpz8fA==}
     engines: {node: ^20.17.0 || >=22.9.0}
@@ -2236,6 +2356,7 @@ packages:
 
   crypto-js@4.2.0:
     resolution: {integrity: sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==}
+    deprecated: Active development of CryptoJS has been discontinued. This library is no longer maintained.
 
   css-select@5.2.2:
     resolution: {integrity: sha512-TizTzUddG/xYLA3NXodFM0fSbNizXjOKhqiQQwvhlspadZokn1KDy0NZFS0wuEubIYAV5/c1/lAr0TaaFXEXzw==}
@@ -4140,6 +4261,11 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  typescript@7.0.2:
+    resolution: {integrity: sha512-8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA==}
+    engines: {node: '>=16.20.0'}
+    hasBin: true
+
   uint8arrays@3.1.1:
     resolution: {integrity: sha512-+QJa8QRnbdXVpHYjLoTpJIdCTiw9Ir62nocClWuXIq2JIh4Uta0cQsTSpFL678p2CN8B+XSApwcU+pQEqVpKWg==}
 
@@ -4391,7 +4517,7 @@ snapshots:
       enabled: 2.0.0
       kuler: 2.0.0
 
-  '@didtools/cacao@3.0.1(typescript@5.9.3)':
+  '@didtools/cacao@3.0.1(typescript@7.0.2)':
     dependencies:
       '@didtools/codecs': 3.0.0
       '@didtools/siwx': 2.0.0
@@ -4399,7 +4525,7 @@ snapshots:
       caip: 1.1.1
       multiformats: 13.4.2
       uint8arrays: 5.1.1
-      viem: 1.21.4(typescript@5.9.3)
+      viem: 1.21.4(typescript@7.0.2)
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -4412,9 +4538,9 @@ snapshots:
       multiformats: 13.4.2
       uint8arrays: 5.1.1
 
-  '@didtools/pkh-ethereum@0.6.0(typescript@5.9.3)':
+  '@didtools/pkh-ethereum@0.6.0(typescript@7.0.2)':
     dependencies:
-      '@didtools/cacao': 3.0.1(typescript@5.9.3)
+      '@didtools/cacao': 3.0.1(typescript@7.0.2)
       '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@stablelib/random': 1.0.2
@@ -4770,6 +4896,22 @@ snapshots:
       diff: 4.0.4
       make-error: 1.3.6
       typescript: 5.9.3
+      v8-compile-cache-lib: 3.0.1
+
+  '@isaacs/ts-node-temp-fork-for-pr-2009@10.9.7(@types/node@24.12.4)(typescript@7.0.2)':
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      '@tsconfig/node14': 14.1.8
+      '@tsconfig/node16': 16.1.8
+      '@tsconfig/node18': 18.2.6
+      '@tsconfig/node20': 20.1.9
+      '@types/node': 24.12.4
+      acorn: 8.16.0
+      acorn-walk: 8.3.5
+      arg: 4.1.3
+      diff: 4.0.4
+      make-error: 1.3.6
+      typescript: 7.0.2
       v8-compile-cache-lib: 3.0.1
 
   '@isaacs/which@7.0.4':
@@ -5740,10 +5882,10 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
-  '@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)':
+  '@prisma/client@6.19.3(prisma@6.19.3(typescript@7.0.2))(typescript@7.0.2)':
     optionalDependencies:
-      prisma: 6.19.3(typescript@5.9.3)
-      typescript: 5.9.3
+      prisma: 6.19.3(typescript@7.0.2)
+      typescript: 7.0.2
 
   '@prisma/config@6.19.3':
     dependencies:
@@ -6272,6 +6414,16 @@ snapshots:
       - '@types/node'
       - typescript
 
+  '@tapjs/typescript@3.5.10(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/node@24.12.4)(typescript@7.0.2)':
+    dependencies:
+      '@isaacs/ts-node-temp-fork-for-pr-2009': 10.9.7(@types/node@24.12.4)(typescript@7.0.2)
+      '@tapjs/core': 4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - typescript
+
   '@tapjs/worker@4.3.10(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
     dependencies:
       '@tapjs/core': 4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -6361,9 +6513,9 @@ snapshots:
 
   '@types/strip-json-comments@0.0.30': {}
 
-  '@types/tap@18.0.0(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
+  '@types/tap@18.0.0(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@7.0.2)':
     dependencies:
-      tap: 21.7.4(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
+      tap: 21.7.4(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@7.0.2)
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
@@ -6419,15 +6571,75 @@ snapshots:
       '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260519.1
       '@typescript/native-preview-win32-x64': 7.0.0-dev.20260519.1
 
+  '@typescript/typescript-aix-ppc64@7.0.2':
+    optional: true
+
+  '@typescript/typescript-darwin-arm64@7.0.2':
+    optional: true
+
+  '@typescript/typescript-darwin-x64@7.0.2':
+    optional: true
+
+  '@typescript/typescript-freebsd-arm64@7.0.2':
+    optional: true
+
+  '@typescript/typescript-freebsd-x64@7.0.2':
+    optional: true
+
+  '@typescript/typescript-linux-arm64@7.0.2':
+    optional: true
+
+  '@typescript/typescript-linux-arm@7.0.2':
+    optional: true
+
+  '@typescript/typescript-linux-loong64@7.0.2':
+    optional: true
+
+  '@typescript/typescript-linux-mips64el@7.0.2':
+    optional: true
+
+  '@typescript/typescript-linux-ppc64@7.0.2':
+    optional: true
+
+  '@typescript/typescript-linux-riscv64@7.0.2':
+    optional: true
+
+  '@typescript/typescript-linux-s390x@7.0.2':
+    optional: true
+
+  '@typescript/typescript-linux-x64@7.0.2':
+    optional: true
+
+  '@typescript/typescript-netbsd-arm64@7.0.2':
+    optional: true
+
+  '@typescript/typescript-netbsd-x64@7.0.2':
+    optional: true
+
+  '@typescript/typescript-openbsd-arm64@7.0.2':
+    optional: true
+
+  '@typescript/typescript-openbsd-x64@7.0.2':
+    optional: true
+
+  '@typescript/typescript-sunos-x64@7.0.2':
+    optional: true
+
+  '@typescript/typescript-win32-arm64@7.0.2':
+    optional: true
+
+  '@typescript/typescript-win32-x64@7.0.2':
+    optional: true
+
   abbrev@4.0.0: {}
 
-  abitype@0.9.8(typescript@5.9.3):
+  abitype@0.9.8(typescript@7.0.2):
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 7.0.2
 
-  abitype@1.2.3(typescript@5.9.3):
+  abitype@1.2.3(typescript@7.0.2):
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 7.0.2
 
   abort-controller@3.0.0:
     dependencies:
@@ -6487,21 +6699,21 @@ snapshots:
 
   apg-js@4.4.0: {}
 
-  aqua-js-sdk@3.2.1-45(ethers@6.16.0)(typescript@5.9.3):
+  aqua-js-sdk@3.2.1-45(ethers@6.16.0)(typescript@7.0.2):
     dependencies:
       asn1js: 3.0.10
       buffer: 6.0.3
       crypto-browserify: 3.12.1
       did-resolver: 4.1.0
-      dids: 5.0.3(typescript@5.9.3)
+      dids: 5.0.3(typescript@7.0.2)
       ethers: 6.16.0
       http-status-codes: 2.3.0
       js-sha3: 0.9.3
-      key-did-provider-ed25519: 4.0.2(typescript@5.9.3)
+      key-did-provider-ed25519: 4.0.2(typescript@7.0.2)
       key-did-resolver: 4.0.0
       merkletreejs: 0.5.2
       node-forge: 1.4.0
-      nostr-tools: 2.23.5(typescript@5.9.3)
+      nostr-tools: 2.23.5(typescript@7.0.2)
       open: 10.2.0
       openid-client: 5.7.1
       pkijs: 3.4.0
@@ -7043,11 +7255,11 @@ snapshots:
 
   did-resolver@4.1.0: {}
 
-  dids@5.0.3(typescript@5.9.3):
+  dids@5.0.3(typescript@7.0.2):
     dependencies:
-      '@didtools/cacao': 3.0.1(typescript@5.9.3)
+      '@didtools/cacao': 3.0.1(typescript@7.0.2)
       '@didtools/codecs': 3.0.0
-      '@didtools/pkh-ethereum': 0.6.0(typescript@5.9.3)
+      '@didtools/pkh-ethereum': 0.6.0(typescript@7.0.2)
       '@stablelib/random': 1.0.2
       codeco: 1.4.3
       dag-jose-utils: 4.0.0
@@ -7813,11 +8025,11 @@ snapshots:
       jwa: 2.0.1
       safe-buffer: 5.2.1
 
-  key-did-provider-ed25519@4.0.2(typescript@5.9.3):
+  key-did-provider-ed25519@4.0.2(typescript@7.0.2):
     dependencies:
       '@noble/curves': 1.9.7
       did-jwt: 7.4.7
-      dids: 5.0.3(typescript@5.9.3)
+      dids: 5.0.3(typescript@7.0.2)
       fast-json-stable-stringify: 2.1.0
       rpc-utils: 0.6.2
       uint8arrays: 5.1.1
@@ -8102,7 +8314,7 @@ snapshots:
 
   normalize-path@3.0.0: {}
 
-  nostr-tools@2.23.5(typescript@5.9.3):
+  nostr-tools@2.23.5(typescript@7.0.2):
     dependencies:
       '@noble/ciphers': 2.1.1
       '@noble/curves': 2.0.1
@@ -8112,7 +8324,7 @@ snapshots:
       '@scure/bip39': 2.0.1
       nostr-wasm: 0.1.0
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 7.0.2
 
   nostr-wasm@0.1.0: {}
 
@@ -8206,7 +8418,7 @@ snapshots:
       object-hash: 2.2.0
       oidc-token-hash: 5.2.0
 
-  ox@0.14.22(typescript@5.9.3):
+  ox@0.14.22(typescript@7.0.2):
     dependencies:
       '@adraffy/ens-normalize': 1.11.1
       '@noble/ciphers': 1.3.0
@@ -8214,10 +8426,10 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.9.3)
+      abitype: 1.2.3(typescript@7.0.2)
       eventemitter3: 5.0.1
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 7.0.2
     transitivePeerDependencies:
       - zod
 
@@ -8395,12 +8607,12 @@ snapshots:
     dependencies:
       xtend: 4.0.2
 
-  prisma@6.19.3(typescript@5.9.3):
+  prisma@6.19.3(typescript@7.0.2):
     dependencies:
       '@prisma/config': 6.19.3
       '@prisma/engines': 6.19.3
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 7.0.2
     transitivePeerDependencies:
       - magicast
 
@@ -8911,7 +9123,7 @@ snapshots:
       yaml: 2.9.0
       yaml-types: 0.4.0(yaml@2.9.0)
 
-  tap@21.7.4(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3):
+  tap@21.7.4(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@7.0.2):
     dependencies:
       '@tapjs/after': 3.3.10(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@tapjs/after-each': 4.3.10(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
@@ -8930,7 +9142,7 @@ snapshots:
       '@tapjs/spawn': 4.3.10(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@tapjs/stdin': 4.3.10(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@tapjs/test': 4.4.8(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@tapjs/typescript': 3.5.10(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/node@24.12.4)(typescript@5.9.3)
+      '@tapjs/typescript': 3.5.10(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/node@24.12.4)(typescript@7.0.2)
       '@tapjs/worker': 4.3.10(@tapjs/core@4.5.8(@types/node@24.12.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       resolve-import: 2.4.0
     transitivePeerDependencies:
@@ -9037,12 +9249,12 @@ snapshots:
 
   trivial-deferred@2.0.0: {}
 
-  ts-mock-imports@1.3.19(sinon@22.0.0)(typescript@5.9.3):
+  ts-mock-imports@1.3.19(sinon@22.0.0)(typescript@7.0.2):
     dependencies:
       sinon: 22.0.0
-      typescript: 5.9.3
+      typescript: 7.0.2
 
-  ts-node-dev@2.0.0(@types/node@24.12.4)(typescript@5.9.3):
+  ts-node-dev@2.0.0(@types/node@24.12.4)(typescript@7.0.2):
     dependencies:
       chokidar: 3.6.0
       dynamic-dedupe: 0.3.0
@@ -9052,15 +9264,15 @@ snapshots:
       rimraf: 2.7.1
       source-map-support: 0.5.21
       tree-kill: 1.2.2
-      ts-node: 10.9.2(@types/node@24.12.4)(typescript@5.9.3)
+      ts-node: 10.9.2(@types/node@24.12.4)(typescript@7.0.2)
       tsconfig: 7.0.0
-      typescript: 5.9.3
+      typescript: 7.0.2
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
       - '@types/node'
 
-  ts-node@10.9.2(@types/node@24.12.4)(typescript@5.9.3):
+  ts-node@10.9.2(@types/node@24.12.4)(typescript@7.0.2):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.12
@@ -9074,7 +9286,7 @@ snapshots:
       create-require: 1.1.1
       diff: 4.0.4
       make-error: 1.3.6
-      typescript: 5.9.3
+      typescript: 7.0.2
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
 
@@ -9156,6 +9368,29 @@ snapshots:
 
   typescript@5.9.3: {}
 
+  typescript@7.0.2:
+    optionalDependencies:
+      '@typescript/typescript-aix-ppc64': 7.0.2
+      '@typescript/typescript-darwin-arm64': 7.0.2
+      '@typescript/typescript-darwin-x64': 7.0.2
+      '@typescript/typescript-freebsd-arm64': 7.0.2
+      '@typescript/typescript-freebsd-x64': 7.0.2
+      '@typescript/typescript-linux-arm': 7.0.2
+      '@typescript/typescript-linux-arm64': 7.0.2
+      '@typescript/typescript-linux-loong64': 7.0.2
+      '@typescript/typescript-linux-mips64el': 7.0.2
+      '@typescript/typescript-linux-ppc64': 7.0.2
+      '@typescript/typescript-linux-riscv64': 7.0.2
+      '@typescript/typescript-linux-s390x': 7.0.2
+      '@typescript/typescript-linux-x64': 7.0.2
+      '@typescript/typescript-netbsd-arm64': 7.0.2
+      '@typescript/typescript-netbsd-x64': 7.0.2
+      '@typescript/typescript-openbsd-arm64': 7.0.2
+      '@typescript/typescript-openbsd-x64': 7.0.2
+      '@typescript/typescript-sunos-x64': 7.0.2
+      '@typescript/typescript-win32-arm64': 7.0.2
+      '@typescript/typescript-win32-x64': 7.0.2
+
   uint8arrays@3.1.1:
     dependencies:
       multiformats: 9.9.0
@@ -9198,35 +9433,35 @@ snapshots:
 
   varint@6.0.0: {}
 
-  viem@1.21.4(typescript@5.9.3):
+  viem@1.21.4(typescript@7.0.2):
     dependencies:
       '@adraffy/ens-normalize': 1.10.0
       '@noble/curves': 1.2.0
       '@noble/hashes': 1.3.2
       '@scure/bip32': 1.3.2
       '@scure/bip39': 1.2.1
-      abitype: 0.9.8(typescript@5.9.3)
+      abitype: 0.9.8(typescript@7.0.2)
       isows: 1.0.3(ws@8.20.1)
       ws: 8.20.1
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 7.0.2
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
       - zod
 
-  viem@2.50.4(typescript@5.9.3):
+  viem@2.50.4(typescript@7.0.2):
     dependencies:
       '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.9.3)
+      abitype: 1.2.3(typescript@7.0.2)
       isows: 1.0.7(ws@8.20.1)
-      ox: 0.14.22(typescript@5.9.3)
+      ox: 0.14.22(typescript@7.0.2)
       ws: 8.20.1
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 7.0.2
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
