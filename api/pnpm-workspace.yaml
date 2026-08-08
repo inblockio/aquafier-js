@@ -19,3 +19,6 @@ allowBuilds:
   '@sentry-internal/node-cpu-profiler': true
   'esbuild': true
   'protobufjs': true
+minimumReleaseAgeExclude:
+  # Renovate security update: ws@8.21.0
+  - ws@8.21.0
