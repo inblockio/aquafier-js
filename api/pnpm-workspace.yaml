@@ -19,3 +19,6 @@ allowBuilds:
   '@sentry-internal/node-cpu-profiler': true
   'esbuild': true
   'protobufjs': true
+minimumReleaseAgeExclude:
+  # Renovate security update: axios@1.18.0
+  - axios@1.18.0
